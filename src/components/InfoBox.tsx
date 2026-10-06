@@ -1,0 +1,2748 @@
+/** @jsx jsx */
+/** @jsxFrag React.Fragment */
+import { React, jsx } from "jimu-core";
+import * as Icons from "../components/Icons";
+import { InfoBoxProps } from "./types";
+import { miniJoyStyle } from "../utils/styles";
+
+interface InfoBoxState {
+  isOverflowing: boolean;
+  canScrollDown: boolean;
+  canScrollUp: boolean;
+  sliderDragValue: number | null;
+  sliderDragWidthValue: number | null;
+}
+/**
+ * InfoBox
+ * Right-hand side panel stack containing:
+ *  - Status / coordinates / address card
+ *  - Turbo year-legend with click-to-filter
+ *  - Coverage Analysis
+ *  - Feature export button (when traffic signs or objects active)
+ *  - AI Overlay toggle button
+ *  - AI tag show/hide toggle
+ *  - Alternate images panel
+ */
+export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
+  private scrollContainerRef = React.createRef<HTMLDivElement>();
+
+  constructor(props: InfoBoxProps) {
+    super(props);
+    this.state = {
+      isOverflowing: false,
+      canScrollDown: false,
+      canScrollUp: false,
+      sliderDragValue: null,
+      sliderDragWidthValue: null,
+    };
+  }
+
+  componentDidMount() {
+    this.checkOverflow();
+    window.addEventListener("resize", this.checkOverflow);
+  }
+
+  componentDidUpdate() {
+    this.checkOverflow();
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("resize", this.checkOverflow);
+  }
+
+  checkOverflow = () => {
+    if (this.scrollContainerRef.current) {
+      const { scrollHeight, clientHeight, scrollTop } = this.scrollContainerRef.current;
+
+      const isOverflowing = scrollHeight > clientHeight + 1;
+      const atBottom = Math.abs(scrollHeight - clientHeight - scrollTop) <= 2;
+
+      const canScrollDown = isOverflowing && !atBottom;
+      const canScrollUp = isOverflowing && scrollTop > 2;
+
+      if (this.state.isOverflowing !== isOverflowing || this.state.canScrollDown !== canScrollDown || this.state.canScrollUp !== canScrollUp) {
+        this.setState({ isOverflowing, canScrollDown, canScrollUp });
+      }
+    }
+  };
+
+  render() {
+    const { isOverflowing } = this.state;
+    const {
+      hideInfoBox,
+      turboCreator,
+      imageId,
+      address,
+      currentZoom,
+      jimuMapViewZoom,
+      sequenceImages,
+      turboModeActive,
+      turboColorByDate,
+      turboYearLegend,
+      selectedTurboYear,
+      trafficSignsActive,
+      objectsActive,
+      detectionsActive,
+      showAiTags,
+      alternateImages,
+      onYearLegendClick,
+      onDownloadFeatures,
+      onToggleDetections,
+      onToggleAiTags,
+      onCloseAlternates,
+      onSelectAlternateImage,
+      coverageAnalysisLoading,
+      coverageResult,
+      coverageSegmentsVisible,
+      onToggleCoverageSegments,
+      onRunCoverageAnalysis,
+      onDismissCoverageResult,
+      turboPointsAvailable,
+      turboMinZoom = 16,
+      hideCoverageAnalysis,
+      pointCloudVisible,
+      isMeasureMode,
+      measurePoints,
+      onToggleMeasureMode,
+      onClearMeasurement,
+      isLassoMode,
+      onToggleLassoMode,
+      onClearLasso,
+      isSightMode,
+      sightObserver,
+      sightTargets,
+      onToggleSightMode,
+      onClearSight,
+      isViewshedMode,
+      onToggleViewshedMode,
+      onClearViewshed,
+      showCalibrationPanel,
+      nudgeStep,
+      onToggleCalibrationPanel,
+      onJoystickNudge,
+      onResetCalibration,
+      onSetNudgeStep,
+      pointCloudColorMode,
+      onDownloadPointCloud,
+      qualityViewActive,
+      onToggleQualityView,
+      selectedQualityBand,
+      onQualityLegendClick,
+      nearbyCount,
+      nearbyLoading,
+      nearbyStripOpen,
+      onToggleNearbyStrip,
+      fieldNotesCount,
+      isAnnotationMode,
+      fieldNotesListOpen,
+      onToggleAnnotationMode,
+      onToggleFieldNotesList,
+      isSolarMode,
+      onToggleSolarMode,
+      routeData,
+      isGeneratingRoute,
+      onGenerateRoute,
+      onDownloadRouteGPX,
+      routeStartPoint,
+      routeEndPoint,
+      routeSpareMinutes,
+      routePickMode,
+      onSetRoutePickMode,
+      onChangeSpareMinutes,
+      onResetRoutePoints,
+      runtimeRoutingEngine,
+      onChangeRuntimeRoutingEngine,
+      runtimeTravelMode,
+      onChangeRuntimeTravelMode,
+      travelModeAvailability,
+      routeGenerationProgress,
+    } = this.props;
+
+    const currentImg = imageId && sequenceImages.length > 0 ? sequenceImages.find((img) => img.id === imageId) : null;
+
+    return (
+      <div
+        style={{
+          position: "absolute",
+          top: "2px",
+          right: isOverflowing ? "0" : "4px",
+          zIndex: 10002,
+          maxHeight: "calc(100% - 170px)",
+          display: "flex",
+          flexDirection: "column",
+          pointerEvents: "none",
+        }}
+      >
+        <div
+          ref={this.scrollContainerRef}
+          onScroll={this.checkOverflow}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+            pointerEvents: "auto",
+            minHeight: 0,
+            flexShrink: 1,
+            overflowY: "auto",
+            overflowX: "hidden",
+            scrollbarWidth: "thin",
+            scrollbarColor: "rgba(255,255,255,0.25) transparent",
+            paddingRight: isOverflowing ? "4px" : "0px",
+          }}
+        >
+          {/* STATUS CARD */}
+          {!hideInfoBox && (
+            <div
+              className="info-box"
+              style={{
+                fontSize: "8.5px",
+                color: "white",
+                background: "rgba(0, 0, 0, 0.35)",
+                backdropFilter: "blur(5px)",
+                borderRadius: "6px",
+                width: "80px",
+                textAlign: "left",
+                padding: "5px",
+                boxShadow: "0 4px 15px rgba(0, 0, 0, 0.3)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                pointerEvents: "auto",
+              }}
+            >
+              {/* Header / zoom */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "3px",
+                  opacity: 0.8,
+                  fontSize: "10px",
+                  borderBottom: "1px solid rgba(255,255,255,0.2)",
+                  paddingBottom: "4px",
+                }}
+              >
+                <span style={{ fontWeight: 600, fontSize: "8px" }}>STATUS</span>
+                <span>
+                  <Icons.Search size={9} style={{ marginRight: "2px", marginLeft: "2px" }} />
+                  <span style={{ fontSize: "8px" }}>Z: {currentZoom !== undefined ? currentZoom.toFixed(1) : jimuMapViewZoom?.toFixed(1)}</span>
+                </span>
+              </div>
+
+              {/* Address */}
+              {address && (
+                <div style={{ marginBottom: "3px", color: "#37d582", fontWeight: 500 }}>
+                  <Icons.Globe size={12} style={{ marginRight: "4px" }} />
+                  {address}
+                </div>
+              )}
+
+              {/* Coordinates */}
+              {currentImg && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px", opacity: 0.9 }}>
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <span style={{ width: "25px", fontSize: "9px", color: "#aaa" }}>LAT</span>
+                    <span>{currentImg.lat.toFixed(6)}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <span style={{ width: "25px", fontSize: "9px", color: "#aaa" }}>LON</span>
+                    <span>{currentImg.lon.toFixed(6)}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Locked creator tag */}
+              {turboCreator && (
+                <div
+                  style={{
+                    marginTop: "4px",
+                    padding: "1px 3px",
+                    background: "rgba(55, 213, 130, 0.2)",
+                    border: "1px solid rgba(55, 213, 130, 0.4)",
+                    borderRadius: "3px",
+                    fontSize: "9px",
+                    color: "#37d582",
+                    textAlign: "center",
+                  }}
+                >
+                  {turboCreator}
+                </div>
+              )}
+
+              {/* Street Coverage Analysis button */}
+              {turboModeActive &&
+                !hideCoverageAnalysis &&
+                (() => {
+                  const zoom = currentZoom ?? jimuMapViewZoom ?? 0;
+                  const belowZoom = zoom < turboMinZoom;
+                  const noPoints = !turboPointsAvailable;
+                  const canRun = !belowZoom && !noPoints && !coverageAnalysisLoading;
+
+                  const tooltip = coverageAnalysisLoading
+                    ? "Analysing…"
+                    : belowZoom
+                      ? `Zoom in to street level (≥ ${turboMinZoom}) first`
+                      : noPoints
+                        ? "No Turbo coverage points loaded in this area"
+                        : "Run Street Coverage Analysis";
+
+                  const btnBg = canRun && coverageResult ? "rgba(30, 144, 255, 0.42)" : "rgba(30, 144, 255, 0.17)";
+
+                  return (
+                    <React.Fragment>
+                      {/* Coverage Analysis button */}
+                      <div
+                        style={{
+                          marginTop: "5px",
+                          borderTop: "1px solid rgba(255,255,255,0.08)",
+                          paddingTop: "4px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <button
+                          onClick={canRun ? onRunCoverageAnalysis : undefined}
+                          title={tooltip}
+                          style={{
+                            width: "100%",
+                            textAlign: "center",
+                            borderRadius: "4px",
+                            border: `1px solid ${canRun ? "rgba(30, 144, 255, 0.4)" : "rgba(255,255,255,0.1)"}`,
+                            background: btnBg,
+                            color: canRun ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.65)",
+                            fontSize: "7px",
+                            fontWeight: 500,
+                            cursor: canRun ? "pointer" : "not-allowed",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "4px",
+                            transition: "background 0.2s, color 0.2s",
+                            whiteSpace: "nowrap",
+                            opacity: canRun ? 1 : 0.5,
+                          }}
+                          onMouseEnter={(e) => {
+                            if (canRun) e.currentTarget.style.background = "rgba(30, 144, 255, 0.3)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = btnBg;
+                          }}
+                        >
+                          {coverageAnalysisLoading ? (
+                            <React.Fragment>
+                              <div
+                                style={{
+                                  width: "8px",
+                                  height: "8px",
+                                  border: "1.5px solid rgba(255,255,255,0.2)",
+                                  borderTopColor: "#1e90ff",
+                                  borderRadius: "50%",
+                                  animation: "spin 0.8s linear infinite",
+                                  flexShrink: 0,
+                                }}
+                              />
+                              Analysing…
+                            </React.Fragment>
+                          ) : (
+                            <span>{belowZoom ? "Zoom in to analyse" : noPoints ? "Analyse Not Ready" : coverageResult ? "Run New Analysis" : "Analyse Coverage"}</span>
+                          )}
+                        </button>
+                      </div>
+                    </React.Fragment>
+                  );
+                })()}
+
+              {/* QUALITY VIEW TOGGLE */}
+              {!hideCoverageAnalysis && (
+                <div
+                  style={{
+                    marginTop: "5px",
+                    borderTop: "1px solid rgba(255,255,255,0.08)",
+                    paddingTop: "4px",
+                  }}
+                >
+                  <button
+                    onClick={onToggleQualityView}
+                    title={qualityViewActive ? "Quality View ON: lines coloured by image quality score" : "Quality View OFF: click to colour coverage lines by quality score"}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      margin: 0,
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      width: "100%",
+                      cursor: "pointer",
+                      color: "white",
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "3px",
+                        fontWeight: 600,
+                        fontSize: "8px",
+                        lineHeight: 1,
+                        paddingTop: "1px",
+                        color: qualityViewActive ? "#F5A623" : "rgba(255,255,255,0.7)",
+                      }}
+                    >
+                      <Icons.Star size={10} color={qualityViewActive ? "#F5A623" : "rgba(255,255,255,0.7)"} filled={qualityViewActive} />
+                      QUALITY
+                    </span>
+                    <div
+                      style={{
+                        width: "16px",
+                        height: "8px",
+                        borderRadius: "4px",
+                        background: qualityViewActive ? "#F5A623" : "rgba(255,255,255,0.3)",
+                        position: "relative",
+                        flexShrink: 0,
+                        transition: "background 0.2s",
+                      }}
+                    >
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "1px",
+                          left: qualityViewActive ? "9px" : "1px",
+                          width: "6px",
+                          height: "6px",
+                          borderRadius: "50%",
+                          background: "white",
+                          transition: "left 0.2s",
+                        }}
+                      />
+                    </div>
+                  </button>
+
+                  {qualityViewActive && (
+                    <div style={{ marginTop: "4px", display: "flex", flexDirection: "column", gap: "2px" }}>
+                      {(
+                        [
+                          ["#35AF6D", "Good", "≥0.70", "good"],
+                          ["#F5A623", "Fair", "0.45–0.70", "fair"],
+                          ["#D0021B", "Poor", "0.10–0.45", "poor"],
+                          ["#A855F7", "Unscored", "N/A", "unscored"],
+                        ] as [string, string, string, "good" | "fair" | "poor" | "unscored"][]
+                      ).map(([color, label, range, band]) => {
+                        const isSelected = selectedQualityBand === band;
+                        const isAnySelected = !!selectedQualityBand;
+                        return (
+                          <div
+                            key={label}
+                            onClick={() => onQualityLegendClick(band)}
+                            title={isSelected ? "Click to show all quality bands" : `Show only ${label} captures`}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              fontSize: "7px",
+                              cursor: "pointer",
+                              opacity: isAnySelected && !isSelected ? 0.3 : 1,
+                              transition: "opacity 0.2s ease",
+                            }}
+                          >
+                            <div style={{ width: "8px", height: "3px", borderRadius: "2px", background: color, flexShrink: 0 }} />
+                            <span style={{ color: "rgba(255,255,255,0.85)", fontWeight: isSelected ? 700 : 500 }}>{label}</span>
+                            {range && <span style={{ color: "rgba(255,255,255,0.4)", marginLeft: "auto" }}>{range}</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* NEARBY CAPTURES TRIGGER ROW */}
+              {imageId && (
+                <div
+                  style={{
+                    marginTop: "5px",
+                    borderTop: "1px solid rgba(255,255,255,0.08)",
+                    paddingTop: "4px",
+                  }}
+                >
+                  <button
+                    onClick={onToggleNearbyStrip}
+                    title="Show captures nearby"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      margin: 0,
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      width: "100%",
+                      cursor: "pointer",
+                      color: "white",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "7.5px",
+                        lineHeight: 1,
+                        fontWeight: 600,
+                        color: nearbyStripOpen ? "#05a056" : "rgba(255,255,255,0.7)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <Icons.Camera size={9} />
+                      NEARBY
+                      {nearbyLoading ? (
+                        <span style={{ opacity: 0.5 }}>…</span>
+                      ) : nearbyCount != null && nearbyCount > 0 ? (
+                        <span
+                          style={{
+                            background: "#05a056",
+                            color: "white",
+                            borderRadius: "8px",
+                            padding: "1px 4px 0px",
+                            fontSize: "6.5px",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {nearbyCount}
+                        </span>
+                      ) : null}
+                    </span>
+                    {/* chevron */}
+                    <svg
+                      width="8"
+                      height="8"
+                      viewBox="0 0 10 10"
+                      fill="white"
+                      style={{ transform: nearbyStripOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", opacity: 0.6 }}
+                    >
+                      <path d="M1 3l4 4 4-4" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+              {/* FIELD NOTES TRIGGER ROW */}
+              <div
+                style={{
+                  marginTop: "5px",
+                  borderTop: "1px solid rgba(255,255,255,0.08)",
+                  paddingTop: "4px",
+                }}
+              >
+                <button
+                  onClick={onToggleAnnotationMode}
+                  title={isAnnotationMode ? "Disable note mode" : "Add field note"}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    margin: 0,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    width: "100%",
+                    cursor: "pointer",
+                    color: "white",
+                    marginBottom: "3px",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "7.5px",
+                      lineHeight: 1,
+                      fontWeight: 600,
+                      color: isAnnotationMode ? "#f5a623" : "rgba(255,255,255,0.7)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    <Icons.Notes size={10} />
+                    {isAnnotationMode ? "NOTE MODE ON" : "ADD NOTE"}
+                  </span>
+                </button>
+
+                {
+                  <button
+                    onClick={onToggleFieldNotesList}
+                    title="Show field notes"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      margin: 0,
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      width: "100%",
+                      cursor: "pointer",
+                      color: "white",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "7.5px",
+                        lineHeight: 1,
+                        fontWeight: 600,
+                        color: fieldNotesListOpen ? "#f5a623" : "rgba(255,255,255,0.7)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      NOTES
+                      {(fieldNotesCount ?? 0) > 0 && (
+                        <span style={{ background: "#f5a623", color: "#000", borderRadius: "8px", padding: "1px 4px 0px", fontSize: "6.5px", fontWeight: 700 }}>
+                          {fieldNotesCount}
+                        </span>
+                      )}
+                    </span>
+                    <svg
+                      width="8"
+                      height="8"
+                      viewBox="0 0 10 10"
+                      fill="white"
+                      style={{ transform: fieldNotesListOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", opacity: 0.6 }}
+                    >
+                      <path d="M1 3l4 4 4-4" />
+                    </svg>
+                  </button>
+                }
+              </div>
+
+              {/* Turbo year legend */}
+              {turboModeActive && turboColorByDate && turboYearLegend && turboYearLegend.length > 0 && (
+                <div
+                  className="year-legend-scroll"
+                  style={{
+                    marginTop: "4px",
+                    paddingTop: "4px",
+                    borderTop: "1px solid rgba(255,255,255,0.2)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    maxHeight: "65px",
+                    overflowY: "auto",
+                    pointerEvents: "auto",
+                    overflowX: "hidden",
+                    scrollbarColor: "rgba(255,255,255,0.3) transparent",
+                  }}
+                >
+                  <style>{`.year-legend-scroll::-webkit-scrollbar { display: none; }`}</style>
+                  <div style={{ fontSize: "8px", fontWeight: 600, opacity: 0.7, marginBottom: "2px", textAlign: "center", width: "100%" }}>YEARS</div>
+                  {turboYearLegend.map((item) => {
+                    const isSelected = selectedTurboYear === item.year;
+                    const isAnySelected = !!selectedTurboYear;
+                    return (
+                      <div
+                        key={item.year}
+                        onClick={() => onYearLegendClick(item.year)}
+                        title={isSelected ? "Click to show all years" : `Filter by ${item.year}`}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          marginBottom: "3px",
+                          gap: "6px",
+                          width: "100%",
+                          flexShrink: 0,
+                          cursor: "pointer",
+                          opacity: isAnySelected && !isSelected ? 0.3 : 1,
+                          transition: "all 0.2s ease",
+                          transform: isSelected ? "scale(1.1)" : "scale(1)",
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: "8px",
+                            height: "8px",
+                            borderRadius: "50%",
+                            backgroundColor: item.color,
+                            border: isSelected ? "1.5px solid white" : "1px solid rgba(255,255,255,0.6)",
+                            boxShadow: isSelected ? "0 0 4px rgba(255,255,255,0.8)" : "none",
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span
+                          style={{
+                            whiteSpace: "nowrap",
+                            fontWeight: isSelected ? 800 : 400,
+                            color: isSelected ? "#fff" : "rgba(255,255,255,0.9)",
+                          }}
+                        >
+                          {item.year}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 3D TAPE MEASURE */}
+          {pointCloudVisible && (
+            <div
+              style={{
+                marginTop: "4px",
+                background: isMeasureMode ? "rgba(25, 25, 25, 0.85)" : "rgba(20, 20, 20, 0.6)",
+                backdropFilter: "blur(10px)",
+                borderRadius: "6px",
+                padding: "5px",
+                width: "80px",
+                border: isMeasureMode ? "1px solid rgba(30, 144, 255, 0.5)" : "1px solid rgba(255, 255, 255, 0.15)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+                display: "flex",
+                flexDirection: "column",
+                pointerEvents: "auto",
+                boxSizing: "border-box",
+              }}
+            >
+              <button
+                onClick={onToggleMeasureMode}
+                title="Toggle 3D Tape Measure"
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  margin: 0,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  width: "100%",
+                  cursor: "pointer",
+                  color: "white",
+                }}
+              >
+                <span style={{ fontSize: "7px", fontWeight: 600, color: isMeasureMode ? "#1e90ff" : "rgba(255,255,255,0.7)" }}>
+                  <Icons.Measure size={12} style={{ marginRight: "2px", verticalAlign: "bottom" }} />
+                  MEASURE
+                </span>
+                <div
+                  style={{
+                    width: "16px",
+                    height: "8px",
+                    borderRadius: "4px",
+                    background: isMeasureMode ? "#1e90ff" : "rgba(255,255,255,0.3)",
+                    position: "relative",
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "1px",
+                      left: isMeasureMode ? "9px" : "1px",
+                      width: "6px",
+                      height: "6px",
+                      borderRadius: "50%",
+                      background: "white",
+                      transition: "left 0.2s",
+                    }}
+                  />
+                </div>
+              </button>
+
+              {isMeasureMode && (
+                <div style={{ marginTop: "4px", fontSize: "7.5px", color: "#ccc", textAlign: "left" }}>
+                  {(!measurePoints || measurePoints.length === 0) && "Select 1st point"}
+                  {measurePoints && measurePoints.length === 1 && "Select 2nd point"}
+                  {measurePoints && measurePoints.length === 2 && <div style={{ color: "#37d582", fontWeight: "bold" }}>Ready</div>}
+                  {measurePoints && measurePoints.length > 0 && (
+                    <button
+                      onClick={onClearMeasurement}
+                      style={{
+                        marginTop: "5px",
+                        width: "100%",
+                        background: "rgba(255,0,0,0.2)",
+                        border: "1px solid rgba(255,0,0,0.4)",
+                        color: "#ffcccc",
+                        borderRadius: "3px",
+                        padding: "2px 0",
+                        fontSize: "7.5px",
+                        cursor: "pointer",
+                        fontWeight: 600,
+                      }}
+                    >
+                      CLEAR
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 3D LASSO SELECTION */}
+          {/* This panel allows users to draw a 2D shape over the panoramic image to select 3D points */}
+          {pointCloudVisible && (
+            <div
+              style={{
+                marginTop: "4px",
+                background: isLassoMode ? "rgba(25, 25, 25, 0.85)" : "rgba(20, 20, 20, 0.6)",
+                backdropFilter: "blur(10px)",
+                borderRadius: "6px",
+                padding: "5px",
+                width: "80px",
+                border: isLassoMode ? "1px solid rgba(0, 255, 255, 0.5)" : "1px solid rgba(255, 255, 255, 0.15)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+                display: "flex",
+                flexDirection: "column",
+                pointerEvents: "auto",
+                boxSizing: "border-box",
+              }}
+            >
+              <button
+                onClick={onToggleLassoMode}
+                title="Toggle Lasso Point Selection"
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  margin: 0,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  width: "100%",
+                  cursor: "pointer",
+                  color: "white",
+                }}
+              >
+                <span style={{ fontSize: "7px", fontWeight: 600, color: isLassoMode ? "#00ffff" : "rgba(255,255,255,0.7)" }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: "2px", verticalAlign: "bottom" }}>
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM12 22c-5.52 0-10-4.48-10-10S6.48 2 12 2s10 4.48 10 10-4.48 10-10 10z" />
+                    <circle cx="12" cy="12" r="3" fill="currentColor" />
+                  </svg>
+                  LASSO
+                </span>
+                <div
+                  style={{
+                    width: "16px",
+                    height: "8px",
+                    borderRadius: "4px",
+                    background: isLassoMode ? "#00ffff" : "rgba(255,255,255,0.3)",
+                    position: "relative",
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "1px",
+                      left: isLassoMode ? "9px" : "1px",
+                      width: "6px",
+                      height: "6px",
+                      borderRadius: "50%",
+                      background: "white",
+                      transition: "left 0.2s",
+                    }}
+                  />
+                </div>
+              </button>
+
+              {isLassoMode && (
+                <div style={{ marginTop: "4px", fontSize: "7.5px", color: "#ccc", textAlign: "left" }}>
+                  Draw on image to select.
+                  <button
+                    onClick={onClearLasso}
+                    style={{
+                      marginTop: "5px",
+                      width: "100%",
+                      background: "rgba(255,0,0,0.2)",
+                      border: "1px solid rgba(255,0,0,0.4)",
+                      color: "#ffcccc",
+                      borderRadius: "3px",
+                      padding: "2px 0",
+                      fontSize: "7.5px",
+                      cursor: "pointer",
+                      fontWeight: 600,
+                    }}
+                  >
+                    CLEAR
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 3D LINE OF SIGHT */}
+          {pointCloudVisible && (
+            <div
+              style={{
+                marginTop: "4px",
+                background: isSightMode ? "rgba(25, 25, 25, 0.85)" : "rgba(20, 20, 20, 0.6)",
+                backdropFilter: "blur(10px)",
+                borderRadius: "6px",
+                padding: "5px",
+                width: "80px",
+                border: isSightMode ? "1px solid rgba(168, 85, 247, 0.5)" : "1px solid rgba(255, 255, 255, 0.15)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+                display: "flex",
+                flexDirection: "column",
+                pointerEvents: "auto",
+                boxSizing: "border-box",
+              }}
+            >
+              <button
+                onClick={onToggleSightMode}
+                title="Toggle 3D Line of Sight"
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  margin: 0,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  width: "100%",
+                  cursor: "pointer",
+                  color: "white",
+                }}
+              >
+                <span style={{ fontSize: "7px", fontWeight: 600, color: isSightMode ? "#a855f7" : "rgba(255,255,255,0.7)" }}>
+                  <Icons.Eye size={12} style={{ marginRight: "5px", verticalAlign: "bottom" }} />
+                  SIGHT
+                </span>
+                <div
+                  style={{
+                    width: "16px",
+                    height: "8px",
+                    borderRadius: "4px",
+                    background: isSightMode ? "#a855f7" : "rgba(255,255,255,0.3)",
+                    position: "relative",
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "1px",
+                      left: isSightMode ? "9px" : "1px",
+                      width: "6px",
+                      height: "6px",
+                      borderRadius: "50%",
+                      background: "white",
+                      transition: "left 0.2s",
+                    }}
+                  />
+                </div>
+              </button>
+
+              {isSightMode && (
+                <div style={{ marginTop: "4px", fontSize: "7.5px", color: "#ccc", textAlign: "left" }}>
+                  {!sightObserver && "Select Observer point"}
+                  {sightObserver && "Click to add Targets"}
+                  {(sightObserver || (sightTargets && sightTargets.length > 0)) && (
+                    <button
+                      onClick={onClearSight}
+                      style={{
+                        marginTop: "5px",
+                        width: "100%",
+                        background: "rgba(255,0,0,0.2)",
+                        border: "1px solid rgba(255,0,0,0.4)",
+                        color: "#ffcccc",
+                        borderRadius: "3px",
+                        padding: "2px 0",
+                        fontSize: "7.5px",
+                        cursor: "pointer",
+                        fontWeight: 600,
+                      }}
+                    >
+                      CLEAR
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 3D VIEWSHED ANALYSIS */}
+          {pointCloudVisible && (
+            <div
+              style={{
+                marginTop: "4px",
+                background: isViewshedMode ? "rgba(25, 25, 25, 0.85)" : "rgba(20, 20, 20, 0.6)",
+                backdropFilter: "blur(10px)",
+                borderRadius: "6px",
+                padding: "5px",
+                width: "80px",
+                border: isViewshedMode ? "1px solid rgba(255, 85, 85, 0.5)" : "1px solid rgba(255, 255, 255, 0.15)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+                display: "flex",
+                flexDirection: "column",
+                pointerEvents: "auto",
+                boxSizing: "border-box",
+              }}
+            >
+              <button
+                onClick={onToggleViewshedMode}
+                title="Toggle 3D Viewshed (Blind Spot) Analysis"
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  margin: 0,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  width: "100%",
+                  cursor: "pointer",
+                  color: "white",
+                }}
+              >
+                <span style={{ fontSize: "7px", fontWeight: 600, color: isViewshedMode ? "#ff5555" : "rgba(255,255,255,0.7)" }}>
+                  <Icons.Viewshed size={12} style={{ marginRight: "2px", verticalAlign: "bottom" }} />
+                  VIEWSHED
+                </span>
+                <div
+                  style={{
+                    width: "16px",
+                    height: "8px",
+                    borderRadius: "4px",
+                    background: isViewshedMode ? "#ff5555" : "rgba(255,255,255,0.3)",
+                    position: "relative",
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "1px",
+                      left: isViewshedMode ? "9px" : "1px",
+                      width: "6px",
+                      height: "6px",
+                      borderRadius: "50%",
+                      background: "white",
+                      transition: "left 0.2s",
+                    }}
+                  />
+                </div>
+              </button>
+
+              {isViewshedMode && (
+                <div style={{ marginTop: "4px", fontSize: "7.5px", color: "#ccc", textAlign: "left" }}>
+                  Click cloud to calculate blind spots.
+                  <button
+                    onClick={onClearViewshed}
+                    style={{
+                      marginTop: "5px",
+                      width: "100%",
+                      background: "rgba(255,0,0,0.2)",
+                      border: "1px solid rgba(255,0,0,0.4)",
+                      color: "#ffcccc",
+                      borderRadius: "3px",
+                      padding: "2px 0",
+                      fontSize: "7.5px",
+                      cursor: "pointer",
+                      fontWeight: 600,
+                    }}
+                  >
+                    CLEAR
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* POINT CLOUD CALIBRATION MICRO-JOYSTICK */}
+          {pointCloudVisible && (
+            <div
+              style={{
+                marginTop: "4px",
+                background: showCalibrationPanel ? "rgba(25, 25, 25, 0.85)" : "rgba(20, 20, 20, 0.6)",
+                backdropFilter: "blur(10px)",
+                borderRadius: "6px",
+                padding: "5px",
+                width: "80px",
+                border: showCalibrationPanel ? "1px solid rgba(255, 193, 7, 0.5)" : "1px solid rgba(255, 255, 255, 0.15)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+                display: "flex",
+                flexDirection: "column",
+                pointerEvents: "auto",
+                boxSizing: "border-box",
+              }}
+            >
+              <button
+                onClick={onToggleCalibrationPanel}
+                title="Calibrate Point Cloud GPS Drift"
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  margin: 0,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  width: "100%",
+                  cursor: "pointer",
+                  color: "white",
+                }}
+              >
+                <span style={{ fontSize: "7px", fontWeight: 600, color: showCalibrationPanel ? "#ffc107" : "rgba(255,255,255,0.7)" }}>
+                  <Icons.Crosshair size={12} style={{ marginRight: "4px", verticalAlign: "middle" }} />
+                  CALIBRATE
+                </span>
+                <div style={{ fontSize: "8px", color: "rgba(255,255,255,0.5)" }}>{showCalibrationPanel ? "▼" : "▲"}</div>
+              </button>
+
+              {showCalibrationPanel && (
+                <div style={{ marginTop: "6px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                  {/* Step size toggle */}
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "7px", background: "rgba(0,0,0,0.3)", padding: "3px", borderRadius: "3px" }}>
+                    <label style={{ cursor: "pointer", color: nudgeStep === 0.1 ? "#37d582" : "white" }}>
+                      <input type="radio" checked={nudgeStep === 0.1} onChange={() => onSetNudgeStep?.(0.1)} style={{ display: "none" }} /> 0.1m
+                    </label>
+                    <label style={{ cursor: "pointer", color: nudgeStep === 1.0 ? "#37d582" : "white" }}>
+                      <input type="radio" checked={nudgeStep === 1.0} onChange={() => onSetNudgeStep?.(1.0)} style={{ display: "none" }} /> 1.0m
+                    </label>
+                  </div>
+
+                  {/* Micro D-Pad */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2px", justifyItems: "center", marginTop: "2px" }}>
+                    <div />
+                    <button onClick={() => onJoystickNudge?.("y", 1)} style={miniJoyStyle}>
+                      ▲
+                    </button>
+                    <div />
+                    <button onClick={() => onJoystickNudge?.("x", -1)} style={miniJoyStyle}>
+                      ◀
+                    </button>
+                    <button
+                      onClick={onResetCalibration}
+                      style={{ ...miniJoyStyle, fontSize: "6px", background: "rgba(255,0,0,0.3)", borderColor: "rgba(255,0,0,0.5)", fontWeight: "bold" }}
+                    >
+                      RST
+                    </button>
+                    <button onClick={() => onJoystickNudge?.("x", 1)} style={miniJoyStyle}>
+                      ▶
+                    </button>
+                    <div />
+                    <button onClick={() => onJoystickNudge?.("y", -1)} style={miniJoyStyle}>
+                      ▼
+                    </button>
+                    <div />
+                  </div>
+
+                  {/* Vertical Z-controls */}
+                  <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "4px", marginTop: "2px" }}>
+                    <button onClick={() => onJoystickNudge?.("z", -1)} style={{ ...miniJoyStyle, width: "32px", fontSize: "7.5px" }}>
+                      ▼ Z
+                    </button>
+                    <button onClick={() => onJoystickNudge?.("z", 1)} style={{ ...miniJoyStyle, width: "32px", fontSize: "7.5px" }}>
+                      ▲ Z
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* POINT CLOUD ELEVATION HEATMAP LEGEND */}
+          {pointCloudVisible && pointCloudColorMode === "elevation" && (
+            <div
+              style={{
+                marginTop: "4px",
+                background: "rgba(20, 20, 20, 0.6)",
+                backdropFilter: "blur(10px)",
+                borderRadius: "6px",
+                padding: "5px",
+                width: "80px",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+                display: "flex",
+                flexDirection: "column",
+                pointerEvents: "auto",
+                boxSizing: "border-box",
+              }}
+            >
+              <div style={{ fontSize: "7px", fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: "4px", textAlign: "center" }}>ELEVATION</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                {[
+                  { val: "15m+", col: "#FF0000", lbl: "Tall" },
+                  { val: "7.0m", col: "#FFFF00", lbl: "Poles" },
+                  { val: "2.5m", col: "#00FF00", lbl: "Fences" },
+                  { val: "0.0m", col: "#00FFFF", lbl: "Road" },
+                  { val: "Below", col: "#0000FF", lbl: "Ditch" },
+                ].map((item) => (
+                  <div key={item.val} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "6.5px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
+                      <div
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: "50%",
+                          background: item.col,
+                          border: "0.5px solid rgba(255,255,255,0.4)",
+                          flexShrink: 0,
+                        }}
+                      />
+                      <span style={{ color: "white", fontWeight: 600 }}>{item.val}</span>
+                    </div>
+                    <span style={{ color: "rgba(255,255,255,0.5)" }}>{item.lbl}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* POINT CLOUD LENGTH + WIDTH SLIDERS */}
+          {this.props.pointCloudVisible &&
+            (() => {
+              const { pointCloudLength, pointCloudMaxLength, pointCloudActualLength, onLengthChange, pointCloudWidth, pointCloudMaxWidth, pointCloudActualWidth, onWidthChange } =
+                this.props;
+
+              const lengthStep = 5;
+              const lengthSliderMax = pointCloudMaxLength + lengthStep;
+              const isLengthFull = pointCloudLength <= 0;
+              const lengthSliderValue = isLengthFull ? lengthSliderMax : pointCloudLength;
+
+              const handleLengthDec = () => {
+                if (isLengthFull) {
+                  onLengthChange(pointCloudMaxLength);
+                } else {
+                  const next = pointCloudLength - lengthStep;
+                  onLengthChange(next < 10 ? 10 : next);
+                }
+              };
+              const handleLengthInc = () => {
+                if (isLengthFull) return;
+                const next = pointCloudLength + lengthStep;
+                onLengthChange(next > pointCloudMaxLength ? 0 : next);
+              };
+
+              const hasWidth = pointCloudWidth !== undefined && !!onWidthChange;
+              const minWidth = 5;
+              const maxWidth = pointCloudMaxWidth ?? 80;
+              const widthStep = 5;
+              const widthValue = pointCloudWidth ?? minWidth;
+              const widthSliderMax = maxWidth + widthStep;
+              const isWidthFull = pointCloudWidth <= 0 || widthValue >= widthSliderMax;
+              const widthSliderValue = isWidthFull ? widthSliderMax : widthValue;
+
+              const handleWidthDec = () => {
+                if (!onWidthChange) return;
+                if (isWidthFull) {
+                  onWidthChange(maxWidth);
+                } else {
+                  onWidthChange(Math.max(minWidth, widthValue - widthStep));
+                }
+              };
+              const handleWidthInc = () => {
+                if (!onWidthChange) return;
+                const next = widthValue + widthStep;
+                onWidthChange(next > maxWidth ? 0 : next);
+              };
+
+              const btnBase: React.CSSProperties = {
+                width: "16px",
+                height: "16px",
+                borderRadius: "3px",
+                border: "1px solid rgba(255,255,255,0.25)",
+                background: "rgba(255,255,255,0.1)",
+                color: "white",
+                fontSize: "11px",
+                lineHeight: "1",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                padding: 0,
+                transition: "background 0.15s",
+              };
+
+              const divider = <div style={{ borderTop: "1px solid rgba(255,255,255,0.12)", margin: "6px 0 5px" }} />;
+
+              return (
+                <div
+                  style={{
+                    marginTop: "4px",
+                    background: "rgba(20, 20, 20, 0.6)",
+                    backdropFilter: "blur(10px)",
+                    borderRadius: "6px",
+                    padding: "6px",
+                    width: "80px",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+                    display: "flex",
+                    flexDirection: "column",
+                    pointerEvents: "auto",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  {/* LENGTH sub-section */}
+                  <div style={{ fontSize: "7px", fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: "4px", textAlign: "center" }}>
+                    LENGTH <span style={{ fontWeight: 400, opacity: 0.55, fontSize: "6px" }}>N↔S</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "5px", gap: "3px" }}>
+                    <button
+                      title="Decrease length by 5m"
+                      onClick={handleLengthDec}
+                      style={btnBase}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.1)")}
+                    >
+                      &#8722;
+                    </button>
+                    <div style={{ fontSize: "8px", fontWeight: "bold", color: isLengthFull ? "#37d582" : "#00FFFF", textAlign: "center", flex: 1 }}>
+                      {this.state.sliderDragValue !== null
+                        ? this.state.sliderDragValue >= lengthSliderMax
+                          ? `FULL (~${pointCloudActualLength}m)`
+                          : `${this.state.sliderDragValue}m`
+                        : isLengthFull
+                          ? `FULL (~${pointCloudActualLength}m)`
+                          : `${pointCloudLength}m`}
+                    </div>
+                    <button
+                      title={isLengthFull ? "Already at full length" : "Increase length by 5m"}
+                      onClick={handleLengthInc}
+                      style={{ ...btnBase, opacity: isLengthFull ? 0.35 : 1, cursor: isLengthFull ? "default" : "pointer" }}
+                      onMouseEnter={(e) => {
+                        if (!isLengthFull) e.currentTarget.style.background = "rgba(255,255,255,0.25)";
+                      }}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.1)")}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div style={{ position: "relative", width: "100%" }}>
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: `${((pointCloudMaxLength - 10) / (lengthSliderMax - 10)) * 100}%`,
+                        width: "1px",
+                        height: "8px",
+                        background: "rgba(255,255,255,0.4)",
+                        pointerEvents: "none",
+                        transform: "translateX(-50%)",
+                      }}
+                    />
+                    <input
+                      className="point-cloud-slider"
+                      type="range"
+                      min={10}
+                      max={lengthSliderMax}
+                      step={lengthStep}
+                      value={this.state.sliderDragValue ?? lengthSliderValue}
+                      onChange={(e) => this.setState({ sliderDragValue: Number(e.target.value) })}
+                      onMouseUp={(e) => {
+                        const val = Number((e.target as HTMLInputElement).value);
+                        this.setState({ sliderDragValue: null });
+                        onLengthChange(val >= lengthSliderMax ? 0 : val);
+                      }}
+                      onTouchEnd={(e) => {
+                        const val = Number((e.target as HTMLInputElement).value);
+                        this.setState({ sliderDragValue: null });
+                        onLengthChange(val >= lengthSliderMax ? 0 : val);
+                      }}
+                      style={{ width: "100%", background: "transparent", cursor: "pointer", height: "3px", appearance: "none" }}
+                    />
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: "3px", fontSize: "6.5px", color: "rgba(255,255,255,0.5)" }}>
+                    <span>10m</span>
+                    <span style={{ color: "rgba(255,255,255,0.35)" }}>{pointCloudMaxLength}m</span>
+                    <span>FULL</span>
+                  </div>
+
+                  {/* WIDTH sub-section */}
+                  {hasWidth && (
+                    <React.Fragment>
+                      {divider}
+                      <div style={{ fontSize: "7px", fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: "4px", textAlign: "center" }}>
+                        WIDTH <span style={{ fontWeight: 400, opacity: 0.55, fontSize: "6px" }}>E↔W</span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "5px", gap: "3px" }}>
+                        <button
+                          title="Decrease width by 5m"
+                          onClick={handleWidthDec}
+                          style={{ ...btnBase, opacity: widthValue <= minWidth ? 0.35 : 1, cursor: widthValue <= minWidth ? "default" : "pointer" }}
+                          onMouseEnter={(e) => {
+                            if (widthValue > minWidth) e.currentTarget.style.background = "rgba(255,255,255,0.25)";
+                          }}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.1)")}
+                        >
+                          &#8722;
+                        </button>
+                        <div style={{ fontSize: "8px", fontWeight: "bold", color: isWidthFull ? "#37d582" : "#FFD700", textAlign: "center", flex: 1 }}>
+                          {this.state.sliderDragWidthValue !== null
+                            ? this.state.sliderDragWidthValue >= widthSliderMax
+                              ? `FULL (~${pointCloudActualWidth}m)`
+                              : `${this.state.sliderDragWidthValue}m`
+                            : isWidthFull
+                              ? `FULL (~${pointCloudActualWidth}m)`
+                              : `${widthValue}m`}
+                        </div>
+                        <button
+                          title={isWidthFull ? "Already at full width" : "Increase width by 5m"}
+                          onClick={handleWidthInc}
+                          style={{ ...btnBase, opacity: isWidthFull ? 0.35 : 1, cursor: isWidthFull ? "default" : "pointer" }}
+                          onMouseEnter={(e) => {
+                            if (!isWidthFull) e.currentTarget.style.background = "rgba(255,255,255,0.25)";
+                          }}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.1)")}
+                        >
+                          +
+                        </button>
+                      </div>
+                      <div style={{ position: "relative", width: "100%" }}>
+                        <div
+                          style={{
+                            position: "absolute",
+                            left: `${((maxWidth - minWidth) / (widthSliderMax - minWidth)) * 100}%`,
+                            width: "1px",
+                            height: "8px",
+                            background: "rgba(255,255,255,0.4)",
+                            pointerEvents: "none",
+                            transform: "translateX(-50%)",
+                          }}
+                        />
+                        <input
+                          className="point-cloud-slider"
+                          type="range"
+                          min={minWidth}
+                          max={widthSliderMax}
+                          step={widthStep}
+                          value={this.state.sliderDragWidthValue ?? widthSliderValue}
+                          onChange={(e) => this.setState({ sliderDragWidthValue: Number(e.target.value) })}
+                          onMouseUp={(e) => {
+                            const val = Number((e.target as HTMLInputElement).value);
+                            this.setState({ sliderDragWidthValue: null });
+                            onWidthChange!(val >= widthSliderMax ? 0 : val);
+                          }}
+                          onTouchEnd={(e) => {
+                            const val = Number((e.target as HTMLInputElement).value);
+                            this.setState({ sliderDragWidthValue: null });
+                            onWidthChange!(val >= widthSliderMax ? 0 : val);
+                          }}
+                          style={{ width: "100%", background: "transparent", cursor: "pointer", height: "3px", appearance: "none" }}
+                        />
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginTop: "3px", fontSize: "6.5px", color: "rgba(255,255,255,0.5)" }}>
+                        <span>{minWidth}m</span>
+                        <span style={{ color: "rgba(255,255,255,0.35)" }}>{maxWidth}m</span>
+                        <span>FULL</span>
+                      </div>
+                    </React.Fragment>
+                  )}
+                </div>
+              );
+            })()}
+
+          {/* POINT CLOUD CSV EXPORT BUTTON */}
+          {pointCloudVisible && (
+            <button
+              onClick={onDownloadPointCloud}
+              title="Export Point Cloud as CSV (Includes Calibrations)"
+              style={{
+                marginTop: "4px",
+                background: "rgba(30, 144, 255, 0.3)",
+                backdropFilter: "blur(10px)",
+                WebkitBackdropFilter: "blur(10px)",
+                color: "#fff",
+                borderRadius: "6px",
+                fontSize: "9px",
+                cursor: "pointer",
+                width: "80px",
+                fontWeight: 600,
+                letterSpacing: "0.5px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                pointerEvents: "auto",
+                transition: "all 0.2s ease-in-out",
+                border: "1px solid rgba(30, 144, 255, 0.5)",
+                boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+                padding: "4px 0",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(30, 144, 255, 0.8)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(30, 144, 255, 0.3)")}
+            >
+              <Icons.Download size={12} color="#ffffff" />
+              <span style={{ fontWeight: 700 }}>CSV (3D)</span>
+            </button>
+          )}
+
+          {/* SOLAR GLARE & SHADOW MODELING */}
+          <div
+            style={{
+              marginTop: "4px",
+              background: isSolarMode ? "rgba(25, 25, 25, 0.85)" : "rgba(20, 20, 20, 0.6)",
+              backdropFilter: "blur(10px)",
+              borderRadius: "6px",
+              padding: "5px",
+              width: "80px",
+              border: isSolarMode ? "1px solid rgba(255, 215, 0, 0.5)" : "1px solid rgba(255, 255, 255, 0.15)",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+              display: "flex",
+              flexDirection: "column",
+              pointerEvents: "auto",
+              boxSizing: "border-box",
+            }}
+          >
+            <button
+              onClick={onToggleSolarMode}
+              title="Toggle Solar Glare & Shadow Modeling"
+              style={{
+                background: "none",
+                border: "none",
+                padding: 0,
+                margin: 0,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                width: "100%",
+                cursor: "pointer",
+                color: "white",
+              }}
+            >
+              <span style={{ fontSize: "7px", fontWeight: 600, color: isSolarMode ? "#ffd700" : "rgba(255,255,255,0.7)", display: "flex", alignItems: "center" }}>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ marginRight: "4px" }}
+                >
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                SOLAR
+              </span>
+              <div
+                style={{
+                  width: "16px",
+                  height: "8px",
+                  borderRadius: "4px",
+                  background: isSolarMode ? "#ffd700" : "rgba(255,255,255,0.3)",
+                  position: "relative",
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "1px",
+                    left: isSolarMode ? "9px" : "1px",
+                    width: "6px",
+                    height: "6px",
+                    borderRadius: "50%",
+                    background: "white",
+                    transition: "left 0.2s",
+                  }}
+                />
+              </div>
+            </button>
+
+            {isSolarMode && (
+              <div style={{ marginTop: "4px", fontSize: "7px", color: "#ccc", textAlign: "left", lineHeight: "1.2" }}>
+                Sun &amp; Shadow position modeled based on exact photo timestamp.
+              </div>
+            )}
+          </div>
+
+          {/* ELEVATION PROFILE WIDGET TOGGLE */}
+          {sequenceImages && sequenceImages.length > 1 && (
+            <div
+              style={{
+                marginTop: "4px",
+                background: this.props.isElevationProfileActive ? "rgba(25, 25, 25, 0.85)" : "rgba(20, 20, 20, 0.6)",
+                backdropFilter: "blur(10px)",
+                borderRadius: "6px",
+                padding: "5px",
+                width: "80px",
+                border: this.props.isElevationProfileActive ? "1px solid rgba(52, 152, 219, 0.6)" : "1px solid rgba(255, 255, 255, 0.15)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+                display: "flex",
+                flexDirection: "column",
+                pointerEvents: "auto",
+                boxSizing: "border-box",
+              }}
+            >
+              <button
+                onClick={this.props.onToggleElevationProfile}
+                title="Toggle Elevation Profile along sequence"
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  margin: 0,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  width: "100%",
+                  cursor: "pointer",
+                  color: "white",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "7px",
+                    fontWeight: 600,
+                    color: this.props.isElevationProfileActive ? "#3498db" : "rgba(255,255,255,0.7)",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ marginRight: "3px" }}
+                  >
+                    <path d="M3 20h18L14 7l-4 7-3-4-4 10z" />
+                  </svg>
+                  PROFILE
+                </span>
+                <div
+                  style={{
+                    width: "16px",
+                    height: "8px",
+                    borderRadius: "4px",
+                    background: this.props.isElevationProfileActive ? "#3498db" : "rgba(255,255,255,0.3)",
+                    position: "relative",
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "1px",
+                      left: this.props.isElevationProfileActive ? "9px" : "1px",
+                      width: "6px",
+                      height: "6px",
+                      borderRadius: "50%",
+                      background: "white",
+                      transition: "left 0.2s",
+                    }}
+                  />
+                </div>
+              </button>
+            </div>
+          )}
+
+          {/* EXPORT BUTTON */}
+          {(trafficSignsActive || objectsActive) && (
+            <button
+              onClick={onDownloadFeatures}
+              title="Export Current Features as GeoJSON"
+              style={{
+                marginTop: "4px",
+                background: "rgba(55, 213, 130, 0.3)",
+                backdropFilter: "blur(10px)",
+                WebkitBackdropFilter: "blur(10px)",
+                color: "#fff",
+                borderRadius: "6px",
+                fontSize: "9px",
+                cursor: "pointer",
+                width: "80px",
+                fontWeight: 600,
+                letterSpacing: "0.5px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                pointerEvents: "auto",
+                transition: "all 0.2s ease-in-out",
+                boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(55, 213, 130, 0.95)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = detectionsActive ? "rgba(55, 213, 130, 0.8)" : "rgba(55, 213, 130, 0.3)")}
+            >
+              <Icons.Download size={12} color="#ffffff" />
+              <span style={{ fontWeight: 700 }}>EXPORT</span>
+            </button>
+          )}
+
+          {/* AI OVERLAY BUTTON */}
+          {(trafficSignsActive || objectsActive) && imageId && (
+            <button
+              onClick={onToggleDetections}
+              title="Toggle AI Object Detection Overlays"
+              style={{
+                marginTop: "4px",
+                background: detectionsActive ? "rgba(55, 213, 130, 0.8)" : "rgba(55, 213, 130, 0.3)",
+                color: "white",
+                borderRadius: "6px",
+                width: "80px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                pointerEvents: "auto",
+                backdropFilter: "blur(5px)",
+                transition: "background 0.2s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(55, 213, 130, 0.95)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = detectionsActive ? "rgba(55, 213, 130, 0.8)" : "rgba(55, 213, 130, 0.3)")}
+            >
+              <Icons.Detection size={11} />
+              <span style={{ fontSize: "8.5px", marginLeft: "3px", fontWeight: 700 }}>AI OVERLAY</span>
+            </button>
+          )}
+
+          {/* AI TAG VISIBILITY TOGGLE */}
+          {detectionsActive && (
+            <button
+              onClick={onToggleAiTags}
+              title={showAiTags ? "Hide Labels/Tags" : "Show Labels/Tags"}
+              style={{
+                background: showAiTags ? "rgba(61, 36, 36, 0.2)" : "rgba(255, 0, 0, 0.4)",
+                border: "1px solid rgba(1, 1, 1, 0.7)",
+                marginTop: "2px",
+                color: "white",
+                borderRadius: "6px",
+                width: "30px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backdropFilter: "blur(5px)",
+                pointerEvents: "auto",
+                height: "12px",
+              }}
+            >
+              {showAiTags ? <Icons.LabelsOn size={12} /> : <Icons.LabelsOff size={12} />}
+            </button>
+          )}
+
+          {/* ALTERNATE IMAGES PANEL */}
+          {alternateImages.length > 0 && (
+            <div
+              className="alternate-images-panel"
+              style={{
+                marginTop: "3px",
+                width: "80px",
+                background: "rgba(20, 20, 20, 0.6)",
+                backdropFilter: "blur(10px)",
+                borderRadius: "8px",
+                padding: "3px",
+                pointerEvents: "auto",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+              }}
+            >
+              <div
+                style={{
+                  color: "white",
+                  borderBottom: "1px solid rgba(255,255,255,0.2)",
+                  padding: "0",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <span style={{ fontSize: "7px", fontWeight: "600" }}>ALTERNATE</span>
+                <button
+                  onClick={onCloseAlternates}
+                  style={{ background: "none", border: "none", color: "white", cursor: "pointer", fontSize: "10px", padding: "0 2px" }}
+                  title="Close"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {alternateImages.map((img) => (
+                <div
+                  key={img.id}
+                  onClick={() => onSelectAlternateImage(img)}
+                  style={{
+                    cursor: "pointer",
+                    borderRadius: "4px",
+                    overflow: "hidden",
+                    position: "relative",
+                    border: imageId === img.id ? "2px solid #37d582" : "1px solid rgba(255,255,255,0.2)",
+                    boxShadow: imageId === img.id ? "0 0 10px rgba(55, 213, 130, 0.4)" : "none",
+                    transition: "transform 0.2s",
+                    height: "50px",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                  title={`Captured: ${new Date(img.capturedAt).toLocaleDateString()}`}
+                >
+                  <img src={img.thumbUrl} alt="Alt" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent)",
+                      color: "white",
+                      fontSize: "8px",
+                      padding: "8px 4px 2px 4px",
+                      textAlign: "right",
+                    }}
+                  >
+                    {new Date(img.capturedAt).toLocaleDateString(undefined, { month: "numeric", year: "2-digit" })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* STREET COVERAGE ANALYSIS RESULT */}
+          {(coverageAnalysisLoading || coverageResult) && (
+            <div
+              style={{
+                marginTop: "3px",
+                padding: "0 5px 5px 5px",
+                borderRadius: "6px",
+                background: "rgba(0, 0, 0, 0.40)",
+                border: "1px solid rgba(30, 144, 255, 0.3)",
+                backdropFilter: "blur(5px)",
+                pointerEvents: "auto",
+                width: "80px",
+                boxSizing: "border-box",
+              }}
+            >
+              {/* Header */}
+              <div
+                style={{
+                  fontSize: "7.4px",
+                  fontWeight: 600,
+                  color: "rgba(255,255,255,0.7)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  borderBottom: "1px solid rgba(255,255,255,0.2)",
+                  marginBottom: "3px",
+                  marginTop: "1.5px",
+                }}
+              >
+                <span>STREET COVERAGE</span>
+                <button
+                  onClick={onDismissCoverageResult}
+                  style={{ background: "none", border: "none", color: "white", cursor: "pointer", fontSize: "10px", margin: "0", padding: "0" }}
+                >
+                  ×
+                </button>
+              </div>
+
+              {coverageAnalysisLoading && (
+                <>
+                  <style>{`
+      @keyframes dots {
+        0%, 20%  { content: '.'; }
+        40%      { content: '..'; }
+        60%, 100%{ content: '...'; }
+      }
+      .animated-dots::after {
+        content: '';
+        animation: dots 1.5s infinite;
+      }
+    `}</style>
+
+                  <div style={{ textAlign: "center", fontSize: "8px", color: "#ccc", padding: "1px" }}>
+                    Analysing
+                    <span className="animated-dots" style={{ display: "inline-block", width: "12px", textAlign: "left" }} />
+                  </div>
+                </>
+              )}
+
+              {coverageResult &&
+                !coverageAnalysisLoading &&
+                (() => {
+                  const r = coverageResult;
+                  const total = r.totalCount || 1;
+                  const freshPct = Math.round((r.freshCount / total) * 100);
+                  const agingPct = Math.round((r.agingCount / total) * 100);
+                  const stalePct = Math.round((r.staleCount / total) * 100);
+                  const nonePct = Math.round((r.noneCount / total) * 100);
+
+                  const row = (color: string, label: string, age: string, pct: number, km: number) => (
+                    <div style={{ marginBottom: "3px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "7px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
+                          <div style={{ width: 5, height: 5, borderRadius: "50%", background: color, flexShrink: 0 }} />
+                          <span style={{ color: "rgba(255,255,255,0.9)", fontWeight: 500 }}>{label}</span>
+                          <span style={{ color: "rgba(255,255,255,0.5)" }}>{age}</span>
+                        </div>
+                        <span style={{ fontWeight: 700, color: "#fff" }}>{pct}%</span>
+                      </div>
+                      <div style={{ textAlign: "right", fontSize: "6.5px", color: "rgba(255,255,255,0.5)", marginTop: "1px" }}>{km} km</div>
+                    </div>
+                  );
+
+                  return (
+                    <React.Fragment>
+                      {/* Segmented Colored Bar */}
+                      <div
+                        style={{
+                          height: "4px",
+                          borderRadius: "2px",
+                          background: "rgba(255,255,255,0.1)",
+                          display: "flex",
+                          overflow: "hidden",
+                          marginBottom: "5px",
+                        }}
+                      >
+                        {freshPct > 0 && <div style={{ width: `${freshPct}%`, background: "#37d582" }} />}
+                        {agingPct > 0 && <div style={{ width: `${agingPct}%`, background: "#ffc107" }} />}
+                        {stalePct > 0 && <div style={{ width: `${stalePct}%`, background: "#ff6e32" }} />}
+                        {nonePct > 0 && <div style={{ width: `${nonePct}%`, background: "#dc3232" }} />}
+                      </div>
+
+                      {/* Totals */}
+                      <div style={{ textAlign: "center", marginBottom: "5px" }}>
+                        <div style={{ fontWeight: 800, fontSize: "9px", color: "#fff" }}>{r.percentCovered}% covered</div>
+                        <div style={{ fontSize: "6.5px", color: "rgba(255,255,255,0.5)" }}>
+                          {r.coveredCount} / {r.totalCount} segments
+                        </div>
+                      </div>
+
+                      {/* Data Rows */}
+                      {row("#37d582", "Fresh", "(<2y)", freshPct, r.freshKm)}
+                      {row("#ffc107", "Aging", "(2-4y)", agingPct, r.agingKm)}
+                      {row("#ff6e32", "Stale", "(>4y)", stalePct, r.staleKm)}
+                      {row("#dc3232", "None", "", nonePct, r.noneKm)}
+
+                      {/* Toggle Button */}
+                      <button
+                        onClick={onToggleCoverageSegments}
+                        style={{
+                          width: "100%",
+                          marginTop: "3px",
+                          borderRadius: "3px",
+                          border: "1px solid rgba(255,255,255,0.15)",
+                          background: coverageSegmentsVisible ? "rgba(30, 144, 255, 0.4)" : "rgba(255,255,255,0.1)",
+                          color: "white",
+                          fontSize: "7px",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          padding: "3px 0",
+                        }}
+                      >
+                        {coverageSegmentsVisible ? "HIDE MAP" : "SHOW MAP"}
+                      </button>
+
+                      {/* ROUTE GENERATOR (A -> Missing/Stale -> B) */}
+                      {coverageSegmentsVisible && (
+                        <div style={{ marginTop: "4px", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "4px" }}>
+                          {/* Runtime Routing Engine */}
+                          {runtimeRoutingEngine && (
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                gap: "3px",
+
+                                background: "rgba(0,0,0,0.3)",
+
+                                borderRadius: "2px",
+
+                                padding: "2px 3px",
+
+                                marginBottom: "3px",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: "6px",
+                                  color: "rgba(255,255,255,0.7)",
+                                }}
+                              >
+                                Engine:
+                              </span>
+
+                              <select
+                                value={runtimeRoutingEngine}
+                                disabled={isGeneratingRoute}
+                                onChange={(e) => {
+                                  const engine = e.target.value as "world" | "osrm";
+
+                                  onChangeRuntimeRoutingEngine?.(engine);
+                                }}
+                                style={{
+                                  flex: 1,
+
+                                  minWidth: 0,
+
+                                  height: "16px",
+
+                                  borderRadius: "2px",
+
+                                  border: "1px solid rgba(255,255,255,0.2)",
+
+                                  background: "rgba(255,255,255,0.1)",
+
+                                  color: "#fff",
+
+                                  fontSize: "6px",
+
+                                  padding: "0 2px",
+
+                                  cursor: isGeneratingRoute ? "wait" : "pointer",
+                                }}
+                              >
+                                <option value="world" style={{ color: "#000" }}>
+                                  Esri World
+                                </option>
+
+                                <option value="osrm" style={{ color: "#000" }}>
+                                  OSRM
+                                </option>
+                              </select>
+                            </div>
+                          )}
+                          {/* Runtime Travel Mode */}
+                          {runtimeTravelMode && (
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                gap: "3px",
+
+                                background: "rgba(0,0,0,0.3)",
+
+                                borderRadius: "2px",
+
+                                padding: "2px 3px",
+
+                                marginBottom: "3px",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: "6px",
+                                  color: "rgba(255,255,255,0.7)",
+                                }}
+                              >
+                                Mode:
+                              </span>
+
+                              <div
+                                style={{
+                                  flex: 1,
+                                  minWidth: 0,
+                                  display: "flex",
+                                  flexDirection: "column",
+                                }}
+                              >
+                                <select
+                                  value={runtimeTravelMode}
+                                  disabled={isGeneratingRoute}
+                                  onChange={(e) => {
+                                    const mode = e.target.value as "drive" | "walk" | "bike";
+
+                                    onChangeRuntimeTravelMode?.(mode);
+                                  }}
+                                  style={{
+                                    width: "100%",
+                                    minWidth: 0,
+                                    height: "16px",
+                                    borderRadius: "2px",
+                                    border: "1px solid rgba(255,255,255,0.2)",
+                                    background: "rgba(255,255,255,0.1)",
+                                    color: "#fff",
+                                    fontSize: "6px",
+                                    padding: "0 2px",
+                                    cursor: isGeneratingRoute ? "wait" : "pointer",
+                                  }}
+                                >
+                                  <option value="drive" disabled={travelModeAvailability ? !travelModeAvailability.drive : false} style={{ color: "#000" }}>
+                                    🚗 Drive
+                                  </option>
+
+                                  <option value="walk" disabled={travelModeAvailability ? !travelModeAvailability.walk : false} style={{ color: "#000" }}>
+                                    {travelModeAvailability && !travelModeAvailability.walk ? "🚶 Walk - Esri only" : "🚶 Walk"}
+                                  </option>
+
+                                  <option value="bike" disabled={travelModeAvailability ? !travelModeAvailability.bike : false} style={{ color: "#000" }}>
+                                    {travelModeAvailability && !travelModeAvailability.bike ? "🚲 Bike - unavailable" : "🚲 Bike"}
+                                  </option>
+                                </select>
+                              </div>
+                            </div>
+                          )}
+                          {!routeData ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                              {/* Point A and B Selection Buttons */}
+                              <div style={{ display: "flex", gap: "2px" }}>
+                                <button
+                                  onClick={() => onSetRoutePickMode?.(routePickMode === "start" ? null : "start")}
+                                  title="Select Start Point (A) on map"
+                                  style={{
+                                    flex: 1,
+                                    padding: "2px 0",
+                                    fontSize: "6.5px",
+                                    fontWeight: "bold",
+                                    borderRadius: "2px",
+                                    border: "1px solid rgba(46, 204, 113, 0.6)",
+
+                                    background: routePickMode === "start" ? "rgba(46, 204, 113, 0.8)" : routeStartPoint ? "rgba(46, 204, 113, 0.3)" : "rgba(255,255,255,0.1)",
+
+                                    color: "white",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  {routePickMode === "start" ? "Click..." : routeStartPoint ? "A: ✓" : "A: Pick"}
+                                </button>
+
+                                <button
+                                  onClick={() => onSetRoutePickMode?.(routePickMode === "end" ? null : "end")}
+                                  title="Select Destination Point (B) on map"
+                                  style={{
+                                    flex: 1,
+                                    padding: "2px 0",
+                                    fontSize: "6.5px",
+                                    fontWeight: "bold",
+                                    borderRadius: "2px",
+                                    border: "1px solid rgba(231, 76, 60, 0.6)",
+
+                                    background: routePickMode === "end" ? "rgba(231, 76, 60, 0.8)" : routeEndPoint ? "rgba(231, 76, 60, 0.3)" : "rgba(255,255,255,0.1)",
+
+                                    color: "white",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  {routePickMode === "end" ? "Click..." : routeEndPoint ? "B: ✓" : "B: Pick"}
+                                </button>
+                              </div>
+
+                              {/* CLEAR A / B */}
+                              {(routeStartPoint || routeEndPoint) && (
+                                <button
+                                  onClick={onResetRoutePoints}
+                                  title="Clear A and B route points"
+                                  style={{
+                                    width: "100%",
+                                    padding: "2px 0",
+                                    fontSize: "6px",
+                                    fontWeight: 600,
+                                    borderRadius: "2px",
+                                    border: "1px solid rgba(231, 76, 60, 0.35)",
+                                    background: "rgba(231, 76, 60, 0.12)",
+                                    color: "rgba(255,255,255,0.8)",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  ✕ Clear A / B
+                                </button>
+                              )}
+
+                              {/* Spare Time Configuration */}
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "space-between",
+                                  background: "rgba(0,0,0,0.3)",
+                                  borderRadius: "2px",
+                                  padding: "1px 3px",
+                                }}
+                              >
+                                <span style={{ fontSize: "6px", color: "rgba(255,255,255,0.7)" }}>Spare Time:</span>
+                                <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
+                                  <button
+                                    onClick={() => onChangeSpareMinutes?.(Math.max(5, (routeSpareMinutes || 15) - 5))}
+                                    style={{ background: "none", border: "none", color: "white", cursor: "pointer", fontSize: "8px", padding: "0 2px" }}
+                                  >
+                                    -
+                                  </button>
+                                  <span style={{ fontSize: "6.5px", fontWeight: "bold", color: "#f39c12" }}>+{routeSpareMinutes || 15}m</span>
+                                  <button
+                                    onClick={() => onChangeSpareMinutes?.(Math.min(60, (routeSpareMinutes || 15) + 5))}
+                                    style={{ background: "none", border: "none", color: "white", cursor: "pointer", fontSize: "8px", padding: "0 2px" }}
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Generate Route Button with Progress Bar */}
+                              <button
+                                onClick={onGenerateRoute}
+                                disabled={isGeneratingRoute || !routeStartPoint || !routeEndPoint}
+                                style={{
+                                  position: "relative",
+                                  width: "100%",
+                                  borderRadius: "3px",
+                                  border: "1px solid rgba(168, 85, 247, 0.5)",
+                                  background: !routeStartPoint || !routeEndPoint ? "rgba(255,255,255,0.05)" : "rgba(168, 85, 247, 0.3)",
+                                  color: !routeStartPoint || !routeEndPoint ? "rgba(255,255,255,0.3)" : "white",
+                                  fontSize: "6.5px",
+                                  fontWeight: 700,
+                                  cursor: isGeneratingRoute ? "wait" : !routeStartPoint || !routeEndPoint ? "not-allowed" : "pointer",
+                                  padding: "3px 0",
+                                  display: "flex",
+                                  justifyContent: "center",
+                                  gap: "3px",
+                                  overflow: "hidden",
+                                }}
+                              >
+                                {isGeneratingRoute && routeGenerationProgress && (
+                                  <div
+                                    style={{
+                                      position: "absolute",
+                                      left: 0,
+                                      top: 0,
+                                      bottom: 0,
+                                      width: `${Math.min(100, (routeGenerationProgress.usedMinutes / routeGenerationProgress.budgetMinutes) * 100)}%`,
+                                      background: "rgba(168, 85, 247, 0.55)",
+                                      transition: "width 0.25s ease-out",
+                                      zIndex: 0,
+                                    }}
+                                  />
+                                )}
+                                <span style={{ position: "relative", zIndex: 1 }}>
+                                  {isGeneratingRoute
+                                    ? routeGenerationProgress
+                                      ? `Routing... ${Math.round((routeGenerationProgress.usedMinutes / routeGenerationProgress.budgetMinutes) * 100)}%`
+                                      : "Routing..."
+                                    : "🚗 Generate Route"}
+                                </span>
+                              </button>
+                            </div>
+                          ) : (
+                            /* ROUTE RESULT PANEL */
+                            <div
+                              style={{
+                                background: "rgba(168, 85, 247, 0.15)",
+
+                                borderRadius: "4px",
+
+                                padding: "5px",
+
+                                border: "1px solid rgba(168, 85, 247, 0.3)",
+                              }}
+                            >
+                              {/*
+                               * --------------------------------------------------------
+                               * HEADER
+                               * --------------------------------------------------------
+                               */}
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  fontSize: "6.5px",
+                                  color: "#a855f7",
+                                  fontWeight: 700,
+                                  marginBottom: "3px",
+                                }}
+                              >
+                                <span>A ➔ B CAPTURE</span>
+
+                                <span
+                                  style={{
+                                    color: "#fff",
+                                  }}
+                                >
+                                  {Math.round(routeData.duration / 60)} min
+                                </span>
+                              </div>
+
+                              {/*
+                               * --------------------------------------------------------
+                               * ROUTE DISTANCE
+                               * --------------------------------------------------------
+                               */}
+                              <div
+                                style={{
+                                  fontSize: "8px",
+                                  fontWeight: 800,
+                                  color: "#fff",
+                                  textAlign: "center",
+                                  marginBottom: "4px",
+                                }}
+                              >
+                                {(routeData.distance / 1000).toFixed(1)} km
+                              </div>
+
+                              {/*
+                               * --------------------------------------------------------
+                               * HEADLINE: USEFUL NEW COVERAGE
+                               * --------------------------------------------------------
+                               */}
+                              {routeData.usefulCoverageMeters != null && (
+                                <div
+                                  title={"Selected missing/stale road traversed by " + "the final route that was not already covered " + "by the normal A → B baseline."}
+                                  style={{
+                                    background: "rgba(168, 85, 247, 0.22)",
+
+                                    borderRadius: "3px",
+
+                                    padding: "4px 3px",
+
+                                    textAlign: "center",
+
+                                    marginBottom: "3px",
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      fontSize: "6px",
+                                      color: "rgba(255,255,255,0.7)",
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    USEFUL NEW COVERAGE
+                                  </div>
+
+                                  <div
+                                    style={{
+                                      fontSize: "9px",
+                                      color: "#fff",
+                                      fontWeight: 800,
+                                    }}
+                                  >
+                                    +{(routeData.usefulCoverageMeters / 1000).toFixed(2)}
+                                    {" km"}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/*
+                               * --------------------------------------------------------
+                               * TARGET REALIZATION
+                               * --------------------------------------------------------
+                               */}
+                              {routeData.targetRealizationPercent != null && (
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+
+                                    alignItems: "center",
+
+                                    fontSize: "6.5px",
+
+                                    marginBottom: "2px",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      color: "rgba(255,255,255,0.7)",
+                                    }}
+                                  >
+                                    Target realization
+                                  </span>
+
+                                  <span
+                                    style={{
+                                      color: "#fff",
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    {routeData.targetRealizationPercent.toFixed(0)}%
+                                  </span>
+                                </div>
+                              )}
+
+                              {/*
+                               * --------------------------------------------------------
+                               * NONE / STALE BREAKDOWN
+                               * --------------------------------------------------------
+                               */}
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "3px",
+                                  marginTop: "3px",
+                                }}
+                              >
+                                {routeData.incrementalNoneMeters != null && (
+                                  <div
+                                    title="New useful coverage on roads with no current Mapillary coverage."
+                                    style={{
+                                      flex: 1,
+
+                                      background: "rgba(231, 76, 60, 0.16)",
+
+                                      borderRadius: "3px",
+
+                                      padding: "3px",
+
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        fontSize: "5.5px",
+                                        color: "#ff7675",
+                                        fontWeight: 700,
+                                      }}
+                                    >
+                                      MISSING
+                                    </div>
+
+                                    <div
+                                      style={{
+                                        fontSize: "7px",
+                                        color: "#fff",
+                                        fontWeight: 700,
+                                      }}
+                                    >
+                                      {(routeData.incrementalNoneMeters / 1000).toFixed(2)}
+                                      {" km"}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {routeData.incrementalStaleMeters != null && (
+                                  <div
+                                    title="New useful coverage on stale Mapillary road coverage."
+                                    style={{
+                                      flex: 1,
+
+                                      background: "rgba(243, 156, 18, 0.16)",
+
+                                      borderRadius: "3px",
+
+                                      padding: "3px",
+
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        fontSize: "5.5px",
+                                        color: "#f39c12",
+                                        fontWeight: 700,
+                                      }}
+                                    >
+                                      STALE
+                                    </div>
+
+                                    <div
+                                      style={{
+                                        fontSize: "7px",
+                                        color: "#fff",
+                                        fontWeight: 700,
+                                      }}
+                                    >
+                                      {(routeData.incrementalStaleMeters / 1000).toFixed(2)}
+                                      {" km"}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/*
+                               * --------------------------------------------------------
+                               * EXTRA TIME BUDGET
+                               * --------------------------------------------------------
+                               */}
+                              {routeData.extraDurationMinutes != null && routeData.requestedExtraMinutes != null && (
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+
+                                    alignItems: "center",
+
+                                    marginTop: "4px",
+
+                                    paddingTop: "3px",
+
+                                    borderTop: "1px solid rgba(255,255,255,0.08)",
+
+                                    fontSize: "6.5px",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      color: "rgba(255,255,255,0.65)",
+                                    }}
+                                  >
+                                    Extra time
+                                  </span>
+
+                                  <span
+                                    style={{
+                                      color: routeData.extraDurationMinutes > routeData.requestedExtraMinutes ? "#ff7675" : "#fff",
+
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    {routeData.extraDurationMinutes.toFixed(0)}
+                                    {" / "}
+                                    {routeData.requestedExtraMinutes.toFixed(0)}
+                                    {" min"}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/*
+                               * --------------------------------------------------------
+                               * ACTIONS
+                               * --------------------------------------------------------
+                               */}
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "3px",
+                                  marginTop: "4px",
+                                }}
+                              >
+                                <button
+                                  onClick={onDownloadRouteGPX}
+                                  style={{
+                                    flex: 1,
+                                    background: "#a855f7",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: "2px",
+                                    fontSize: "6.5px",
+                                    fontWeight: "bold",
+                                    cursor: "pointer",
+                                    padding: "2px 0",
+                                  }}
+                                >
+                                  ⬇️ GPX
+                                </button>
+
+                                <button
+                                  onClick={onResetRoutePoints}
+                                  title={"Clear route and A/B waypoints"}
+                                  style={{
+                                    background: "rgba(231, 76, 60, 0.4)",
+
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: "2px",
+                                    fontSize: "6.5px",
+                                    cursor: "pointer",
+                                    padding: "2px 5px",
+                                  }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </React.Fragment>
+                  );
+                })()}
+            </div>
+          )}
+
+          {/* PERSISTENT ROUTE POINT CONTROLS
+                        ------------------------------------------------------------
+                        A/B coordinates can survive a 2D ↔ 3D map switch even though
+                        the old coverage analysis is intentionally discarded.
+
+                        This gives the user a way to remove those preserved points
+                        without having to run Street Coverage Analysis again.
+                    */}
+          {!coverageResult && !coverageAnalysisLoading && !routeData && (routeStartPoint || routeEndPoint) && (
+            <div
+              style={{
+                marginTop: "4px",
+                width: "80px",
+                padding: "4px",
+                boxSizing: "border-box",
+
+                background: "rgba(20, 20, 20, 0.65)",
+
+                backdropFilter: "blur(8px)",
+                borderRadius: "6px",
+
+                border: "1px solid rgba(168, 85, 247, 0.3)",
+
+                boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+
+                pointerEvents: "auto",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "6px",
+                  fontWeight: 700,
+                  color: "rgba(255,255,255,0.65)",
+                  textAlign: "center",
+                  marginBottom: "3px",
+                }}
+              >
+                ROUTE POINTS
+              </div>
+
+              {/* A / B status */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: "2px",
+                  marginBottom: "3px",
+                }}
+              >
+                <div
+                  style={{
+                    flex: 1,
+                    textAlign: "center",
+                    padding: "2px 0",
+                    borderRadius: "2px",
+
+                    background: routeStartPoint ? "rgba(46, 204, 113, 0.25)" : "rgba(255,255,255,0.06)",
+
+                    color: routeStartPoint ? "#2ecc71" : "rgba(255,255,255,0.4)",
+
+                    fontSize: "6.5px",
+                    fontWeight: 700,
+                  }}
+                >
+                  A {routeStartPoint ? "✓" : "—"}
+                </div>
+
+                <div
+                  style={{
+                    flex: 1,
+                    textAlign: "center",
+                    padding: "2px 0",
+                    borderRadius: "2px",
+
+                    background: routeEndPoint ? "rgba(231, 76, 60, 0.25)" : "rgba(255,255,255,0.06)",
+
+                    color: routeEndPoint ? "#e74c3c" : "rgba(255,255,255,0.4)",
+
+                    fontSize: "6.5px",
+                    fontWeight: 700,
+                  }}
+                >
+                  B {routeEndPoint ? "✓" : "—"}
+                </div>
+              </div>
+
+              {/* Remove preserved A/B points */}
+              <button
+                onClick={onResetRoutePoints}
+                title="Remove A and B route points"
+                style={{
+                  width: "100%",
+                  borderRadius: "3px",
+
+                  border: "1px solid rgba(231, 76, 60, 0.4)",
+
+                  background: "rgba(231, 76, 60, 0.15)",
+
+                  color: "#fff",
+
+                  fontSize: "6.5px",
+                  fontWeight: 600,
+
+                  padding: "3px 0",
+
+                  cursor: "pointer",
+                }}
+              >
+                ✕ Clear A / B
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Scroll up indicator */}
+        {this.state.canScrollUp && (
+          <div
+            style={{
+              position: "absolute",
+              top: "8px",
+              right: isOverflowing ? "4px" : "0px",
+              width: "80px",
+              display: "flex",
+              justifyContent: "center",
+              pointerEvents: "none",
+              zIndex: 100,
+            }}
+          >
+            <div
+              style={{
+                width: "24px",
+                height: "24px",
+                background: "rgba(20, 20, 20, 0.75)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid rgba(255,255,255,0.25)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "50%",
+                animation: "initialStateFloat 1.5s infinite",
+              }}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ marginBottom: "2px" }}
+              >
+                <polyline points="18 15 12 9 6 15"></polyline>
+              </svg>
+            </div>
+          </div>
+        )}
+
+        {/* Scroll down indicator */}
+        {this.state.canScrollDown && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: "8px",
+              right: isOverflowing ? "4px" : "0px",
+              width: "80px",
+              display: "flex",
+              justifyContent: "center",
+              pointerEvents: "none",
+              zIndex: 100,
+            }}
+          >
+            <div
+              style={{
+                width: "24px",
+                height: "24px",
+                background: "rgba(20, 20, 20, 0.75)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid rgba(255,255,255,0.25)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "50%",
+                animation: "initialStateFloat 1.5s infinite",
+              }}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ marginTop: "2px" }}
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+}

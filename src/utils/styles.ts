@@ -1,0 +1,1390 @@
+// src/helpers/styles.ts
+import React from "react";
+
+// SECTION: LEGEND PRIMITIVES
+// Used to create the small colored dots in the map legend (e.g., green for active frame, blue for sequence).
+export const legendCircleStyle = (color: string): React.CSSProperties => ({
+    display: "inline-block",
+    width: "10px",
+    height: "10px",
+    borderRadius: "50%",
+    backgroundColor: color,
+    marginRight: "4px",
+    border: "1px solid rgba(255,255,255,0.3)", // Softer border
+    flexShrink: 0    // Prevents circle from squishing
+});
+
+// SECTION: LEGEND ROW STYLES
+export const legendRowStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '2px'
+};
+
+export const legendTextStyle: React.CSSProperties = {
+    fontSize: '9px',
+    color: 'rgba(255,255,255,0.9)',
+    whiteSpace: 'nowrap',
+    fontWeight: 400
+};
+
+export const compactButtonStyle: React.CSSProperties = {
+    marginTop: '4px',
+    background: 'rgba(217, 83, 79, 0.2)',
+    border: '1px solid rgba(217, 83, 79, 0.3)',
+    color: '#ff908d',
+    borderRadius: '2px',
+    fontSize: '8px',
+    padding: '2px 0',
+    cursor: 'pointer',
+    width: '100%',
+    fontWeight: 700
+};
+
+// SECTION: FULLSCREEN MODE STYLES
+export const fullscreenOverlayStyle: React.CSSProperties = {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "#000",
+    zIndex: 9999,
+    display: "flex",
+    flexDirection: "column"
+};
+
+export const fullscreenExitButtonStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: '10px',
+    left: '10px',
+    zIndex: 10000,
+    background: '#d1000059',
+    color: 'white',
+    
+    border: 'none',
+    outline: 'none',
+    WebkitAppearance: 'none',
+    
+    padding: '4px',
+    borderRadius: '3px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+};
+
+export const fullscreenMinimapToggleButtonStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: '48px',
+    left: '10px',
+    zIndex: 10000,
+    background: 'rgba(0, 0, 0, 0.6)',
+    color: 'white',
+    
+    border: 'none',
+    outline: 'none',
+    WebkitAppearance: 'none',
+    
+    padding: '6px',
+    borderRadius: '3px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '32px',
+    height: '32px'
+};
+
+export const getMinimapContainerStyle = (showMinimap: boolean): React.CSSProperties => ({
+    position: 'absolute',
+    bottom: '30px',
+    left: '30px',
+    width: '330px',
+    height: '220px',
+    background: "rgba(20, 20, 20, 0.4)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    border: "1px solid rgba(255, 255, 255, 0.15)",
+    borderRadius: "20px",
+    overflow: "hidden",
+    boxShadow: `
+        0 8px 32px 0 rgba(0, 0, 0, 0.6), 
+        inset 0 0 0 1px rgba(255, 255, 255, 0.05)
+    `,
+    zIndex: 10001,
+    visibility: showMinimap ? 'visible' : 'hidden',
+    opacity: showMinimap ? 1 : 0,
+    pointerEvents: showMinimap ? 'auto' : 'none',
+    transition: "all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)",
+    transform: showMinimap ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.95)',
+});
+
+// SECTION: MINI CONTROL BUTTONS FOR POINT CLOUD
+export const miniJoyStyle: React.CSSProperties = {
+    background: 'rgba(255,255,255,0.1)',
+    border: '1px solid rgba(255,255,255,0.3)',
+    color: 'white',
+    borderRadius: '3px',
+    width: '20px',
+    height: '20px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    fontSize: '9px',
+    padding: 0,
+    transition: 'background 0.1s'
+};
+
+// SECTION: GLASSMORPHISM UI COMPONENTS
+// This object contains all the logic for the "Glass" look (blur + transparency).
+export const glassStyles = {
+    // The main vertical sidebar on the right side of the viewer that holds control buttons.
+    container: {
+        position: 'absolute',
+        top: '2px',
+        zIndex: 10003,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+        alignItems: 'center', // Centers the buttons horizontally in the strip
+        padding: '3px 3.5px 3px 3px', 
+        // Glass Effect logic
+        background: 'rgba(20, 20, 20, 0.4)',
+        backdropFilter: 'blur(1px)',
+        WebkitBackdropFilter: 'blur(11px)',
+        borderRadius: '12px',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+        willChange: 'width, height', // Hints to GPU for smoother rendering
+        transform: 'translateZ(0)',  // Forces hardware acceleration
+    } as React.CSSProperties,
+
+    // Generates styling for individual buttons. 
+    // Logic: If 'active', it applies a colorful gradient and glow; otherwise, a subtle transparent look.
+    getButtonStyle: (active: boolean, baseColor: string, isSmall: boolean = false): React.CSSProperties => ({
+        background: active 
+            ? `linear-gradient(135deg, ${baseColor.replace('0.9', '0.85')}, ${baseColor.replace('0.9', '0.6')})`
+            : 'rgba(255, 255, 255, 0.05)',
+        color: active ? '#fff' : 'rgba(255, 255, 255, 0.7)',
+        width: isSmall ? '22px' : '28px',
+        height: isSmall ? '22px' : '28px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 0,
+
+        border: 'none',
+        outline: 'none',
+        WebkitAppearance: 'none',
+        
+        borderRadius: '8px',
+        cursor: 'pointer',
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)',
+        boxShadow: active 
+            ? `0 0 10px ${baseColor.replace('0.9', '0.4')}, inset 0 0 10px rgba(255,255,255,0.1)` 
+            : '0 2px 5px rgba(0,0,0,0.1)',
+        transition: 'all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1)',
+        transform: active ? 'scale(1.05)' : 'scale(1)'
+    }),
+
+    // Wraps related buttons (like Turbo Mode and its Filter) into a unified visual group.
+    groupContainer: (active: boolean): React.CSSProperties => ({
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '4px',
+        borderRadius: '10px',
+        // Fixed syntax below:
+        background: active 
+            ? 'linear-gradient(135deg, rgba(240, 185, 5, 0.3), rgba(251, 0, 0, 0.1))' 
+            : 'transparent',
+        border: active ? '1px solid rgba(255, 255, 255, 0.24)' : '1px solid transparent',
+        transition: 'all 0.3s ease',
+        alignItems: 'center',
+    }),
+
+    // Overlay style for when a user clicks the map but no imagery exists at that location.
+    noImageContainer: {
+        position: "absolute",
+        top: 0, left: 0, width: "100%", height: "100%",
+        display: "flex", justifyContent: "center", alignItems: "center",
+        zIndex: 5,
+        background: "rgba(18, 20, 24, 0.75)", // Dark slate tint
+        backdropFilter: "blur(12px) grayscale(50%)", 
+        WebkitBackdropFilter: "blur(12px) grayscale(50%)",
+        opacity: 1,
+        transition: "opacity 0.6s ease-in-out"
+    } as React.CSSProperties,
+
+    // The text and icon container inside the 'noImageContainer'.
+    noImageContent: {
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "12px",
+        color: "rgba(255, 255, 255, 0.8)",
+        fontSize: "13px",
+        fontWeight: 500,
+        letterSpacing: "0.5px",
+        textAlign: "center",
+        textShadow: "0 2px 4px rgba(0,0,0,0.5)",
+        padding: "20px 30px",
+        borderRadius: "16px",
+        border: "1px solid rgba(255,255,255,0.05)",
+        background: "rgba(255,255,255,0.03)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.2)"
+    } as React.CSSProperties,
+
+    // Initial overlay shown when the widget is opened before any map click occurs.
+    initialStateContainer: {
+        position: "absolute",
+        top: 0, left: 0, width: "100%", height: "100%",
+        display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center",
+        zIndex: 4, 
+        background: "rgba(0, 0, 0, 0.15)",
+        backdropFilter: "blur(2px)",
+        WebkitBackdropFilter: "blur(2px)",
+        transition: "all 0.3s ease"
+    } as React.CSSProperties,
+
+    // The card showing "Click a point to view imagery".
+    initialStateCard: {
+        padding: "16px 18px",
+        borderRadius: "16px",
+        background: "rgba(30, 30, 35, 0.6)", 
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.25)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        textAlign: "center",
+        gap: "12px",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        animation: "mly-warning-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards, targetPulse 2s infinite"
+    } as React.CSSProperties,
+
+    initialStateTextPrimary: {
+        textShadow: "0 2px 4px rgba(0,0,0,0.5)",
+        fontSize: "11px",
+        fontWeight: 700,
+        letterSpacing: "0.8px",
+        color: "#ffffff"
+    } as React.CSSProperties,
+
+    initialStateTextSecondary: {
+        fontSize: "10px",
+        color: "rgba(255, 255, 255, 0.6)",
+        marginTop: "2px",
+        display: "none",
+    } as React.CSSProperties,
+
+    // Full-screen loading overlay used during imagery fetches.
+    loadingContainer: {
+        position: "absolute",
+        top: 0, left: 0, width: "100%", height: "100%",
+        display: "flex", justifyContent: "center", alignItems: "center",
+        zIndex: 9999,
+        background: "rgba(8, 8, 12, 0.5)",
+        backdropFilter: "blur(14px)",
+        WebkitBackdropFilter: "blur(14px)",
+        transition: "opacity 0.35s ease",
+    } as React.CSSProperties,
+
+    // The central card holding the loading spinner and text.
+    loadingCard: {
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "12px",
+        padding: "24px 32px",
+        borderRadius: "16px",
+        background: "rgba(14, 10, 5, 0.55)",
+        border: "1px solid rgba(255, 255, 255, 0.07)",
+        boxShadow: `
+            0 8px 32px rgba(0, 0, 0, 0.5),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+            0 0 24px rgba(55, 213, 130, 0.08)
+        `,
+        backdropFilter: "blur(14px)",
+        WebkitBackdropFilter: "blur(14px)",
+        animation: "mly-warning-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+    } as React.CSSProperties,
+
+    // The blue animated spinning ring.
+    loadingSpinner: {
+        width: "36px",
+        height: "36px",
+        borderRadius: "50%",
+        border: "2.5px solid rgba(55, 213, 130, 0.12)",
+        borderTop: "2.5px solid #37d582",
+        borderRight: "2.5px solid rgba(55, 213, 130, 0.35)",
+        boxShadow: "0 0 14px rgba(55, 213, 130, 0.3)",
+        animation: "spin 1s linear infinite",
+    } as React.CSSProperties,
+
+    loadingText: {
+        color: "rgba(255, 255, 255, 0.65)",
+        fontSize: "10px",
+        fontWeight: 400,
+        fontStyle: "italic",
+        letterSpacing: "0.3px",
+        lineHeight: 1.35,
+    } as React.CSSProperties,
+
+    // A smaller loader used specifically for Turbo Mode updates.
+    compactLoadingCard: {
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "10px",
+        padding: "18px 24px",
+        borderRadius: "16px",
+        textAlign: "center",
+        background: "rgba(14, 10, 5, 0.55)",
+        border: "1px solid rgba(255, 215, 0, 0.12)",
+        boxShadow: `
+            0 8px 32px rgba(0, 0, 0, 0.5),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+            0 0 20px rgba(255, 215, 0, 0.07)
+        `,
+        backdropFilter: "blur(14px)",
+        WebkitBackdropFilter: "blur(14px)",
+        animation: "mly-warning-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+    } as React.CSSProperties,
+
+    compactLoadingText: {
+        color: "rgba(255, 255, 255, 0.65)",
+        fontSize: "10px",
+        fontWeight: 400,
+        fontStyle: "italic",
+        letterSpacing: "0.3px",
+        lineHeight: 1.35,
+        maxWidth: "110px",
+    } as React.CSSProperties,
+
+    // The gold animated spinning ring for Turbo Mode.
+    turboSpinner: {
+        width: "36px",
+        height: "36px",
+        borderRadius: "50%",
+        border: "2.5px solid rgba(255, 215, 0, 0.1)",
+        borderTop: "2.5px solid #FFD700",
+        borderRight: "2.5px solid rgba(255, 215, 0, 0.3)",
+        boxShadow: "0 0 14px rgba(255, 215, 0, 0.28)",
+        animation: "spin 0.7s linear infinite",
+    } as React.CSSProperties,
+
+    // DYNAMIC ISLAND TURBO PILL
+     turboDynamicPillContainer: {
+        position: "absolute",
+        top: 0, left: 0, right: 0, bottom: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "rgba(0, 0, 0, 0.15)",
+        backdropFilter: "blur(2px)",
+        WebkitBackdropFilter: "blur(2px)",
+        zIndex: 9999,
+        pointerEvents: "none",
+        transition: "all 0.3s ease"
+    } as React.CSSProperties,
+
+    turboDynamicPill: {
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
+        background: "rgba(20, 20, 20, 0.85)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        border: "1px solid rgba(255, 193, 7, 0.3)",
+        padding: "clamp(6px, 1.5cqw, 10px) clamp(12px, 3cqw, 22px)",
+        borderRadius: "30px",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+        animation: "turboDataPulse 2s infinite"
+   } as React.CSSProperties,
+
+    turboDynamicPillText: {
+        fontSize: "clamp(8px, 2cqw, 11px)", 
+        fontWeight: 700,
+        letterSpacing: "0.8px",
+        background: "linear-gradient(90deg, #fff 0%, #ffc107 100%)",
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+        backgroundClip: "text"
+    } as React.CSSProperties,
+
+    // DYNAMIC ISLAND IMAGE LOADING PILL
+    imageDynamicPillContainer: {
+        position: "absolute",
+        top: 0, left: 0, right: 0, bottom: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "rgba(0, 0, 0, 0.15)",
+        backdropFilter: "blur(2px)",
+        WebkitBackdropFilter: "blur(2px)",
+        zIndex: 9999,
+        pointerEvents: "none",
+        transition: "all 0.3s ease"
+    } as React.CSSProperties,
+ 
+    imageDynamicPill: {
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
+        background: "rgba(20, 20, 20, 0.85)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        border: "1px solid rgba(55, 213, 130, 0.3)",
+        padding: "clamp(6px, 1.5cqw, 10px) clamp(12px, 3cqw, 22px)",
+        borderRadius: "30px",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+        animation: "imageDataPulse 2s infinite"
+    } as React.CSSProperties,
+ 
+    imageDynamicPillText: {
+        fontSize: "clamp(8px, 2cqw, 11px)",
+        fontWeight: 700,
+        letterSpacing: "0.8px",
+        background: "linear-gradient(90deg, #fff 0%, #37d582 100%)",
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+        backgroundClip: "text"
+    } as React.CSSProperties,
+
+    // SPLASH SCREEN
+    /** Full-viewport overlay. Fades out and scales up once filtersLoaded = true. */
+    splashOverlay: (filtersLoaded: boolean): React.CSSProperties => ({
+        position:       "absolute",
+        inset:          0,
+        zIndex:         999999999,
+        display:        "flex",
+        alignItems:     "center",
+        justifyContent: "center",
+        background:     "#08080f",
+        overflow:       "hidden",
+        opacity:        filtersLoaded ? 0 : 1,
+        transform:      filtersLoaded ? "scale(1.06)" : "scale(1)",
+        transition:     "opacity 0.55s ease, transform 0.55s ease",
+        pointerEvents:  filtersLoaded ? "none" : "auto",
+    }),
+
+    /** Twinkling star-field canvas: absolute, fills the overlay, non-interactive. */
+    splashCanvas: {
+        position:      "absolute",
+        inset:         0,
+        width:         "100%",
+        height:        "100%",
+        pointerEvents: "none",
+    } as React.CSSProperties,
+
+    /** Glassmorphism card centred in the overlay. */
+    splashCard: {
+        position:           "relative",
+        zIndex:             2,
+        display:            "flex",
+        flexDirection:      "column",
+        alignItems:         "center",
+        width:              "clamp(200px, 70cqw, 420px)", 
+        padding:            "clamp(12px, 3cqw, 44px) clamp(12px, 4cqw, 52px) clamp(10px, 3cqw, 38px)",
+        background:         "rgba(255,255,255,0.028)",
+        border:             "1px solid rgba(255,255,255,0.07)",
+        borderRadius:       "20px",
+        backdropFilter:     "blur(14px)",
+        WebkitBackdropFilter: "blur(14px)",
+        animation:          "mly-fade-in 0.6s ease forwards",
+        boxSizing:          "border-box",
+    } as React.CSSProperties,
+
+    /** Container that holds the globe SVG + ripple rings + camera pin. */
+    splashGlobeWrapper: {
+        position:     "relative",
+        width:        "clamp(56px, 15cqw, 96px)",
+        height:       "clamp(56px, 15cqw, 96px)",
+        marginBottom: "clamp(6px, 2cqw, 15px)",
+    } as React.CSSProperties,
+
+    /** One ripple ring; pass delay as inline style override. */
+    splashRippleRing: {
+        position:     "absolute",
+        top: "50%", left: "50%",
+        transform:    "translate(-50%,-50%)",
+        borderRadius: "50%",
+        border:       "1px solid rgba(55,213,130,0.18)",
+        width:        "28px",
+        height:       "28px",
+    } as React.CSSProperties,
+
+    /** Spinning wireframe globe SVG. */
+    splashGlobe: {
+        width:     "100%",
+        height:    "100%",
+        animation: "mly-globe-spin 18s linear infinite",
+        filter:    "drop-shadow(0 0 16px rgba(55,213,130,0.20))",
+    } as React.CSSProperties,
+
+    /** Circular camera-logo pin centred over the globe. */
+    splashCameraPin: {
+        position:       "absolute",
+        top: "50%", left: "50%",
+        transform:      "translate(-50%,-50%)",
+        width:          "clamp(32px, 9cqw, 51px)",
+        height:         "clamp(32px, 9cqw, 51px)",
+        borderRadius:   "50%",
+        overflow:       "hidden",
+        animation:      "mly-cam-pulse 2.6s ease-in-out infinite",
+        boxShadow:      "0 0 15px rgba(55,213,130,0.35)",
+        background:     "rgba(255,255,255,0.08)",
+        backdropFilter: "blur(8px)",
+        border:         "1px solid rgba(255,255,255,0.15)",
+    } as React.CSSProperties,
+
+    /** Wordmark ("MAPILLARY") above the title. */
+    splashWordmark: {
+        fontSize:      "clamp(8px, 2cqw, 16px)",
+        fontWeight:    300,
+        letterSpacing: "clamp(2px, 0.5cqw, 5px)",
+        color:         "rgba(255,255,255,0.3)",
+        marginBottom:  "4px",
+    } as React.CSSProperties,
+
+    /** Large "Explorer" title. */
+    splashTitle: {
+        fontSize:      "clamp(18px, 5cqw, 28px)",
+        fontWeight:    600,
+        letterSpacing: "-0.5px",
+        color:         "#ffffff",
+        marginBottom:  "6px",
+        lineHeight:    1,
+        textAlign:     "center",
+    } as React.CSSProperties,
+
+    /** Tagline + version beneath the title. */
+    splashTagline: {
+        fontSize:      "clamp(9px, 2.2cqw, 11px)",
+        textAlign:     "center",
+        lineHeight:    1.45,
+        color:         "rgba(255,255,255,0.25)",
+        letterSpacing: "0.4px",
+        marginBottom:  "8px",
+        fontWeight:    300,
+        maxWidth:      "260px",
+    } as React.CSSProperties,
+
+    /** Thin progress track beneath the tagline. */
+    splashProgressTrack: {
+        width:        "min(100%, 220px)",
+        height:       "2px",
+        background:   "rgba(255,255,255,0.07)",
+        borderRadius: "2px",
+        overflow:     "hidden",
+        marginBottom: "14px",
+    } as React.CSSProperties,
+
+    /** Animated fill bar inside the progress track. */
+    splashProgressBar: {
+        height:       "100%",
+        background:   "linear-gradient(90deg,#37d582,#1db954)",
+        borderRadius: "2px",
+        boxShadow:    "0 0 8px rgba(55,213,130,0.55)",
+        animation:    "mly-bar 3s cubic-bezier(0.4,0,0.2,1) forwards",
+    } as React.CSSProperties,
+
+    /** Clipping container for the two cycling status messages. */
+    splashMessageBox: {
+        position: "relative",
+        height:   "18px",
+        width:    "100%",
+        overflow: "hidden",
+    } as React.CSSProperties,
+
+    /** First cycling message; white italic. */
+    splashMessage1: {
+        position:   "absolute",
+        width:      "100%",
+        textAlign:  "center",
+        fontSize:   "clamp(8px, 2cqw, 10px)",
+        fontStyle:  "italic",
+        color:      "rgba(255,255,255,0.60)",
+        textShadow: "0 0 8px rgba(255,255,255,0.12)",
+        animation:  "mly-msg-1 4s infinite",
+    } as React.CSSProperties,
+
+    /** Second cycling message; Mapillary green. */
+    splashMessage2: {
+        position:      "absolute",
+        width:         "100%",
+        textAlign:     "center",
+        fontSize:      "clamp(8px, 2cqw, 10px)",
+        fontWeight:    500,
+        color:         "#37d582",
+        letterSpacing: "0.2px",
+        animation:     "mly-msg-2 4s infinite",
+    } as React.CSSProperties,
+
+    progressTrack: {
+        width: "140px",
+        height: "4px",
+        background: "rgba(255,255,255,0.1)",
+        borderRadius: "2px",
+        overflow: "hidden",
+        position: "relative"
+    } as React.CSSProperties,
+
+    progressBar: {
+        position: "absolute",
+        top: 0, left: 0, height: "100%", width: "50%",
+        background: "#35AF6D", 
+        boxShadow: "0 0 10px #35AF6D", 
+        borderRadius: "2px",
+        animation: "loading 1.5s ease-in-out infinite"
+    } as React.CSSProperties,
+
+    // The horizontal "revolver" style picker at the top of the viewer for selecting different sequences.
+    sequencePickerContainer: {
+        background: "rgba(20, 20, 30, 0.65)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        padding: "3px 4px", 
+        borderRadius: "20px",
+        border: "1px solid rgba(150, 150, 150, 0.3)",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+        zIndex: 10000,
+        display: "flex",
+        alignItems: "center",
+        gap: "4px",
+        justifyContent: "center",
+        marginTop: "2px",
+        overflow: "hidden"
+    } as React.CSSProperties,
+
+    // Styling for individual sequence items in the picker.
+    sequenceSlot: (isActive: boolean): React.CSSProperties => ({
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "4px",
+        padding: "3px 8px",
+        borderRadius: "12px",
+        cursor: "pointer",
+        background: isActive ? "rgba(255, 255, 255, 0.35)" : "transparent",
+          border: isActive 
+        ? "1px solid rgba(210, 210, 210, 0.20)" 
+        : "1px solid rgba(175,175,175,0.3)",
+        boxShadow: isActive
+        ? "inset 0 2px 4px rgba(0,0,0,0.5)"
+        : "1px 1px 1px 1px",
+        transition: "all 0.15s ease",
+        flex: "1 1 0",
+        minWidth: "0"
+    }),
+
+    sequenceArrow: {
+        background: "rgba(255, 255, 255, 0.05)",
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        color: "#fff",
+        borderRadius: "50%",
+        width: "18px",
+        height: "18px",
+        flexShrink: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        fontSize: "9px",
+        transition: "background 0.2s"
+    } as React.CSSProperties,
+
+    sequenceDot: (color: string): React.CSSProperties => ({
+        display: "inline-block",
+        width: "8px",
+        height: "8px",
+        borderRadius: "50%",
+        backgroundColor: color,
+        border: "1px solid rgba(255,255,255,0.8)",
+        boxShadow: "0 0 4px rgba(0,0,0,0.5)",
+        flexShrink: 0
+    }),
+
+    sequenceText: {
+        whiteSpace: "nowrap", 
+        fontSize: "9px",
+        color: "#fff",
+        fontWeight: 500,
+        textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+        overflow: "hidden",
+        textOverflow: "ellipsis"
+    } as React.CSSProperties,
+
+    // The horizontal bar at the bottom containing advanced filters (User, Date, Traffic Sign filter, etc.).
+    filterBarContainer: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '6px',
+        background: "rgba(20, 20, 30, 0.65)", 
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        paddingBottom: "2px",
+        marginTop: "1px",
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        borderRadius : "20px",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+        pointerEvents: "auto",
+        zIndex: 10001,
+        overflow: "visible"
+    } as React.CSSProperties,
+
+    // Sub-containers within the filter bar for grouping related filters (e.g., all Turbo filters together).
+    filterGroup: (baseColor: string): React.CSSProperties => ({
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        borderRadius: '8px',
+        background: `linear-gradient(135deg, ${baseColor}1A 0%, ${baseColor}05 100%)`, 
+        border: `1px solid ${baseColor}33`, 
+        boxShadow: `inset 0 0 10px ${baseColor}0D`
+    }),
+
+    // Transparent inputs inside the filter bar.
+    glassInput: {
+        background: "rgba(0, 0, 0, 0.2)",
+        border: "1px solid rgba(255, 255, 255, 0.15)",
+        borderRadius: "20px",
+        padding: "4px 20px 4px 10px",
+        color: "#fff",
+        fontSize: "10px",
+        width: "110px",
+        outline: "none",
+        transition: "all 0.2s",
+        boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)"
+    } as React.CSSProperties,
+
+    // Small square buttons for icon triggers (like the Calendar icon).
+    glassIconBtn: {
+        background: "rgba(255, 255, 255, 0.1)",
+        border: "1px solid rgba(255, 255, 255, 0.2)",
+        borderRadius: "6px",
+        width: "22px",
+        height: "22px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        color: "#fff",
+        fontSize: "11px",
+        marginLeft: "4px",
+        transition: "background 0.2s"
+    } as React.CSSProperties,
+
+    labelSmall: {
+        fontSize: '9px',
+        color: 'rgba(255,255,255,0.8)',
+        fontWeight: 500
+    } as React.CSSProperties,
+
+    // Warning overlay shown when zoom level is insufficient for the active layer.
+    zoomWarningContainer: {
+        position: "absolute",
+        top: "6px",
+        left: "48px",
+        zIndex: 9999,
+        // Dark glass card; matches SplashScreen card language
+        background: "rgba(14, 10, 5, 0.55)",
+        backdropFilter: "blur(14px)",
+        WebkitBackdropFilter: "blur(14px)",
+        // Amber border accent
+        border: "1px solid rgba(255, 165, 0, 0.22)",
+        borderRadius: "12px",
+        // Layered shadow; outer depth + inner amber glow
+        boxShadow: `
+            0 8px 32px rgba(0, 0, 0, 0.5),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+            0 0 18px rgba(255, 140, 0, 0.18)
+        `,
+        color: "#fff",
+        padding: "6px 10px",
+        maxWidth: "110px",
+        fontSize: "9px",
+        fontWeight: 500,
+        fontFamily: '"Inter", "Segoe UI", sans-serif',
+        lineHeight: 1.35,
+        letterSpacing: "0.3px",
+        textAlign: "center",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "4px",
+
+        animation: "mly-warning-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+    } as React.CSSProperties,
+
+    zoomWarningIcon: {
+        display: "flex",
+        alignItems: "center",
+        gap: "4px",
+        color: "#ffb347",
+        fontWeight: 700,
+        fontSize: "9px",
+        letterSpacing: "0.8px",
+        filter: "drop-shadow(0 0 6px rgba(255, 165, 0, 0.55))",
+        animation: "mly-warn-pulse 2.4s ease-in-out infinite",
+    } as React.CSSProperties,
+
+    // Toast notification overlay for user feedback (copy, download, center map, etc.)
+    toastContainer: {
+        position: "absolute",
+        bottom: "40px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        background: "rgba(20, 20, 30, 0.85)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        border: "1px solid rgba(255,255,255,0.15)",
+        borderRadius: "12px",
+        padding: "clamp(6px, 1.5cqw, 8px) clamp(12px, 3cqw, 16px)",
+        color: "#fff",
+        fontSize: "clamp(9px, 2.2cqw, 11px)",
+        fontWeight: 500,
+        zIndex: 99999,
+        boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+        whiteSpace: "nowrap",
+        animation: "fadeIn 0.2s ease-out"
+    } as React.CSSProperties,
+
+    // Bottom-center badge shown while traffic signs / objects tiles are loading.
+    featuresLoadingBadge: {
+        position: "absolute",
+        bottom: "28px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 9999,
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        padding: "6px 12px",
+        background: "rgba(20, 20, 20, 0.55)",
+        backdropFilter: "blur(6px)",
+        WebkitBackdropFilter: "blur(6px)",
+        borderRadius: "8px",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+        pointerEvents: "none",
+        whiteSpace: "nowrap",
+    } as React.CSSProperties,
+ 
+    featuresLoadingSpinner: {
+        width: "12px",
+        height: "12px",
+        border: "2px solid rgba(255,255,255,0.25)",
+        borderTopColor: "#ff9500",
+        borderRadius: "50%",
+        animation: "spin 0.8s linear infinite",
+        flexShrink: 0,
+    } as React.CSSProperties,
+ 
+    featuresLoadingText: {
+        color: "rgba(255,255,255,0.85)",
+        fontSize: "11px",
+        fontWeight: 500,
+        letterSpacing: "0.2px",
+    } as React.CSSProperties,
+
+    // MISSING MAP WIDGET OVERLAY
+    missingMapContainer: {
+        position: "absolute",
+        top: 0, left: 0, right: 0, bottom: 0,
+        background: "rgba(15, 15, 20, 0.85)",
+        backdropFilter: "blur(5px)",
+        WebkitBackdropFilter: "blur(5px)",
+        zIndex: 10005,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "20px"
+    } as React.CSSProperties,
+
+    missingMapCard: {
+        background: "rgba(255, 255, 255, 0.05)",
+        border: "1px solid rgba(255, 255, 255, 0.15)",
+        borderRadius: "8px",
+        padding: "20px",
+        maxWidth: "280px",
+        textAlign: "center",
+        color: "#fff",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.5)"
+    } as React.CSSProperties,
+
+    missingMapIcon: {
+        color: "#ffc107",
+        marginBottom: "12px",
+        display: "flex",
+        justifyContent: "center"
+    } as React.CSSProperties,
+
+    missingMapTitle: {
+        margin: "0 0 10px 0",
+        fontSize: "15px",
+        color: "rgba(232, 190, 20, 0.7)",
+        fontWeight: 600,
+        letterSpacing: "0.5px"
+    } as React.CSSProperties,
+
+    missingMapText: {
+        margin: "0 0 15px 0",
+        fontSize: "12px",
+        color: "rgba(255,255,255,0.7)",
+        lineHeight: "1.5"
+    } as React.CSSProperties,
+
+    missingMapInstructionsBox: {
+        background: "rgba(0, 0, 0, 0.4)",
+        borderRadius: "6px",
+        padding: "12px",
+        textAlign: "left",
+        border: "1px solid rgba(255,255,255,0.05)"
+    } as React.CSSProperties,
+
+    missingMapInstructionsTitle: {
+        fontSize: "11px",
+        fontWeight: 700,
+        color: "#37d582",
+        marginBottom: "8px",
+        letterSpacing: "0.5px"
+    } as React.CSSProperties,
+
+    missingMapInstructionsList: {
+        margin: 0,
+        paddingLeft: "18px",
+        fontSize: "11px",
+        color: "rgba(255,255,255,0.85)",
+        lineHeight: "1.8"
+    } as React.CSSProperties,
+};
+
+
+
+// SECTION: GLOBAL CSS STRING
+// Contains CSS animations, responsive container queries, and specific fixes for ArcGIS Experience Builder panels.
+export const overrideStyles = `
+    /* EXPERIENCE BUILDER UI FIXES */
+    .mobile-panel-content-header { height: 30px !important; }
+    .expand-mobile-panel-touch-container { height: 30px !important; }
+    .expand-mobile-panel[style*="height: 150px"] { height: 280px !important; }
+
+    /* MAPILLARY-JS OVERRIDES */
+    .mapillary-js .DirectionsPerspective {
+        z-index: 1 !important;
+    }
+    .mapillary-js .DirectionsPerspectiveArrow {
+        filter: drop-shadow(0px 0px 2px rgba(0,0,0,0.8)) !important;
+    }
+    .mapillary-js .DirectionsPerspectiveContainer {
+        bottom: 10px !important;
+    }
+
+    /* Z-INDEX STACKING FIXES */
+    .legend-container { display: flex !important; }
+    .glass-scroll-container::-webkit-scrollbar { display: none; }
+    .glass-scroll-container { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* RESPONSIVE SCALING FOR VIEWER CONTROLS */
+    .widget-mapillary.jimu-widget .mapillary-sequence-playback,
+    .widget-mapillary.jimu-widget .mapillary-sequence-timeline {
+        --scale: clamp(0.5, 100cqw / 850, 0.9);
+        transform: translateX(-50%) scale(var(--scale)) !important;
+        transform-origin: top center !important;
+        transition: transform 0.15s ease-out;
+    }
+
+    /* CONTAINER QUERIES: RESPONSIVE SIZING BASED ON WIDGET WIDTH */
+    @container (max-width: 599px) {
+        .widget-mapillary.jimu-widget .mapillary-sequence-playback,
+        .widget-mapillary.jimu-widget .mapillary-sequence-timeline {
+            transform: translateX(-50%) scale(0.5) !important;
+        }
+    }
+
+    @container (min-width: 600px) {
+        .widget-mapillary.jimu-widget .mapillary-sequence-playback,
+        .widget-mapillary.jimu-widget .mapillary-sequence-timeline {
+            transform: translateX(-50%) scale(0.75) !important;
+        }
+    }
+    /* Elevation Profiles */
+    .esri-elevation-profile{ margin-bottom: 75px !important; }
+
+    .esri-elevation-profile.esri-component.esri-widget--panel{ max-width: 50% !important; }
+
+    /* MINI BUTTONS FOR SMALL WIDGETS */
+    @container (max-width: 350px) {
+        .unified-control-buttons-mapped, .unified-control-buttons { width: 24px !important; height: 24px !important; }
+        .unified-control-buttons-filters { width: 20px !important; height: 20px !important; }
+        .unified-control-buttons-mapped svg, .unified-control-buttons svg { width: 20px !important; height: 20px !important; }
+        .unified-control-buttons-filters svg { width: 16px !important; height: 16px !important; }
+    }
+
+    /* TINY BUTTONS FOR NARROW SIDEBARS */
+    @container (max-width: 250px) {
+        .unified-control-buttons-mapped, .unified-control-buttons { width: 20px !important; height: 20px !important; border-radius: 6px !important; }
+        .unified-control-buttons-filters { width: 16px !important; height: 16px !important; }
+        .unified-control-buttons-mapped svg, .unified-control-buttons svg { width: 12px !important; height: 12px !important; }
+    }
+    
+    /* EXPERIENCE BUILDER PANEL OVERRIDES */
+    .p-1 { padding: 0px !important; }
+    div.jimu-floating-panel[aria-label="Mapillary Explorer"] { border: none !important; box-shadow: none !important; background: transparent !important; }
+    div.jimu-floating-panel[aria-label="Mapillary Explorer"] .jimu-floating-panel-content { background: transparent !important; }
+    div.jimu-floating-panel[aria-label="Mapillary Explorer"] .widget-content.p-1 { padding: 0 !important; }
+    div.jimu-floating-panel[aria-label="Mapillary Explorer"] .resizer-0.bottom-right { right: 0 !important; bottom: 0 !important; width: 15px !important; height: 15px !important; padding: 0 !important; margin: 0 !important; }
+    div.jimu-floating-panel[aria-label="Mapillary Explorer"] .resize-handle { position: absolute !important; right: 0px !important; bottom: 0px !important; padding: 0 !important; }
+    div.jimu-floating-panel[aria-label="Mapillary Explorer"] .resize-handle svg path { fill: #35AF6D !important; }
+    div.jimu-floating-panel[aria-label="Mapillary Explorer"] .resizer-0.bottom-right:hover svg path{ fill: #82e8ec !important; }
+
+    /* SIDEBAR BUTTON CLAMPING (FLUID SCALING) */
+    .glass-control-panel {
+        max-height: calc(100% - 10px) !important;
+        overflow-y: auto !important;
+        scrollbar-width: none;
+        gap: 4px !important;
+    }
+    .glass-control-panel::-webkit-scrollbar { display: none; }
+    .glass-control-panel .unified-control-buttons,
+    .glass-control-panel .unified-control-buttons-mapped,
+    .glass-control-panel .unified-control-buttons-filters {
+        transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1),
+                    background 0.2s ease,
+                    box-shadow 0.2s ease !important;
+        transform-origin: center center;
+    }
+    .glass-control-panel .unified-control-buttons { margin-bottom: 2px}
+    @media (hover: hover) and (pointer: fine) {
+        .glass-control-panel .unified-control-buttons:hover,
+        .glass-control-panel .unified-control-buttons-mapped:hover {
+            transform: scale(1.10) !important;
+            background: rgba(255, 255, 255, 0.16) !important;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35),
+                        0 4px 14px rgba(0, 0, 0, 0.35) !important;
+            filter: brightness(1.25);
+        }
+        .glass-control-panel .unified-control-buttons.is-active:hover,
+        .glass-control-panel .unified-control-buttons-mapped.is-active:hover {
+            transform: scale(1.10) !important;
+        }
+        .glass-control-panel .unified-control-buttons-filters.is-hoverable:hover {
+            transform: scale(1.10) !important;
+            background: rgba(255, 255, 255, 0.14) !important;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3) !important;
+            filter: brightness(1.2);
+        }
+    }
+    
+    /* Same treatment for the utility panel buttons if you applied the
+    earlier utility-panel-fix.css — wrap that :hover block the same way: */
+    
+    @media (hover: hover) and (pointer: fine) {
+        .glass-image-utility-panel .utility-button:hover {
+            transform: scale(1.15) !important;
+            background: rgba(255, 255, 255, 0.16) !important;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35),
+                        0 4px 14px rgba(0, 0, 0, 0.35) !important;
+            filter: brightness(1.25);
+            z-index: 2;
+            position: relative;
+        }
+    }
+    .glass-control-panel svg {
+        width: clamp(10px, 60%, 20px) !important;
+        height: auto !important;
+        aspect-ratio: 1 / 1 !important;
+        display: block;
+        flex-shrink: 0;
+    }
+    .glass-control-panel .unified-control-buttons-filters svg {
+        width: clamp(10px, 60%, 16px) !important;
+        height: auto !important;
+        aspect-ratio: 1 / 1 !important;
+    }
+    .glass-control-panel > div { display: flex !important; flex-direction: column !important; }
+
+    /* GLASS UTILITY PANEL */
+    .glass-image-utility-panel {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important; /* Changed to always be 2 columns */
+        justify-items: center;
+        padding: clamp(4px, 1cqmin, 6px) !important; /* Slightly increased padding to balance 2 cols */
+        gap: clamp(3px, 1cqh, 6px) !important;
+        right: clamp(44px, 8cqw, 66px) !important;
+        bottom: clamp(20px, 5cqh, 27px) !important;
+    }
+
+    .glass-image-utility-panel .utility-button {
+        width: clamp(18px, 6cqh, 24px) !important;
+        height: clamp(18px, 6cqh, 24px) !important;
+    }
+
+    .glass-image-utility-panel .utility-button svg {
+        width: clamp(12px, 70%, 18px) !important;
+        height: clamp(12px, 70%, 18px) !important;
+    }
+
+    .utility-spinner {
+        width: 12px;
+        height: 12px;
+        border: 2px solid #fff;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    /* OVERLAY CARD FLUID SCALING */
+    .initial-state-card, .loading-card, .no-image-card {
+        padding: clamp(10px, 5cqh, 30px) clamp(12px, 5cqw, 40px) !important;
+        gap: clamp(4px, 2cqh, 16px) !important;
+        max-width: 85% !important;
+        border-radius: clamp(8px, 3cqmin, 20px) !important;
+    }
+    .initial-state-card span:first-of-type, .loading-card div, .no-image-card span {
+        font-size: clamp(8px, 4cqmin, 12px) !important;
+        line-height: 1.2 !important;
+    }
+    .initial-state-card span:last-of-type { font-size: clamp(7px, 3cqmin, 10px) !important; }
+    .loading-card .premium-spinner, .loading-card .turbo-spinner {
+        width: clamp(20px, 8cqmin, 40px) !important; height: clamp(20px, 8cqmin, 40px) !important;
+        border-width: clamp(2px, 0.8cqmin, 4px) !important;
+    }
+    .no-image-card svg, .initial-state-card svg { width: clamp(18px, 6cqmin, 32px) !important; height: clamp(18px, 6cqmin, 32px) !important; }
+
+    /* HIDE SUBTITLES ON SHORT WIDGETS */
+    @container (max-height: 200px) {
+        .initial-state-card span:last-of-type { display: none !important; }
+        .initial-state-card, .loading-card { padding: 8px !important; }
+    }
+
+    /* LEGEND FLUID SCALING */
+    .legend-container {
+        padding: clamp1px, 0.5cqmin, 2px) !important;
+        gap: clamp(1px, 1cqh, 4px) !important;
+        border-radius: clamp(4px, 2cqmin, 8px) !important;
+        bottom: clamp(2px, 2cqh, 2px) !important;
+        left: clamp(2px, 2cqw, 2px) !important;
+        max-width: 40% !important;
+    }
+    .legend-container div[style*="opacity: 0.4"] { font-size: clamp(4px, 2cqmin, 8px) !important; margin-bottom: 1px !important; padding-bottom: 1px !important; }
+    @container (max-height: 340px) {
+        .legend-container div[style*="opacity: 0.4"] { display: none !important; }
+        .legend-container { bottom: 0 !important; }
+    }
+    .legend-container span[style*="font-size"] { font-size: clamp(6px, 3cqmin, 9px) !important; }
+    .legend-container span[style*="border-radius: 50%"] { width: clamp(6px, 3cqmin, 9px) !important; height: clamp(6px, 3cqmin, 9px) !important; margin-right: 2px !important; }
+    .legend-container button { font-size: clamp(6px, 2cqmin, 8px) !important; padding: 1px 0 !important; margin-top: 2px !important; }
+    @container (max-height: 250px) { .legend-container button { display: none !important; } }
+
+    /* KEYFRAME DEFINITIONS */
+    @keyframes activePulse {
+        0% { box-shadow: 0 0 5px var(--glow); }
+        50% { box-shadow: 0 0 15px var(--glow); }
+        100% { box-shadow: 0 0 5px var(--glow); }
+    }
+    @keyframes mly-warning-in {
+        from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+        to   { opacity: 1; transform: translateY(0)    scale(1);    }
+    }
+    @keyframes mly-warn-pulse {
+        0%, 100% { filter: drop-shadow(0 0 4px rgba(255,165,0,0.4)); }
+        50%       { filter: drop-shadow(0 0 10px rgba(255,165,0,0.75)); }
+    }
+    @keyframes radarSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    @keyframes targetPulse {
+        0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.25); }
+        70% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+    }
+    .unified-control-buttons.active-layer { animation: activePulse 2s infinite ease-in-out; }
+    @keyframes turboDataSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    @keyframes turboDataPulse {
+        0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.2); }
+        70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+    }
+    @keyframes radarPulse {
+        0% { transform: scale(0.5); opacity: 1; }
+        100% { transform: scale(1.6); opacity: 0; }
+    }
+    @keyframes initialStateFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+    }
+    
+    /* SPLASH SCREEN ANIMATIONS */
+    @keyframes ripple {
+        0% { transform: scale(1); opacity: 0.8; }
+        100% { transform: scale(3.5); opacity: 0; }
+    }
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-6px); }
+    }
+    @keyframes shimmer {
+        0% { background-position: 0% center; }
+        100% { background-position: 200% center; }
+    }
+    @keyframes loading {
+        0% { left: -50%; }
+        50% { left: 25%; width: 50%; }
+        100% { left: 100%; width: 20%; }
+    }
+    @keyframes msgFade1 {
+        0%, 35% { opacity: 1; transform: translateY(0); }
+        45%, 85% { opacity: 0; transform: translateY(-4px); }
+        95%, 100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes msgFade2 {
+        0%, 35% { opacity: 0; transform: translateY(4px); }
+        45%, 85% { opacity: 1; transform: translateY(0); }
+        95%, 100% { opacity: 0; transform: translateY(4px); }
+    }
+    .splash-msg-1 { animation: msgFade1 3.5s infinite ease-in-out; }
+    .splash-msg-2 { animation: msgFade2 3.5s infinite ease-in-out; }
+
+    /* FORCE SMOOTH RESIZE */
+    div.jimu-floating-panel[aria-label="Mapillary Explorer"] {
+        transition: width 0.05s ease-out, height 0.05s ease-out !important;
+    }
+
+    /* PREVENT BLACK FLASH */
+    .widget-mapillary .mapillary-js {
+        background: #000 !important;
+        overflow: hidden !important;
+    }
+
+    /* HIDE BLACK STRIPES DURING RESIZE */
+    .widget-mapillary .mapillary-viewer {
+        overflow: hidden !important;
+        background: #1a1a1a !important; /* Darker gray instead of pure black */
+    }
+
+    .widget-mapillary .mapillary-viewer canvas {
+        transition: none !important; /* Remove any canvas transitions */
+    }
+    
+    /* Targets the container to set a baseline */
+    .mapillary-tag-container {
+        font-size: 9px !important; 
+        font-family: "Inter", "Segoe UI", Roboto, sans-serif !important;
+    }
+
+    /* Targets the individual labels to ensure they stay compact */
+    .mapillary-tag-symbol {
+        font-size: 9px !important;
+        font-weight: 600 !important;
+        line-height: 1 !important;
+        /* Adds a dark outline so white text is readable on bright colors */
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.9) !important;
+        /* Optional: prevents labels from being too wide */
+        max-width: 100px;
+        white-space: nowrap;
+    }
+    
+    .hide-mly-tags .mapillary-tag-symbol {
+        display: none !important;
+    }
+
+    /* POINT CLOUD SLIDER */
+    .point-cloud-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        background: transparent;
+    }
+
+    /* Track */
+    .point-cloud-slider::-webkit-slider-runnable-track {
+        height: 3px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 2px;
+    }
+
+    .point-cloud-slider::-moz-range-track {
+        height: 3px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 2px;
+    }
+
+    /* Thumb (the green circle) */
+    .point-cloud-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 8px;              /* 👈 smaller */
+        height: 8px;
+        border-radius: 50%;
+        background: #37d582;
+        border: 1px solid rgba(255,255,255,0.6);
+        cursor: pointer;
+        margin-top: -2.5px;      /* center it */
+    }
+
+    .point-cloud-slider::-moz-range-thumb {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #37d582;
+        border: 1px solid rgba(255,255,255,0.6);
+        cursor: pointer;
+    }
+
+    .point-cloud-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+    }
+
+    .point-cloud-slider::-moz-range-thumb:hover {
+        transform: scale(1.2);
+    }
+
+    /* MOBILE (768px) OVERRIDES */
+
+    @container (max-height: 350px) {
+        .glass-image-utility-panel {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .widget-mapillary input[type="date"]::-webkit-datetime-edit { display: none !important; }
+        .show-panorama-only-filter::after { content: "Panoramas:"; font-size: 9px !important; }
+        .show-color-by-date-filter::after { content: "CBD:"; font-size: 9px !important; }
+        .info-box { font-size: 8px !important; max-width: 110px !important; }
+        .legend-container { display: none !important; }
+        .esri-popup__main-container { width: 250px !important;}
+        .esri-widget__heading { font-size: 10px !important; }
+        .esri-feature-content { font-size: 10px !important; }
+        .esri-view-width-xsmall .esri-popup--docked-bottom-center .esri-popup__main-container { left: auto !important; right: auto !important; }
+        .splash-screen-logo { margin-bottom: 15px !important; }
+        .splash-screen-text { font-size: 10px !important; }
+        .minimap-container { top: 100px !important; left: 50% !important; right: auto !important; transform: translateX(-50%) !important; width: 90% !important; max-width: 350px !important; height: 200px !important; }
+        .warning-message-container { font-size: 8px !important; }
+        .glass-scroll-container { border-radius: 0px !important; padding: 0px !important; margin-top: 0px !important; gap: 2px !important }
+        .glass-datepicker-calendar { width: 160px !important; padding: 6px 6px 5px !important; }
+        .day-cell { padding: 2px 1px !important; font-size: 8px !important; }
+        .nav-row span { font-size: 9px !important; }
+        .today-btn { font-size: 8px !important; padding: 2px 0 !important; }
+        .turbo-filter-container { gap: 0 !important; padding: 0 !important; border: none !important; }
+        .esri-elevation-profile{ margin-bottom: 0px !important; margin-left: 75px !important; }
+        .esri-elevation-profile-legend{ display: none !important }
+    }
+
+    @keyframes spin {
+        0%   { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+`;
