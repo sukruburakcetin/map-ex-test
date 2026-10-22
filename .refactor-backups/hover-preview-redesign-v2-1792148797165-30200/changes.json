@@ -1,0 +1,26 @@
+[
+  {
+    "file": "src\\runtime\\widget.tsx",
+    "created": false
+  },
+  {
+    "file": "src\\components\\ImageryLoading.tsx",
+    "created": false
+  },
+  {
+    "file": "src\\styles\\imageryLoading.ts",
+    "created": false
+  },
+  {
+    "file": "src\\features\\coverage\\RepresentativePickCache.ts",
+    "created": true
+  },
+  {
+    "file": "src\\features\\imagery\\hoverCard.ts",
+    "created": true
+  },
+  {
+    "file": "src\\styles\\imageryHoverCard.ts",
+    "created": true
+  }
+]

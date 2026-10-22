@@ -1,0 +1,54 @@
+{
+  "installer": "point-cloud-lifecycle",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "c787e81eee120315d39f5f0c1b5630b2718c702e1cce668807bf43fd2825dbd3",
+      "resultSha256": "902eb70519d6c34f4b1263bda01f894edc52e1a7ff237b610ad5f21c33256a15"
+    },
+    {
+      "file": "tests/pointCloudMapLayer.test.cjs",
+      "operation": "update",
+      "originalSha256": "afceb306fca3549f471f63635f78d6368638d34f42961083ad979773eddc1fbc",
+      "resultSha256": "7f2aca194f9d4b5fd915c3f70ce8ca76c0b3cd37e92b17d1495749fb8587bcab"
+    },
+    {
+      "file": "docs/POINT-CLOUD-OWNERSHIP.md",
+      "operation": "update",
+      "originalSha256": "6849d2173ca018566e5fbdcfdb0570d457933118c28ec7a31912219c206e085c",
+      "resultSha256": "952a330e98f7b997d66777563431008b6530f3b88334f31323223f44fee08815"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "0bd7716a5f7475e1b11f49a4be7fd63a74a770041f39da992433a11ec10d14ab",
+      "resultSha256": "af84a28da2c3976af8cc6ca19fdab7458cd7b2896190a9ae38cca48c2cab158e"
+    },
+    {
+      "file": "src/features/point-cloud/README.md",
+      "operation": "update",
+      "originalSha256": "0f1cb770f0c5847dd29f6f0f32a74a810bc63d6c682f92679beabdcf452cb7b7",
+      "resultSha256": "0f2a9c96e23d6111fe80619260db573310ca11a461faccda7bb135ccc856e7db"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudLifecycle.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "87d78efa2d700ea931770673f45250b181dc2fdfe05e5047c8d07397e43d1374"
+    },
+    {
+      "file": "tests/pointCloudLifecycle.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "22a538afc7703f1c079120ea51cc184fc48130cfcfc6a6619496f6e853a21711"
+    },
+    {
+      "file": "tests/fixtures/pointCloudLifecycle.baseline.json",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "59673c39de00d3ad14304d22d7e63c9b8270af329d6e71597829480e1e5f3598"
+    }
+  ]
+}

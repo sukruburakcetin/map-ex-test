@@ -1,0 +1,10 @@
+[
+  {
+    "file": "src\\utils\\pointCloudUtils.ts",
+    "created": false
+  },
+  {
+    "file": "docs\\POINT-CLOUD-CANCELLATION.md",
+    "created": true
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {
+    "file": "src\\runtime\\widget.tsx",
+    "created": false
+  },
+  {
+    "file": "docs\\FIELD-NOTES-VIEWER.md",
+    "created": false
+  },
+  {
+    "file": "src\\features\\field-notes\\viewerSelection.ts",
+    "created": true
+  }
+]

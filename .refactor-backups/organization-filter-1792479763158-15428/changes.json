@@ -1,0 +1,72 @@
+{
+  "installer": "organization-filter",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/config.ts",
+      "operation": "update",
+      "originalSha256": "1adb701faef6fc21b03c83eda521fea4b7599264ac08e19d3343c75319faa858",
+      "resultSha256": "497b54184c73d5956f0fd643861dbeb3f35afa23595357c5c2884ae57ec0194c"
+    },
+    {
+      "file": "src/components/types.ts",
+      "operation": "update",
+      "originalSha256": "36c81d0059e4a156dd161fff1eb389c66042f94a35cfea2481149706f0f5877f",
+      "resultSha256": "f1f485c02097c7a2754218b29aade2834c0266f676e6973383e6bde8e575330b"
+    },
+    {
+      "file": "src/utils/turboCoverageUtils.ts",
+      "operation": "update",
+      "originalSha256": "e28839687a64a79077a9b7e810a9da3450cf71d7374306423548c681a788c6b9",
+      "resultSha256": "51ab96b083f456b52de66caba073c5cb5cff5bf3a97f5680be7591008afed172"
+    },
+    {
+      "file": "src/utils/filterBuilder.ts",
+      "operation": "update",
+      "originalSha256": "25486c39f6c546ab59ab351ebdfcfca22fc2536ef54b69223930869239febe09",
+      "resultSha256": "1c0d4cf00c664fcc172323d8bf906cde19dd72697833673fdf3bd51814c43f57"
+    },
+    {
+      "file": "src/features/coverage/nearbySequenceFrame.ts",
+      "operation": "update",
+      "originalSha256": "bcdd6ece3b26a5b8ab1f37c6af80fe2ffba824df98f0822c3240232a66d04e5d",
+      "resultSha256": "65091ba2eb952bbb237419f64c7c7563c7b05207ea5924ead8a56c123b2acd9d"
+    },
+    {
+      "file": "src/components/FilterBar.tsx",
+      "operation": "update",
+      "originalSha256": "a0b8926adac2718cfd57ba53b506cc50688b53c6a230c3a932a898d7598c2738",
+      "resultSha256": "48125ce274cc4a6212444c1c858822a4b06fec2d1779f728449425aa88e5a066"
+    },
+    {
+      "file": "src/setting/setting.tsx",
+      "operation": "update",
+      "originalSha256": "f8ee83cc3ee9cd074beb96df0a3d0864b95e9c805049f96b4a55a8bd34d73671",
+      "resultSha256": "77dbee18327c8f5c663801903cca47c8026ecf71c34f427e4e3b705a6925ff9f"
+    },
+    {
+      "file": "src/components/InfoBox.tsx",
+      "operation": "update",
+      "originalSha256": "dee23812ed39e70d0a0245830a51fed855e33340638bd9dcae8bf5278ab4410b",
+      "resultSha256": "1b4130ec3372ce5a907d1167c3ad86a8f9aacdd20f0fbd296a93abad2416a4bb"
+    },
+    {
+      "file": "src/components/info-box/StatusSummary.tsx",
+      "operation": "update",
+      "originalSha256": "e89024d7e18579f8eb51661a1d05db9e748582773687fbca43cffdef97fcfe22",
+      "resultSha256": "13e3b653030632a4db1876eeea37000f9a2054c035cc4f2fcf77e78436e4b9c3"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "ef2cf79b1bbbc9ae741c43ddddd16a39d0b638510e49b8ff40f281de53225679",
+      "resultSha256": "bc23f59d8520a1a1d66c91b9acf6448f2ad65ea7726ecd2de7b3f46d47d64d0e"
+    },
+    {
+      "file": "src/utils/organizationFilter.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "5253bc2ffd3f5be983c9a19b5c5956ec72b7384e1069eecd309767527190e79c"
+    }
+  ]
+}

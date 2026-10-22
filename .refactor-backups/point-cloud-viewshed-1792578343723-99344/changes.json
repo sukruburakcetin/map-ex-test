@@ -1,0 +1,48 @@
+{
+  "installer": "point-cloud-viewshed",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "2839b470be7e81344774923e19ce331b0d859a3e76450415d97582bf555af256",
+      "resultSha256": "48aeb7171dee81cf64053757e448fe8ed71cd7a15a1ccba605a3c92eb70c2f0d"
+    },
+    {
+      "file": "docs/POINT-CLOUD-OWNERSHIP.md",
+      "operation": "update",
+      "originalSha256": "f0f40eb8ad81b79da15540e092f3f7f2a4f50f056b43b54d878830d60fef22c9",
+      "resultSha256": "d4af73f666baaa0732232b644baf7849bdd66d171a9673b01efd18bf0842b828"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "c63645af1525d16d3b9aa40081f6fad8f336e675dc0516bea17856781901f18b",
+      "resultSha256": "be9bf9fe7ce3c11859e68cd0641c0d13b6dffb9cfa5a1d87456fc2f7b9d458e7"
+    },
+    {
+      "file": "src/features/point-cloud/README.md",
+      "operation": "update",
+      "originalSha256": "1a391dfc789a3fc28ca8af191f6c4d26ceb320e4910a877b988170bc218f1547",
+      "resultSha256": "00fb619f5e128886e269bafa46ffc4a6b9d752ba0081e7e719fa573271035dcf"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudViewshed.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "a8db65884b4a4bc367558de14a8eab659f23ca9557f95af89df40ef5fe2b535c"
+    },
+    {
+      "file": "tests/pointCloudViewshed.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "f5788cb5dcbf0f9a5af65b1bee391961adfbc7bfe25246770818400699dc038a"
+    },
+    {
+      "file": "tests/fixtures/pointCloudViewshed.baseline.json",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "97d0fd631cbd615b7792ce895a1c9d3fd85c88f056982d94c4ae64099b997755"
+    }
+  ]
+}

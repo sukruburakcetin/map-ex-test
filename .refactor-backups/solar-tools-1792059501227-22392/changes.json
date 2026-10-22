@@ -1,0 +1,18 @@
+[
+  {
+    "file": "src\\components\\InfoBox.tsx",
+    "created": false
+  },
+  {
+    "file": "docs\\INFOBOX-SECTIONS.md",
+    "created": false
+  },
+  {
+    "file": "src\\features\\solar\\SolarToolsSection.tsx",
+    "created": true
+  },
+  {
+    "file": "src\\styles\\solarControls.ts",
+    "created": true
+  }
+]

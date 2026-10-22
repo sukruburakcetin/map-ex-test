@@ -1,8 +1,11 @@
 /** @jsx jsx */
 import { React, jsx } from "jimu-core";
+import ReactDOM from "react-dom";
+import { ACCENT, NAV_BTN, dateWrapperStyle, getDateTriggerStyle, dateIconStyle, dateLabelStyle, dateClearStyle, dateCalendarStyle, dateYearNavigationStyle, dateYearLabelStyle, dateMonthNavigationStyle, dateMonthLabelStyle, dateWeekHeaderGridStyle, dateWeekHeaderStyle, dateDayGridStyle, getDateDayStyle, dateTodaySectionStyle, dateTodayButtonStyle } from '../styles/glassDatePicker';
 
 // Types
 interface GlassDatePickerProps {
+    floatingMenu?: boolean;
     selected: Date | null;
     onChange: (date: Date | null) => void;
     placeholderText?: string;
@@ -42,21 +45,26 @@ function firstDayOfMonth(year: number, month: number): number {
     return new Date(year, month, 1).getDay();
 }
 
-const ACCENT = "#37d582";
-
-const NAV_BTN: React.CSSProperties = {
-    background: "none",
-    border: "none",
-    color: "rgba(255,255,255,0.6)",
-    cursor: "pointer",
-    fontSize: "14px",
-    padding: "0 5px",
-    lineHeight: 1,
-    borderRadius: "3px",
-};
+// Presentation styles live in styles/glassDatePicker.ts.
 
 //  Component
 export class GlassDatePicker extends React.PureComponent<GlassDatePickerProps, GlassDatePickerState> {
+    private menuRef = React.createRef<HTMLDivElement>();
+    private closeFloatingMenu = (event?: Event) => {
+        if (!this.props.floatingMenu || (event?.target instanceof Node && this.menuRef.current?.contains(event.target))) return;
+        this.setState({ open: false });
+    };
+    private renderFloatingMenu = (menu: React.ReactNode) => this.props.floatingMenu
+        ? ReactDOM.createPortal(menu, document.fullscreenElement || document.body) : menu;
+    private floatingMenuStyle = (): React.CSSProperties => {
+        const rect = this.wrapperRef.current?.getBoundingClientRect();
+        if (!this.props.floatingMenu || !rect) return {};
+        const width = 184;
+        const above = rect.top > 250;
+        return { position: "fixed", left: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)), right: "auto", width,
+            top: above ? "auto" : rect.bottom + 6, bottom: above ? window.innerHeight - rect.top + 6 : "auto",
+            transform: "none", zIndex: 2147483647, maxHeight: Math.max(80, Math.min(250, above ? rect.top - 14 : window.innerHeight - rect.bottom - 14)), overflowY: "auto", boxSizing: "border-box" };
+    };
     private wrapperRef = React.createRef<HTMLDivElement>();
 
     constructor(props: GlassDatePickerProps) {
@@ -72,10 +80,14 @@ export class GlassDatePicker extends React.PureComponent<GlassDatePickerProps, G
 
     componentDidMount() {
         document.addEventListener("mousedown", this.handleOutside);
+        document.addEventListener("scroll", this.closeFloatingMenu, true);
+        window.addEventListener("resize", this.closeFloatingMenu);
     }
 
     componentWillUnmount() {
         document.removeEventListener("mousedown", this.handleOutside);
+        document.removeEventListener("scroll", this.closeFloatingMenu, true);
+        window.removeEventListener("resize", this.closeFloatingMenu);
     }
 
     componentDidUpdate(prev: GlassDatePickerProps) {
@@ -88,7 +100,7 @@ export class GlassDatePicker extends React.PureComponent<GlassDatePickerProps, G
     }
 
     private handleOutside = (e: MouseEvent) => {
-        if (this.wrapperRef.current && !this.wrapperRef.current.contains(e.target as Node)) {
+        if (this.wrapperRef.current && !this.wrapperRef.current.contains(e.target as Node) && !this.menuRef.current?.contains(e.target as Node)) {
             this.setState({ open: false });
         }
     };
@@ -163,47 +175,21 @@ export class GlassDatePicker extends React.PureComponent<GlassDatePickerProps, G
         return (
             <div
                 ref={this.wrapperRef}
-                style={{ position: "relative", display: "inline-block" }}
+                style={dateWrapperStyle}
             >
                 {/* Trigger button */}
                 <button
                     type="button"
                     onClick={this.toggle}
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        padding: "3px 7px",
-                        background: open ? "rgba(55,213,130,0.15)" : "rgba(255,255,255,0.08)",
-                        border: `1px solid ${open ? ACCENT : "rgba(255,255,255,0.18)"}`,
-                        borderRadius: "5px",
-                        color: selected ? "#fff" : "rgba(255,255,255,0.5)",
-                        fontSize: "9px",
-                        cursor: disabled ? "not-allowed" : "pointer",
-                        opacity: disabled ? 0.5 : 1,
-                        pointerEvents: disabled ? "none" as const : "auto" as const,
-                        whiteSpace: "nowrap" as const,
-                        backdropFilter: "blur(6px)",
-                        WebkitBackdropFilter: "blur(6px)",
-                        boxShadow: open ? `0 0 8px ${ACCENT}44` : "none",
-                        transition: "all 0.15s",
-                        userSelect: "none" as const,
-                        WebkitUserSelect: "none" as const,
-                    }}
+                    style={getDateTriggerStyle(open, selected, disabled)}
                     title={placeholderText}
                 >
-                    <span style={{ fontSize: "10px", lineHeight: 1 }}>📅</span>
-                    <span style={{ fontSize: "8px", lineHeight: 1 }}>{label}</span>
+                    <span style={dateIconStyle}>📅</span>
+                    <span style={dateLabelStyle}>{label}</span>
                     {isClearable && selected && (
                         <span
                             onClick={this.clear}
-                            style={{
-                                marginLeft: "1px",
-                                color: "rgba(255,255,255,0.45)",
-                                fontSize: "10px",
-                                lineHeight: 1,
-                                cursor: "pointer",
-                            }}
+                            style={dateClearStyle}
                         >
                             ✕
                         </span>
@@ -211,68 +197,40 @@ export class GlassDatePicker extends React.PureComponent<GlassDatePickerProps, G
                 </button>
 
                 {/* Calendar panel (absolute child, opens upward) */}
-                {open && (
-                    <div
+                {open && this.renderFloatingMenu(
+                    <div ref={this.menuRef}
                         onClick={e => e.stopPropagation()}
-                        style={{
-                            position: "absolute",
-                            bottom: "calc(100% + 6px)",
-                            left: "50%",
-                            transform: "translateX(-50%)",
-                            zIndex: 10002,
-                            width: "168px",
-                            background: "rgba(10,10,10,0.97)",
-                            backdropFilter: "blur(18px)",
-                            WebkitBackdropFilter: "blur(18px)",
-                            border: `1px solid ${ACCENT}55`,
-                            borderRadius: "10px",
-                            padding: "8px 8px 6px",
-                            boxShadow: `0 -8px 32px rgba(0,0,0,0.7), 0 0 20px ${ACCENT}22`,
-                            userSelect: "none" as const,
-                            WebkitUserSelect: "none" as const,
-                        }}
+                        style={{ ...dateCalendarStyle, ...this.floatingMenuStyle() }}
                     >
                         {/* Year navigation */}
-                        <div style={{
-                            display: "flex", alignItems: "center",
-                            justifyContent: "space-between", marginBottom: "5px"
-                        }}>
+                        <div style={dateYearNavigationStyle}>
                             <button type="button" onClick={this.prevYear} style={NAV_BTN}>«</button>
-                            <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700 }}>
+                            <span style={dateYearLabelStyle}>
                                 {viewYear}
                             </span>
                             <button type="button" onClick={this.nextYear} style={NAV_BTN}>»</button>
                         </div>
 
                         {/* Month navigation */}
-                        <div style={{
-                            display: "flex", alignItems: "center",
-                            justifyContent: "space-between", marginBottom: "8px"
-                        }}>
+                        <div style={dateMonthNavigationStyle}>
                             <button type="button" onClick={this.prevMonth} style={NAV_BTN}>‹</button>
-                            <span style={{ color: ACCENT, fontSize: "10px", fontWeight: 600, letterSpacing: "0.4px" }}>
+                            <span style={dateMonthLabelStyle}>
                                 {MONTHS[viewMonth]}
                             </span>
                             <button type="button" onClick={this.nextMonth} style={NAV_BTN}>›</button>
                         </div>
 
                         {/* Day-of-week headers */}
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", marginBottom: "3px" }}>
+                        <div style={dateWeekHeaderGridStyle}>
                             {DAYS.map(d => (
-                                <div key={d} style={{
-                                    fontSize: "8px",
-                                    color: "rgba(255,255,255,0.3)",
-                                    textAlign: "center",
-                                    fontWeight: 700,
-                                    padding: "1px 0",
-                                }}>
+                                <div key={d} style={dateWeekHeaderStyle}>
                                     {d}
                                 </div>
                             ))}
                         </div>
 
                         {/* Day cells */}
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "2px" }}>
+                        <div style={dateDayGridStyle}>
                             {cells.map((day, idx) => {
                                 if (day === null) return <div key={`_${idx}`} />;
 
@@ -294,25 +252,7 @@ export class GlassDatePicker extends React.PureComponent<GlassDatePickerProps, G
                                         onClick={e => this.selectDay(e, day)}
                                         onMouseEnter={() => this.setState({ hoveredDay: day })}
                                         onMouseLeave={() => this.setState({ hoveredDay: -1 })}
-                                        style={{
-                                            textAlign: "center",
-                                            padding: "4px 2px",
-                                            fontSize: "9px",
-                                            borderRadius: "4px",
-                                            cursor: "pointer",
-                                            background: bg,
-                                            color: isSelected
-                                                ? "#000"
-                                                : isToday
-                                                ? ACCENT
-                                                : "rgba(255,255,255,0.88)",
-                                            fontWeight: isSelected || isToday ? 700 : 400,
-                                            border: isToday && !isSelected
-                                                ? `1px solid ${ACCENT}55`
-                                                : "1px solid transparent",
-                                            transition: "background 0.08s",
-                                            lineHeight: 1.2,
-                                        }}
+                                        style={getDateDayStyle(bg, isSelected, isToday)}
                                     >
                                         {day}
                                     </div>
@@ -321,11 +261,7 @@ export class GlassDatePicker extends React.PureComponent<GlassDatePickerProps, G
                         </div>
 
                         {/* Today shortcut */}
-                        <div style={{
-                            marginTop: "7px",
-                            borderTop: "1px solid rgba(255,255,255,0.08)",
-                            paddingTop: "5px"
-                        }}>
+                        <div style={dateTodaySectionStyle}>
                             <button
                                 type="button"
                                 className="today-btn"
@@ -339,18 +275,7 @@ export class GlassDatePicker extends React.PureComponent<GlassDatePickerProps, G
                                         viewMonth: t.getMonth()
                                     });
                                 }}
-                                style={{
-                                    width: "100%",
-                                    background: "rgba(55,213,130,0.12)",
-                                    border: `1px solid ${ACCENT}44`,
-                                    borderRadius: "5px",
-                                    color: ACCENT,
-                                    fontSize: "9px",
-                                    cursor: "pointer",
-                                    padding: "3px 0",
-                                    fontWeight: 600,
-                                    letterSpacing: "0.3px",
-                                }}
+                                style={dateTodayButtonStyle}
                             >
                                 Today
                             </button>

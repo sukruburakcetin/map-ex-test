@@ -1,0 +1,12 @@
+{
+  "installer": "note-mode-indicator",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/features/field-notes/NoteToolsSection.tsx",
+      "operation": "update",
+      "originalSha256": "0e1012052ea274316713dd0a54b1c984f34481eeb6d274227a8bb78ed9f536b5",
+      "resultSha256": "ce2dd5c2d35ee68bcab9fa9366fb796995d557b81a7c937cb12760033dd31cb7"
+    }
+  ]
+}

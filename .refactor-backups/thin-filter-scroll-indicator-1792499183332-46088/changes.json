@@ -1,0 +1,12 @@
+{
+  "installer": "thin-filter-scroll-indicator",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/components/FilterScrollRegion.tsx",
+      "operation": "update",
+      "originalSha256": "6390b9e7a01c1d82ed0ec54e5d3ac0dbed10945b0fa7e0c9989b9149f547a3a7",
+      "resultSha256": "c8d1f294777b66cd1e014a69396f55d253c61c25c7058c26bf80d3f0d497f353"
+    }
+  ]
+}

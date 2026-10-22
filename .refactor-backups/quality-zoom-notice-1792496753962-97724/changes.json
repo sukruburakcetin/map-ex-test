@@ -1,0 +1,18 @@
+{
+  "installer": "quality-zoom-notice",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/features/coverage/QualityToolsSection.tsx",
+      "operation": "update",
+      "originalSha256": "649d15be4de03a06078d9950ee2efbf6ac4266b9cf6f4854133ec3d073af0aa8",
+      "resultSha256": "23d361a187f95288c4a9c42cccb091f73d4a65a7dca297b73792d91fa9ae6719"
+    },
+    {
+      "file": "src/components/InfoBox.tsx",
+      "operation": "update",
+      "originalSha256": "9de3214ead9c19c7a6a61969e332b3e479bf736a0b30e964932d73324fb0b32d",
+      "resultSha256": "639af984d0fbfb7f5272e3d694cf8ab248b8f14255a6545072c3a10d8d567389"
+    }
+  ]
+}

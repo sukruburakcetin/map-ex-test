@@ -1,0 +1,12 @@
+{
+  "installer": "compact-controlbar-filters",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/styles/controlPanels.ts",
+      "operation": "update",
+      "originalSha256": "0eb6fc11f200260d82150d92539e4a592c8328240a95f73d6a811d20cfc44e68",
+      "resultSha256": "e3cfffda06a4648c2ca86056ffb91ab2cd14093cecf7512e65ff18beb6b742c2"
+    }
+  ]
+}

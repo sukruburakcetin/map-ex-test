@@ -1,0 +1,48 @@
+{
+  "installer": "field-note-draft",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "b1649ff0789d32fce9430ce4f10193f7f9a8660886300b836f70fe7e05e9ffc6",
+      "resultSha256": "b9213ec036c6202cf24ee9f7a05d5237a55bf70a15317a5e77292c74dddb4c31"
+    },
+    {
+      "file": "src/features/field-notes/README.md",
+      "operation": "update",
+      "originalSha256": "6333b6a24bfbfe85d6e43906e631c4ff8b56355ae9c4e8d3b2d5f48f1b74cf77",
+      "resultSha256": "a33452d1d54a322dd27d33a08eff328e6e2568f5c24da26bfaffb0689469bbbc"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "44dfeb6a24796a70cadd557862e41639bbe4d85550ac7582e20b4b5d06f50477",
+      "resultSha256": "1f6c2e40c5295c6b847dae2b0dc24ce896b8af05308ab788ea85ef067bdffa99"
+    },
+    {
+      "file": "src/features/field-notes/FieldNoteDraft.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "cb897bbc9dad5724a4952da9b7ba41a2f55e7701085b862a6d65bf154f6df1d0"
+    },
+    {
+      "file": "src/features/field-notes/FieldNoteDraftFeedback.tsx",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "e5fa5b904a29c06ade1021bebb2447d4e26a11f627ffa6182cb9d2b6d7b2ccad"
+    },
+    {
+      "file": "tests/fieldNoteDraft.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "10ed132793e7a78e759f99621b07b6661cfdf5dc8948eb3e26c632f1844e3377"
+    },
+    {
+      "file": "tests/fixtures/fieldNoteDraft.baseline.json",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "c57bcc7c8a7acc0d38a80690be05ca55b72408210fdd46c933d9baac1147acbb"
+    }
+  ]
+}

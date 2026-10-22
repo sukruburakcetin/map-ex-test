@@ -1,0 +1,18 @@
+{
+  "installer": "shared-map-startup-fix",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "3f731e03413b10f5d203bc831b608b9635a70d61a88ec211e10b5e4a418da53c",
+      "resultSha256": "b07d3806d04e5b574c3e26c674eb71d1c131d698ef996769f1439de8fce59743"
+    },
+    {
+      "file": "src/features/map-graphics/MapSymbolLegend.ts",
+      "operation": "update",
+      "originalSha256": "db23598f8ecfeb277c1dfa147877633ba1643715bf9ba3f830bdeeb09ec1ff6b",
+      "resultSha256": "32a9d3561748d29f6e27294a339ccf3a9707108c1211fff9911a9c170141b8cc"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+[
+  {
+    "file": "src\\components\\InfoBox.tsx",
+    "created": false
+  },
+  {
+    "file": "docs\\INFOBOX-SECTIONS.md",
+    "created": false
+  },
+  {
+    "file": "src\\features\\coverage\\CoverageAnalysisTrigger.tsx",
+    "created": true
+  },
+  {
+    "file": "src\\styles\\coverageAnalysis.ts",
+    "created": true
+  }
+]

@@ -1,6 +1,7 @@
 /** @jsx jsx */
 import { React, jsx } from "jimu-core";
 import { glassStyles } from "../utils/styles";
+import { controlBarInteractionCss, controlBarCompactCss } from '../styles/controlPanels';
 import * as Icons from "../components/Icons";
 import { ControlBarProps } from "./types";
 
@@ -9,16 +10,13 @@ import { ControlBarProps } from "./types";
     * Vertical glass button panel docked at the left edge of the widget.
     * Contains:
     *  - Fullscreen toggle
-    *  - Coverage layer toggle (hidden when coverageLayerAlwaysOn)
-    *  - Turbo Mode group (main button + filter toggle)
+    *  - Coverage filters
     *  - Traffic Signs group (main button + filter toggle)
     *  - Objects group (main button + filter toggle)
     * All click handlers are passed in as props - this component is purely
     * presentational and owns no state.
 */
 export const ControlBar: React.FC<ControlBarProps> = ({
-    coverageLayerAlwaysOn,
-    turboModeOnly,
     hideTurboFilter,
     enableTrafficSigns,
     enableMapillaryObjects,
@@ -32,17 +30,14 @@ export const ControlBar: React.FC<ControlBarProps> = ({
     showObjectsFilterBox,
     jimuMapView,
     onToggleFullscreen,
-    onToggleTiles,
-    onToggleTurboMode,
     onToggleTurboFilter,
     onToggleTrafficSigns,
     onToggleTrafficSignsFilter,
     onToggleObjects,
     onToggleObjectsFilter
 }) => {
-    const zoom = jimuMapView?.view?.zoom ?? 0;
-    const coverageReady = turboModeActive && zoom >= 16;
-    // Individual icon buttons (fullscreen + coverage toggle)
+
+    // Fullscreen control
     const singleButtons = [
         {
             id: "fullscreen",
@@ -51,56 +46,43 @@ export const ControlBar: React.FC<ControlBarProps> = ({
             title: "Maximize/Fullscreen",
             bg: "rgba(2, 117, 216, 0.9)",
             active: isFullscreen
-        },
-        {
-            id: "coverage_toggle",
-            content: <Icons.MapLayer size={20} />,
-            onClick: onToggleTiles,
-            title: "Toggle Mapillary Layer",
-            bg: "rgba(53, 175, 109, 0.9)",
-            active: tilesActive
         }
-    ].filter(btn => !(btn.id === "coverage_toggle" && coverageLayerAlwaysOn));
+    ];
 
     return (
         <div
             className="glass-control-panel"
-            style={glassStyles.container}
+            style={{ ...glassStyles.container, background: "rgba(18,31,27,0.62)", border: "1px solid rgba(170,205,188,0.22)", borderRadius: 12, boxShadow: "0 4px 14px rgba(0,0,0,0.2)" }}
         >
+<style>{controlBarInteractionCss}</style>
+            <style>{controlBarCompactCss}</style>
             {/* SINGLE ICON BUTTONS */}
             {singleButtons.map((btn, i) => (
                 <button
+                            type="button"
                     className={`unified-control-buttons-mapped${btn.active ? " is-active" : ""}`}
                     key={i}
                     title={btn.title}
+                    aria-label={btn.title}
+                    aria-pressed={btn.active}
                     onClick={btn.onClick}
-                    style={glassStyles.getButtonStyle(btn.active, btn.bg)}
+                    style={{ ...glassStyles.getButtonStyle(btn.active, btn.bg), boxSizing: "border-box", border: btn.active ? "1px solid rgba(195,230,214,0.65)" : "1px solid rgba(255,255,255,0.08)" }}
                 >
                     {btn.content}
                 </button>
             ))}
 
             {/* TURBO MODE GROUP */}
-            {(!turboModeOnly || !hideTurboFilter) && (
+            {!hideTurboFilter && (
                 <div style={glassStyles.groupContainer(turboModeActive)}>
-                    {/* Main Turbo button */}
-                    {!turboModeOnly && (
-                        <button
-                            className={`unified-control-buttons${turboModeActive ? " is-active" : ""}`}
-                            title="Toggle Turbo Mode"
-                            onClick={onToggleTurboMode}
-                            style={glassStyles.getButtonStyle(turboModeActive, "rgba(95, 92, 53, 0.30)")}
-                        >
-                            <Icons.Turbo size={20}
-                                style={{ filter: turboModeActive ? "drop-shadow(0 0 1.2px grey)" : "none" }}
-                            />
-                        </button>
-                    )}
                     {/* Turbo filter toggle */}
                     {!hideTurboFilter && (
                         <button
+                            type="button"
                             className={`unified-control-buttons-filters${turboModeActive ? " is-hoverable" : ""}`}
-                            title="Filter Turbo Mode Coverage"
+                            title="Filter Coverage"
+                            aria-label="Filter Coverage"
+                            aria-expanded={showTurboFilterBox}
                             onClick={onToggleTurboFilter}
                             style={{
                                 ...glassStyles.getButtonStyle(showTurboFilterBox, "rgba(255, 215, 0, 0.5)", true),
@@ -118,18 +100,24 @@ export const ControlBar: React.FC<ControlBarProps> = ({
             {enableTrafficSigns !== false && (
                 <div style={glassStyles.groupContainer(trafficSignsActive)}>
                     <button
+                            type="button"
                         className={`unified-control-buttons${trafficSignsActive ? " is-active" : ""}`}
                         title="Toggle Mapillary Traffic Signs Layer"
+                        aria-label="Toggle Mapillary Traffic Signs Layer"
+                        aria-pressed={trafficSignsActive}
                         onClick={onToggleTrafficSigns}
-                        style={glassStyles.getButtonStyle(trafficSignsActive, "rgba(147, 102, 19, 0.3)")}
+                        style={{ ...glassStyles.getButtonStyle(trafficSignsActive, "rgba(147, 102, 19, 0.3)"), boxSizing: "border-box", border: trafficSignsActive ? "1px solid rgba(195,230,214,0.65)" : "1px solid rgba(255,255,255,0.08)" }}
                     >
                         <Icons.AllMapillaryTrafficSigns size={16}
                             style={{ filter: trafficSignsActive ? "drop-shadow(0 0 1.2px grey)" : "none" }}
                         />
                     </button>
-                    <button
+                    {trafficSignsActive && <button
+                            type="button"
                         className={`unified-control-buttons-filters${trafficSignsActive ? " is-hoverable" : ""}`}
                         title="Filter Traffic Signs"
+                        aria-label="Filter Traffic Signs"
+                        aria-expanded={showTrafficSignsFilterBox}
                         onClick={onToggleTrafficSignsFilter}
                         style={{
                             ...glassStyles.getButtonStyle(showTrafficSignsFilterBox, "rgba(255, 165, 0, 0.5)", true),
@@ -138,7 +126,7 @@ export const ControlBar: React.FC<ControlBarProps> = ({
                         }}
                     >
                         <Icons.Filter size={16} />
-                    </button>
+                    </button>}
                 </div>
             )}
 
@@ -146,18 +134,24 @@ export const ControlBar: React.FC<ControlBarProps> = ({
             {enableMapillaryObjects !== false && (
                 <div style={glassStyles.groupContainer(objectsActive)}>
                     <button
+                            type="button"
                         className={`unified-control-buttons${objectsActive ? " is-active" : ""}`}
                         title="Toggle Mapillary Objects Layer"
+                        aria-label="Toggle Mapillary Objects Layer"
+                        aria-pressed={objectsActive}
                         onClick={onToggleObjects}
-                        style={glassStyles.getButtonStyle(objectsActive, "rgba(155, 55, 55, 0.3)")}
+                        style={{ ...glassStyles.getButtonStyle(objectsActive, "rgba(155, 55, 55, 0.3)"), boxSizing: "border-box", border: objectsActive ? "1px solid rgba(195,230,214,0.65)" : "1px solid rgba(255,255,255,0.08)" }}
                     >
                         <Icons.AllMapillaryObjects size={16}
                             style={{ filter: objectsActive ? "drop-shadow(0 0 0.2px grey)" : "none" }}
                         />
                     </button>
-                    <button
+                    {objectsActive && <button
+                            type="button"
                         className={`unified-control-buttons-filters${objectsActive ? " is-hoverable" : ""}`}
                         title="Filter Objects"
+                        aria-label="Filter Objects"
+                        aria-expanded={showObjectsFilterBox}
                         onClick={onToggleObjectsFilter}
                         style={{
                             ...glassStyles.getButtonStyle(showObjectsFilterBox, "rgba(255, 60, 60, 0.5)", true),
@@ -166,7 +160,7 @@ export const ControlBar: React.FC<ControlBarProps> = ({
                         }}
                     >
                         <Icons.Filter size={16} />
-                    </button>
+                    </button>}
                 </div>
             )}
         </div>

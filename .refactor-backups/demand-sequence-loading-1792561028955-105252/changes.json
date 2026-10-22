@@ -1,0 +1,42 @@
+{
+  "installer": "demand-sequence-loading",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "b215d46f3b7510d82586caa9b29399d6974c90cd561a5c9a16e35e9324f2390a",
+      "resultSha256": "6f4f89310c76017d40165e2cd2192d3e67e1c7294908c4d7f9e3265501931f8e"
+    },
+    {
+      "file": "src/features/imagery/sequenceCoordinates.ts",
+      "operation": "update",
+      "originalSha256": "3b15473638c144375def3a388ea4416af67e1e29857fe7a70b6ce1dd8c57001e",
+      "resultSha256": "717ab607f8c4e66959f42a63383cc5afc351865185c217c04f52463e4bfafc04"
+    },
+    {
+      "file": "src/features/imagery/LiveSequenceFrames.ts",
+      "operation": "update",
+      "originalSha256": "24a351794df52a0f18036c72789874ef065086642770e143a38e4f53f906f880",
+      "resultSha256": "b516cd99a565442e217407b1a2351528921674142bf24dfd0c84b8fb88343a02"
+    },
+    {
+      "file": "src/features/imagery/playbackRecovery.ts",
+      "operation": "update",
+      "originalSha256": "21e576b8a61841002cb9e8cf6cf4c5de9569b603b5b3afcafee9bd9e6c4c0e3f",
+      "resultSha256": "826176acc8bb44f599d8da19855ce16352a2cca38bf1126d155cd475977bfc48"
+    },
+    {
+      "file": "src/components/InfoBox.tsx",
+      "operation": "update",
+      "originalSha256": "54d032db41d131e092566a678e58b5fd6bcc8445e3ba9272f2e8c4989d41e085",
+      "resultSha256": "096d4001e6c40c455db7af8a01e2dc96a1e79f14aaedcbef2dc2dab35b1f7adc"
+    },
+    {
+      "file": "src/features/imagery/SequenceDemandData.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "5707e29c3c9e6e54bb7dd931d94d07d3cf26522fae3fd55f1fa708121d8a4a36"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "installer": "profile-layout-performance-fix",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/features/elevation/profileIndicator.ts",
+      "operation": "update",
+      "originalSha256": "15206e56b3b29357636f91ef32c56118136e3d210d2a5a98f778b6dc251b800a",
+      "resultSha256": "76503895b97e2da9ccf96636216321c5e7791dc6e2439f6d0da356750d19d508"
+    },
+    {
+      "file": "src/features/elevation/ElevationProfileController.ts",
+      "operation": "update",
+      "originalSha256": "7b6b1631cea3a166b8340560759f442963acd4f5ac0f2c90b38b60f3bd1a5995",
+      "resultSha256": "4c046d6c8f67bf35bf40e08774e6cde8739df1db14abce2c33b82b4dfa6e8dfc"
+    },
+    {
+      "file": "src/features/elevation/README.md",
+      "operation": "update",
+      "originalSha256": "070092341f82539b9ad9e44c1aaa615e8ee41e89067b6cc2163ed330c20813cb",
+      "resultSha256": "0d1021fbec3ca242c37dee4af78ce4be0e9d4019302856891077d373adf1bbce"
+    }
+  ]
+}

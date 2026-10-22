@@ -1,0 +1,48 @@
+{
+  "installer": "local-note-collection",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "b9213ec036c6202cf24ee9f7a05d5237a55bf70a15317a5e77292c74dddb4c31",
+      "resultSha256": "cb6345948a5b404d79414f540662b92109511c35bb86a3c4178477524dc7b08f"
+    },
+    {
+      "file": "src/features/field-notes/README.md",
+      "operation": "update",
+      "originalSha256": "a33452d1d54a322dd27d33a08eff328e6e2568f5c24da26bfaffb0689469bbbc",
+      "resultSha256": "5b122486c12963366afaf6d616be353690dbc2190edcb624f41d15f79772913c"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "1f6c2e40c5295c6b847dae2b0dc24ce896b8af05308ab788ea85ef067bdffa99",
+      "resultSha256": "4df37a557f5de6fc74eb4e8af2a4fc4541e04c5e2837ad96574a15bfa9d4636b"
+    },
+    {
+      "file": "src/features/field-notes/LocalNoteCollection.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "6e2a1c8523a5cbbd15a66ab47a0c26f4c65a629cdadb26c239b74b23af9af057"
+    },
+    {
+      "file": "src/features/field-notes/LocalNoteCollectionFeedback.tsx",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "4d505c220fb8879e535cb806b777147d206079d2fa127d009114d3308ec4ff43"
+    },
+    {
+      "file": "tests/localNoteCollection.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "5d085017312e441f1055e25f2b49f32faa8a321906b86be786faa963f6be858d"
+    },
+    {
+      "file": "tests/fixtures/localNoteCollection.baseline.json",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "602a5cad464c9667e09afa20aab26223f24c35cdb8e1c6aafab7ba72a793e774"
+    }
+  ]
+}

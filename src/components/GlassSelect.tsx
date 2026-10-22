@@ -1,5 +1,7 @@
 /** @jsx jsx */
 import { React, jsx } from "jimu-core";
+import ReactDOM from "react-dom";
+import { base, controlStyle, menuStyle, optionStyle, chevron } from '../styles/glassSelect';
 
 // Types
 export interface GlassSelectOption {
@@ -9,6 +11,8 @@ export interface GlassSelectOption {
 }
 
 interface GlassSelectProps {
+    floatingMenu?: boolean;
+    compact?: boolean;
     value: GlassSelectOption;
     onChange: (option: GlassSelectOption) => void;
     options: GlassSelectOption[];
@@ -18,93 +22,38 @@ interface GlassSelectProps {
 }
 
 
-// Styles
-const base: React.CSSProperties = {
-    position: "relative",
-    display: "inline-block",
-    width: "100%",
-    fontFamily: "'Segoe UI', system-ui, sans-serif",
-    fontSize: "10px",
-    userSelect: "none",
-    WebkitUserSelect: "none",
-};
-
-const controlStyle = (accent: string, open: boolean): React.CSSProperties => ({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "4px",
-    padding: "3px 6px",
-    backdropFilter: "blur(10px)",
-    WebkitBackdropFilter: "blur(10px)",
-    border: `1px solid ${open ? accent : "rgba(255,255,255,0.15)"}`,
-    borderRadius: open ? "6px 6px 0 0" : "6px",
-    color: "#fff",
-    cursor: "pointer",
-    minHeight: "24px",
-    boxShadow: open ? `0 0 8px ${accent}55` : "none",
-    transition: "border-color 0.15s, box-shadow 0.15s",
-    boxSizing: "border-box" as const,
-    minWidth: "130px",
-});
-
-const menuStyle = (accent: string, placement: "top" | "bottom"): React.CSSProperties => ({
-    position: "absolute",
-    [placement === "top" ? "bottom" : "top"]: "100%",
-    left: 0,
-    right: 0,
-    zIndex: 99999,
-    maxHeight: "200px",
-    overflowY: "auto",
-    background: "rgba(15,15,15,0.92)",
-    backdropFilter: "blur(14px)",
-    WebkitBackdropFilter: "blur(14px)",
-    border: `1px solid ${accent}66`,
-    borderTop: placement === "top" ? `1px solid ${accent}66` : "none",
-    borderBottom: placement === "bottom" ? `1px solid ${accent}66` : "none",
-    borderRadius: placement === "top" ? "6px 6px 0 0" : "0 0 6px 6px",
-    boxShadow: `0 8px 24px rgba(0,0,0,0.5), 0 0 12px ${accent}33`,
-    scrollbarWidth: "thin" as const,
-    scrollbarColor: `${accent}55 transparent`,
-});
-
-const optionStyle = (hovered: boolean, selected: boolean, accent: string): React.CSSProperties => ({
-    display: "flex",
-    alignItems: "center",
-    gap: "7px",
-    padding: "5px 8px",
-    cursor: "pointer",
-    color: selected ? "#fff" : "rgba(255,255,255,0.82)",
-    background: selected
-        ? `${accent}33`
-        : hovered
-        ? "rgba(255,255,255,0.08)"
-        : "transparent",
-    fontWeight: selected ? 600 : 400,
-    borderLeft: selected ? `2px solid ${accent}` : "2px solid transparent",
-    transition: "background 0.1s",
-    boxSizing: "border-box" as const,
-    whiteSpace: "nowrap" as const,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-});
-
-const chevron = (open: boolean, accent: string): React.CSSProperties => ({
-    flexShrink: 0,
-    width: "8px",
-    height: "8px",
-    borderRight: `1.5px solid ${open ? accent : "rgba(255,255,255,0.5)"}`,
-    borderBottom: `1.5px solid ${open ? accent : "rgba(255,255,255,0.5)"}`,
-    transform: open ? "rotate(-135deg) translateY(2px)" : "rotate(45deg) translateY(-2px)",
-    transition: "transform 0.2s, border-color 0.15s",
-    marginLeft: "2px",
-});
+// Presentation styles live in styles/glassSelect.ts.
 
 // Component
 export class GlassSelect extends React.PureComponent<
     GlassSelectProps,
     { open: boolean; hoveredIdx: number; searchQuery: string }
 > {
+    private menuRef = React.createRef<HTMLDivElement>();
+    private closeFloatingMenu = (event?: Event) => {
+        if (!this.props.floatingMenu || (event?.target instanceof Node && this.menuRef.current?.contains(event.target))) return;
+        this.setState({ open: false });
+    };
+    private renderFloatingMenu = (menu: React.ReactNode) => this.props.floatingMenu
+        ? ReactDOM.createPortal(menu, document.fullscreenElement || document.body) : menu;
+    private floatingMenuStyle = (): React.CSSProperties => {
+        const rect = this.containerRef.current?.getBoundingClientRect();
+        if (!this.props.floatingMenu || !rect) return {};
+        const width = Math.min(Math.max(240, rect.width), window.innerWidth - 16);
+        // Clear the entire filter strip, including its scrollbar and border.
+        const panel = this.containerRef.current?.closest('.mly-filter-panel')?.getBoundingClientRect();
+        const anchorTop = panel?.top ?? rect.top, anchorBottom = panel?.bottom ?? rect.bottom;
+        const gap = panel ? 8 : 6;
+        const spaceAbove = Math.max(0, anchorTop - gap - 8);
+        const spaceBelow = Math.max(0, window.innerHeight - anchorBottom - gap - 8);
+        const above = panel
+            ? ((this.props.menuPlacement ?? 'top') === 'top' ? spaceAbove >= Math.min(120, spaceBelow) : spaceAbove > spaceBelow && spaceBelow < 120)
+            : rect.top > 250;
+        return { position: "fixed", left: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)), right: "auto", width,
+            top: above ? "auto" : anchorBottom + gap, bottom: above ? window.innerHeight - anchorTop + gap : "auto",
+            transform: "none", zIndex: 2147483647, isolation: "isolate",
+            maxHeight: Math.min(250, above ? spaceAbove : spaceBelow), overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" };
+    };
     private containerRef = React.createRef<HTMLDivElement>();
     private searchRef = React.createRef<HTMLInputElement>();
 
@@ -116,14 +65,18 @@ export class GlassSelect extends React.PureComponent<
 
     componentDidMount() {
         document.addEventListener("mousedown", this.handleOutsideClick);
+        document.addEventListener("scroll", this.closeFloatingMenu, true);
+        window.addEventListener("resize", this.closeFloatingMenu);
     }
 
     componentWillUnmount() {
         document.removeEventListener("mousedown", this.handleOutsideClick);
+        document.removeEventListener("scroll", this.closeFloatingMenu, true);
+        window.removeEventListener("resize", this.closeFloatingMenu);
     }
 
     private handleOutsideClick = (e: MouseEvent) => {
-        if (this.containerRef.current && !this.containerRef.current.contains(e.target as Node)) {
+        if (this.containerRef.current && !this.containerRef.current.contains(e.target as Node) && !this.menuRef.current?.contains(e.target as Node)) {
             this.setState({ open: false, searchQuery: "" });
         }
     };
@@ -160,13 +113,14 @@ export class GlassSelect extends React.PureComponent<
             : options;
 
         return (
-            <div ref={this.containerRef} style={base}>
+            <div ref={this.containerRef} style={{ ...base, ...(this.props.compact ? { width: `clamp(190px, ${Math.max(190, (value?.label?.length || 0) * 5.3 + 48)}px, 320px)`, flexShrink: 0 } : {}) }}>
                 {/* Control (trigger) */}
                 <div
                     style={controlStyle(accentColor, open)}
                     onClick={this.toggle}
                     role="combobox"
                     aria-expanded={open}
+                    title={value?.label}
                 >
                     {/* Selected value label */}
                     <div style={{ display: "flex", alignItems: "center", gap: "5px", overflow: "hidden", flex: 1 }}>
@@ -191,8 +145,8 @@ export class GlassSelect extends React.PureComponent<
                 </div>
 
                 {/* Dropdown menu */}
-                {open && (
-                    <div style={menuStyle(accentColor, menuPlacement)}>
+                {open && this.renderFloatingMenu(
+                    <div ref={this.menuRef} className="mly-filter-floating-menu" style={{ ...menuStyle(accentColor, menuPlacement), ...this.floatingMenuStyle() }}>
                         {/* Search input */}
                         {options.length > 6 && (
                             <div style={{ padding: "4px 6px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
@@ -227,7 +181,8 @@ export class GlassSelect extends React.PureComponent<
                             filtered.map((opt, idx) => (
                                 <div
                                     key={opt.value}
-                                    style={optionStyle(hoveredIdx === idx, opt.value === value?.value, accentColor)}
+                                    style={{ ...optionStyle(hoveredIdx === idx, opt.value === value?.value, accentColor), fontSize: "10px", whiteSpace: "normal" }}
+                                    title={opt.label}
                                     onMouseEnter={() => this.setState({ hoveredIdx: idx })}
                                     onMouseLeave={() => this.setState({ hoveredIdx: -1 })}
                                     onMouseDown={e => { e.preventDefault(); this.select(opt); }}
@@ -240,7 +195,7 @@ export class GlassSelect extends React.PureComponent<
                                             style={{ width: 14, height: 14, objectFit: "contain", flexShrink: 0 }}
                                         />
                                     )}
-                                    <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+                                    <span style={{ whiteSpace: "normal", overflowWrap: "anywhere", lineHeight: 1.4 }}>
                                         {opt.label}
                                     </span>
                                 </div>

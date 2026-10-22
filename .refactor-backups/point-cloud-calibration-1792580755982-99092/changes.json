@@ -1,0 +1,48 @@
+{
+  "installer": "point-cloud-calibration",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "a7ebc25d38021b08359873e27899d7cf190e790dcc8bec32324412d015731241",
+      "resultSha256": "838e54b102113855899b8d18a906d737fded5d31fbd453f3abcb2e119c7a4421"
+    },
+    {
+      "file": "docs/POINT-CLOUD-OWNERSHIP.md",
+      "operation": "update",
+      "originalSha256": "bbdeffc2ba4700af22ff795d92a0a722f7266eb3fa19babc1a1b12f05709405a",
+      "resultSha256": "eb36d996043d05c217732eb0f0a6ca6e5902bec6f826ae2747b5ec51d1649fe4"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "145aeaf3e66be364d4782aaff5fcd3f32c6017be21701ecbfe574a16da9f027b",
+      "resultSha256": "5f0dcc08e5dba17aa177443d39311fccc01e802bfdd9167c40f794bdccf6f063"
+    },
+    {
+      "file": "src/features/point-cloud/README.md",
+      "operation": "update",
+      "originalSha256": "4de57b8c846fc665526fe052ea84b99b8c27cc1668215913a86ddeec63101eaa",
+      "resultSha256": "f08a77142243af6f78dfa4866d194459ac82044da68f003cdd2864226a9dbfa6"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudCalibration.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "bd3e408e9e21e7eef0687a3a161e260e5a92c89d92b6ea51dbe470cdf7612533"
+    },
+    {
+      "file": "tests/pointCloudCalibration.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "cdcc9c940c2ef1b7bb50530635fa3cd0431305d1d811a3e67446679919b85f7b"
+    },
+    {
+      "file": "tests/fixtures/pointCloudCalibration.baseline.json",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "2a2ae1ceaf0a979c5e49111d39c72c1cee201f396ae9211727fb1ffb2a9781fb"
+    }
+  ]
+}

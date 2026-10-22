@@ -1,0 +1,24 @@
+{
+  "installer": "sequence-loading-clarity",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "6f4f89310c76017d40165e2cd2192d3e67e1c7294908c4d7f9e3265501931f8e",
+      "resultSha256": "813c060851351446bda80667cc6ef9417e64c834df1db1df0352910407241b08"
+    },
+    {
+      "file": "src/components/Legend.tsx",
+      "operation": "update",
+      "originalSha256": "ef73a47b1e558ee5dcfc471744bdc6fa2d8bbb3026e8ca17269ba49cd15e8d78",
+      "resultSha256": "db575c4102ca43844a57e08a36ef7d593b47a85cfa5ec3f30a54dd183ff28cc5"
+    },
+    {
+      "file": "src/features/map-graphics/MapSymbolLegend.ts",
+      "operation": "update",
+      "originalSha256": "32a9d3561748d29f6e27294a339ccf3a9707108c1211fff9911a9c170141b8cc",
+      "resultSha256": "2633460f310f0278c52892bae307647590e1882a655526789eda935ddd658a72"
+    }
+  ]
+}

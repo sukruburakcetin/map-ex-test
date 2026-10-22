@@ -1,0 +1,14 @@
+[
+  {
+    "file": "src/runtime/widget.tsx",
+    "created": false
+  },
+  {
+    "file": "src/features/coverage/nearbySequenceFrame.ts",
+    "created": false
+  },
+  {
+    "file": "src/features/coverage/CoverageFrameLookup.ts",
+    "created": true
+  }
+]

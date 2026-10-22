@@ -1,0 +1,18 @@
+[
+  {
+    "file": "src\\components\\InfoBox.tsx",
+    "created": false
+  },
+  {
+    "file": "docs\\INFOBOX-SECTIONS.md",
+    "created": false
+  },
+  {
+    "file": "src\\features\\detections\\DetectionToolsSection.tsx",
+    "created": true
+  },
+  {
+    "file": "src\\styles\\detectionControls.ts",
+    "created": true
+  }
+]

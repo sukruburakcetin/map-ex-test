@@ -1,0 +1,14 @@
+[
+  {
+    "file": "src\\runtime\\widget.tsx",
+    "created": false
+  },
+  {
+    "file": "src\\features\\imagery\\sequenceCoordinates.ts",
+    "created": false
+  },
+  {
+    "file": "src\\features\\imagery\\sequenceCacheStore.ts",
+    "created": true
+  }
+]

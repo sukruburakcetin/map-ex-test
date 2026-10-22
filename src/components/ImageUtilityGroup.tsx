@@ -1,6 +1,7 @@
 /** @jsx jsx */
 import { React, jsx } from "jimu-core";
 import { glassStyles } from "../utils/styles";
+import { imageUtilityInteractionCss, pointCloudModeCss, imageUtilityPanelStyle } from '../styles/controlPanels';
 import * as Icons from "./Icons";
 import { ImageUtilityGroupProps } from "./types";
 
@@ -25,7 +26,11 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = ({
     is3D,
     imageId,
     sequenceImages,
+    pointCloudFollowImages,
+    onPointCloudFollowImagesChange,
     pointCloudLoading,
+    pointCloudAutoPaused,
+    pointCloudActive,
     pointCloudVisible,
     pointCloudAvailable,
     // callbacks
@@ -38,20 +43,9 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = ({
 }) => (
     <div
         className="glass-image-utility-panel"
-        style={{
-            position: "absolute",
-            bottom: "22px",
-            right: "55px",
-            zIndex: 10000,
-            gap: "3px",
-            padding: "1px 3px 1px 2px",
-            background: "rgba(20, 20, 20, 0.4)",
-            backdropFilter: "blur(1px)",
-            WebkitBackdropFilter: "blur(1px)",
-            borderRadius: "12px",
-            boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.30)",
-        }}
+        style={imageUtilityPanelStyle}
     >
+<style>{imageUtilityInteractionCss}</style>
         {/* 1. Time Travel */}
         {!hideTimeTravel && hasTimeTravel && (
             <button
@@ -141,28 +135,29 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = ({
 
         {/* 6. Point Cloud, 3D only, hidden when no sfm_cluster or config hides it */}
         {is3D && !hidePointCloud && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, position: "relative", pointerEvents: "auto" }}>
             <button
                 className="utility-button"
                 title={
                     pointCloudLoading
-                        ? "Loading point cloud…"
+                        ? "Cancel point-cloud loading"
                         : pointCloudAvailable === false
                         ? "No point cloud available for this image"
-                        : pointCloudVisible
-                        ? "Hide point cloud"
-                        : "Load point cloud"
+                        : (pointCloudVisible || pointCloudActive)
+                        ? `Point cloud ${pointCloudAutoPaused ? "PAUSED" : pointCloudFollowImages ? "AUTO" : "ON"} — click to close`
+                        : `Load point cloud (${pointCloudFollowImages ? "auto-follow" : "current image"})`
                 }
-                onClick={pointCloudLoading || pointCloudAvailable === false
-                    ? undefined
-                    : onTogglePointCloud
-                }
+                onClick={pointCloudAvailable === false && !pointCloudLoading && !pointCloudVisible && !pointCloudActive ? undefined : onTogglePointCloud}
+                aria-label={pointCloudLoading ? "Cancel point-cloud loading" : (pointCloudVisible || pointCloudActive) ? "Close point cloud" : "Load point cloud"}
+                aria-pressed={(!!pointCloudVisible || !!pointCloudActive) || !!pointCloudLoading}
                 style={{
                     ...glassStyles.getButtonStyle(
-                        !!pointCloudVisible,
+                        (!!pointCloudVisible || !!pointCloudActive),
                         "rgba(120, 80, 255, 0.45)"
                     ),
-                    opacity: pointCloudAvailable === false ? 0.35 : 1,
-                    cursor: pointCloudLoading || pointCloudAvailable === false
+                    position: "relative",
+                    opacity: pointCloudAvailable === false && !pointCloudLoading && !pointCloudVisible && !pointCloudActive ? 0.35 : 1,
+                    cursor: pointCloudAvailable === false && !pointCloudLoading && !pointCloudVisible && !pointCloudActive
                         ? "default"
                         : "pointer",
                     boxShadow: pointCloudVisible
@@ -191,7 +186,32 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = ({
                 ) : (
                     <Icons.PointCloud size={16} />
                 )}
+                {(!pointCloudLoading && (pointCloudVisible || pointCloudActive)) && <span aria-hidden="true" style={{ position: "absolute", bottom: -3, left: "50%", transform: "translateX(-50%)", borderRadius: 3, padding: "1px 3px", background: pointCloudLoading ? "#614523" : "#315e43", color: "white", fontSize: 6, fontWeight: 700, lineHeight: 1.2, pointerEvents: "none" }}>{pointCloudLoading ? "CANCEL" : pointCloudAutoPaused ? "PAUSED" : pointCloudFollowImages ? "AUTO" : "ON"}</span>}
             </button>
+                {pointCloudVisible && <details
+                  className="mapillary-point-cloud-mode"
+                  style={{ position: "relative", pointerEvents: "auto", flexShrink: 0, width: 12, overflow: "visible" }}
+                  onKeyDown={event => { if (event.key === "Escape") { event.currentTarget.open = false; event.currentTarget.querySelector("summary")?.focus(); } }}
+                  >
+                  <style>{pointCloudModeCss}</style>
+                  <summary aria-label="Choose point-cloud mode" title={`Point-cloud mode: ${pointCloudFollowImages ? "Auto-follow" : "Current image"}`} style={{ listStyle: "none", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, width: 12, minWidth: 12, height: 24, boxSizing: "border-box", cursor: "pointer", pointerEvents: "auto", padding: "2px", borderRadius: 5, background: "rgba(86,62,144,0.9)", border: "1px solid rgba(200,184,255,0.6)", color: "#fff", fontSize: 7, fontWeight: 700 }}><svg aria-hidden="true" width="10" height="6" viewBox="0 0 10 6" style={{ display: "block", flexShrink: 0 }}><path d="M1 1 L5 5 L9 1" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg></summary>
+                  <div role="group" aria-label="Point-cloud mode" style={{ position: "absolute", bottom: "calc(100% + 5px)", right: 0, zIndex: 10003, width: 142, boxSizing: "border-box", padding: 5, borderRadius: 6, border: "1px solid #638974", background: "#17241e", color: "#e2ece7", boxShadow: "0 4px 14px rgba(0,0,0,0.4)", display: "flex", flexDirection: "column", gap: 3 }}>
+                    {[{ label: "Current image", follow: false }, { label: "Auto-follow", follow: true }].map(mode => <button
+                      key={mode.label} type="button" aria-pressed={!!pointCloudFollowImages === mode.follow}
+                      title={mode.follow ? "Fetch point clouds automatically as you browse images" : "Close point cloud when you change images"}
+                      onClick={event => {
+                        event.stopPropagation();
+                        const menu = event.currentTarget.closest("details"); if (menu) menu.open = false;
+                        if (!!pointCloudFollowImages !== mode.follow) onPointCloudFollowImagesChange?.(mode.follow);
+                      }}
+                      style={{ width: "100%", minHeight: 28, boxSizing: "border-box", display: "flex", alignItems: "center", gap: 6, padding: "5px 6px", borderRadius: 4, border: "1px solid transparent", background: !!pointCloudFollowImages === mode.follow ? "#294e3a" : "transparent", color: "#e2ece7", cursor: "pointer", fontFamily: "inherit", fontSize: 11, fontWeight: 500, lineHeight: 1.3, textAlign: "left", whiteSpace: "nowrap" }}>
+                      <span aria-hidden="true" style={{ width: 12, flexShrink: 0, pointerEvents: "none" }}>{!!pointCloudFollowImages === mode.follow ? "✓" : ""}</span><span style={{ pointerEvents: "none" }}>{mode.label}</span>
+                    </button>)}
+                  </div>
+                </details>}
+
+            </div>
         )}
+        {is3D && !hidePointCloud && pointCloudLoading && <button type="button" aria-label="Cancel point-cloud loading" onClick={onTogglePointCloud} style={{ pointerEvents: "auto", position: "relative", zIndex: 10001, gridColumn: "1 / -1", minHeight: 24, padding: "3px 5px", borderRadius: 5, border: "1px solid rgba(255,255,255,0.35)", background: "#493d36", color: "white", cursor: "pointer", fontSize: 10, fontWeight: 600 }}>Cancel</button>}
     </div>
 );

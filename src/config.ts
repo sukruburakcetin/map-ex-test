@@ -34,19 +34,19 @@ export interface Config {
   syncMapPosition?: string;
 
   /**
-   * If true, forces the widget to stay in Turbo Mode and may restrict non-turbo UI.
-   * Accessed in widget via: this.props.config.turboModeOnly
+   * @deprecated Retained for saved-app compatibility; coverage exploration is always enabled.
+   * This value is no longer read by the runtime.
    */
   turboModeOnly: boolean;
 
   /**
    * If true, the Mapillary Vector Tile (green lines/dots) layer loads immediately upon map ready.
-   * Accessed in widget via: this.props.config.coverageLayerAlwaysOn
+   * This value is no longer read by the runtime.
    */
   coverageLayerAlwaysOn: boolean;
 
   /**
-   * If true, hides the individual image points (circles) on the Mapillary coverage layer.
+   * @deprecated Retained for saved-app compatibility; image circles support point selection.
    */
   hideCoverageCircles?: boolean;
 
@@ -55,6 +55,9 @@ export interface Config {
    * Accessed in widget via: this.props.config.turboCreator
    */
   turboCreator?: string;
+
+  /** Optional numeric Mapillary organization ID; locks the runtime organization field. */
+  turboOrganization?: string;
 
   // Turbo Coverage Presets
   /**
@@ -95,9 +98,15 @@ export interface Config {
   enableQualityView?: boolean;
 
   /**
-   * If true, the legend overlay inside the viewer is hidden.
+   * If true, Mapillary symbol entries are hidden from the map legend.
    */
   hideLegend?: boolean;
+  /** Opt-in controls; missing values are disabled for existing saved apps too. */
+  enableSolar?: boolean;
+  enableElevationProfile?: boolean;
+
+  /** Add World Elevation to a 3D map only when it has no terrain source. Default: false. */
+  enable3DTerrain?: boolean;
 
   /**
    * If true, the info box (lat/lon, zoom, address) inside the viewer is hidden.
@@ -197,6 +206,9 @@ export interface Config {
    * If not configured or empty, defaults to FIELD_NOTE_CATEGORIES.
    */
   fieldNoteCategories?: string[];
+  sharedFieldNotesEnabled?: boolean;
+  sharedFieldNotesUrl?: string;
+  sharedFieldNotesReadUrl?: string;
 
   /**
    * Routing engine used by Capture Route.

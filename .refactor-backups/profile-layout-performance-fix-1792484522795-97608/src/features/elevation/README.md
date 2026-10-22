@@ -1,0 +1,11 @@
+# Elevation profile
+
+`ElevationProfileController` builds the ArcGIS profile input and an immutable frame-distance index from the same ordered sequence snapshot. Segment distances use the SDK's geodesic calculation in metres, in bounded batches. Identical inputs are reused; image playback does not regenerate profiles or scan the sequence.
+
+`profileIndicator.ts` renders a small SVG chart from the public `ElevationProfileLine.samples` API. Its explicit distance axis positions the dashed blue current-image line. The frame label includes its ordinal, distance, optional GPS altitude and an image-ID tooltip. Distance-axis zoom, pan and reset use the chart buttons. All elevations and stored distances are metres; long horizontal axes are labelled in kilometres.
+
+Only confirmed viewer image events may drive the current-image line. An optimistic selection, missing frame, or mismatching route/viewer hides the line. A separate grey line and “Inspecting profile” text show interpolated sample values under the pointer. Inspection neither changes imagery nor navigates the map. ArcGIS's sample-snapped map visualizations are disabled, leaving the existing green active-image marker authoritative.
+
+The SDK still owns terrain queries, loading progress, profile visibility switches and statistics. Its native chart is hidden while this renderer is attached and restored during cleanup. The renderer does not use private chart internals, arbitrary SVG paths, screenshot readback or predicted frames. Sample rendering preserves missing-data gaps and bounds SVG complexity by chart width.
+
+Route replacement and view transfer remove the old chart, watch, widget and fallback terrain source. The controller removes widgets from their creating view. The elevation profile never changes the visible map's Ground; the independent 3D-terrain setting owns optional scene terrain.

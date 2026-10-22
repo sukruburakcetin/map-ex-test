@@ -1,0 +1,12 @@
+{
+  "installer": "compact-mobile-profile-controls",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/features/elevation/profileIndicator.ts",
+      "operation": "update",
+      "originalSha256": "53622db6a60c86bf225dbdeb86a5c6834e28117a0a3905cb12543fefd2685763",
+      "resultSha256": "e96ea56ca8c8dbf2c00f0832dda647ad1f700b9d92d4df9232302e4dfc9a6522"
+    }
+  ]
+}

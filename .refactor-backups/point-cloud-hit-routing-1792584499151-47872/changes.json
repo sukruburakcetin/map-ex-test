@@ -1,0 +1,60 @@
+{
+  "installer": "point-cloud-hit-routing",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "cd37ab182633e1353adc25f73712b8da95aaf90827ddf6ebe90d7b5993d620f4",
+      "resultSha256": "f149cd5874938745b4b42866773c546053e70051bcd57e81895de0352bf968d5"
+    },
+    {
+      "file": "tests/pointCloudSight.test.cjs",
+      "operation": "update",
+      "originalSha256": "9b3726a8d3bda94d8065f8470d6fa6df43717987d9e48cfe06efb3517a0fd0af",
+      "resultSha256": "b386d4611521830fa3c498f86a80fa5c5f5915c5fe44c7f3155766c436092925"
+    },
+    {
+      "file": "tests/pointCloudViewshed.test.cjs",
+      "operation": "update",
+      "originalSha256": "224d04b26309e43410b75ad1ac8a91f2b19e95844ac739390d19a01fe8a0d978",
+      "resultSha256": "0cf0d3cd0891e33640ce8798e87e133b9f9c1f3b2fc63d6e88af0ef9d680d418"
+    },
+    {
+      "file": "docs/POINT-CLOUD-OWNERSHIP.md",
+      "operation": "update",
+      "originalSha256": "6ad02d186e40d47dac71554987c3e6adca4867c022f0364de91a394418f2a36b",
+      "resultSha256": "db865a87ea66aa6cbacc4c3514782413d74e0c9191afca3439511c59b9d8b556"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "6ad7f9a3c2c916a07542e0229ddf08ce3c910ef9cad948306b9627f1df161fe7",
+      "resultSha256": "e359ee4f5f3665797de965fb082d99f481cfb3f91d7534284268f27c88a5a5c8"
+    },
+    {
+      "file": "src/features/point-cloud/README.md",
+      "operation": "update",
+      "originalSha256": "28a3321d94546fcc71f8d10ca8e19037e4cc8f98ed9d91133dff137d656d14d9",
+      "resultSha256": "4e9d7c3b70d6d79b59bc27433b75b2478867f38cc0f5edd579ced41c56cb85f4"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudHitRouting.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "63cf383e7a531029aabfd9fd831d3468621c60ad1d6d9b7126c11161b72e4065"
+    },
+    {
+      "file": "tests/pointCloudHitRouting.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "49d41597fa4de333900fbd0470056de2dec63ef0b40f9f299e4067addbfc39d4"
+    },
+    {
+      "file": "tests/fixtures/pointCloudHitRouting.baseline.json",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "b4d9a79df64fab640e2148b99516f9e3e444dc09d4e5c810d12f65dda8f9b340"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "installer": "native-selection-repair",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "95b96e787ebde8311e10bdbe7fb44077964687234707205b6dc6f4632b61d2d8",
+      "resultSha256": "62b88972423124ce3119f5e0f1a8a6eb2fad2e856cd96eb4f1e4ae527882d7ba"
+    },
+    {
+      "file": "src/features/coverage/NativeSequenceSelection.ts",
+      "operation": "update",
+      "originalSha256": "4fec91477d248ae7bf07c80decd9d009d64bf75e27ca13e2c8e89a3977a964d7",
+      "resultSha256": "c65070f6217647889a404311f42aa20858fa527e0d9debdf1acbba5062346092"
+    },
+    {
+      "file": "tests/nativeSequenceSelection.test.cjs",
+      "operation": "update",
+      "originalSha256": "42ce3c8f69edecf7cbea1c7a5d8a1ca0421896636d851552bf000dafb1c35248",
+      "resultSha256": "d55e7bec2e31a2b2bc2d437b7585be3caf225a9922fa26fe2085502170051d25"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "5b05635a564ee5ab299eed899cda61cb5ee8024ecacad7e8ff464b64473bceac",
+      "resultSha256": "6346d06907cb5b975dae14bdd08bdb37069b2f962daf2916f677107af23fae03"
+    }
+  ]
+}

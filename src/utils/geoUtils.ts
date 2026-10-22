@@ -245,26 +245,6 @@ export function parseOverpassRoads(overpassJson: any): RoadSegment[] {
 }
 
 /**
- * Returns the distance in metres between two [lon, lat] points.
- * Uses planar approximation ; accurate enough at street scale.
- */
-function pointDistanceMeters(p: [number, number], q: [number, number]): number {
-  const R = 6_371_000;
-  const mPerDegLat = (Math.PI / 180) * R;
-  const mPerDegLon = mPerDegLat * Math.cos((((p[1] + q[1]) / 2) * Math.PI) / 180);
-  const dx = (p[0] - q[0]) * mPerDegLon;
-  const dy = (p[1] - q[1]) * mPerDegLat;
-  return Math.sqrt(dx * dx + dy * dy);
-}
-
-/**
- * Returns an interpolated point along segment AB at fraction t (0=A, 1=B).
- */
-function interpolate(a: [number, number], b: [number, number], t: number): [number, number] {
-  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
-}
-
-/**
   * Computes an inset bounding box in WGS84 degrees by shrinking each edge
   * inward by `insetMeters`. Used to exclude segments near the bbox edge whose
   * coverage point neighbourhood may be incomplete due to tile truncation.
@@ -325,6 +305,276 @@ export function segmentMidpointInBbox(seg: { start: [number, number]; end: [numb
  * @param minPoints       Min covered samples required to pass the segment
  * @returns               Covered and total segment counts and lengths in km
  */
+/** Conservative spatial candidate lookup; the original distance test remains authoritative. */
+export type CoverageAnalysisResult = {
+  coveredCount: number;
+  totalCount: number;
+  coveredKm: number;
+  remainingKm: number;
+  percentCovered: number;
+  segmentDates: (number | null)[];
+  segmentTiers: Array<"fresh" | "aging" | "stale" | "none">;
+  freshCount: number;
+  freshKm: number;
+  agingCount: number;
+  agingKm: number;
+  staleCount: number;
+  staleKm: number;
+  noneCount: number;
+  noneKm: number;
+};
+
+/** Self-contained factory: also executed in a Blob worker without module imports. */
+export function createCoverageClassifier() {
+  function pointDistanceMeters(p: [number, number], q: [number, number]): number {
+    const R = 6_371_000;
+    const mPerDegLat = (Math.PI / 180) * R;
+    const mPerDegLon = mPerDegLat * Math.cos((((p[1] + q[1]) / 2) * Math.PI) / 180);
+    const dx = (p[0] - q[0]) * mPerDegLon;
+    const dy = (p[1] - q[1]) * mPerDegLat;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  /**
+   * Returns an interpolated point along segment AB at fraction t (0=A, 1=B).
+   */
+  function interpolate(a: [number, number], b: [number, number], t: number): [number, number] {
+    return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  }
+
+  class CoveragePointIndex {
+    private readonly heads = new Map<number, number>();
+    private readonly next: Int32Array;
+    private readonly cellDegrees = 0.0005;
+    private readonly stride = 800001;
+    private direct: boolean;
+
+    private readonly points: [number, number][];
+
+    private built = 0;
+
+    constructor(points: [number, number][], deferBuild = false) {
+      this.points = points;
+      this.direct = points.length < 128 || !deferBuild && points.some(p => !p.every(Number.isFinite) || Math.abs(p[1]) > 90 || Math.abs(p[0]) > 180);
+      this.next = new Int32Array(this.direct ? 0 : points.length);
+      if (!deferBuild) while (!this.buildChunk()) { /* synchronous public API */ }
+    }
+
+    buildChunk(): boolean {
+      if (this.direct) return true;
+      const end = Math.min(this.points.length, this.built + 8192);
+      for (let i = this.built; i < end; i++) {
+        const point = this.points[i];
+        if (!point.every(Number.isFinite) || Math.abs(point[1]) > 90 || Math.abs(point[0]) > 180) {
+          this.direct = true; this.heads.clear(); return true;
+        }
+        const x = Math.floor((this.points[i][0] + 180) / this.cellDegrees);
+        const y = Math.floor((this.points[i][1] + 90) / this.cellDegrees);
+        const key = x * this.stride + y;
+        this.next[i] = this.heads.get(key) ?? -1;
+        this.heads.set(key, i);
+      }
+      this.built = end;
+      return end === this.points.length;
+    }
+
+    forEachCandidate(probe: [number, number], radiusMeters: number, visit: (index: number) => void): void {
+      const direct = () => { for (let i = 0; i < this.points.length; i++) visit(i); };
+      if (this.direct || !Number.isFinite(radiusMeters) || !probe.every(Number.isFinite)) { direct(); return; }
+      if (radiusMeters < 0) return;
+      const latitudeRadius = radiusMeters / ((Math.PI / 180) * 6371000);
+      // A matching point's mean latitude is within latitudeRadius/2 of the probe.
+      // Taking the minimum cosine in that interval gives a conservative longitude bound.
+      const maxMeanLatitude = Math.abs(probe[1]) + latitudeRadius / 2;
+      if (maxMeanLatitude >= 90) { direct(); return; }
+      const longitudeRadius = latitudeRadius / Math.cos(maxMeanLatitude * Math.PI / 180);
+      const epsilon = 1e-10;
+      const left = Math.max(0, Math.floor((probe[0] - longitudeRadius - epsilon + 180) / this.cellDegrees));
+      const right = Math.min(720000, Math.floor((probe[0] + longitudeRadius + epsilon + 180) / this.cellDegrees));
+      const bottom = Math.max(0, Math.floor((probe[1] - latitudeRadius - epsilon + 90) / this.cellDegrees));
+      const top = Math.min(360000, Math.floor((probe[1] + latitudeRadius + epsilon + 90) / this.cellDegrees));
+      if ((right - left + 1) * (top - bottom + 1) > 10000) { direct(); return; }
+      for (let x = left; x <= right; x++) for (let y = bottom; y <= top; y++) {
+        let i = this.heads.get(x * this.stride + y) ?? -1;
+        while (i !== -1) { visit(i); i = this.next[i]; }
+      }
+    }
+  }
+
+  function classify(
+    points: [number, number][],
+    segments: RoadSegment[],
+    thresholdMeters: number,
+    minPoints: number = 2,
+    highwayThresholds: Record<string, number> = {},
+    pointTimestamps: (number | null)[] = [],
+    analysisTime = Date.now(),
+  ): { next: () => IteratorResult<number, CoverageAnalysisResult> } {
+    // Freshness thresholds in ms (2yr and 4yr)
+    const FRESH_MS = 2 * 365.25 * 24 * 60 * 60 * 1000;
+    const AGING_MS = 4 * 365.25 * 24 * 60 * 60 * 1000;
+    const now = analysisTime;
+
+    // We place a sample probe along the road every 15 meters
+    const SAMPLE_INTERVAL_M = 15;
+
+    let coveredCount = 0;
+    let coveredKm = 0;
+    let remainingKm = 0;
+    let freshCount = 0,
+      freshKm = 0;
+    let agingCount = 0,
+      agingKm = 0;
+    let staleCount = 0,
+      staleKm = 0;
+    let noneCount = 0,
+      noneKm = 0;
+
+    const segmentDates: (number | null)[] = [];
+    const segmentTiers: Array<"fresh" | "aging" | "stale" | "none"> = [];
+
+    let pointIndex: CoveragePointIndex | null = null;
+    let completed = 0;
+    return { next: (): IteratorResult<number, CoverageAnalysisResult> => {
+      if (segments.length && !pointIndex) { pointIndex = new CoveragePointIndex(points, true); return { done: false, value: 0 }; }
+      if (pointIndex && !pointIndex.buildChunk()) return { done: false, value: 0 };
+      for (; completed < segments.length;) {
+        const seg = segments[completed];
+        const baseT = highwayThresholds[seg.highwayType] ?? thresholdMeters;
+        const T = seg.isOneway ? Math.round(baseT * 1.25) : baseT;
+        let covered = false;
+        let mostRecentDate: number | null = null;
+
+        // We use a Set to collect unique indices of points that hit any probe
+        // so we can calculate the majority-vote freshness tier at the end.
+        const matchedIndices = new Set<number>();
+
+        // Calculate how many sample points to generate based on segment length
+        const numSamples = Math.max(1, Math.ceil(seg.lengthMeters / SAMPLE_INTERVAL_M));
+
+        const probes: [number, number][] = [];
+        for (let p = 1; p <= numSamples; p++) {
+          // Space out the probes evenly, purposefully avoiding t=0 and t=1
+          // to prevent intersection bleeding between crossing roads.
+          const t = p / (numSamples + 1);
+          probes.push(interpolate(seg.start, seg.end, t));
+        }
+
+        let coveredSamplesCount = 0;
+
+        // Test each virtual probe point against the Mapillary dots
+        for (const probe of probes) {
+          let probeHasCoverage = false;
+
+          pointIndex!.forEachCandidate(probe, T, (i) => {
+            if (pointDistanceMeters(points[i], probe) <= T) {
+              probeHasCoverage = true;
+              matchedIndices.add(i);
+
+              const ts = pointTimestamps[i] ?? null;
+              if (ts !== null && (mostRecentDate === null || ts > mostRecentDate)) {
+                mostRecentDate = ts;
+              }
+            }
+          });
+
+          if (probeHasCoverage) {
+            coveredSamplesCount++;
+          }
+        }
+
+        // To mark the entire road as green/covered, we require enough probes to be hit.
+        // If the segment is extremely short (1 probe), it only needs 1 hit.
+        // For anything longer, it needs `minPoints` covered samples (Defaults to 2).
+        const requiredSamples = numSamples === 1 ? 1 : Math.min(minPoints, numSamples);
+
+        if (coveredSamplesCount >= requiredSamples) {
+          covered = true;
+        }
+
+        // Build flat timestamp array from deduplicated matched indices for tier voting
+        const tierMatchTimestamps = Array.from(matchedIndices).map((i) => pointTimestamps[i] ?? null);
+
+        segmentDates.push(covered ? mostRecentDate : null);
+
+        const km = seg.lengthMeters / 1000;
+        if (!covered) {
+          noneCount++;
+          noneKm += km;
+          remainingKm += km;
+          segmentTiers.push("none");
+        } else {
+          coveredCount++;
+          coveredKm += km;
+
+          // TIER CLASSIFICATION ; majority vote among all matching points.
+          // "Most recent wins" causes a single stray fresh point to override hundreds
+          // of stale points, making a poorly-documented street look falsely green.
+          const tierVotes = { fresh: 0, aging: 0, stale: 0 };
+          for (let i = 0; i < tierMatchTimestamps.length; i++) {
+            const ts = tierMatchTimestamps[i];
+            const age = ts !== null ? now - ts : Infinity;
+            if (age <= FRESH_MS) tierVotes.fresh++;
+            else if (age <= AGING_MS) tierVotes.aging++;
+            else tierVotes.stale++;
+          }
+
+          // Pick tier with the most votes; ties broken in favour of worse tier
+          // (stale > aging > fresh) so we don't over-report coverage quality.
+          let dominantTier: "fresh" | "aging" | "stale";
+          if (tierVotes.stale >= tierVotes.aging && tierVotes.stale >= tierVotes.fresh) {
+            dominantTier = "stale";
+          } else if (tierVotes.aging >= tierVotes.fresh) {
+            dominantTier = "aging";
+          } else {
+            dominantTier = "fresh";
+          }
+
+          if (dominantTier === "fresh") {
+            freshCount++;
+            freshKm += km;
+            segmentTiers.push("fresh");
+          } else if (dominantTier === "aging") {
+            agingCount++;
+            agingKm += km;
+            segmentTiers.push("aging");
+          } else {
+            staleCount++;
+            staleKm += km;
+            segmentTiers.push("stale");
+          }
+        }
+        if (++completed % 32 === 0) return { done: false, value: completed };
+      }
+
+      const totalCount = segments.length;
+      const percentCovered = totalCount > 0 ? Math.round((coveredCount / totalCount) * 100) : 0;
+
+      return { done: true, value: {
+        coveredCount,
+        totalCount,
+        coveredKm: Math.round(coveredKm * 100) / 100,
+        remainingKm: Math.round(remainingKm * 100) / 100,
+        percentCovered,
+        segmentDates,
+        segmentTiers,
+        freshCount,
+        freshKm: Math.round(freshKm * 100) / 100,
+        agingCount,
+        agingKm: Math.round(agingKm * 100) / 100,
+        staleCount,
+        staleKm: Math.round(staleKm * 100) / 100,
+        noneCount,
+        noneKm: Math.round(noneKm * 100) / 100,
+    } };
+    } };
+  }
+
+  return { CoveragePointIndex, classify };
+}
+
+export const CoveragePointIndex = createCoverageClassifier().CoveragePointIndex;
+
 export function snapPointsToSegments(
   points: [number, number][],
   segments: RoadSegment[],
@@ -349,176 +599,10 @@ export function snapPointsToSegments(
   noneCount: number;
   noneKm: number;
 } {
-  // Freshness thresholds in ms (2yr and 4yr)
-  const FRESH_MS = 2 * 365.25 * 24 * 60 * 60 * 1000;
-  const AGING_MS = 4 * 365.25 * 24 * 60 * 60 * 1000;
-  const now = Date.now();
-
-  if (!segments.length) {
-    return {
-      coveredCount: 0,
-      totalCount: 0,
-      coveredKm: 0,
-      remainingKm: 0,
-      percentCovered: 0,
-      segmentDates: [],
-      segmentTiers: [],
-      freshCount: 0,
-      freshKm: 0,
-      agingCount: 0,
-      agingKm: 0,
-      staleCount: 0,
-      staleKm: 0,
-      noneCount: 0,
-      noneKm: 0,
-    };
-  }
-
-  // We place a sample probe along the road every 15 meters
-  const SAMPLE_INTERVAL_M = 15;
-
-  let coveredCount = 0;
-  let coveredKm = 0;
-  let remainingKm = 0;
-  let freshCount = 0,
-    freshKm = 0;
-  let agingCount = 0,
-    agingKm = 0;
-  let staleCount = 0,
-    staleKm = 0;
-  let noneCount = 0,
-    noneKm = 0;
-
-  const segmentDates: (number | null)[] = [];
-  const segmentTiers: Array<"fresh" | "aging" | "stale" | "none"> = [];
-
-  for (const seg of segments) {
-    const baseT = highwayThresholds[seg.highwayType] ?? thresholdMeters;
-    const T = seg.isOneway ? Math.round(baseT * 1.25) : baseT;
-    let covered = false;
-    let mostRecentDate: number | null = null;
-
-    // We use a Set to collect unique indices of points that hit any probe
-    // so we can calculate the majority-vote freshness tier at the end.
-    const matchedIndices = new Set<number>();
-
-    // Calculate how many sample points to generate based on segment length
-    const numSamples = Math.max(1, Math.ceil(seg.lengthMeters / SAMPLE_INTERVAL_M));
-
-    const probes: [number, number][] = [];
-    for (let p = 1; p <= numSamples; p++) {
-      // Space out the probes evenly, purposefully avoiding t=0 and t=1
-      // to prevent intersection bleeding between crossing roads.
-      const t = p / (numSamples + 1);
-      probes.push(interpolate(seg.start, seg.end, t));
-    }
-
-    let coveredSamplesCount = 0;
-
-    // Test each virtual probe point against the Mapillary dots
-    for (const probe of probes) {
-      let probeHasCoverage = false;
-
-      for (let i = 0; i < points.length; i++) {
-        if (pointDistanceMeters(points[i], probe) <= T) {
-          probeHasCoverage = true;
-          matchedIndices.add(i);
-
-          const ts = pointTimestamps[i] ?? null;
-          if (ts !== null && (mostRecentDate === null || ts > mostRecentDate)) {
-            mostRecentDate = ts;
-          }
-        }
-      }
-
-      if (probeHasCoverage) {
-        coveredSamplesCount++;
-      }
-    }
-
-    // To mark the entire road as green/covered, we require enough probes to be hit.
-    // If the segment is extremely short (1 probe), it only needs 1 hit.
-    // For anything longer, it needs `minPoints` covered samples (Defaults to 2).
-    const requiredSamples = numSamples === 1 ? 1 : Math.min(minPoints, numSamples);
-
-    if (coveredSamplesCount >= requiredSamples) {
-      covered = true;
-    }
-
-    // Build flat timestamp array from deduplicated matched indices for tier voting
-    const tierMatchTimestamps = Array.from(matchedIndices).map((i) => pointTimestamps[i] ?? null);
-
-    segmentDates.push(covered ? mostRecentDate : null);
-
-    const km = seg.lengthMeters / 1000;
-    if (!covered) {
-      noneCount++;
-      noneKm += km;
-      remainingKm += km;
-      segmentTiers.push("none");
-    } else {
-      coveredCount++;
-      coveredKm += km;
-
-      // TIER CLASSIFICATION ; majority vote among all matching points.
-      // "Most recent wins" causes a single stray fresh point to override hundreds
-      // of stale points, making a poorly-documented street look falsely green.
-      const tierVotes = { fresh: 0, aging: 0, stale: 0 };
-      for (let i = 0; i < tierMatchTimestamps.length; i++) {
-        const ts = tierMatchTimestamps[i];
-        const age = ts !== null ? now - ts : Infinity;
-        if (age <= FRESH_MS) tierVotes.fresh++;
-        else if (age <= AGING_MS) tierVotes.aging++;
-        else tierVotes.stale++;
-      }
-
-      // Pick tier with the most votes; ties broken in favour of worse tier
-      // (stale > aging > fresh) so we don't over-report coverage quality.
-      let dominantTier: "fresh" | "aging" | "stale";
-      if (tierVotes.stale >= tierVotes.aging && tierVotes.stale >= tierVotes.fresh) {
-        dominantTier = "stale";
-      } else if (tierVotes.aging >= tierVotes.fresh) {
-        dominantTier = "aging";
-      } else {
-        dominantTier = "fresh";
-      }
-
-      if (dominantTier === "fresh") {
-        freshCount++;
-        freshKm += km;
-        segmentTiers.push("fresh");
-      } else if (dominantTier === "aging") {
-        agingCount++;
-        agingKm += km;
-        segmentTiers.push("aging");
-      } else {
-        staleCount++;
-        staleKm += km;
-        segmentTiers.push("stale");
-      }
-    }
-  }
-
-  const totalCount = segments.length;
-  const percentCovered = totalCount > 0 ? Math.round((coveredCount / totalCount) * 100) : 0;
-
-  return {
-    coveredCount,
-    totalCount,
-    coveredKm: Math.round(coveredKm * 100) / 100,
-    remainingKm: Math.round(remainingKm * 100) / 100,
-    percentCovered,
-    segmentDates,
-    segmentTiers,
-    freshCount,
-    freshKm: Math.round(freshKm * 100) / 100,
-    agingCount,
-    agingKm: Math.round(agingKm * 100) / 100,
-    staleCount,
-    staleKm: Math.round(staleKm * 100) / 100,
-    noneCount,
-    noneKm: Math.round(noneKm * 100) / 100,
-  };
+  const iterator = createCoverageClassifier().classify(points, segments, thresholdMeters, minPoints, highwayThresholds, pointTimestamps);
+  let step = iterator.next();
+  while (!step.done) step = iterator.next();
+  return step.value;
 }
 
 /**
@@ -1215,4 +1299,151 @@ export function evaluateIncrementalRouteCoverage(
 
     incrementalPercent,
   };
+}
+
+export type CoverageDisplayTier = "fresh" | "aging" | "stale" | "none";
+
+/** Display-only grouping. Never edits the complete classified dataset used by routing. */
+export async function buildCoverageDisplayPaths(
+  segments: RoadSegment[], tiers: CoverageDisplayTier[], covered: boolean[],
+  boxes: [number, number, number, number][], signal: AbortSignal, maxPaths = 30000,
+): Promise<{ groups: Record<CoverageDisplayTier, [number, number][][]>; limited: boolean; visibleCount: number }> {
+  const groups: Record<CoverageDisplayTier, [number, number][][]> = { fresh: [], aging: [], stale: [], none: [] };
+  let visibleCount = 0;
+  for (let i = 0; i < segments.length; i++) {
+    if (i % 1000 === 0) { await new Promise(resolve => setTimeout(resolve, 0)); if (signal.aborted) throw new DOMException("Cancelled", "AbortError"); }
+    const seg = segments[i];
+    const left = Math.min(seg.start[0], seg.end[0]), right = Math.max(seg.start[0], seg.end[0]);
+    const bottom = Math.min(seg.start[1], seg.end[1]), top = Math.max(seg.start[1], seg.end[1]);
+    if (!boxes.some(box => right >= box[0] && left <= box[2] && top >= box[1] && bottom <= box[3])) continue;
+    if (++visibleCount > maxPaths) return { groups: { fresh: [], aging: [], stale: [], none: [] }, limited: true, visibleCount };
+    const tier = tiers[i] ?? (covered[i] ? "fresh" : "none");
+    groups[tier].push([seg.start, seg.end]);
+  }
+  if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
+  return { groups, limited: false, visibleCount };
+}
+
+/** Abortable delay, including retry backoff; no orphaned timers or listeners. */
+export function coverageAnalysisDelay(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const abort = () => { clearTimeout(timer); signal.removeEventListener('abort', abort); reject(new DOMException('Analysis cancelled', 'AbortError')); };
+    const timer = setTimeout(() => { signal.removeEventListener('abort', abort); resolve(); }, ms);
+    signal.addEventListener('abort', abort, { once: true });
+    if (signal.aborted) abort();
+  });
+}
+
+/** Worker code contains only the self-contained classifier factory. No SDK imports/assets. */
+export function coverageAnalysisWorkerSource(): string {
+  return `"use strict";
+const factory = (${createCoverageClassifier.toString()})();
+self.onmessage = function(event) {
+  try {
+    const data = event.data;
+    let packed = new Float64Array(data.packed);
+    const points = [], dates = [];
+    for (let i = 0; i < packed.length; i += 4) {
+      points.push([packed[i], packed[i + 1]]);
+      dates.push(packed[i + 3] ? packed[i + 2] : null);
+    }
+    packed = null; data.packed = null;
+    const iterator = factory.classify(points, data.segments, data.threshold, data.minPoints, data.thresholds, dates, data.now);
+    let step, last = 0;
+    do {
+      step = iterator.next();
+      if (!step.done && Date.now() - last >= 100) {
+        self.postMessage({ progress: step.value }); last = Date.now();
+      }
+    } while (!step.done);
+    self.postMessage({ result: step.value });
+  } catch(error) { self.postMessage({ error: error && error.message || 'Classification failed' }); }
+};
+self.postMessage({ ready: true });`;
+}
+
+/** Exact classification with worker cancellation, or cooperative processing when CSP blocks workers. */
+export async function classifyCoverageAsync(
+  points: [number, number][], segments: RoadSegment[], threshold: number,
+  minPoints: number, thresholds: Record<string, number>, dates: (number | null)[],
+  options: { signal: AbortSignal; onProgress?: (completed: number, total: number) => void; onTransferred?: () => void; useWorker?: boolean; now?: number },
+): Promise<CoverageAnalysisResult> {
+  const { signal } = options;
+  const now = options.now ?? Date.now();
+  let lastProgress = -1, lastProgressAt = 0;
+  const report = (completed: number) => {
+    const time = Date.now();
+    if (completed === segments.length || lastProgress < 0 || completed > 0 && lastProgress === 0 || time - lastProgressAt >= 100) {
+      lastProgress = completed; lastProgressAt = time;
+      options.onProgress?.(completed, segments.length);
+    }
+  };
+  const check = () => { if (signal.aborted) throw new DOMException('Analysis cancelled', 'AbortError'); };
+  check();
+  // Wait for a startup handshake before transferring data. Asynchronous CSP/startup failures can fall back safely.
+  let worker: Worker | null = null;
+  let url: string | null = null;
+  let workerFailed = false;
+  if (options.useWorker !== false && typeof Worker !== 'undefined' && typeof Blob !== 'undefined') {
+    try {
+      url = URL.createObjectURL(new Blob([coverageAnalysisWorkerSource()], { type: 'text/javascript' }));
+      worker = new Worker(url);
+      const started = await new Promise<boolean>((resolve) => {
+        const finish = (ready: boolean) => { clearTimeout(timer); signal.removeEventListener('abort', abort); resolve(ready); };
+        const abort = () => finish(false);
+        const timer = setTimeout(() => finish(false), 2000);
+        worker!.onmessage = (event) => finish(event.data?.ready === true);
+        worker!.onerror = (event) => { event.preventDefault(); finish(false); };
+        signal.addEventListener('abort', abort, { once: true });
+        if (signal.aborted) abort();
+      });
+      if (!started) { worker.terminate(); worker = null; }
+      else worker.onerror = (event) => { event.preventDefault(); workerFailed = true; };
+    } catch { worker?.terminate(); worker = null; }
+    finally { if (url) URL.revokeObjectURL(url); }
+  }
+  if (!worker) {
+    check();
+    const iterator = createCoverageClassifier().classify(points, segments, threshold, minPoints, thresholds, dates, now);
+    let step;
+    do {
+      await coverageAnalysisDelay(0, signal);
+      check(); step = iterator.next();
+      if (!step.done) report(step.value);
+    } while (!step.done);
+    report(segments.length);
+    check();
+    return step.value;
+  }
+  try {
+    check();
+    // Transfer coordinates and timestamps instead of structured-cloning millions of nested arrays.
+    const packed = new Float64Array(points.length * 4);
+    for (let i = 0; i < points.length; i++) {
+      packed[i * 4] = points[i][0]; packed[i * 4 + 1] = points[i][1];
+      packed[i * 4 + 2] = dates[i] ?? 0; packed[i * 4 + 3] = dates[i] == null ? 0 : 1;
+      if (i > 0 && i % 8192 === 0) await coverageAnalysisDelay(0, signal);
+    }
+    check();
+    if (workerFailed) throw new Error("Background classification failed. Please retry analysis.");
+    return await new Promise<CoverageAnalysisResult>((resolve, reject) => {
+      const abort = () => { cleanup(); reject(new DOMException('Analysis cancelled', 'AbortError')); };
+      const cleanup = () => { signal.removeEventListener('abort', abort); worker!.terminate(); };
+      worker!.onmessage = (event) => {
+        if (signal.aborted) { abort(); return; }
+        try {
+          if (event.data.error) { cleanup(); reject(new Error(event.data.error)); }
+          else if (event.data.result) { cleanup(); report(segments.length); check(); resolve(event.data.result); }
+          else if (typeof event.data.progress === 'number') report(event.data.progress);
+        } catch (error) { cleanup(); reject(error); }
+      };
+      worker!.onerror = (event) => { event.preventDefault(); cleanup(); reject(new Error('Background classification failed. Please retry analysis.')); };
+      signal.addEventListener('abort', abort, { once: true });
+      try {
+        worker!.postMessage({ packed: packed.buffer, segments, threshold, minPoints, thresholds, now }, [packed.buffer]);
+        points = []; dates = []; // Release main-thread references after successful transfer.
+        options.onTransferred?.();
+      } catch (error) { cleanup(); reject(error); }
+    });
+  } finally { worker.terminate(); }
 }

@@ -1,0 +1,18 @@
+[
+  {
+    "file": "src\\components\\InfoBox.tsx",
+    "created": false
+  },
+  {
+    "file": "src\\features\\routing\\RouteControls.tsx",
+    "created": false
+  },
+  {
+    "file": "src\\styles\\routing.ts",
+    "created": false
+  },
+  {
+    "file": "docs\\INFOBOX-SECTIONS.md",
+    "created": false
+  }
+]

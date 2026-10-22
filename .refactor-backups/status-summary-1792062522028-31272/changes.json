@@ -1,0 +1,18 @@
+[
+  {
+    "file": "src\\components\\InfoBox.tsx",
+    "created": false
+  },
+  {
+    "file": "docs\\INFOBOX-SECTIONS.md",
+    "created": false
+  },
+  {
+    "file": "src\\components\\info-box\\StatusSummary.tsx",
+    "created": true
+  },
+  {
+    "file": "src\\styles\\infoBox.ts",
+    "created": true
+  }
+]

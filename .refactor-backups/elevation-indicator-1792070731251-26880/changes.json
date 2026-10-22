@@ -1,0 +1,22 @@
+[
+  {
+    "file": "src\\runtime\\widget.tsx",
+    "created": false
+  },
+  {
+    "file": "docs\\REFACTORING-ROADMAP.md",
+    "created": false
+  },
+  {
+    "file": "src\\features\\elevation\\profileIndicator.ts",
+    "created": true
+  },
+  {
+    "file": "src\\styles\\elevationIndicator.ts",
+    "created": true
+  },
+  {
+    "file": "src\\features\\elevation\\README.md",
+    "created": true
+  }
+]

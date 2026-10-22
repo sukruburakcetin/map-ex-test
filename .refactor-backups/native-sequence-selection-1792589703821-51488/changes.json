@@ -1,0 +1,36 @@
+{
+  "installer": "native-sequence-selection",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "4f0990bf7fae578d2e5af075b06d95a3d8e7d0b7387b120c769edde1ca23b7ea",
+      "resultSha256": "95b96e787ebde8311e10bdbe7fb44077964687234707205b6dc6f4632b61d2d8"
+    },
+    {
+      "file": "src/utils/turboCoverageUtils.ts",
+      "operation": "update",
+      "originalSha256": "51ab96b083f456b52de66caba073c5cb5cff5bf3a97f5680be7591008afed172",
+      "resultSha256": "a4fb3c7f1e70474dabbed75485046eebacc18a50c48987a59e88a3be9d47e896"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "15945109699a112c6fb7462ae28862e9806795833914485daa80a3d3571c5f02",
+      "resultSha256": "5b05635a564ee5ab299eed899cda61cb5ee8024ecacad7e8ff464b64473bceac"
+    },
+    {
+      "file": "src/features/coverage/NativeSequenceSelection.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "4fec91477d248ae7bf07c80decd9d009d64bf75e27ca13e2c8e89a3977a964d7"
+    },
+    {
+      "file": "tests/nativeSequenceSelection.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "42ce3c8f69edecf7cbea1c7a5d8a1ca0421896636d851552bf000dafb1c35248"
+    }
+  ]
+}

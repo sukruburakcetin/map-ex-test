@@ -1,0 +1,54 @@
+{
+  "installer": "point-cloud-crop",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "7affeb77f381d15169098f9480d85e7a716ead69e7e192ac703f797de0cc7e79",
+      "resultSha256": "bfe4add9ec7e14e9daaddb808b9963e603a9c83dca3b403dd3d2d3659ffa0489"
+    },
+    {
+      "file": "tests/pointCloudGeometry.test.cjs",
+      "operation": "update",
+      "originalSha256": "22c31f1b888b829a955287a54aa447c1e3bfb5b9879d39abfaea33b705f763de",
+      "resultSha256": "b237d6a2cddeee8137c1d5bc7e2fe6e47f5b327030f696b2d7974f7486da6ad1"
+    },
+    {
+      "file": "docs/POINT-CLOUD-OWNERSHIP.md",
+      "operation": "update",
+      "originalSha256": "c5fa0eba3749ca3a718bf05899fd823025eb9b6956fef991ab4207ee8a8fc392",
+      "resultSha256": "d792225eb997327e243ae916e833c89abe07936c53970fdd74141c263ab9d2fe"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "09e706cc436ac39c1262de65e83e8ebb1a2c653e45742f75ba5cc77268d02860",
+      "resultSha256": "47fa6e3f44722e87e5b0db560dccb1545f694127ca53e168d54fa2862db9c751"
+    },
+    {
+      "file": "src/features/point-cloud/README.md",
+      "operation": "update",
+      "originalSha256": "aba31bfaa9f165b246f8be6b35da7680c37979fcb0c6d8b6815302629eb39e9b",
+      "resultSha256": "18cc1522d0c1b9fa7b6468899e260fce61f5707b75740f0baafd56d9f3751af7"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudCrop.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "945eeaefbea53f5420b0894885aaa9d7a9fc35671b41d1a85708ea2727938f14"
+    },
+    {
+      "file": "tests/pointCloudCrop.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "cf57f14cd9f8d286eed81ca96ba3413289608e4ab240a2ae78b59b4693a801f2"
+    },
+    {
+      "file": "tests/fixtures/pointCloudCrop.baseline.json",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "8402cba2353d3c2a18db77010297c706e9d85dec645439b4bbf3c161718251ad"
+    }
+  ]
+}

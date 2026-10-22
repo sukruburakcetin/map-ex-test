@@ -11,12 +11,16 @@
   *   so date / panorama filters must be omitted for it.
 */
 
+import { organizationCondition } from './organizationFilter';
+
 // Types
 
 /** All optional inputs that can be used to filter Mapillary coverage */
 export interface CoverageFilterParams {
   /** Numeric Mapillary creator ID (not the username string) */
   creatorId?:  number;
+  /** Positive numeric Mapillary organization ID. */
+  organizationId?: number;
   /** ISO date string "yyyy-mm-dd" - inclusive start */
   startDate?:  string;
   /** ISO date string "yyyy-mm-dd" - inclusive end (set to 23:59:59.999) */
@@ -40,6 +44,10 @@ function buildBaseConditions(params: CoverageFilterParams): any[] {
 
   if (params.creatorId) {
     conditions.push(['==', 'creator_id', params.creatorId]);
+  }
+
+  if (params.organizationId !== undefined) {
+    conditions.push(organizationCondition(params.organizationId));
   }
 
   if (params.startDate) {
@@ -82,6 +90,9 @@ export function buildOverviewFilter(
 ): any | null | 'hide' {
   const hasPanoFilter = params.isPano !== undefined && params.isPano !== null;
 
+  // Overview tiles have no organization ownership; do not show unfiltered data.
+  if (params.organizationId !== undefined) return 'hide';
+
   // overview has no is_pano - hide it when a pano filter is active so the
   // user only sees correctly-filtered image-layer dots.
   if (hasPanoFilter) return 'hide';
@@ -105,7 +116,7 @@ export function buildSequenceFilter(
   const hasPanoFilter = params.isPano !== undefined && params.isPano !== null;
   if (hasPanoFilter) return 'hide';
 
-  const conditions = buildBaseConditions({ creatorId: params.creatorId });
+  const conditions = buildBaseConditions({ creatorId: params.creatorId, organizationId: params.organizationId });
   return collapseConditions(conditions);
 }
 

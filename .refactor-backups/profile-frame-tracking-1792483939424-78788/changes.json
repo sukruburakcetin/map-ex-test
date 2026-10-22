@@ -1,0 +1,36 @@
+{
+  "installer": "profile-frame-tracking",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "1fc6e49fd9c3112970ae014e53c09d3b65ed5e05ed380092cf92f9d5f53648db",
+      "resultSha256": "29e219d0a2bcc342648e672df3e5ce99098401eaa89762232943fa2852fbb889"
+    },
+    {
+      "file": "src/features/elevation/ElevationProfileController.ts",
+      "operation": "update",
+      "originalSha256": "697314bb15ce74f6e3413a27ede6cd587708c4017b5ca1cc59f4b6fbf5d71e60",
+      "resultSha256": "7b6b1631cea3a166b8340560759f442963acd4f5ac0f2c90b38b60f3bd1a5995"
+    },
+    {
+      "file": "src/features/elevation/README.md",
+      "operation": "update",
+      "originalSha256": "fa14369f6203b8f1bbcc0f544bcf94091ec90b8a62e72b32ea153664c6d3ea98",
+      "resultSha256": "070092341f82539b9ad9e44c1aaa615e8ee41e89067b6cc2163ed330c20813cb"
+    },
+    {
+      "file": "src/features/elevation/profileIndicator.ts",
+      "operation": "update",
+      "originalSha256": "6222315efe159ec1452594da434723c1b5dc838396a476ab255fe9c6874c2858",
+      "resultSha256": "15206e56b3b29357636f91ef32c56118136e3d210d2a5a98f778b6dc251b800a"
+    },
+    {
+      "file": "src/features/elevation/profileTracking.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "9561471516522957f00ef0267529f8d1ac4ae35b11bcfaf1a2091602565559d1"
+    }
+  ]
+}

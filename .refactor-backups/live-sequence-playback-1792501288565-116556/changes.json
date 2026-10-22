@@ -1,0 +1,30 @@
+{
+  "installer": "live-sequence-playback",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "24d53376563733709e8d0925a604f0ce2bf8538db4a15ec0cc2da89cf52ca1c1",
+      "resultSha256": "b215d46f3b7510d82586caa9b29399d6974c90cd561a5c9a16e35e9324f2390a"
+    },
+    {
+      "file": "src/features/imagery/sequenceCoordinates.ts",
+      "operation": "update",
+      "originalSha256": "c34e672f183ace720f208a10290a5a2b61d2033ee3d45f7369d97ea8979320dc",
+      "resultSha256": "3b15473638c144375def3a388ea4416af67e1e29857fe7a70b6ce1dd8c57001e"
+    },
+    {
+      "file": "src/features/imagery/sequenceCacheStore.ts",
+      "operation": "update",
+      "originalSha256": "5eb186b295c66afc9a3ab23d68feb27665f847dba4736bc5b7a416847f04e7e2",
+      "resultSha256": "93e44686fe65d2bee20321bb16d2d616a365ac499183ad993b26b5988b3b8521"
+    },
+    {
+      "file": "src/features/imagery/LiveSequenceFrames.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "24a351794df52a0f18036c72789874ef065086642770e143a38e4f53f906f880"
+    }
+  ]
+}

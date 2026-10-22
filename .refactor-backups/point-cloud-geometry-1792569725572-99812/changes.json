@@ -1,0 +1,60 @@
+{
+  "installer": "point-cloud-geometry",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "18eb7939466adeee0b6bf7f2df4ddc379e9fb5df9ac04fc1512f45e3e8d360f3",
+      "resultSha256": "d65b878bfa698c8f5ade50198a0bb0910adc6875691212fac8f676fd0d8f3651"
+    },
+    {
+      "file": "docs/POINT-CLOUD-OWNERSHIP.md",
+      "operation": "update",
+      "originalSha256": "c98d831bf310bf16c1a5435353acd17a77f5e0a98e2719479d6142f9fc166157",
+      "resultSha256": "23442f2c03ee4c8144efa724f6b2bbeed130dbaa6b897405a3ed2c7350d6fe8a"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "4b9a192422f0b8b46161f12c838df318492e1504f3cba7a6b37ebb3bbb2fe24e",
+      "resultSha256": "b78395ea94907cef85f1aeb2361044c68af4a541dee8012d078c60ac949082c6"
+    },
+    {
+      "file": "src/features/point-cloud/README.md",
+      "operation": "update",
+      "originalSha256": "53af7656c81b4c6abb3768502ec02dd70c1b95d1c6e24df2038ef80ee54875be",
+      "resultSha256": "7540b61e793bfa098fc532ae9cc2e82d84ffe9ed87f8e60831a1ead57a80972f"
+    },
+    {
+      "file": "tests/pointCloudMapLayer.test.cjs",
+      "operation": "update",
+      "originalSha256": "3bc582207dc0896397d87cdb75378e9411c4eeb5953839180b474b14a4fec80a",
+      "resultSha256": "3eff0577ca6139556080bcf79b6f6a5bc745940ea71bc47d5a295afc30f1b15e"
+    },
+    {
+      "file": "tests/pointCloudAcquisition.test.cjs",
+      "operation": "update",
+      "originalSha256": "51f86ce3d4c4fc2c6f03193258d4a1cbc17809c24bee875e88feb9b887900189",
+      "resultSha256": "92aa79648bcc763bf96dc9227ec8559e75bd5edd4697d8c6d9a4b71310fe18a2"
+    },
+    {
+      "file": "src/features/point-cloud/pointCloudGeometry.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "883b7a0d59454e44bef4e72cf1a26256feb307dd481f51963f7dae785614a364"
+    },
+    {
+      "file": "tests/pointCloudGeometry.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "8e1e2596b61a05caa11d1d9666dfcf3136923d55465481c6272119354440eaa3"
+    },
+    {
+      "file": "tests/fixtures/pointCloudGeometry.baseline.json",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "f02f436147e9e67bb20275e3b7f67feb0c35c0bf39e8693cb6f18ace6c8f640d"
+    }
+  ]
+}

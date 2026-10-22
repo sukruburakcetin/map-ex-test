@@ -1,0 +1,22 @@
+[
+  {
+    "file": "src\\components\\InfoBox.tsx",
+    "created": false
+  },
+  {
+    "file": "src\\components\\types.ts",
+    "created": false
+  },
+  {
+    "file": "docs\\INFOBOX-SECTIONS.md",
+    "created": false
+  },
+  {
+    "file": "src\\features\\coverage\\QualityToolsSection.tsx",
+    "created": true
+  },
+  {
+    "file": "src\\styles\\qualityTools.ts",
+    "created": true
+  }
+]

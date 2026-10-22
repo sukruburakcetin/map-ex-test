@@ -1,7 +1,7 @@
 {
   "mapillaryAccessToken": "",
-  "turboModeOnly": false,
-  "coverageLayerAlwaysOn": false,
+  "turboModeOnly": true,
+  "coverageLayerAlwaysOn": true,
   "hideCoverageCircles": false,
   "turboCreator": "",
   "turboDefaultStartDate": "",
@@ -28,11 +28,24 @@
   "cameraX": 0.5,
   "cameraY": 0.5,
   "debugMode": false,
-  "fieldNoteCategories": ["Missing Sign", "Damaged Sign", "Damaged Sidewalk", "Pothole / Road Damage", "Streetlight Failure", "Illegal Encroachment", "Other"],
+  "fieldNoteCategories": [
+    "Missing Sign",
+    "Damaged Sign",
+    "Damaged Sidewalk",
+    "Pothole / Road Damage",
+    "Streetlight Failure",
+    "Illegal Encroachment",
+    "Other"
+  ],
   "routingEngine": "world",
   "routingAuthMode": "auto",
   "routingApiKey": "",
   "routingServiceUrl": "",
   "osrmServerMode": "public",
-  "osrmServerUrl": ""
+  "osrmServerUrl": "",
+  "enableSolar": false,
+  "enableElevationProfile": false,
+  "sharedFieldNotesEnabled": false,
+  "sharedFieldNotesUrl": "",
+  "sharedFieldNotesReadUrl": ""
 }

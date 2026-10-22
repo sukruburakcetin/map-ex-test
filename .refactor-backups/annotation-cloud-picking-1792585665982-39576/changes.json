@@ -1,0 +1,54 @@
+{
+  "installer": "annotation-cloud-picking",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "f149cd5874938745b4b42866773c546053e70051bcd57e81895de0352bf968d5",
+      "resultSha256": "b1649ff0789d32fce9430ce4f10193f7f9a8660886300b836f70fe7e05e9ffc6"
+    },
+    {
+      "file": "docs/POINT-CLOUD-OWNERSHIP.md",
+      "operation": "update",
+      "originalSha256": "db865a87ea66aa6cbacc4c3514782413d74e0c9191afca3439511c59b9d8b556",
+      "resultSha256": "425aa9527d2db1ea15911c647ccf44544b5d0eee909e1a6f9f680c1a4a4ae042"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "e359ee4f5f3665797de965fb082d99f481cfb3f91d7534284268f27c88a5a5c8",
+      "resultSha256": "44dfeb6a24796a70cadd557862e41639bbe4d85550ac7582e20b4b5d06f50477"
+    },
+    {
+      "file": "src/features/point-cloud/README.md",
+      "operation": "update",
+      "originalSha256": "4e9d7c3b70d6d79b59bc27433b75b2478867f38cc0f5edd579ced41c56cb85f4",
+      "resultSha256": "433d340495699d78d00b27dcda56b2bbe1da1acb4feecf910eca71131db1954b"
+    },
+    {
+      "file": "src/features/field-notes/PointCloudAnnotationPicker.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "e71d17d131c39627fd806e7bc3f3c7a11a2a0b9df8f2f315f7d584ea66484f7c"
+    },
+    {
+      "file": "src/features/field-notes/README.md",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "6333b6a24bfbfe85d6e43906e631c4ff8b56355ae9c4e8d3b2d5f48f1b74cf77"
+    },
+    {
+      "file": "tests/annotationCloudPicking.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "83018787018c95e34027ee0a8c93a175ad3ba9098a1036109aa651248cc08a9d"
+    },
+    {
+      "file": "tests/fixtures/annotationCloudPicking.baseline.json",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "bd3038b1226497cc891bbf278a80a406631e940839764fdd3d6f24a346e3e185"
+    }
+  ]
+}

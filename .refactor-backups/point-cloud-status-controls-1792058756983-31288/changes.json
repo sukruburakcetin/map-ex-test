@@ -1,0 +1,18 @@
+[
+  {
+    "file": "src\\components\\InfoBox.tsx",
+    "created": false
+  },
+  {
+    "file": "src\\styles\\pointCloudControls.ts",
+    "created": true
+  },
+  {
+    "file": "docs\\INFOBOX-SECTIONS.md",
+    "created": false
+  },
+  {
+    "file": "src\\features\\point-cloud\\PointCloudStatusSection.tsx",
+    "created": true
+  }
+]

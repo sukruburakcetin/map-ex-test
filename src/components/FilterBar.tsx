@@ -3,7 +3,9 @@ import { React, jsx } from "jimu-core";
 import { GlassSelect } from "../components/GlassSelect";
 import { GlassDatePicker } from "../components/GlassDatePicker";
 import { glassStyles } from "../utils/styles";
+import { FilterScrollRegion } from "./FilterScrollRegion";
 import { FilterBarProps } from "./types";
+import { organizationFilterId } from "../utils/organizationFilter";
 
 /**
     * FilterBar
@@ -14,16 +16,29 @@ import { FilterBarProps } from "./types";
     *   - Objects filter (GlassSelect dropdown)
     * Each group is only rendered when its corresponding `show*FilterBox` flag is true.
 */
+const SpriteSize: React.FC<{ label: string; value: number; onChange: (value: number) => void }> = ({ label, value, onChange }) => (
+    <label className="mly-filter-size" title={`${label} icon size`} style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 9, color: "#e4eee8", flexShrink: 0 }}>
+      Size<select aria-label={`${label} icon size`} value={value} onChange={event => onChange(Number(event.target.value))} style={{ height: 22, fontSize: 10, padding: "0 2px", borderRadius: 4, border: "1px solid #ffffff35", background: "#214d36", color: "white" }}>
+        {[0.75, 1, 1.25, 1.5, 2].map(scale => <option key={scale} value={scale}>{scale * 100}%</option>)}
+      </select>
+    </label>
+);
+
 export const FilterBar: React.FC<FilterBarProps> = ({
+    signSpriteScale = 1, objectSpriteScale = 1, onSpriteScaleChange,
     showTurboFilterBox,
     showTrafficSignsFilterBox,
     showObjectsFilterBox,
     turboFilterUsername,
+    turboFilterOrganization,
     turboFilterStartDate,
     turboFilterEndDate,
     turboFilterIsPano,
+    turboFilterOnFoot,
+    onTurboTravelMethodChange,
     turboColorByDate,
     turboCreator,
+    turboOrganization,
     trafficSignsFilterValue,
     trafficSignsOptions,
     objectsFilterValue,
@@ -31,6 +46,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     onTurboUsernameChange,
     onTurboUsernameEnter,
     onTurboUsernameClear,
+    onTurboOrganizationChange,
+    onTurboOrganizationEnter,
+    onTurboOrganizationClear,
     onTurboStartDateChange,
     onTurboEndDateChange,
     onTurboIsPanoChange,
@@ -43,13 +61,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     }
 
     return (
-        <div
-            className="glass-scroll-container"
-            style={glassStyles.filterBarContainer}
-        >
-            {/* TURBO MODE FILTER GROUP (GOLD) */}
+        <FilterScrollRegion>
+            {/* COVERAGE FILTERS */}
             {showTurboFilterBox && (
-                <div style={glassStyles.filterGroup("#FFD700")}>
+                <div className="mly-filter-group" role="group" aria-label="Coverage filters">
 
                     {/* Username input */}
                     <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
@@ -97,15 +112,32 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                         )}
                     </div>
 
+                    {/* Organization input */}
+                    <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                        <input type="text" inputMode="numeric" aria-label="Mapillary organization ID"
+                            placeholder="Organization ID" value={turboFilterOrganization} disabled={!!turboOrganization}
+                            aria-invalid={organizationFilterId(turboFilterOrganization) === -1}
+                            title={turboOrganization ? "Organization is set in widget settings" : "Filter by numeric Mapillary organization ID. Combined with Username when both are set."}
+                            className="glass-input-placeholder"
+                            onChange={event => onTurboOrganizationChange(event.target.value)}
+                            onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); onTurboOrganizationEnter(); } }}
+                            style={{ ...glassStyles.glassInput, width: 112, minWidth: 90, height: 18, paddingRight: 18,
+                                opacity: turboOrganization ? 0.6 : 1, cursor: turboOrganization ? "not-allowed" : "text",
+                                ...(organizationFilterId(turboFilterOrganization) === -1 ? { outline: "1px solid #ff8c8c" } : {}) }} />
+                        {!turboOrganization && turboFilterOrganization && <button type="button" aria-label="Clear organization filter"
+                            title="Clear organization filter" onClick={onTurboOrganizationClear}
+                            style={{ position: "absolute", right: 6, background: "transparent", border: "none", color: "rgba(255,255,255,0.6)", fontSize: 10, cursor: "pointer", padding: 0 }}>✕</button>}
+                    </div>
+
                     {/* Date range */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
-                        <GlassDatePicker
+                    <div className="mly-filter-dates">
+                        <GlassDatePicker floatingMenu
                             selected={turboFilterStartDate ? new Date(turboFilterStartDate) : null}
                             onChange={(date) => onTurboStartDateChange(date ? date.toISOString().split("T")[0] : "")}
                             isClearable
                             placeholderText="Start"
                         />
-                        <GlassDatePicker
+                        <GlassDatePicker floatingMenu
                             selected={turboFilterEndDate ? new Date(turboFilterEndDate) : null}
                             onChange={(date) => onTurboEndDateChange(date ? date.toISOString().split("T")[0] : "")}
                             isClearable
@@ -119,7 +151,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                     {/* Is Pano toggle */}
                     <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                         <span style={glassStyles.labelSmall}>Is Pano:</span>
-                        <div style={{ display: "flex", gap: "2px" }}>
+                        <div className="mly-filter-pano" style={{ display: "flex", gap: "2px" }}>
                             {([
                                 { label: "All", value: undefined },
                                 { label: "360", value: true },
@@ -134,8 +166,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                                             padding: "1px 4px",
                                             fontSize: "8px",
                                             fontWeight: isActive ? 700 : 400,
-                                            background: isActive ? "rgba(255, 215, 0, 0.6)" : "rgba(255,255,255,0.1)",
-                                            border: isActive ? "1px solid rgba(255,215,0,0.8)" : "1px solid rgba(255,255,255,0.2)",
+                                            background: isActive ? "#2b8054" : "#183f2c",
+                                            border: isActive ? "1px solid #74c397" : "1px solid #456b58",
                                             borderRadius: "3px",
                                             color: "white",
                                             cursor: "pointer",
@@ -148,6 +180,13 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                             })}
                         </div>
                     </div>
+
+                    <label className="mly-filter-travel" style={{ display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
+                        <span style={glassStyles.labelSmall}>Travel:</span>
+                        <select aria-label="Coverage travel method" title="Filters sequence and image coverage. Zoom closer at overview scale. Other travel includes non-pedestrian capture methods." value={turboFilterOnFoot === undefined ? "any" : turboFilterOnFoot ? "foot" : "other"} onChange={event => onTurboTravelMethodChange?.(event.target.value === "foot" ? true : event.target.value === "other" ? false : undefined)} style={{ height: 22, maxWidth: 96, padding: "0 3px", fontSize: 10, borderRadius: 4, border: "1px solid #ffffff35", background: "#214d36", color: "white" }}>
+                            <option value="any">Any</option><option value="foot">On foot</option><option value="other">Other travel</option>
+                        </select>
+                    </label>
 
                     {/* Date colour toggle */}
                     <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
@@ -174,31 +213,33 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 </div>
             )}
 
-            {/* TRAFFIC SIGNS FILTER GROUP (ORANGE) */}
+            {/* TRAFFIC SIGN FILTERS */}
             {showTrafficSignsFilterBox && (
-                <div style={glassStyles.filterGroup("#FFA500")}>
-                    <GlassSelect
+                <div className="mly-filter-group mly-filter-group--features" role="group" aria-label="Traffic sign filters">
+                    <GlassSelect floatingMenu compact
                         value={trafficSignsFilterValue}
                         onChange={onTrafficSignsFilterChange}
                         options={trafficSignsOptions}
-                        accentColor="#FFA500"
+                        accentColor="#63c38e"
                         menuPlacement="top"
                     />
+                    {onSpriteScaleChange && <SpriteSize label="Traffic sign" value={signSpriteScale} onChange={value => onSpriteScaleChange("signs", value)} />}
                 </div>
             )}
 
-            {/* OBJECTS FILTER GROUP (RED) */}
+            {/* OBJECT FILTERS */}
             {showObjectsFilterBox && (
-                <div style={glassStyles.filterGroup("#FF3C3C")}>
-                    <GlassSelect
+                <div className="mly-filter-group mly-filter-group--features" role="group" aria-label="Object filters">
+                    <GlassSelect floatingMenu compact
                         value={objectsFilterValue}
                         onChange={onObjectsFilterChange}
                         options={objectsOptions}
-                        accentColor="#FF3C3C"
+                        accentColor="#63c38e"
                         menuPlacement="top"
                     />
+                    {onSpriteScaleChange && <SpriteSize label="Object" value={objectSpriteScale} onChange={value => onSpriteScaleChange("objects", value)} />}
                 </div>
             )}
-        </div>
+        </FilterScrollRegion>
     );
 };

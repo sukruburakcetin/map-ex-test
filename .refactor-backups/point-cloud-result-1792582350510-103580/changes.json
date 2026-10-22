@@ -1,0 +1,66 @@
+{
+  "installer": "point-cloud-result",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "bfe4add9ec7e14e9daaddb808b9963e603a9c83dca3b403dd3d2d3659ffa0489",
+      "resultSha256": "c787e81eee120315d39f5f0c1b5630b2718c702e1cce668807bf43fd2825dbd3"
+    },
+    {
+      "file": "tests/pointCloudGeometry.test.cjs",
+      "operation": "update",
+      "originalSha256": "b237d6a2cddeee8137c1d5bc7e2fe6e47f5b327030f696b2d7974f7486da6ad1",
+      "resultSha256": "d9fe38414bccee5f1ee3e4fa2a630bdb97d6c9c82d092d2969cabaaff1369c15"
+    },
+    {
+      "file": "tests/pointCloudAcquisition.test.cjs",
+      "operation": "update",
+      "originalSha256": "92aa79648bcc763bf96dc9227ec8559e75bd5edd4697d8c6d9a4b71310fe18a2",
+      "resultSha256": "c5e8fc1cb2b65a9367c91d0d5bddb8c8ebcb1d7609364431bbf7cc00ac292956"
+    },
+    {
+      "file": "docs/POINT-CLOUD-OWNERSHIP.md",
+      "operation": "update",
+      "originalSha256": "d792225eb997327e243ae916e833c89abe07936c53970fdd74141c263ab9d2fe",
+      "resultSha256": "6849d2173ca018566e5fbdcfdb0570d457933118c28ec7a31912219c206e085c"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "47fa6e3f44722e87e5b0db560dccb1545f694127ca53e168d54fa2862db9c751",
+      "resultSha256": "0bd7716a5f7475e1b11f49a4be7fd63a74a770041f39da992433a11ec10d14ab"
+    },
+    {
+      "file": "src/features/point-cloud/README.md",
+      "operation": "update",
+      "originalSha256": "18cc1522d0c1b9fa7b6468899e260fce61f5707b75740f0baafd56d9f3751af7",
+      "resultSha256": "0f1cb770f0c5847dd29f6f0f32a74a810bc63d6c682f92679beabdcf452cb7b7"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudResultApplication.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "c0955ca9c4225aae4c99948c2bd306fa536d3b28dbc9480b7ffe34be88214eff"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudResultFeedback.tsx",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "00bf9fa1708a9c1f511fc1c57af986f0b3f31549deaa70ed7dabbfdc26057ac7"
+    },
+    {
+      "file": "tests/pointCloudResult.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "3c25c6846ebc1117385b11b6c1eda06a643a793965ada47002ac7ecb2f23e88a"
+    },
+    {
+      "file": "tests/fixtures/pointCloudResult.baseline.json",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "1880eba9c620da8983d4e698a596845d7bced67de83a444f21409b680e2d568e"
+    }
+  ]
+}

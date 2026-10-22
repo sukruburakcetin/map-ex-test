@@ -1,0 +1,18 @@
+[
+  {
+    "file": "src\\runtime\\widget.tsx",
+    "created": false
+  },
+  {
+    "file": "docs\\REFACTORING-ROADMAP.md",
+    "created": false
+  },
+  {
+    "file": "src\\features\\map-graphics\\DIRECTION-HOVER.md",
+    "created": false
+  },
+  {
+    "file": "src\\features\\imagery\\DirectionHoverBindings.ts",
+    "created": true
+  }
+]

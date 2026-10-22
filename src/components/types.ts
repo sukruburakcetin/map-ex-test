@@ -16,6 +16,8 @@ export interface FilterOption {
 export interface AlternateImage {
     id: string;
     detectionId: string;
+    detectionBounds?: { x: number; y: number; width: number; height: number };
+    detectionLabel?: string;
     thumbUrl: string;
     capturedAt: number;
     geometry: { type: "Point"; coordinates: [number, number] };
@@ -37,7 +39,23 @@ export interface NearbyImage {
   creator?: { username: string };
 }
 
+export type FieldNoteStatus = 'open' | 'in_progress' | 'completed' | 'dismissed';
+export const FIELD_NOTE_STATUSES = [
+    { value: 'open', label: 'Open' }, { value: 'in_progress', label: 'In progress' },
+    { value: 'completed', label: 'Completed' }, { value: 'dismissed', label: 'Dismissed' }
+] as const;
+export interface FieldNoteEditor {
+    key: string; localId?: string; globalId?: string; url?: string;
+    category: string; note: string; status: FieldNoteStatus; resolutionNote: string;
+    baseline?: Record<string, any>; saving?: boolean; error?: string;
+}
 export interface FieldNote {
+    status?: FieldNoteStatus;
+    resolutionNote?: string;
+    sharedGlobalId?: string;
+    sharedLayerUrl?: string;
+    sharedStatus?: 'saving' | 'shared' | 'failed';
+    sharedError?: string;
     id: string;
     source: 'mapillary-detection' | 'manual';
     category: string;
@@ -67,11 +85,14 @@ export interface InfoBoxProps {
   // visibility / config
   hideInfoBox?: boolean;
   turboCreator?: string;
+  turboOrganization?: string;
+  turboOrganizationName?: string;
   // state
   imageId: string | null;
   address: string | null;
   currentZoom?: number;
   jimuMapViewZoom?: number;
+  qualityViewType?: '2d' | '3d';
   sequenceImages: { id: string; lat: number; lon: number; captured_at?: number }[];
   turboModeActive?: boolean;
   turboColorByDate?: boolean;
@@ -86,6 +107,7 @@ export interface InfoBoxProps {
   accessToken: string;
   // callbacks
   onYearLegendClick: (year: string) => void;
+  mapFeatureExportLoading?: boolean;
   onDownloadFeatures: () => void;
   onToggleDetections: () => void;
   onToggleAiTags: () => void;
@@ -93,6 +115,8 @@ export interface InfoBoxProps {
   onSelectAlternateImage: (img: AlternateImage) => void;
   // coverage analysis
   coverageAnalysisLoading?: boolean;
+  coverageAnalysisProgress?: string;
+  onCancelCoverageAnalysis?: () => void;
   coverageResult?: CoverageResult | null;
   coverageSegmentsVisible?: boolean;
   /** True when turbo layer is loaded and has features in the current view */
@@ -130,6 +154,17 @@ export interface InfoBoxProps {
   onJoystickNudge?: (axis: "x" | "y" | "z", direction: 1 | -1) => void;
   onResetCalibration?: () => void;
   onSetNudgeStep?: (step: number) => void;
+  pointCloudAutoPaused?: boolean;
+  pointCloudPrevious?: boolean;
+  pointCloudLoading?: boolean;
+  pointCloudAdaptive?: boolean;
+  onPointCloudAdaptiveChange?: (enabled: boolean) => void;
+  pointCloudSummary?: string;
+  pointCloudIncomplete?: boolean;
+  onRetryPointCloud?: () => void;
+  pointCloudFollowImages?: boolean;
+  onPointCloudFollowImagesChange?: (enabled: boolean) => void;
+  onCopyCoordinates?: (latitude: number, longitude: number) => void;
   pointCloudColorMode?: "rgb" | "elevation";
   pointCloudLength: number;
   pointCloudMaxLength: number;
@@ -139,11 +174,14 @@ export interface InfoBoxProps {
   pointCloudActualWidth: number;
   onWidthChange?: (width: number) => void;
   onLengthChange: (length: number) => void;
-  onDownloadPointCloud?: () => void;
+  pointCloudExportLoading?: boolean;
+  onDownloadPointCloud?: (format?: "csv" | "ply" | "las") => void;
   // Quality View
   enableQualityView?: boolean;
   qualityViewActive?: boolean;
   onToggleQualityView: () => void;
+  selectedQualityBand?: "good" | "fair" | "poor" | "unscored" | null;
+  onQualityLegendClick: (band: "good" | "fair" | "poor" | "unscored") => void;
   nearbyImages?: NearbyImage[];
   nearbyLoading?: boolean;
   onSelectNearbyImage?: (id: string) => void;
@@ -162,6 +200,8 @@ export interface InfoBoxProps {
   onGenerateRoute?: () => void;
   onClearRoute?: () => void;
   onDownloadRouteGPX?: () => void;
+  enableSolar?: boolean;
+  enableElevationProfile?: boolean;
   isSolarMode?: boolean;
   onToggleSolarMode?: () => void;
   isElevationProfileActive?: boolean;
@@ -170,6 +210,7 @@ export interface InfoBoxProps {
   routeEndPoint?: [number, number] | null;
   routeSpareMinutes?: number;
   routePickMode?: "start" | "end" | null;
+  runtimeTravelMode?: CaptureTravelMode;
   onChangeRuntimeTravelMode?: ( mode: CaptureTravelMode ) => void;
   travelModeAvailability?: {
   drive: boolean;
@@ -188,19 +229,26 @@ export interface InfoBoxProps {
 
 // FilterBar props
 export interface FilterBarProps {
+    signSpriteScale?: number;
+    objectSpriteScale?: number;
+    onSpriteScaleChange?: (kind: 'signs' | 'objects', scale: number) => void;
     // visibility
     showTurboFilterBox: boolean;
     showTrafficSignsFilterBox: boolean;
     showObjectsFilterBox: boolean;
     // turbo filter state
     turboFilterUsername: string;
+    turboFilterOrganization: string;
     turboFilterStartDate?: string;
     turboFilterEndDate?: string;
     turboFilterIsPano?: boolean;
+    turboFilterOnFoot?: boolean;
+    onTurboTravelMethodChange?: (onFoot: boolean | undefined) => void;
     turboColorByDate?: boolean;
     turboModeActive?: boolean;
     // locked creator (from settings)
     turboCreator?: string;
+    turboOrganization?: string;
     // options
     trafficSignsFilterValue: FilterOption;
     trafficSignsOptions: FilterOption[];
@@ -210,6 +258,9 @@ export interface FilterBarProps {
     onTurboUsernameChange: (val: string) => void;
     onTurboUsernameEnter: () => void;
     onTurboUsernameClear: () => void;
+    onTurboOrganizationChange: (value: string) => void;
+    onTurboOrganizationEnter: () => void;
+    onTurboOrganizationClear: () => void;
     onTurboStartDateChange: (dateString: string) => void;
     onTurboEndDateChange: (dateString: string) => void;
     onTurboIsPanoChange: (val: boolean | undefined) => void;
@@ -221,6 +272,7 @@ export interface FilterBarProps {
 
 // SplashScreen props
 export interface SplashScreenProps {
+    onDismiss?: () => void;
     showIntro: boolean;
     filtersLoaded: boolean;
 }
@@ -247,8 +299,6 @@ export interface CoverageResult {
 // ControlBar props
 export interface ControlBarProps {
     // config flags
-    coverageLayerAlwaysOn?: boolean;
-    turboModeOnly?: boolean;
     hideTurboFilter?: boolean;
     enableTrafficSigns?: boolean;
     enableMapillaryObjects?: boolean;
@@ -264,11 +314,11 @@ export interface ControlBarProps {
     jimuMapView: JimuMapView | null;
     // coverage analysis
     coverageAnalysisLoading?: boolean;
+  coverageAnalysisProgress?: string;
+  onCancelCoverageAnalysis?: () => void;
     coverageResult?: CoverageResult | null;
     // callbacks
     onToggleFullscreen: () => void;
-    onToggleTiles: () => void;
-    onToggleTurboMode: () => void;
     onToggleTurboFilter: () => void;
     onToggleTrafficSigns: () => void;
     onToggleTrafficSignsFilter: () => void;
@@ -300,7 +350,16 @@ export interface ImageUtilityGroupProps {
     is3D: boolean;
     imageId: string | null;
     sequenceImages: { id: string; lat: number; lon: number }[];
+    pointCloudFollowImages?: boolean;
+    onPointCloudFollowImagesChange?: (enabled: boolean) => void;
     pointCloudLoading?: boolean;
+    pointCloudAdaptive?: boolean;
+    onPointCloudAdaptiveChange?: (enabled: boolean) => void;
+    pointCloudSummary?: string;
+    pointCloudIncomplete?: boolean;
+    onRetryPointCloud?: () => void;
+    pointCloudAutoPaused?: boolean;
+    pointCloudActive?: boolean;
     pointCloudVisible?: boolean;
     pointCloudAvailable?: boolean; // false = no sfm_cluster for this image
     // callbacks
@@ -388,4 +447,10 @@ export interface RouteData {
     remainingTargetLengthMeters?: number;
     capturedSegmentCount?: number;
     totalSegmentCount?: number;
+}
+
+export interface FieldNoteAttachments {
+    key: string; globalId: string; url: string; objectId: number;
+    items: { id: number; name: string; size?: number; contentType?: string }[];
+    busy?: boolean; error?: string; message?: string;
 }

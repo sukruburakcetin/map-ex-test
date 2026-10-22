@@ -1,0 +1,36 @@
+{
+  "installer": "organization-name",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "bc23f59d8520a1a1d66c91b9acf6448f2ad65ea7726ecd2de7b3f46d47d64d0e",
+      "resultSha256": "41f30076be30020fa322b5f6c9cdf8b01d26d9d6cfe0f80fc362329bbc88b9dc"
+    },
+    {
+      "file": "src/components/types.ts",
+      "operation": "update",
+      "originalSha256": "f1f485c02097c7a2754218b29aade2834c0266f676e6973383e6bde8e575330b",
+      "resultSha256": "5df649388ac4fe260378ec1aa805304f2ea21f22df5aa48a844a3e516de05f44"
+    },
+    {
+      "file": "src/components/InfoBox.tsx",
+      "operation": "update",
+      "originalSha256": "1b4130ec3372ce5a907d1167c3ad86a8f9aacdd20f0fbd296a93abad2416a4bb",
+      "resultSha256": "9de3214ead9c19c7a6a61969e332b3e479bf736a0b30e964932d73324fb0b32d"
+    },
+    {
+      "file": "src/components/info-box/StatusSummary.tsx",
+      "operation": "update",
+      "originalSha256": "13e3b653030632a4db1876eeea37000f9a2054c035cc4f2fcf77e78436e4b9c3",
+      "resultSha256": "659b54b68f5205c1ec625fb824730e48c45b78d084eab4169c61ce4e9b2c7a8d"
+    },
+    {
+      "file": "src/features/coverage/organizationNameLookup.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "e88fd0cf0051eabb49a4aeefe1d4e57a9e75fa0cd2af6bc11f6b8d56b248c0e0"
+    }
+  ]
+}

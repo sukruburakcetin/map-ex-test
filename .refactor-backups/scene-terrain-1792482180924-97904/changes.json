@@ -1,0 +1,30 @@
+{
+  "installer": "scene-terrain",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/config.ts",
+      "operation": "update",
+      "originalSha256": "497b54184c73d5956f0fd643861dbeb3f35afa23595357c5c2884ae57ec0194c",
+      "resultSha256": "6719b4e80ca410c6b4676dafa180a5d016774773c1c2b5681fb780abb04c397a"
+    },
+    {
+      "file": "src/setting/setting.tsx",
+      "operation": "update",
+      "originalSha256": "77dbee18327c8f5c663801903cca47c8026ecf71c34f427e4e3b705a6925ff9f",
+      "resultSha256": "637197c4f427f36e394bcdac6b95cdc58e7a2b942e53c1c170e5762e53a91635"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "41f30076be30020fa322b5f6c9cdf8b01d26d9d6cfe0f80fc362329bbc88b9dc",
+      "resultSha256": "1fc6e49fd9c3112970ae014e53c09d3b65ed5e05ed380092cf92f9d5f53648db"
+    },
+    {
+      "file": "src/features/elevation/SceneTerrainController.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "4675fea9bd19c96401fbdb1a7339884b9ef73eca9e2c6ff7473cce0accd2e703"
+    }
+  ]
+}

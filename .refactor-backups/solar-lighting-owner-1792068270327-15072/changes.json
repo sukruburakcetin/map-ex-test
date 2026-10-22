@@ -1,0 +1,18 @@
+[
+  {
+    "file": "src\\runtime\\widget.tsx",
+    "created": false
+  },
+  {
+    "file": "docs\\REFACTORING-ROADMAP.md",
+    "created": false
+  },
+  {
+    "file": "src\\features\\solar\\SolarSceneLighting.ts",
+    "created": true
+  },
+  {
+    "file": "src\\features\\solar\\README.md",
+    "created": true
+  }
+]

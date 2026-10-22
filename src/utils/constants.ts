@@ -120,7 +120,7 @@ export const ZOOM = {
   FEATURES_INTERACTIVE: 16,
 
   /** Minimum zoom for Turbo Mode coverage points */
-  TURBO_MIN: 16,
+  TURBO_MIN: 0,
 
   /** Tile zoom level used when fetching vector tiles from Mapillary */
   TILE_FETCH: 14,
@@ -291,13 +291,8 @@ export const OVERPASS_ROAD_QUERY = (
   east: number
 ) => `
 [out:json][timeout:25];
-(
-  way["highway"](${south},${west},${north},${east});
-  relation["highway"](${south},${west},${north},${east});
-);
-out body geom tags;
->;
-out skel qt;
+way["highway"](${south},${west},${north},${east});
+out body geom;
 `.trim();
  
 /**

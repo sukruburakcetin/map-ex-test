@@ -1,0 +1,12 @@
+{
+  "installer": "coverage-view-transition-fix",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "b07d3806d04e5b574c3e26c674eb71d1c131d698ef996769f1439de8fce59743",
+      "resultSha256": "ef2cf79b1bbbc9ae741c43ddddd16a39d0b638510e49b8ff40f281de53225679"
+    }
+  ]
+}

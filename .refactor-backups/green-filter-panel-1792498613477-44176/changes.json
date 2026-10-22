@@ -1,0 +1,18 @@
+{
+  "installer": "green-filter-panel",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/components/FilterBar.tsx",
+      "operation": "update",
+      "originalSha256": "48125ce274cc4a6212444c1c858822a4b06fec2d1779f728449425aa88e5a066",
+      "resultSha256": "ee1735d895e2e605721e7de63ee69489eb1917976522ef3379e6146f4cd09f2a"
+    },
+    {
+      "file": "src/components/FilterScrollRegion.tsx",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "bb2d50d8bf81a8dc18a9870ba5c7d52057e61890014fa4e8f002e128d128772d"
+    }
+  ]
+}

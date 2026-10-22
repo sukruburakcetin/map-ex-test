@@ -1,0 +1,48 @@
+{
+  "installer": "field-note-map",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "e349ac177f1cfadf8fbdd0295422cd93de895bd1bb1d1b79a454a2cd10345b60",
+      "resultSha256": "4f0990bf7fae578d2e5af075b06d95a3d8e7d0b7387b120c769edde1ca23b7ea"
+    },
+    {
+      "file": "src/features/field-notes/mapGraphic.ts",
+      "operation": "update",
+      "originalSha256": "df1b46d5c53ee898d42097fb275774290fb813c94549e75f921dd3b0ae52c45d",
+      "resultSha256": "7e9f723b05cb35dd46314cc0c1553be78e4bf3fe0a297964ff8fb881b960cd66"
+    },
+    {
+      "file": "src/features/field-notes/README.md",
+      "operation": "update",
+      "originalSha256": "f1a104547d3b3cdb5cab1d6504ef53d3282a5b155618fa142d264b9f721cc988",
+      "resultSha256": "fd0aece7fcd0866e987af699000259300aeea5ba0571fb725d63f548f42aa246"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "88f77b8fed8e8884263e530bfa8e9d9fe788bb148e3168b7959c3a60940f5989",
+      "resultSha256": "15945109699a112c6fb7462ae28862e9806795833914485daa80a3d3571c5f02"
+    },
+    {
+      "file": "src/features/field-notes/FieldNoteMap.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "db1c4fff84bdc8c8a57228dcf7bd56d5f613fa5e6b4979a22d0f77f87dd6493f"
+    },
+    {
+      "file": "tests/fieldNoteMap.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "c18e09b438300b25044febe71846ac8fe6b2b9caf9cda98ca8fd815195afbd68"
+    },
+    {
+      "file": "tests/fixtures/fieldNoteMap.baseline.json",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "d85c729ee6cc0d2a39dfa53b36cba25a7125e843bd6cbd20ca076c6018d64b10"
+    }
+  ]
+}

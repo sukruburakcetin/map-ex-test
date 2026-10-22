@@ -1,0 +1,7 @@
+# Point-cloud cancellation
+
+Cluster downloads retain their existing AbortSignal through response-body loading. `downloadAndDecompress` now uses a short-lived worker for native zlib/gzip inflation, JSON parsing and reconstruction normalization when Worker and DecompressionStream are supported. Raw XYZ/RGB values return in transferable Float64 buffers; materialization yields in bounded batches and checks the same signal. Cancellation terminates the worker, rejects the pending acquisition and releases its timeout, abort listener and object URL. No partial records are returned after cancellation.
+
+The 64 MiB decoded-data limit is enforced while streaming. Download concurrency, cache/point budgets, reconstruction/color normalization and export quality are unchanged. No external worker script or additional service request is used. Blocked/unsupported workers retain the existing pako compatibility path; synchronous parsing there can still delay input, so immediate processing cancellation requires worker support. A failed worker capability is remembered to avoid repeated failing starts.
+
+`tests/pointCloud.test.cjs` runs real decoder code using Node worker threads, including zlib/gzip parity, abort during decoding/materialization, budget enforcement and compatibility fallback. The lifecycle suite checks the real Cancel-button adapter and acquisition queue. Validate Cancel during a large live cluster download and decode in Experience Builder; unit tests do not measure browser input latency or network-panel timing.

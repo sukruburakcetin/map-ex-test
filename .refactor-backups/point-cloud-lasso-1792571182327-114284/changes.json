@@ -1,0 +1,60 @@
+{
+  "installer": "point-cloud-lasso",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "90930c6ee910721bd829ddc8504f330e4098a315754d94f9f0756dd5d1091733",
+      "resultSha256": "cd37477baba58de6718932c710b77dfd7ca0a8ea34da734c8d154fb6a382d6d8"
+    },
+    {
+      "file": "docs/POINT-CLOUD-OWNERSHIP.md",
+      "operation": "update",
+      "originalSha256": "17d14cf84eb477ddf316bbe3a0ec91a3ddf5a6c78d9721b2a56cbca1fdeb975c",
+      "resultSha256": "7a21e4538cbe99f7603acec2148b0ead6e3927efabfd6b80aba3a9f3cb57ecff"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "e5b7ccff56b66e7712be76161d4e1e63498d28e2cc2e83057b5149a822665848",
+      "resultSha256": "5749708eb65d95f37a8d2ef4ead081b357604d5bed7bf039d2ad7ae95daa2407"
+    },
+    {
+      "file": "src/features/point-cloud/README.md",
+      "operation": "update",
+      "originalSha256": "3202b7b857933ff9ebb0e011af01d209c4a5d544dc3f98bb70f35212cc1ff3e9",
+      "resultSha256": "6a11866e876740ce1dce8c930477bc51c18666c6e7dbec8e53afed92b6d7adfa"
+    },
+    {
+      "file": "tests/pointCloudViewerRenderer.test.cjs",
+      "operation": "update",
+      "originalSha256": "0a6bc9d2d6f96c28c996f39d87018ed20c820c618eef3425a52f1d6191ad2913",
+      "resultSha256": "ede981f39ff4d359bf768b0e4fdf3ca832a9e897d83d7b147f5146cbf1721c14"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudLasso.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "efd5cff478e2c43c57d3a0632f7b8bb11d228572a76c47ede8d0caf2817475b6"
+    },
+    {
+      "file": "src/features/point-cloud/lassoProjection.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "a6c762f7225c8829b55f5e61e4bf96c5c7d3db4d1bef070f1c14923e8a7bc7b2"
+    },
+    {
+      "file": "tests/pointCloudLasso.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "3e9f848d435a6049e0afecd29ee3e5b493397e48d3c87cad120a91cf257fec1f"
+    },
+    {
+      "file": "tests/fixtures/pointCloudLasso.baseline.json",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "ffb29a1c763fd2b3de4f1e3c58beb6f1935e83c7b9f2d52255c0a9ffe7699f47"
+    }
+  ]
+}

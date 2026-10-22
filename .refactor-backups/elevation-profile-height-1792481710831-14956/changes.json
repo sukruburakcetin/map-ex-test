@@ -1,0 +1,12 @@
+{
+  "installer": "elevation-profile-height",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/utils/styles.ts",
+      "operation": "update",
+      "originalSha256": "b5cb72bca3eb0534055e9106eeeaecdb9aba2623eee7ba4375602d6ea2b2e4e2",
+      "resultSha256": "006309b4f3f6396bd77b20012c1ec968150fd0a86052267d213666adab260353"
+    }
+  ]
+}

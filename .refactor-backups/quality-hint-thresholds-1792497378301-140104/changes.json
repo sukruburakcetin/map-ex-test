@@ -1,0 +1,30 @@
+{
+  "installer": "quality-hint-thresholds",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/features/coverage/QualityToolsSection.tsx",
+      "operation": "update",
+      "originalSha256": "9a8f20832167df4f4abf88d10947fa77272ef4a42e59b22f3ac06423f79a5380",
+      "resultSha256": "bdfdba6d90f4083abf43a45314de48a412082a9c7f4e0d2be2f8e017e1fc54d0"
+    },
+    {
+      "file": "src/components/InfoBox.tsx",
+      "operation": "update",
+      "originalSha256": "639af984d0fbfb7f5272e3d694cf8ab248b8f14255a6545072c3a10d8d567389",
+      "resultSha256": "54d032db41d131e092566a678e58b5fd6bcc8445e3ba9272f2e8c4989d41e085"
+    },
+    {
+      "file": "src/components/types.ts",
+      "operation": "update",
+      "originalSha256": "5df649388ac4fe260378ec1aa805304f2ea21f22df5aa48a844a3e516de05f44",
+      "resultSha256": "1c126e90071302e5f2b70773fc5a222300b79e84c2e5adbf40478092807ca46f"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "6fca788e508559eb641988906203241822bd0ca049d2fd7e752906d0cff018eb",
+      "resultSha256": "24d53376563733709e8d0925a604f0ce2bf8538db4a15ec0cc2da89cf52ca1c1"
+    }
+  ]
+}

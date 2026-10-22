@@ -49,39 +49,40 @@ export const Legend: React.FC<LegendProps> = ({ turboModeActive, onClearCache, h
                 fontWeight: 700,
                 marginBottom: "2px",
                 color: "white",
-                textTransform: "uppercase",
+                textTransform: "none",
                 letterSpacing: "1px",
                 borderBottom: "1px solid rgba(255,255,255,0.1)",
                 paddingBottom: "3px"
             }}>Legend</div>
 
             <div style={{ display: "flex", flexDirection: "column" }}>
+                <div style={legendRowStyle}><span aria-hidden="true" style={{ width: 12, borderTop: "2px solid blue", flexShrink: 0 }} /><span style={legendTextStyle}>Selected Sequence</span></div>
                 {turboModeActive ? (
                     <React.Fragment>
-                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("#00ff00"), border: "1px solid white" }}></span> <span style={legendTextStyle}>Active frame</span></div>
-                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("blue"), border: "1px solid #e3da30" }}></span> <span style={legendTextStyle}>Seq. images</span></div>
-                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("#a52a2a"), border: "1px solid white" }}></span> <span style={legendTextStyle}>Turbo coverage</span></div>
-                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("transparent"), border: "1.5px solid cyan" }}></span> <span style={legendTextStyle}>First selected</span></div>
-                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("yellow"), border: "2px solid orange" }}></span> <span style={legendTextStyle}>Next frame</span></div>
+                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("#00ff00"), border: "1px solid white" }}></span> <span style={legendTextStyle}>Active Frame</span></div>
+                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("blue"), border: "1px solid #e3da30" }}></span> <span style={legendTextStyle}>Nearby Frames</span></div>
+                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("#a52a2a"), border: "1px solid white" }}></span> <span style={legendTextStyle}>Coverage</span></div>
+                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("transparent"), border: "1.5px solid cyan" }}></span> <span style={legendTextStyle}>First Selected</span></div>
+                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("yellow"), border: "2px solid orange" }}></span> <span style={legendTextStyle}>Next Frame</span></div>
                         
                         {/* Haritada saha notu varsa göster */}
                         {hasFieldNotes && (
                             <div style={legendRowStyle}>
-                                {diamondMarker} <span style={legendTextStyle}>Field note</span>
+                                {diamondMarker} <span style={legendTextStyle}>Field Note</span>
                             </div>
                         )}
                     </React.Fragment>
                 ) : (
                     <React.Fragment>
-                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("black"), border: "1px solid white" }}></span> <span style={legendTextStyle}>Clicked point</span></div>
-                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("#00ff00"), border: "1px solid white" }}></span> <span style={legendTextStyle}>Active frame</span></div>
-                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("blue"), border: "1px solid white" }}></span> <span style={legendTextStyle}>Active sequence</span></div>
-                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("yellow"), border: "2px solid orange" }}></span> <span style={legendTextStyle}>Next frame</span></div>
+                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("black"), border: "1px solid white" }}></span> <span style={legendTextStyle}>Clicked Point</span></div>
+                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("#00ff00"), border: "1px solid white" }}></span> <span style={legendTextStyle}>Active Frame</span></div>
+                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("blue"), border: "1px solid white" }}></span> <span style={legendTextStyle}>Nearby Frames</span></div>
+                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("yellow"), border: "2px solid orange" }}></span> <span style={legendTextStyle}>Next Frame</span></div>
                         
                         {/* Haritada saha notu varsa göster */}
                         {hasFieldNotes && (
                             <div style={legendRowStyle}>
-                                {diamondMarker} <span style={legendTextStyle}>Field note</span>
+                                {diamondMarker} <span style={legendTextStyle}>Field Note</span>
                             </div>
                         )}
                         <button onClick={onClearCache} style={compactButtonStyle}>CLEAR CACHE</button>

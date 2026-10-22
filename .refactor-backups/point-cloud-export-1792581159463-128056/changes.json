@@ -1,0 +1,60 @@
+{
+  "installer": "point-cloud-export",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "838e54b102113855899b8d18a906d737fded5d31fbd453f3abcb2e119c7a4421",
+      "resultSha256": "7affeb77f381d15169098f9480d85e7a716ead69e7e192ac703f797de0cc7e79"
+    },
+    {
+      "file": "src/features/point-cloud/csvExport.ts",
+      "operation": "update",
+      "originalSha256": "4b6853f8311e9a06089592a1ee857d4dc03a69a854c8433ad6cbc59e6ff3936f",
+      "resultSha256": "678e7f96306cf986b99ae3491a555df67bb2cbfeba5c30a6e37346943f634ba8"
+    },
+    {
+      "file": "docs/POINT-CLOUD-OWNERSHIP.md",
+      "operation": "update",
+      "originalSha256": "eb36d996043d05c217732eb0f0a6ca6e5902bec6f826ae2747b5ec51d1649fe4",
+      "resultSha256": "c5fa0eba3749ca3a718bf05899fd823025eb9b6956fef991ab4207ee8a8fc392"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "5f0dcc08e5dba17aa177443d39311fccc01e802bfdd9167c40f794bdccf6f063",
+      "resultSha256": "09e706cc436ac39c1262de65e83e8ebb1a2c653e45742f75ba5cc77268d02860"
+    },
+    {
+      "file": "src/features/point-cloud/README.md",
+      "operation": "update",
+      "originalSha256": "f08a77142243af6f78dfa4866d194459ac82044da68f003cdd2864226a9dbfa6",
+      "resultSha256": "aba31bfaa9f165b246f8be6b35da7680c37979fcb0c6d8b6815302629eb39e9b"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudExport.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "c560fa5aacce46b263713ec6d570904491170c58c904f676a795cd3a6a8a0587"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudExportFeedback.tsx",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "da2f444d0c44fdc1693abd11686e3762d4dd714300ccf6f0b5866accc85a0877"
+    },
+    {
+      "file": "tests/pointCloudExport.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "8ad4bb17f91b54c53448330fb89f3f64d526dcb2d055f80aa3e783994bf5fcc0"
+    },
+    {
+      "file": "tests/fixtures/pointCloudExport.baseline.json",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "6d6aaa0240a60975cbb7adc5f64b43fe2f0f8de22f43708b506a4de174310d55"
+    }
+  ]
+}

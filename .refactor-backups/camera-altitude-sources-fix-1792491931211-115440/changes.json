@@ -1,0 +1,42 @@
+{
+  "installer": "camera-altitude-sources-fix",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/features/imagery/sequenceCoordinates.ts",
+      "operation": "update",
+      "originalSha256": "4c0bb822034c424a82b27339fdea581a426836445090daacea6984a859acd8fb",
+      "resultSha256": "c34e672f183ace720f208a10290a5a2b61d2033ee3d45f7369d97ea8979320dc"
+    },
+    {
+      "file": "src/features/elevation/profileTracking.ts",
+      "operation": "update",
+      "originalSha256": "9561471516522957f00ef0267529f8d1ac4ae35b11bcfaf1a2091602565559d1",
+      "resultSha256": "d7fcf1037ecbe46721fbf08dd1f648fe695dc80802fcd31fff770f2d35df1ff8"
+    },
+    {
+      "file": "src/features/elevation/ElevationProfileController.ts",
+      "operation": "update",
+      "originalSha256": "4c046d6c8f67bf35bf40e08774e6cde8739df1db14abce2c33b82b4dfa6e8dfc",
+      "resultSha256": "9292fedfe05595763c8d9ed7fd5a5bbe34aa0d26b762eb251eba51e748e9480e"
+    },
+    {
+      "file": "src/features/elevation/profileIndicator.ts",
+      "operation": "update",
+      "originalSha256": "76503895b97e2da9ccf96636216321c5e7791dc6e2439f6d0da356750d19d508",
+      "resultSha256": "108818ae342e9650a89a979e4e6cee90865c5edb0d163bbeca53512c50848a4f"
+    },
+    {
+      "file": "src/features/elevation/README.md",
+      "operation": "update",
+      "originalSha256": "0d1021fbec3ca242c37dee4af78ce4be0e9d4019302856891077d373adf1bbce",
+      "resultSha256": "521a9071bd61c6c1ede18bdd78ccda3de8b9022e1b930f60187f8be20c059aed"
+    },
+    {
+      "file": "src/utils/imageAltitude.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "a5280f5add7dd331531138610beaca6e3b96bd7d27a703ba9d450136d56f4897"
+    }
+  ]
+}

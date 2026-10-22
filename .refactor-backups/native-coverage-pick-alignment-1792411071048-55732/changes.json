@@ -1,0 +1,18 @@
+{
+  "installer": "native-coverage-pick-alignment",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "d9d61d8cdfe9e245e08557e5d434bd8494069bc87304ac5b0b73c85c171914dd",
+      "resultSha256": "3f731e03413b10f5d203bc831b608b9635a70d61a88ec211e10b5e4a418da53c"
+    },
+    {
+      "file": "src/features/coverage/nativeCoverageAlignment.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "2763447a9540a9dc03c26c0561ecc589dfdf7e693065dcdb53af6d1467e04efb"
+    }
+  ]
+}

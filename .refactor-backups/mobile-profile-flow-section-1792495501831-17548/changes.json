@@ -1,0 +1,30 @@
+{
+  "installer": "mobile-profile-flow-section",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "29e219d0a2bcc342648e672df3e5ce99098401eaa89762232943fa2852fbb889",
+      "resultSha256": "6fca788e508559eb641988906203241822bd0ca049d2fd7e752906d0cff018eb"
+    },
+    {
+      "file": "src/features/elevation/profileIndicator.ts",
+      "operation": "update",
+      "originalSha256": "108818ae342e9650a89a979e4e6cee90865c5edb0d163bbeca53512c50848a4f",
+      "resultSha256": "53622db6a60c86bf225dbdeb86a5c6834e28117a0a3905cb12543fefd2685763"
+    },
+    {
+      "file": "src/features/elevation/ElevationProfileController.ts",
+      "operation": "update",
+      "originalSha256": "9292fedfe05595763c8d9ed7fd5a5bbe34aa0d26b762eb251eba51e748e9480e",
+      "resultSha256": "b2f98ec1931d8d44ac098daec5bf670d3202cb1591d244acd0acaeea4c719c7b"
+    },
+    {
+      "file": "src/features/elevation/ProfileFlowDock.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "192c00bd298158b675b01207245e886d590a3a4ae64ff9dcedff7c84d5c48a80"
+    }
+  ]
+}

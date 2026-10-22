@@ -1,0 +1,48 @@
+{
+  "installer": "point-cloud-map-owner",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "813c0ceb25e499573927d811af98cec0ada312d260da0191d4d574d7cbdc7ca7",
+      "resultSha256": "718915812effef0fa2a91d0045960905ce619113e30cdad17086bb4739f632e8"
+    },
+    {
+      "file": "docs/POINT-CLOUD-OWNERSHIP.md",
+      "operation": "update",
+      "originalSha256": "83cdbdd5b06f544d49e50b49c334a207047cc22308ec3c5708a10005aa02ea33",
+      "resultSha256": "da8cab6f08e5552d2bc02e4502755c2baf180b969af64c87fca5b498bc9b759b"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "e613f491adf99d0376101baa861e4c704415f8cba54ee5abbd3c1d4aa71c543f",
+      "resultSha256": "5f50fea37fdeeab4e7538928b17bff5a31131a11f0b94f38c4464a018abfaa0b"
+    },
+    {
+      "file": "src/features/point-cloud/README.md",
+      "operation": "update",
+      "originalSha256": "809f6e16d0c320b3a4fc5e34ecf523593e2f90bf9d37792b40804b296ee5b267",
+      "resultSha256": "db8d73d24ef014b21e6edeef538fcdf82e39e1416d468532a3385eec3a71c381"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudMapLayer.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "31672d30dada8b4194b74ec045ea81d567aff40d6871cafbe7fc75e8da9e0cdb"
+    },
+    {
+      "file": "tests/pointCloudMapLayer.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "546d722b9b561da1d53521268e4f8f711badcf508098ad4e1c3ef34e0ceb79df"
+    },
+    {
+      "file": "tests/fixtures/pointCloudMapLayer.baseline.json",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "add8ab1e6b6325f32b826908c916cc8d1c1d1c93ffae8c3a9f4607e5fed0f4eb"
+    }
+  ]
+}

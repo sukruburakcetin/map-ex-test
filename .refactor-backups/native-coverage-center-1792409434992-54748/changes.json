@@ -1,0 +1,18 @@
+{
+  "installer": "native-coverage-center-measurement",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/features/coverage/NativeCoverageAlignmentDiagnostic.ts",
+      "operation": "update",
+      "originalSha256": "b1eb52a0d21bcfd6c699fe9f19646d73b87d9e8535c31e72b0c630cacd0528b7",
+      "resultSha256": "5dab40af3425e42cb13e4f5408bd20e61f4c2aa1f18ad0c89ddfe3a4e0526ca7"
+    },
+    {
+      "file": "src/features/coverage/nativeCircleMeasurement.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "898da5982ac0c2a44a99e9cfcdfcbe330c940b90330500848759d43c75621987"
+    }
+  ]
+}

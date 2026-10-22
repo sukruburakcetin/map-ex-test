@@ -728,7 +728,7 @@ export const glassStyles = {
         alignItems: 'center',
         justifyContent: 'center',
         gap: '6px',
-        background: "rgba(20, 20, 30, 0.65)", 
+        background: "rgba(20, 20, 30, 0.65)",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
         paddingBottom: "2px",
@@ -973,7 +973,19 @@ export const glassStyles = {
 // SECTION: GLOBAL CSS STRING
 // Contains CSS animations, responsive container queries, and specific fixes for ArcGIS Experience Builder panels.
 export const overrideStyles = `
-    /* EXPERIENCE BUILDER UI FIXES */
+    .mly-coverage-touch-hint { display:none; }
+    @media (pointer:coarse) { .mly-coverage-mouse-hint { display:none; } .mly-coverage-touch-hint { display:inline; } }
+    @container (max-width:900px) { .mly-coverage-context-hint { display:none; } }
+    @container (max-width:400px) { .mly-coverage-filter-hint { max-width:28% !important; font-size:9px !important; } }
+    .mly-coverage-notice button:focus-visible, .mly-coverage-help button:focus-visible { outline:2px solid #91d9b5; outline-offset:-2px; }
+    @container (max-width:600px) {
+        .mly-coverage-logo { display:none; }
+        .mly-coverage-notice { height:24px !important; min-height:24px !important; max-height:24px !important; flex-basis:24px !important; gap:4px !important; padding:0 4px !important; }
+        .mly-coverage-notice [role="status"] > span:last-child { font-size:10.5px !important; }
+        .mly-coverage-notice button { height:24px !important; min-width:24px; font-size:10px !important; }
+        .mly-coverage-notice button[aria-label="Dismiss coverage message"] { width:30px !important; font-size:18px !important; }
+    }
+
     .mobile-panel-content-header { height: 30px !important; }
     .expand-mobile-panel-touch-container { height: 30px !important; }
     .expand-mobile-panel[style*="height: 150px"] { height: 280px !important; }
@@ -1017,8 +1029,14 @@ export const overrideStyles = `
             transform: translateX(-50%) scale(0.75) !important;
         }
     }
-    /* Elevation Profiles */
-    .esri-elevation-profile{ margin-bottom: 75px !important; }
+    /* Elevation Profiles: reserve space for the SDK loading indicator above the chart.
+       Let content determine the panel height so the added space does not shrink the plot. */
+    .esri-elevation-profile{
+        margin-bottom: 75px !important;
+        padding-top: 24px !important;
+        height: auto !important;
+        box-sizing: border-box;
+    }
 
     .esri-elevation-profile.esri-component.esri-widget--panel{ max-width: 50% !important; }
 
@@ -1371,7 +1389,7 @@ export const overrideStyles = `
         .esri-view-width-xsmall .esri-popup--docked-bottom-center .esri-popup__main-container { left: auto !important; right: auto !important; }
         .splash-screen-logo { margin-bottom: 15px !important; }
         .splash-screen-text { font-size: 10px !important; }
-        .minimap-container { top: 100px !important; left: 50% !important; right: auto !important; transform: translateX(-50%) !important; width: 90% !important; max-width: 350px !important; height: 200px !important; }
+        .minimap-container { top: auto !important; bottom: 12px !important; left: 12px !important; right: auto !important; transform: none !important; width: min(34vw, 156px) !important; max-width: 156px !important; height: 104px !important; border-radius: 10px !important; }
         .warning-message-container { font-size: 8px !important; }
         .glass-scroll-container { border-radius: 0px !important; padding: 0px !important; margin-top: 0px !important; gap: 2px !important }
         .glass-datepicker-calendar { width: 160px !important; padding: 6px 6px 5px !important; }
@@ -1388,3 +1406,20 @@ export const overrideStyles = `
         100% { transform: rotate(360deg); }
     }
 `;
+
+/** In-flow notice dock; never overlays playback, toolbars or the status panel. */
+export const coverageNoticeStyles = {
+    container: { position: "relative", flex: "0 0 28px", width: "100%", height: 28, minHeight: 28, maxHeight: 28, boxSizing: "border-box", overflow: "visible", display: "flex", alignItems: "center", gap: 6, padding: "0 6px", borderTop: "1px solid rgba(255,255,255,0.12)", background: "#142126", color: "#fff", fontFamily: '"Inter", "Segoe UI", sans-serif', fontSize: 11, lineHeight: 1.4, zIndex: 60 } as React.CSSProperties,
+    statusIcon: { width: 18, height: 18, flexShrink: 0, objectFit: "cover", borderRadius: 4 } as React.CSSProperties,
+    secondary: { flexShrink: 1, minWidth: 0, fontSize: 10, color: "#9cb6ad", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } as React.CSSProperties,
+    logo: { width: 22, height: 22, flexShrink: 0, objectFit: "cover", borderRadius: 6 } as React.CSSProperties,
+    status: { minWidth: 0, flex: "1 1 0", display: "flex", alignItems: "center", gap: 6, overflow: "hidden" } as React.CSSProperties,
+    title: { minWidth: 0, fontSize: 11, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } as React.CSSProperties,
+    helpButton: { flexShrink: 0, height: 24, minWidth: 24, padding: "0 6px", border: 0, borderRadius: 6, background: "transparent", color: "#b0c3cb", fontSize: 11, whiteSpace: "nowrap", cursor: "pointer", touchAction: "manipulation" } as React.CSSProperties,
+    helpPanel: { position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: "min(420px, calc(100% - 16px))", maxHeight: "calc(100% - 52px)", overflowY: "auto", overflowWrap: "anywhere", overscrollBehavior: "contain", padding: "6px 12px 10px", boxSizing: "border-box", border: "1px solid rgba(145,217,181,0.3)", borderRadius: 8, background: "#142126", color: "#fff", boxShadow: "0 6px 24px rgba(0,0,0,0.4)", zIndex: 1000 } as React.CSSProperties,
+    brand: { fontSize: 9, fontWeight: 600, letterSpacing: "0.25px", color: "#91d9b5", marginBottom: 6 } as React.CSSProperties,
+    message: { fontSize: 11, lineHeight: 1.45, color: "rgba(255,255,255,0.85)" } as React.CSSProperties,
+    close: { flexShrink: 0, width: 36, height: 36, padding: 0, border: 0, borderRadius: 6, background: "transparent", color: "#c6d5dc", fontSize: 20, cursor: "pointer", touchAction: "manipulation" } as React.CSSProperties,
+    optOut: { display: "flex", alignItems: "center", gap: 8, minHeight: 36, fontSize: 11, color: "#bdcdd3", cursor: "pointer", touchAction: "manipulation", marginTop: 6 } as React.CSSProperties,
+    action: { flexShrink: 0, height: 24, padding: "0 5px", border: 0, borderRadius: 6, background: "transparent", color: "#b5edcf", fontSize: 10, whiteSpace: "nowrap", cursor: "pointer", touchAction: "manipulation" } as React.CSSProperties,
+};

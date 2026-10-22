@@ -1,0 +1,54 @@
+{
+  "installer": "point-cloud-measurement",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "d65b878bfa698c8f5ade50198a0bb0910adc6875691212fac8f676fd0d8f3651",
+      "resultSha256": "90930c6ee910721bd829ddc8504f330e4098a315754d94f9f0756dd5d1091733"
+    },
+    {
+      "file": "docs/POINT-CLOUD-OWNERSHIP.md",
+      "operation": "update",
+      "originalSha256": "23442f2c03ee4c8144efa724f6b2bbeed130dbaa6b897405a3ed2c7350d6fe8a",
+      "resultSha256": "17d14cf84eb477ddf316bbe3a0ec91a3ddf5a6c78d9721b2a56cbca1fdeb975c"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "b78395ea94907cef85f1aeb2361044c68af4a541dee8012d078c60ac949082c6",
+      "resultSha256": "e5b7ccff56b66e7712be76161d4e1e63498d28e2cc2e83057b5149a822665848"
+    },
+    {
+      "file": "src/features/point-cloud/README.md",
+      "operation": "update",
+      "originalSha256": "7540b61e793bfa098fc532ae9cc2e82d84ffe9ed87f8e60831a1ead57a80972f",
+      "resultSha256": "3202b7b857933ff9ebb0e011af01d209c4a5d544dc3f98bb70f35212cc1ff3e9"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudMeasurement.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "f977a23c0aa2d04ad8f862ab6ff9fbae55c37c677c33d2d5cdec9b70df949a4d"
+    },
+    {
+      "file": "src/features/point-cloud/MeasurementViewerRenderer.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "4c63756a6b3105c9d9c275533e7142d668ffe5f69a19b2a7ea615b76de772c96"
+    },
+    {
+      "file": "tests/pointCloudMeasurement.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "208e9596cad41b8a445920294396e34e59daa4210eb33724d35a34386b724db1"
+    },
+    {
+      "file": "tests/fixtures/pointCloudMeasurement.baseline.json",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "b6f515cde3ec850acbad57596ad75c397e4991c24526a8b98b526aeeb20b9b62"
+    }
+  ]
+}

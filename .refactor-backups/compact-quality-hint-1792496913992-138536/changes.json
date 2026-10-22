@@ -1,0 +1,12 @@
+{
+  "installer": "compact-quality-hint",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/features/coverage/QualityToolsSection.tsx",
+      "operation": "update",
+      "originalSha256": "23d361a187f95288c4a9c42cccb091f73d4a65a7dca297b73792d91fa9ae6719",
+      "resultSha256": "1b73f136c59c06e3fd4927fde62455543d3862ab2c0bf31507d024819d22bc10"
+    }
+  ]
+}

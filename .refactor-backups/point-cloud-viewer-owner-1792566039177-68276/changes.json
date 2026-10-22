@@ -1,0 +1,48 @@
+{
+  "installer": "point-cloud-viewer-owner",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "813c060851351446bda80667cc6ef9417e64c834df1db1df0352910407241b08",
+      "resultSha256": "813c0ceb25e499573927d811af98cec0ada312d260da0191d4d574d7cbdc7ca7"
+    },
+    {
+      "file": "docs/POINT-CLOUD-OWNERSHIP.md",
+      "operation": "update",
+      "originalSha256": "0a7ee9b65fc2c8377fb1e40582ddfb5a70da344a6264377836710ef1230ab59b",
+      "resultSha256": "83cdbdd5b06f544d49e50b49c334a207047cc22308ec3c5708a10005aa02ea33"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "d864f846390ddf4cee0cf4bebe641dde6a41a39f3dd9e03ba6660eafd6d926e4",
+      "resultSha256": "e613f491adf99d0376101baa861e4c704415f8cba54ee5abbd3c1d4aa71c543f"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudViewerRenderer.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "2dcd3deb82358703cbb780bf6014d92a3d1af7909d4751aea32d57aa6373dbf7"
+    },
+    {
+      "file": "src/features/point-cloud/README.md",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "809f6e16d0c320b3a4fc5e34ecf523593e2f90bf9d37792b40804b296ee5b267"
+    },
+    {
+      "file": "tests/pointCloudViewerRenderer.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "0a6bc9d2d6f96c28c996f39d87018ed20c820c618eef3425a52f1d6191ad2913"
+    },
+    {
+      "file": "tests/fixtures/pointCloudViewerRenderer.baseline.json",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "7bd8a52561ef547cdb7724a29e33181c4b79281e5b7e79154c5de3f0fb640e83"
+    }
+  ]
+}

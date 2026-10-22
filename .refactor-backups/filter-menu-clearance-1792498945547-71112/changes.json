@@ -1,0 +1,18 @@
+{
+  "installer": "filter-menu-clearance",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/components/GlassSelect.tsx",
+      "operation": "update",
+      "originalSha256": "5a8ed9ec3116f5cc3e8e5e38d086b9ec8900f06f6447c474a2c13ef75ccd357e",
+      "resultSha256": "067e3d75668a22efb5528f4445bec58fa29330ff72f1eb55205ff31b330646e3"
+    },
+    {
+      "file": "src/components/FilterScrollRegion.tsx",
+      "operation": "update",
+      "originalSha256": "bb2d50d8bf81a8dc18a9870ba5c7d52057e61890014fa4e8f002e128d128772d",
+      "resultSha256": "6390b9e7a01c1d82ed0ec54e5d3ac0dbed10945b0fa7e0c9989b9149f547a3a7"
+    }
+  ]
+}

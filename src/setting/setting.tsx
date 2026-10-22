@@ -5,6 +5,7 @@ import { SettingSection, SettingRow } from "jimu-ui/advanced/setting-components"
 import { MapWidgetSelector } from "jimu-ui/advanced/setting-components";
 import { Switch, TextInput, NumericInput, Select, Option } from "jimu-ui";
 import { IMConfig } from "../config";
+import { organizationFilterId } from "../utils/organizationFilter";
 import { FIELD_NOTE_CATEGORIES } from "../components/types";
 
 export default class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> {
@@ -33,14 +34,6 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
     });
   };
 
-  // Handle Turbo Mode Only Toggle
-  onToggleTurboModeOnly = (evt: React.ChangeEvent<HTMLInputElement>) => {
-    this.props.onSettingChange({
-      id: this.props.id,
-      config: this.props.config.set("turboModeOnly", evt.target.checked),
-    });
-  };
-
   onToggleHideTurboFilter = (evt: React.ChangeEvent<HTMLInputElement>) => {
     this.props.onSettingChange({
       id: this.props.id,
@@ -48,40 +41,28 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
     });
   };
 
-  onToggleCoverageAlwaysOn = (evt: React.ChangeEvent<HTMLInputElement>) => {
-    this.props.onSettingChange({
-      id: this.props.id,
-      config: this.props.config.set("coverageLayerAlwaysOn", evt.target.checked),
-    });
-  };
-
-  onToggleHideCoverageCircles = (evt: React.ChangeEvent<HTMLInputElement>) => {
-    this.props.onSettingChange({
-      id: this.props.id,
-      config: this.props.config.set("hideCoverageCircles", evt.target.checked),
-    });
-  };
-
   // Handle Creator Input
   onCreatorChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
     const value = evt.target.value;
     let config = this.props.config.set("turboCreator", value);
-    config = this.autoSetTurboMode(config);
     this.props.onSettingChange({ id: this.props.id, config });
+  };
+
+  onOrganizationChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
+    const value = evt.target.value.trim();
+    this.props.onSettingChange({ id: this.props.id, config: this.props.config.set("turboOrganization", value) });
   };
 
   // Turbo Preset Handlers
   onTurboDefaultStartDateChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
     const value = evt.target.value || undefined;
     let config = this.props.config.set("turboDefaultStartDate", value);
-    config = this.autoSetTurboMode(config);
     this.props.onSettingChange({ id: this.props.id, config });
   };
 
   onTurboDefaultEndDateChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
     const value = evt.target.value || undefined;
     let config = this.props.config.set("turboDefaultEndDate", value);
-    config = this.autoSetTurboMode(config);
     this.props.onSettingChange({ id: this.props.id, config });
   };
 
@@ -95,13 +76,11 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
     const raw = evt.target.value;
     const value = raw === "true" ? true : raw === "false" ? false : null;
     let config = this.props.config.set("turboDefaultIsPano", value);
-    config = this.autoSetTurboMode(config);
     this.props.onSettingChange({ id: this.props.id, config });
   };
 
   onToggleTurboDefaultColorByDate = (evt: React.ChangeEvent<HTMLInputElement>) => {
     let config = this.props.config.set("turboDefaultColorByDate", evt.target.checked);
-    config = this.autoSetTurboMode(config);
     this.props.onSettingChange({ id: this.props.id, config });
   };
 
@@ -327,17 +306,6 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
     return "";
   }
 
-  private autoSetTurboMode(config: any): any {
-    const hasAnyPreset = !!(
-      config.turboCreator ||
-      config.turboDefaultStartDate ||
-      config.turboDefaultEndDate ||
-      (config.turboDefaultIsPano !== null && config.turboDefaultIsPano !== undefined) ||
-      config.turboDefaultColorByDate
-    );
-    return config.set("turboModeOnly", hasAnyPreset);
-  }
-
   render() {
     const config = this.props.config;
     const routingEngine = config.routingEngine || "world";
@@ -398,44 +366,30 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
           </SettingRow>
         </SettingSection>
         <SettingSection title="General Settings">
-          <SettingRow label="Mapillary Coverage" style={{ marginTop: "5px" }}>
-            <Switch checked={config.coverageLayerAlwaysOn === true} onChange={this.onToggleCoverageAlwaysOn} />
-          </SettingRow>
-          <SettingRow>
-            <span className="text" style={{ fontSize: "12px", fontStyle: "italic", marginTop: "5px", opacity: "0.3" }}>
-              Always shows standard Mapillary vector tiles and hides the map toggle.
-            </span>
-          </SettingRow>
-          <SettingRow label="Hide Coverage Circles">
-            <Switch checked={config.hideCoverageCircles === true} onChange={this.onToggleHideCoverageCircles} />
-          </SettingRow>
-          <SettingRow>
-            <span className="text" style={{ fontSize: "12px", marginTop: "5px", opacity: "0.3", fontStyle: "italic" }}>
-              Hides the individual image points on the Mapillary coverage layer, showing only sequence lines.
-            </span>
-          </SettingRow>
-          <SettingRow label="Turbo Mode Only">
-            <Switch checked={config.turboModeOnly === true} onChange={this.onToggleTurboModeOnly} />
-          </SettingRow>
-          <SettingRow>
-            <span className="text" style={{ fontSize: "12px", fontStyle: "italic", marginTop: "5px", opacity: "0.3" }}>
-              Always enables the turbo coverage layer and hides the toggle. Disables Normal Mode, allowing interaction only by clicking visible coverage points.
-            </span>
-          </SettingRow>
           {/*Default Creator Field */}
           <SettingRow flow="wrap">
             <div style={{ width: "100%" }}>
-              <div style={{ marginBottom: "5px", fontWeight: 500 }}>Default Creator (Turbo Mode Only)</div>
+              <div style={{ marginBottom: "5px", fontWeight: 500 }}>Default Creator</div>
               <TextInput className="w-100" placeholder="e.g. mapillary_user" value={config.turboCreator || ""} onChange={this.onCreatorChange} />
             </div>
           </SettingRow>
-        </SettingSection>
-
-        {/*Turbo Coverage Presets */}
-        <SettingSection title="Turbo Coverage Presets">
+          <SettingRow flow="wrap">
+            <div style={{ width: "100%" }}>
+              <div style={{ marginBottom: "5px", fontWeight: 500 }}>Organization ID</div>
+              <TextInput className="w-100" aria-label="Default Mapillary organization ID" placeholder="Numeric Mapillary organization ID"
+                value={config.turboOrganization || ""} onChange={this.onOrganizationChange}
+                aria-invalid={organizationFilterId(config.turboOrganization) === -1} />
+              <div style={{ marginTop: 4, fontSize: 11 }}>
+                {organizationFilterId(config.turboOrganization) === -1
+                  ? "Enter a valid positive numeric Mapillary organization ID."
+                  : "Optional. Locks the organization filter at runtime and combines with Default Creator. Zoom closer for organization coverage."}
+              </div>
+            </div>
+          </SettingRow>
+        {/* Coverage defaults are part of General Settings. */}
           <SettingRow>
             <span className="text" style={{ fontSize: "12px", fontStyle: "italic", opacity: "0.4" }}>
-              These values pre-populate the Turbo Mode filter panel when the widget loads. Users can still override them at runtime via the filter button (unless it is hidden).
+              These values pre-populate the coverage filter panel when the widget loads. Users can still override them at runtime via the filter button (unless it is hidden).
             </span>
           </SettingRow>
 
@@ -462,8 +416,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                 <button
                   onClick={() => {
                     let config = this.props.config.set("turboDefaultStartDate", undefined);
-                    config = this.autoSetTurboMode(config);
-                    this.props.onSettingChange({ id: this.props.id, config });
+                                    this.props.onSettingChange({ id: this.props.id, config });
                   }}
                   style={{
                     marginTop: "4px",
@@ -504,8 +457,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                 <button
                   onClick={() => {
                     let config = this.props.config.set("turboDefaultEndDate", undefined);
-                    config = this.autoSetTurboMode(config);
-                    this.props.onSettingChange({ id: this.props.id, config });
+                                    this.props.onSettingChange({ id: this.props.id, config });
                   }}
                   style={{
                     marginTop: "4px",
@@ -539,7 +491,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                 <Option value="true">Panoramas only</Option>
                 <Option value="false">Non-panoramas only</Option>
               </Select>
-              <div style={{ fontSize: "11px", fontStyle: "italic", marginTop: "4px", opacity: "0.4" }}>Restricts Turbo coverage to panoramic or flat images only.</div>
+              <div style={{ fontSize: "11px", fontStyle: "italic", marginTop: "4px", opacity: "0.4" }}>Restricts coverage to panoramic or flat images only.</div>
             </div>
           </SettingRow>
 
@@ -549,7 +501,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
           </SettingRow>
           <SettingRow>
             <span className="text" style={{ fontSize: "11px", fontStyle: "italic", opacity: "0.4" }}>
-              When enabled, Turbo coverage points are coloured by their capture year on first load. The legend in the info box will reflect the year breakdown.
+              When enabled, coverage points are coloured by their capture year on first load. The legend in the info box will reflect the year breakdown.
             </span>
           </SettingRow>
         </SettingSection>
@@ -561,7 +513,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
           </SettingRow>
 
           {/* UI Toggles */}
-          <SettingRow label="Hide Legend">
+          <SettingRow label="Hide Mapillary Map Legend">
             <Switch checked={config.hideLegend === true} onChange={this.onToggleHideLegend} />
           </SettingRow>
 
@@ -569,7 +521,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
             <Switch checked={config.hideInfoBox === true} onChange={this.onToggleHideInfoBox} />
           </SettingRow>
 
-          <SettingRow label="Hide Turbo Mode Filter Button">
+          <SettingRow label="Hide Coverage Filter Button">
             <Switch checked={config.hideTurboFilter === true} onChange={this.onToggleHideTurboFilter} />
           </SettingRow>
 
@@ -634,6 +586,18 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
         </SettingSection>
 
         <SettingSection title="Advanced Settings">
+          <SettingRow label="Enable Solar Modeling">
+            <Switch checked={config.enableSolar === true} onChange={evt => this.props.onSettingChange({ id: this.props.id, config: config.set("enableSolar", evt.target.checked) })} />
+          </SettingRow>
+          <SettingRow label="Enable 3D terrain">
+            <Switch checked={config.enable3DTerrain === true} onChange={evt => this.props.onSettingChange({ id: this.props.id, config: config.set("enable3DTerrain", evt.target.checked) })} />
+          </SettingRow>
+          <SettingRow>
+            <span style={{ fontSize: "12px", opacity: 0.7 }}>Uses existing map terrain, or adds World Elevation in 3D. Independent of the elevation profile.</span>
+          </SettingRow>
+          <SettingRow label="Enable Elevation Profiler">
+            <Switch checked={config.enableElevationProfile === true} onChange={evt => this.props.onSettingChange({ id: this.props.id, config: config.set("enableElevationProfile", evt.target.checked) })} />
+          </SettingRow>
           <SettingRow label="Render Mode">
             <Select
               size="sm"
@@ -719,6 +683,16 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
         </SettingSection>
 
         <SettingSection title="Field Notes Settings">
+          <SettingRow label="Enterprise notes layer">
+            <Switch checked={config.sharedFieldNotesEnabled === true} onChange={event => this.props.onSettingChange({ id: this.props.id, config: config.set("sharedFieldNotesEnabled", event.target.checked) })} />
+          </SettingRow>
+          <SettingRow flow="wrap" label="Editable layer URL">
+            <TextInput className="w-100" placeholder="https://.../FeatureServer/0" value={config.sharedFieldNotesUrl || ""} onChange={event => this.props.onSettingChange({ id: this.props.id, config: config.set("sharedFieldNotesUrl", event.target.value.trim()) })} />
+          </SettingRow>
+          <SettingRow flow="wrap" label="Read-only layer/view URL (optional)">
+            <TextInput className="w-100" placeholder="https://.../FeatureServer/0" value={config.sharedFieldNotesReadUrl || ""} onChange={event => this.props.onSettingChange({ id: this.props.id, config: config.set("sharedFieldNotesReadUrl", event.target.value.trim()) })} />
+          </SettingRow>
+          <SettingRow><span style={{ fontSize: 11 }}>Local notes remain available. Publishing is explicit; users authenticate through the organization’s ArcGIS Enterprise portal. Use the schema and access rules in the shared-note setup guide.</span></SettingRow>
           <SettingRow flow="wrap">
             <div style={{ width: "100%" }}>
               <div style={{ marginBottom: "6px", fontWeight: 500 }}>Field Note Categories</div>
