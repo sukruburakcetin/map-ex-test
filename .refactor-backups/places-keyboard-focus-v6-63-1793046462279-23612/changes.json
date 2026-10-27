@@ -1,0 +1,27 @@
+{
+  "installer": "places-keyboard-focus-v6-63",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "74aa3a30df4d595aa1d7e8d1577b8cb302818097d2a5b2bd8ef6ecc2084e9e97",
+      "resultSha256": "7bb4c3b826654749f841e5078a06ef73e1c0b5379406228b812db71d07a25624"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "8cc7ad53f64ca8b7fba7355a7a335d957ac967e7b698308a618292b9507dca09",
+      "resultSha256": "2d865a9f0961eb1099a410c945cf82621a0509f42313ec50d92e15f76169fd14"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES.md",
+      "originalSha256": "2838180dd1f94a39a5f47ce1b67c38b9c5632d623e1a627a321794c2821774fd",
+      "resultSha256": "a0a47bbaa31c7ef181972076c156d25e5d5f7463f5309164457075b0089baa8a"
+    },
+    {
+      "file": "src/features/places/PlacePopupFocus.ts",
+      "originalSha256": null,
+      "resultSha256": "c798b4f6c3b9eb92d73f4c58b9f308e12690820b4e4633abe355ba8cabd377ff"
+    }
+  ]
+}

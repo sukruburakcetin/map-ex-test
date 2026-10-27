@@ -25,10 +25,18 @@ export class LiveSequenceFrames {
   private revision = 0;
   private pending: AbortController | null = null;
   constructor(private readonly fetchImage: (id: string, signal: AbortSignal) => Promise<any>) {}
-  begin(sequenceId: string, points: readonly SequenceCoordinate[]): void {
+  /** Select an identity before viewer navigation without traversing route data.
+   * Same-sequence selections retain their completed route, lookup maps and local
+   * window. A different sequence adopts its optional cached route after opening.
+   */
+  beginSelection(sequenceId: string): void {
     this.cancelPending();
     if (this.sequenceId !== sequenceId) { this.known.clear(); this.ordinals.clear(); this.complete = null; this.local = []; }
-    this.sequenceId = sequenceId; this.current = null; this.remember(sequenceId, points);
+    this.sequenceId = sequenceId;
+  }
+  begin(sequenceId: string, points: readonly SequenceCoordinate[]): void {
+    this.beginSelection(sequenceId);
+    if (points !== this.complete) this.remember(sequenceId, points);
   }
   remember(sequenceId: string, points: readonly SequenceCoordinate[]): void {
     if (sequenceId !== this.sequenceId) return;
@@ -49,6 +57,9 @@ export class LiveSequenceFrames {
   }
   finish(sequenceId: string, points: SequenceCoordinate[]): boolean {
     if (sequenceId !== this.sequenceId) return false;
+    // Completed route arrays are immutable snapshots. Keep existing lookup maps
+    // and any newer confirmed-frame metadata when the same snapshot is reused.
+    if (this.complete === points) return true;
     this.remember(sequenceId, points); this.complete = points; this.ordinals.clear();
     points.forEach((point, i) => this.ordinals.set(String(point.id), i));
     return true;

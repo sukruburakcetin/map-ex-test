@@ -2,7 +2,8 @@
  * Three 2D measurements, including a rotated view, place the native center at
  * raw MVT coordinates + (0.25, 0.25). This compatibility adjustment assumes the
  * verified Mapillary image-layer extent of 4096. Recheck it if the source or SDK
- * renderer changes. Raw tile, index, API and hybrid-graphics data stay untouched.
+ * renderer changes. This is circle presentation only: native lines stay at their raw coordinates.
+ * Raw tile, index and API data stay untouched.
  */
 const EARTH_RADIUS = 6378137;
 const MAX_LATITUDE = 85.05112878;
@@ -18,6 +19,23 @@ export function nativeCoverageOffsetMeters(sourceZoom: number): number {
     throw new RangeError('Native coverage source zoom must be an integer from 0 to 24.');
   }
   return 2 * Math.PI * EARTH_RADIUS / (2 ** sourceZoom * MVT_EXTENT) * OFFSET_TILE_UNITS;
+}
+
+/** The native circle shader positions its four packed corners at raw + 0/0.5
+ * tile units before adding the CSS radius/stroke extrusion. At overzoom this
+ * expands the displayed circle as well as shifting its center. Match that
+ * footprint with one simple marker; do not create another tile renderer.
+ * ArcGIS simple-marker size is the stroke center diameter, in points.
+ */
+export function nativeCircleSymbolMetrics(radius: number, stroke: number, sourceZoom: number,
+  resolution: number | undefined, rotation = 0): { size: number; outlineWidth: number } | null {
+  if (!resolution || !Number.isFinite(resolution) || resolution <= 0) return null;
+  const outer = radius + stroke;
+  if (!Number.isFinite(outer) || outer <= 0 || radius < 0 || stroke < 0 || !Number.isFinite(rotation)) return null;
+  const grid = nativeCoverageOffsetMeters(sourceZoom) / resolution;
+  const displayedOuter = Math.hypot(outer + grid * Math.cos(rotation * Math.PI / 180), grid * Math.sin(rotation * Math.PI / 180));
+  const outline = stroke / outer * displayedOuter;
+  return { size: (2 * displayedOuter - outline) * 0.75, outlineWidth: outline * 0.75 };
 }
 
 /** Invert native presentation for the raw index search; otherwise a tight hover

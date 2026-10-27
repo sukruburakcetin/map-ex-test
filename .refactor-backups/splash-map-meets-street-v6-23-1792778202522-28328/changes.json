@@ -1,0 +1,17 @@
+{
+  "installer": "splash-map-meets-street-v6-23",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/SplashScreen.tsx",
+      "originalSha256": "b1f86d68eb2619cff850bf28f8e342bced4e3d5efae8e7fad96d12393b8af24e",
+      "resultSha256": "48df5ef1d8904f58539d1d22be455a89ea082819076994528e9a555f894540de"
+    },
+    {
+      "file": "src/styles/splashScreen.ts",
+      "originalSha256": "1af9dbc145ac68e7239a42d23692cfc7ac2280fe229e4febae0aa8c0837d12c3",
+      "resultSha256": "6cd374399d8b357bb327d9e5d8cbe9e3fb679771d86c1814b17551007c4013e0"
+    }
+  ]
+}

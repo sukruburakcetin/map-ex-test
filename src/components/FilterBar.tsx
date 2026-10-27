@@ -18,7 +18,7 @@ import { organizationFilterId } from "../utils/organizationFilter";
 */
 const SpriteSize: React.FC<{ label: string; value: number; onChange: (value: number) => void }> = ({ label, value, onChange }) => (
     <label className="mly-filter-size" title={`${label} icon size`} style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 9, color: "#e4eee8", flexShrink: 0 }}>
-      Size<select aria-label={`${label} icon size`} value={value} onChange={event => onChange(Number(event.target.value))} style={{ height: 22, fontSize: 10, padding: "0 2px", borderRadius: 4, border: "1px solid #ffffff35", background: "#214d36", color: "white" }}>
+      Size<select aria-label={`${label} icon size`} value={value} onChange={event => onChange(Number(event.target.value))} style={{ height: 22, minWidth: 64, flexShrink: 0, fontSize: 10, padding: "0 4px", borderRadius: 4, border: "1px solid #ffffff35", background: "#214d36", color: "white" }}>
         {[0.75, 1, 1.25, 1.5, 2].map(scale => <option key={scale} value={scale}>{scale * 100}%</option>)}
       </select>
     </label>

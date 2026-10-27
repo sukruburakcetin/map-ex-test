@@ -1,0 +1,17 @@
+{
+  "installer": "utility-integrated-minimize-v6-32",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/ImageUtilityGroup.tsx",
+      "originalSha256": "fc1d9a9b1a2343ed0e55682d041f49ab44e535217b4239b31af401a6282f5d9f",
+      "resultSha256": "632d4f47c5e9809a4c22de6d22428ca56f26b70e684f18a4eb74650961db7274"
+    },
+    {
+      "file": "src/styles/controlPanels.ts",
+      "originalSha256": "5ef607dcfbb6a178b972d53b772ecc506572b544f0f9155a9d04f01b07088f5f",
+      "resultSha256": "ad9544633b5e450676fabeb30c308f996b3ccd2506b083b0434f9849689163b2"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "installer": "places-link-distance-audit-v6-56",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/SelectedPlace.ts",
+      "originalSha256": "37d22d89ef5202ecb1510e576c3328cc15cdc341ecf80ea8240f973521a7618c",
+      "resultSha256": "13a48b24fd7dd6c1a4b81813f64214f509b9410c9f7b2bfed1d1540700ead621"
+    },
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "0298e10b1c3fddd1f90254455297ff0196785aaf4d1fb423e1502f46d2f21686",
+      "resultSha256": "81f31c522d31edb0193668f96f6e6cabceef696af5b741436783b1a4ce02b738"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "2c578f95730564038222f694a326f8796bec13df104cacd0d43a30f8a202e837",
+      "resultSha256": "afaae8c56c3ca77abcbb04ca695791018df256165184e5f48639a59702b671dc"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "f778924c41f95d907b5e8d4314be876f52293ec2d4c96b6c8ad36e75870e041f",
+      "resultSha256": "3d3c36792f5eaa1934c59e5c329b313d3cc7b8d7ebc8254b317df73947f78c4f"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES.md",
+      "originalSha256": "9a27bffeb1b26eb31c2c2a842125cb31515126c534670d0d08707aed70f72046",
+      "resultSha256": "fe92e7a0b858dcad8b357c72c5e4a031e5086f60c11c122a551bb4b5d8ee475a"
+    },
+    {
+      "file": "src/features/places/cameraLinkDistance.ts",
+      "originalSha256": null,
+      "resultSha256": "156c55d2584f4f399788e12a9f85233663766e784535772071571cd0f72f470b"
+    },
+    {
+      "file": "tools/performance/places-audit.js",
+      "originalSha256": null,
+      "resultSha256": "2e76a0b6fcaba04916e0c2704640c52dbb8eeba6fe66bcef69b9b559be62d086"
+    },
+    {
+      "file": "tools/performance/PLACES-AUDIT.md",
+      "originalSha256": null,
+      "resultSha256": "22b9f59713c1967b5d1b6104d3ffe528e8a6bfb61f15fa5a3b903bc2e3c31693"
+    }
+  ]
+}

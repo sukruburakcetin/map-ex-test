@@ -4,6 +4,7 @@ import { AllWidgetSettingProps } from "jimu-for-builder";
 import { SettingSection, SettingRow } from "jimu-ui/advanced/setting-components";
 import { MapWidgetSelector } from "jimu-ui/advanced/setting-components";
 import { Switch, TextInput, NumericInput, Select, Option } from "jimu-ui";
+import { placesServiceUrl } from "../features/places/placesModel";
 import { IMConfig } from "../config";
 import { organizationFilterId } from "../utils/organizationFilter";
 import { FIELD_NOTE_CATEGORIES } from "../components/types";
@@ -190,6 +191,10 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
       id: this.props.id,
       config: this.props.config.set("debugMode", evt.target.checked),
     });
+  };
+
+  onToggleImageTiling = (evt: React.ChangeEvent<HTMLInputElement>) => {
+    this.props.onSettingChange({ id: this.props.id, config: this.props.config.set("imageTiling", evt.target.checked) });
   };
 
   getFieldNoteCategories = (): string[] => {
@@ -569,6 +574,13 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
           </SettingRow>
         </SettingSection>
 
+        <SettingSection title="Nearby places · Overture pilot">
+          <SettingRow label="Offer Places layer"><Switch checked={config.enablePlaces === true} onChange={evt => this.props.onSettingChange({ id: this.props.id, config: config.set("enablePlaces", evt.target.checked) })}/></SettingRow>
+          <SettingRow flow="wrap" label="Places FeatureServer layer URL"><TextInput value={config.placesServiceUrl || ""} placeholder="https://…/FeatureServer/0" onChange={event => this.props.onSettingChange({ id: this.props.id, config: config.set("placesServiceUrl", event.target.value) })}/></SettingRow>
+          {!!config.placesServiceUrl && !placesServiceUrl(config.placesServiceUrl) && <p role="status">Use an HTTPS FeatureServer layer URL without query parameters or credentials.</p>}
+          <p style={{ fontSize: 12, opacity: .8 }}>Requires a published pilot layer prepared with tools/overture_places. Starts off for users; maximum 200 places per view. See docs/OVERTURE-PLACES.md.</p>
+        </SettingSection>
+
         <SettingSection title="Feature Detection Layers">
           <SettingRow label="Enable Traffic Signs">
             <Switch checked={config.enableTrafficSigns !== false} onChange={this.onToggleTrafficSigns} />
@@ -671,6 +683,14 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                 <b>Y:</b> 0 = Sky, 1 = Ground. (Try 0.55 for wide widgets)
               </div>
             </div>
+          </SettingRow>
+          <SettingRow label="Load imagery in tiles">
+            <Switch checked={config.imageTiling === true} onChange={this.onToggleImageTiling} />
+          </SettingRow>
+          <SettingRow>
+            <span className="text" style={{ fontSize: "12px" }}>
+              Compare loading on your images and connection. Reopen the viewer to apply.
+            </span>
           </SettingRow>
           <SettingRow label="Debug Mode">
             <Switch checked={config.debugMode === true} onChange={this.onToggleDebugMode} />

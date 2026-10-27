@@ -1,0 +1,17 @@
+{
+  "installer": "utility-mobile-collapse-v6-31",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/ImageUtilityGroup.tsx",
+      "originalSha256": "b6665d698d55bb0770b054d113b0a6a1931e322b703c4f0d7441bf9ab5c5f847",
+      "resultSha256": "fc1d9a9b1a2343ed0e55682d041f49ab44e535217b4239b31af401a6282f5d9f"
+    },
+    {
+      "file": "src/styles/controlPanels.ts",
+      "originalSha256": "130185ff809b295e29539b6ce7ee60a579be58192f45a8160bf0b91eeade833a",
+      "resultSha256": "5ef607dcfbb6a178b972d53b772ecc506572b544f0f9155a9d04f01b07088f5f"
+    }
+  ]
+}

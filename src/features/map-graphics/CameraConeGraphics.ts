@@ -50,7 +50,9 @@ export class CameraConeGraphics<G extends ConeGraphic, L extends ConeLayer<G>, V
     // One clockwise sector in projected coordinates avoids overlapping ground/top surfaces.
     const radius = radiusMeters / Math.max(0.01, Math.cos(latitude * Math.PI / 180));
     const z = scene ? 0.08 : 0;
-    const ring: number[][] = [[center.x, center.y, z]];
+    // The apex belongs to the native ground image center; lift only the wedge's
+    // other surfaces. A fixed 8 cm apex lift becomes several pixels at close zoom.
+    const ring: number[][] = [[center.x, center.y, 0]];
     const segments = Math.max(8, Math.ceil(spreadDeg / 2));
     const rise = Math.min(radiusMeters * 0.15, 1.5);
     for (let i = 0; i <= segments; i++) {
@@ -75,7 +77,7 @@ export class CameraConeGraphics<G extends ConeGraphic, L extends ConeLayer<G>, V
       const tip = ring[0], left = ring[1], right = ring[ring.length - 2];
       const leftGround = [left[0], left[1], z], rightGround = [right[0], right[1], z];
       const sides = [[tip, leftGround, left, tip], [tip, right, rightGround, tip]];
-      const ground = ring.map(p => [p[0], p[1], z]);
+      const ground = ring.map((p, i) => [p[0], p[1], i === 0 || i === ring.length - 1 ? 0 : z]);
       const geometries = sides.map(side => ({ type: "polygon", rings: [side], hasZ: true, spatialReference: { wkid: 3857 } }));
       geometries.push({ type: "polyline", paths: [ground], hasZ: true, spatialReference: { wkid: 3857 } } as any);
       for (let i = 0; i < geometries.length; i++) {

@@ -1,0 +1,32 @@
+{
+  "installer": "places-loaded-categories-v6-57",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/PlacesController.ts",
+      "originalSha256": "9fc955f235c543e91f6b623c851350ac6a21b2689626ad2e114cb1c26a4f28a8",
+      "resultSha256": "2289d057b0d8a8691eb37f256611af946cf318a3587edf39298abd4d5b31b46f"
+    },
+    {
+      "file": "src/components/PlacesPanel.tsx",
+      "originalSha256": "3078bb5c7c54413fa64d490583d0fc082a30aaa2b9c4d56e38e642d4531c1fa1",
+      "resultSha256": "b3a3617eafff60438495f6287fb7ad57237c4b996224f9eb14544a6614f97434"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "afaae8c56c3ca77abcbb04ca695791018df256165184e5f48639a59702b671dc",
+      "resultSha256": "193c4dcdfccf2790f08a84efcd67aa38816d933442cfcbac560e0eaf6db659b9"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "3d3c36792f5eaa1934c59e5c329b313d3cc7b8d7ebc8254b317df73947f78c4f",
+      "resultSha256": "c81562f17a021501dad85f40a92a0c784e2f010f200123c3cfbfbbc67233ba8a"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES.md",
+      "originalSha256": "fe92e7a0b858dcad8b357c72c5e4a031e5086f60c11c122a551bb4b5d8ee475a",
+      "resultSha256": "d57cdbfc22c0932eaa50b6bbf08d82057c6005f406f44e82fd7a7d97552b96fb"
+    }
+  ]
+}

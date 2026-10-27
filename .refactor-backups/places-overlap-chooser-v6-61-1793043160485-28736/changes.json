@@ -1,0 +1,27 @@
+{
+  "installer": "places-overlap-chooser-v6-61",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "48b6bb902997b4e0091fa7f0f1b2963fd091c2bfdab48c6120d6563e8c69006c",
+      "resultSha256": "2cf7f6ee14088d5a8befff7fc665376730a30f672f7db744f4c059188e483526"
+    },
+    {
+      "file": "src/features/places/placePopupStyles.ts",
+      "originalSha256": "3f0e19ecd5975950a8fc444b5591b86ec92e46dba6cd6c7779fef6bdce3fc8b8",
+      "resultSha256": "f82ad2993412332ac131e288815f8e8b28951dc9bac75b012c527265e59fea6a"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "3ba06ca46a5fe311a26e80033808bfbc0d3fab397c0c8d9224ed99f32ece4799",
+      "resultSha256": "4481c836160f7a795d7bd49ea9b4704ef2499d4c4c023254560e1211d0513094"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES.md",
+      "originalSha256": "5c0876cb7182622b5f394c4a1fe34256afd50c73ba0b11e6c3c74c77b7323a7d",
+      "resultSha256": "9716595970ce75e32df79cd091f6c5aa70ee2108cec089d33e10a118a0cd9f48"
+    }
+  ]
+}

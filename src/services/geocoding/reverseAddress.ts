@@ -7,15 +7,19 @@ import { GEOCODE_URL } from '../../utils/constants';
  * Preserve missing-address/error text, logging and single-fetch behavior.
  * @param applyAddress Runtime-owned UI update, invoked within the existing error boundary.
  */
-export async function fetchReverseAddress(lat: number, lon: number, applyAddress: (address: string) => void): Promise<void> {
+export async function fetchReverseAddress(lat: number, lon: number, applyAddress: (address: string) => void, signal?: AbortSignal): Promise<void> {
+    if (signal?.aborted) return;
     try {
-      const response = await fetch(`${GEOCODE_URL}?location=${lon},${lat}&distance=100&f=json`);
+      const response = await fetch(`${GEOCODE_URL}?location=${lon},${lat}&distance=100&f=json`, { signal });
+      if (signal?.aborted) return;
       const data = await response.json();
+      if (signal?.aborted) return;
       const fullAddress = data.address?.LongLabel || "Address not found";
       const addressParts = fullAddress.split(", ").filter((part: string) => part.trim());
       const secondPart = addressParts[1] || fullAddress;
       applyAddress(secondPart);
     } catch (error) {
+      if (signal?.aborted) return;
       console.error("Reverse geocode error:", error);
       applyAddress("Failed to fetch address");
     }

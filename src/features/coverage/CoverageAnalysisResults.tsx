@@ -15,40 +15,39 @@ export const CoverageAnalysisResults: React.FC<CoverageAnalysisResultsProps> = p
   const { coverageAnalysisLoading, coverageAnalysisProgress, onCancelCoverageAnalysis, coverageResult, coverageSegmentsVisible, onToggleCoverageSegments, onDismissCoverageResult, renderRoutingControls } = props;
   return (
 <div
+              className={`mly-coverage-results${coverageAnalysisLoading ? " is-loading" : ""}`}
               style={coverageResultsPanelStyle}
             >
               {/* Header */}
               <div
                 style={coverageResultsHeaderStyle}
               >
-                <span>STREET COVERAGE</span>
-                <button
+                <span>{coverageAnalysisLoading ? "Street coverage" : "STREET COVERAGE"}</span>
+                {!coverageAnalysisLoading && <button type="button" aria-label="Dismiss street coverage results"
                   onClick={onDismissCoverageResult}
                   style={coverageResultsDismissStyle}
                 >
                   ×
-                </button>
+                </button>}
               </div>
 
               {coverageAnalysisLoading && (
                 <>
                   <style>{`
-      @keyframes dots {
-        0%, 20%  { content: '.'; }
-        40%      { content: '..'; }
-        60%, 100%{ content: '...'; }
-      }
-      .animated-dots::after {
-        content: '';
-        animation: dots 1.5s infinite;
-      }
+      @keyframes mly-coverage-scan { from { transform: translateX(-110%); } to { transform: translateX(330%); } }
+      .mly-coverage-results.is-loading { border-color: #78b49455 !important; background: linear-gradient(145deg,rgba(28,51,40,.9),rgba(14,28,22,.8)) !important; }
+      .mly-coverage-results.is-loading > div:first-child { border-bottom: 0 !important; min-height: 22px; margin: 0 !important; font-size: 9px; color: #e0eee5 !important; }
+      .mly-coverage-scan { height: 3px; border-radius: 3px; overflow: hidden; background: #a9d6b71c; margin: 3px 0 7px; }
+      .mly-coverage-scan > span { display: block; width: 32%; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#4daf7955,#9ae6b7,#4daf7955); animation: mly-coverage-scan 1.5s ease-in-out infinite; }
+      .mly-coverage-results.is-loading button:hover { background: #ffffff12 !important; }
+      @media (prefers-reduced-motion: reduce) { .mly-coverage-scan > span { animation: none; margin: 0 auto; } }
     `}</style>
 
-                  <div style={coverageResultsProgressStyle}>
-                    <span role="status" aria-live="polite">{coverageAnalysisProgress || "Analysing"}</span>
-                    <span className="animated-dots" style={coverageResultsDotsStyle} />
+                  <div style={coverageResultsProgressStyle} role="status" aria-live="polite" aria-atomic="true">
+                    {(coverageAnalysisProgress || "Analysing coverage").replace(/(?:…|\.{3})+\s*$/, "")}
                   </div>
-                  <button onClick={onCancelCoverageAnalysis} style={coverageResultsCancelStyle}>Cancel</button>
+                  <div className="mly-coverage-scan" aria-hidden="true"><span/></div>
+                  <button type="button" onClick={onCancelCoverageAnalysis} style={coverageResultsCancelStyle}>Cancel</button>
                 </>
               )}
 

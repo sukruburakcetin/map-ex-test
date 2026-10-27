@@ -1,0 +1,22 @@
+{
+  "installer": "infobox-cleanup-v6-17",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/InfoBox.tsx",
+      "originalSha256": "8b4b177d6f5a5247a453ec13f3dcd1b566db5adc4555e8b22f880dc20cd507b4",
+      "resultSha256": "f1b9710aa96d4072afaf2d3c2579cbe758b2068f1fb6a49f5611bef291dfa7b8"
+    },
+    {
+      "file": "src/features/coverage/QualityToolsSection.tsx",
+      "originalSha256": "9a502bb30c218b214f235ce8d5f7ba904f6c9eb6aeef6e95bda8a50dd6abb649",
+      "resultSha256": "b53ec7d696e87d3dea0acd55fe1c26168a80409f598f477c0ec4b4c663635736"
+    },
+    {
+      "file": "src/features/coverage/CoverageAnalysisResults.tsx",
+      "originalSha256": "08ef4e9d0dac32f9f0a904432d701e1c493a0161caf78373b80918ae9c7cde3f",
+      "resultSha256": "29267b4f93975c27750c53b90be54b02bc128ed30ffbd0a4d2a743586b7d9297"
+    }
+  ]
+}

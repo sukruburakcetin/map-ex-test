@@ -1,0 +1,87 @@
+{
+  "installer": "overture-places-v6-36",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "e415374d231f7aab2ae4a3cb3beecec14a157c8b37f206a6c0cb28202fec8ab0",
+      "resultSha256": "fea6ac06b7861ec0a43f940db5f39d9b415a0add1575e7cfc496cd3709f58827"
+    },
+    {
+      "file": "src/config.ts",
+      "originalSha256": "c6d0b2548f26dbbb6ced2fe8fcac4dd47692eca396f98626db65c1a3a78c2ca3",
+      "resultSha256": "a4352311d30c71af0642a21207fd3b78d2f5f0ab8099f2b3e6500e5b276016bf"
+    },
+    {
+      "file": "src/setting/setting.tsx",
+      "originalSha256": "f09485de48392f7641eb7c3eda8ed7b6038053df9e05c10f19baa3b7c72df1ca",
+      "resultSha256": "20e8d1407aa449ad6af75bb96521302c939739ce3f677a28ae53409e2e01746e"
+    },
+    {
+      "file": "src/components/types.ts",
+      "originalSha256": "1c126e90071302e5f2b70773fc5a222300b79e84c2e5adbf40478092807ca46f",
+      "resultSha256": "b5866bcdc064084d2db2152bbc854f31b2a4822cedd2d3f4c10e6de7c63f96af"
+    },
+    {
+      "file": "src/components/ControlBar.tsx",
+      "originalSha256": "4183acfea997ed5f2447565f420e0f91c89ba99bbc044f1c8638cf28d4082c61",
+      "resultSha256": "a073279c3f2da364e717e0c7627b470a67b44b69b173daf137d64eba551b5323"
+    },
+    {
+      "file": "config.json",
+      "originalSha256": "00f8e97d051ff9a882a29ff2991dfd51050b86cf5d69095f4a74c51bfb9cf6da",
+      "resultSha256": "04407502f04c2c3c7b50f57a34b918189c7db829e5e1c6321031bbc0396b44ad"
+    },
+    {
+      "file": "src/features/places/placesModel.ts",
+      "originalSha256": null,
+      "resultSha256": "9b898caf0de5ac6b1ac89fd3802f09e883dff222173e7004975d00be9ea67170"
+    },
+    {
+      "file": "src/features/places/PlacesController.ts",
+      "originalSha256": null,
+      "resultSha256": "e8dd13a95c40dab21a5778ce1cdfa1326d9b0164d4ec3b76c766744ae2df7f68"
+    },
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": null,
+      "resultSha256": "0902ad3fafbc171039754c9d5ad8bbe728b96d7697bdefb0094ccef03e5c58d0"
+    },
+    {
+      "file": "src/components/PlacesPanel.tsx",
+      "originalSha256": null,
+      "resultSha256": "fb045236c0f090f7783c4fccb50ae7b1245ebce189e03164039d2cc4f5c7a285"
+    },
+    {
+      "file": "tools/overture_places/export_places.py",
+      "originalSha256": null,
+      "resultSha256": "41ba603e3bc0dd35a8f6cbdff9066ab4d286f4cecf88e6400f4eeff23f151c32"
+    },
+    {
+      "file": "tools/overture_places/requirements.txt",
+      "originalSha256": null,
+      "resultSha256": "9f531d20cef97932eaf15c63534a141743c1972610d57f40265317683d4cab1f"
+    },
+    {
+      "file": "tools/overture_places/README.md",
+      "originalSha256": null,
+      "resultSha256": "31194ca029969da38880af31be41707c7550963d362a6b1591625e0b540acada"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "4fa36982680cdeb05fa9209a9bb4ca41cd93a2f93e5a18306af950e6ad259b70"
+    },
+    {
+      "file": "tests/overturePlacesExport.test.py",
+      "originalSha256": null,
+      "resultSha256": "fcb07368008ebd6533b6b27c4518380add63f643f24bf6433bd61a8d07b58966"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES.md",
+      "originalSha256": null,
+      "resultSha256": "a4696fb378157e12c8ac545ca8d837490049205383b11289b8171fa0abb39ef0"
+    }
+  ]
+}

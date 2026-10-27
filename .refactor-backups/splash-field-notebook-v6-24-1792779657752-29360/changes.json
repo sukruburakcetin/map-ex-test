@@ -1,0 +1,17 @@
+{
+  "installer": "splash-field-notebook-v6-24",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/SplashScreen.tsx",
+      "originalSha256": "48df5ef1d8904f58539d1d22be455a89ea082819076994528e9a555f894540de",
+      "resultSha256": "6424e0235b20fc717def68c11b4ba73ef778c6599a8bd32d9c6cefa96cb4a953"
+    },
+    {
+      "file": "src/styles/splashScreen.ts",
+      "originalSha256": "6cd374399d8b357bb327d9e5d8cbe9e3fb679771d86c1814b17551007c4013e0",
+      "resultSha256": "8a71ee90c127d5698043dd183565bcf226df80d393837ed8bf7f4f70ecd5ad7f"
+    }
+  ]
+}

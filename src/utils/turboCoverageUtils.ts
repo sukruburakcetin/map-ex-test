@@ -14,7 +14,7 @@ export interface TurboFilters {
   qualityBand?: "good" | "fair" | "poor" | "unscored" | null;
 }
 export interface TurboPoint {
-  lon: number; lat: number; imageId: string; capturedAt: number | null; year: string | null; qualityScore?: number | null; onFoot?: boolean;
+  lon: number; lat: number; imageId: string; sequenceId?: string; capturedAt: number | null; year: string | null; qualityScore?: number | null; onFoot?: boolean;
 }
 
 /** Cache raw bytes, never decoded features, geometries, or thumbnail metadata. */
@@ -80,6 +80,15 @@ export function turboPointMatches(props: Record<string, any>, filters: TurboFilt
   return true;
 }
 
+/** Keep native sequence identity available to picking without a metadata request. */
+function nativeSequenceId(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    const id = value.trim();
+    return id && id !== 'undefined' && id !== 'null' ? id : undefined;
+  }
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? String(value) : undefined;
+}
+
 /** Visit every matching point. Only one decoded feature is live per iteration. */
 export async function visitTurboImageLayer(
   layer: { length: number; feature(index: number): any }, tile: [number, number, number],
@@ -101,7 +110,7 @@ export async function visitTurboImageLayer(
     if (!Number.isFinite(lon) || !Number.isFinite(lat) || lon < bbox[0] || lon > bbox[2] || lat < bbox[1] || lat > bbox[3]) continue;
     const time = Number(props.captured_at);
     const capturedAt = Number.isFinite(time) && time > 0 ? time : null;
-    visit({ lon, lat, imageId: String(props.id), capturedAt, qualityScore: props.quality_score ?? null, onFoot: typeof props.foot === "boolean" ? props.foot : undefined, year: capturedAt ? String(new Date(capturedAt).getFullYear()) : null });
+    visit({ lon, lat, imageId: String(props.id), sequenceId: nativeSequenceId(props.sequence_id), capturedAt, qualityScore: props.quality_score ?? null, onFoot: typeof props.foot === "boolean" ? props.foot : undefined, year: capturedAt ? String(new Date(capturedAt).getFullYear()) : null });
   }
 }
 
@@ -219,7 +228,7 @@ export class TurboSpatialIndex {
         if (props.id == null || !turboPointMatches(props, filters)) continue;
         const time = Number(props.captured_at), capturedAt = Number.isFinite(time) && time > 0 ? time : null;
         visit({lon:(tx + px) / n * 360 - 180, lat:Math.atan(Math.sinh(Math.PI * (1 - 2 * (ty + py) / n))) * 180 / Math.PI,
-          imageId:String(props.id), capturedAt, qualityScore:props.quality_score ?? null, onFoot:typeof props.foot === "boolean" ? props.foot : undefined, year:capturedAt ? String(new Date(capturedAt).getFullYear()) : null});
+          imageId:String(props.id), sequenceId: nativeSequenceId(props.sequence_id), capturedAt, qualityScore:props.quality_score ?? null, onFoot:typeof props.foot === "boolean" ? props.foot : undefined, year:capturedAt ? String(new Date(capturedAt).getFullYear()) : null});
       }
     }
   }

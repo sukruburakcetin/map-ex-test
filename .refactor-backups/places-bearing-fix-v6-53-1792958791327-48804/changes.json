@@ -1,0 +1,37 @@
+{
+  "installer": "places-bearing-fix-v6-53",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/nearbyPlaceImagery.ts",
+      "originalSha256": "ddaa11a34f4388f8bcf7410407e861aa8844f90916401ea1e6ef9128661387a2",
+      "resultSha256": "1d0c079b88cfc31bcdfd2b9fed3c8811e8174b2dde3699d35886bb3eac768925"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "1235a05c37b7914af421fee5e4371ea7bcbe2caf135d4939eb369655ddc49319",
+      "resultSha256": "7a956a9266a257582931ae684c68c9ceda5b07944d957cbebec6325c8d31a6a4"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "e046e69694574804e6378511e4e3f49aba0718c48bb0d5a09e8305cfa3aab364",
+      "resultSha256": "c6e96dfc38e572c831785b34a7b5d8db6a30dd5d873e5888fe3945ef4d0430fd"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES.md",
+      "originalSha256": "ef539387514b5068e48ac7e11bc55570ea68857b30b452f420d43b651e2e9082",
+      "resultSha256": "9438f482198a779252a7793a71c0b7cca94a8344f4b87dd92e6671f87dfb0520"
+    },
+    {
+      "file": "src/features/places/panoramaPlaceCenter.ts",
+      "originalSha256": null,
+      "resultSha256": "a5afaa70b2745c4343472c975bf7449a90b53406b7dbcb68abcf94db71fd608a"
+    },
+    {
+      "file": "tests/fixtures/mapillary-spherical-centres.json",
+      "originalSha256": null,
+      "resultSha256": "cc4208cfbcb0549c61bb75b03e92d37ade2d8fb607de7a5e64b15b871c8103c8"
+    }
+  ]
+}

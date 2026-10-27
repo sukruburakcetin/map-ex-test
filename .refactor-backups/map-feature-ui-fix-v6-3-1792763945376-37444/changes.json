@@ -1,0 +1,37 @@
+{
+  "installer": "map-feature-ui-fix-v6-3",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/utils/constants.ts",
+      "originalSha256": "f5ff8666c1ddfb306e27bce554ae9631afdedc643e7d2d3baffc40cea99b5f6f",
+      "resultSha256": "219a06e021367f3dc33f39736d2f819d078c31524b3cd1df481e281c34e851c3"
+    },
+    {
+      "file": "src/components/FilterBar.tsx",
+      "originalSha256": "ee1735d895e2e605721e7de63ee69489eb1917976522ef3379e6146f4cd09f2a",
+      "resultSha256": "7fc489c3b6d3e11a912cf6949c20bb82b07d24496aa694d13632e56163735dae"
+    },
+    {
+      "file": "src/components/FilterScrollRegion.tsx",
+      "originalSha256": "c8d1f294777b66cd1e014a69396f55d253c61c25c7058c26bf80d3f0d497f353",
+      "resultSha256": "638b764debf3234c74ea67300e48dc6c7240b09a42240621317c8d56e7debb0c"
+    },
+    {
+      "file": "src/features/imagery/hoverCard.ts",
+      "originalSha256": "962a26aee0858e421ac70aaba2561439d4d71245f28d2ef7c268d26597062d58",
+      "resultSha256": "3195bbad129e138084b6068d08d295cbad2fbe44ceb31f80b1309482605ca9a7"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "1731f9f5d02ddd4ebfb6bfecb80b1683216fa7957659a8879a5d094ac3065fda",
+      "resultSha256": "3f234b44d0d36f83c3e8f9b1c37385f3fc8508e1951f70b9c26ba8d92d579e94"
+    },
+    {
+      "file": "tests/mapFeatureInteraction.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "9823eff211fbb876e891735cec4ad118d7e368976af16d5f742b9f567c727c06"
+    }
+  ]
+}

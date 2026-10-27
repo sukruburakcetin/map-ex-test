@@ -1,0 +1,17 @@
+{
+  "installer": "info-button-icon-v6-34",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "277ff36213b4a6c557c7783f24a9e8738edcfa1dd5b66bf20bcc5629f297e5e2",
+      "resultSha256": "e415374d231f7aab2ae4a3cb3beecec14a157c8b37f206a6c0cb28202fec8ab0"
+    },
+    {
+      "file": "src/utils/styles.ts",
+      "originalSha256": "006309b4f3f6396bd77b20012c1ec968150fd0a86052267d213666adab260353",
+      "resultSha256": "0a07ca384f60752d2bb68e05266c415a8ab415cb9269e8e3a0f549c5fa172448"
+    }
+  ]
+}

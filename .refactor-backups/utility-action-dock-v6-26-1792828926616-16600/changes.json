@@ -1,0 +1,17 @@
+{
+  "installer": "utility-action-dock-v6-26",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/ImageUtilityGroup.tsx",
+      "originalSha256": "9131104826a25e5d19a612d6960ee6573a817e837aa9acca4a883455a6ce49dd",
+      "resultSha256": "898875f1c4468753c67484e9fcba8d5793d7a09c1d22a3feabb178caecb8e2e0"
+    },
+    {
+      "file": "src/styles/controlPanels.ts",
+      "originalSha256": "ddca3356c37fe00f3a1a9aea3bf885b5391cd0823cb2dff88e8cee3b8342b3fd",
+      "resultSha256": "f967667d05b4c9716dbad5a1572f227b4352d74edf91dde95481f656a8d96eb7"
+    }
+  ]
+}

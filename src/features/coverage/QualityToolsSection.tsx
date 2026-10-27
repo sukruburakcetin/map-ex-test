@@ -5,7 +5,7 @@ import * as Icons from '../../components/Icons';
 import type { InfoBoxProps } from '../../components/types';
 import { qualityToolsSectionStyle, qualityToolsButtonStyle, qualityToolsLegendStyle, qualityToolsRangeStyle, getQualityToolsLabelStyle, getQualityToolsTrackStyle, getQualityToolsKnobStyle, getQualityToolsBandStyle, getQualityToolsSwatchStyle, getQualityToolsBandLabelStyle } from '../../styles/qualityTools';
 
-export type QualityToolsSectionProps = Pick<InfoBoxProps, 'qualityViewActive' | 'onToggleQualityView' | 'selectedQualityBand' | 'onQualityLegendClick' | 'currentZoom' | 'jimuMapViewZoom' | 'qualityViewType'>;
+export type QualityToolsSectionProps = Pick<InfoBoxProps, 'qualityViewActive' | 'onToggleQualityView' | 'selectedQualityBand' | 'onQualityLegendClick' | 'currentZoom' | 'jimuMapViewZoom' | 'qualityViewType'> & { hideToggle?: boolean };
 
 /** Presentation thresholds, adjustable independently for each view type. */
 export const QUALITY_HINT_ZOOM = { '2d': 6, '3d': 8 } as const;
@@ -16,11 +16,13 @@ export const QualityToolsSection: React.FC<QualityToolsSectionProps> = props => 
   const zoom = Number.isFinite(jimuMapViewZoom) ? jimuMapViewZoom : currentZoom;
   const threshold = qualityViewType ? QUALITY_HINT_ZOOM[qualityViewType] : undefined;
   const showZoomNotice = qualityViewActive && (threshold === undefined || !Number.isFinite(zoom) || zoom! < threshold);
+  if (props.hideToggle && !qualityViewActive) return null;
   return (
     <div
-      style={qualityToolsSectionStyle}
+      style={props.hideToggle ? { marginTop: 3 } : qualityToolsSectionStyle}
     >
-      <button
+      {!props.hideToggle && <button
+        type="button" aria-label="Color coverage by quality" aria-pressed={!!qualityViewActive}
         onClick={onToggleQualityView}
         title={qualityViewActive ? "Quality View ON: lines coloured by image quality score" : "Quality View OFF: click to colour coverage lines by quality score"}
         style={qualityToolsButtonStyle}
@@ -29,7 +31,7 @@ export const QualityToolsSection: React.FC<QualityToolsSectionProps> = props => 
           style={getQualityToolsLabelStyle(qualityViewActive)}
         >
           <Icons.Star size={10} color={qualityViewActive ? "#F5A623" : "rgba(255,255,255,0.7)"} filled={qualityViewActive} />
-          QUALITY
+          Map quality
         </span>
         <div
           style={getQualityToolsTrackStyle(qualityViewActive)}
@@ -38,7 +40,7 @@ export const QualityToolsSection: React.FC<QualityToolsSectionProps> = props => 
             style={getQualityToolsKnobStyle(qualityViewActive)}
           />
         </div>
-      </button>
+      </button>}
 
       {showZoomNotice && (
         <div role="status" style={{ marginTop: 4, padding: '3px 5px', borderLeft: '2px solid #F5A623', background: 'rgba(245,166,35,0.10)', color: '#fff0ce', fontSize: 9, lineHeight: 1.25, overflowWrap: 'anywhere' }}>

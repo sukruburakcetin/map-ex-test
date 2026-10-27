@@ -1,0 +1,17 @@
+{
+  "installer": "route-point-width-v6-22",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/routing/RouteControls.tsx",
+      "originalSha256": "cc6cc8a8d3231304d5cceda6a74e9c56fa2f8357f1b94aa3cd1e8354840991f2",
+      "resultSha256": "aa6ac9c84242cc91d449d13225adc48f7633b6eb32212aa62ec41852af50731e"
+    },
+    {
+      "file": "src/styles/infoBox.ts",
+      "originalSha256": "e5d0d4fc86e139ee08a41e99859e23c0efd8ea3c06f9aeeea2525cd8c561d0f0",
+      "resultSha256": "5f229b961645b821ae0cae8306f5b632bcd597dd0c2705566322e6b5561dbbe2"
+    }
+  ]
+}

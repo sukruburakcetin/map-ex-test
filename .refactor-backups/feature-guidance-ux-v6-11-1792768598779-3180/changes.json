@@ -1,0 +1,12 @@
+{
+  "installer": "feature-guidance-ux-v6-11",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "f246eff960f59a8c9500ad2530907f900b1aa47ec49f238a71e14822d6662301",
+      "resultSha256": "d07b0e324772fee41629e47297718c5adf064c817f9473b0f000541d910a5493"
+    }
+  ]
+}

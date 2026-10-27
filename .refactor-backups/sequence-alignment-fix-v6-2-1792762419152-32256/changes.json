@@ -1,0 +1,62 @@
+{
+  "installer": "sequence-alignment-fix-v6-2",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "024fedf4d6d6033634cc3152b6725723bb3a8349c4c944b79162b95a896a7422",
+      "resultSha256": "1731f9f5d02ddd4ebfb6bfecb80b1683216fa7957659a8879a5d094ac3065fda"
+    },
+    {
+      "file": "src/features/coverage/SequenceTileIndex.ts",
+      "originalSha256": "a4436a47888542e460cb94a266930488745d1cb9c9e4ac34b6f1657ec1bb2b5e",
+      "resultSha256": "cd29a44d95865070ac53c0c6fe2fb1503b59935f5ea7eb0adb34e834527542d2"
+    },
+    {
+      "file": "src/features/coverage/TileSequenceHighlights.ts",
+      "originalSha256": "19287a6455fa72c8a2ca17019e7c611b1ba364b1268666c96694ccd51e46c4fb",
+      "resultSha256": "8d6012a228a1cfbca4a5e19669d5aa5f1f607f89bfdb563bcdac195be319b833"
+    },
+    {
+      "file": "src/features/coverage/nativeCoverageAlignment.ts",
+      "originalSha256": "2763447a9540a9dc03c26c0561ecc589dfdf7e693065dcdb53af6d1467e04efb",
+      "resultSha256": "10d4c939d05c1f4624249905ff37eccd9ca4bd6d08a173de3063db8ca76cd004"
+    },
+    {
+      "file": "src/features/coverage/nativeImageAnchor.ts",
+      "originalSha256": null,
+      "resultSha256": "5314014edaf376c6c80400dc5d463e0027f3d889c369a18b9873990f35475b9d"
+    },
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "9177460f88e6f6fcba5ba23d5bd182c58e5a758b2b86a7230ea2b41bfb168ca8",
+      "resultSha256": "4f37a0f7ae717c6eba161772aae2777498959b25eb9e1aad46c1cb2fce2f6ef4"
+    },
+    {
+      "file": "src/features/map-graphics/CameraConeGraphics.ts",
+      "originalSha256": "dc99d293558f95802b8809050619df047b41663a89ed0936ede7fedeb9025643",
+      "resultSha256": "b72e58100b6dd6b22d77f9bd77699e030e18d2c708c8f08e6f2b00ce60d341f1"
+    },
+    {
+      "file": "src/features/coverage/SEQUENCE-HOVER.md",
+      "originalSha256": "0b5bb4de1d68fa4e9afc24ee898e520ef2d4979cb38dd061878cb7967b3ad2c0",
+      "resultSha256": "3269ae6c4241f00d21c48d3cb17089479b78bbb5ebf23293d011e5a9112ea1cd"
+    },
+    {
+      "file": "src/features/imagery/SEQUENCE-PERFORMANCE.md",
+      "originalSha256": "b8c217b72dca5b8f70c69e28901c156c159bf5dec1e5e1160ebcc84ccf34e3e9",
+      "resultSha256": "fc43d4ae9fc83117c6bbdfbaa8a0eea5cb8610d9de726a8f8928ee5120182710"
+    },
+    {
+      "file": "tests/nativeCoverageAlignmentFix.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "e69e98d9a0c931d26756262da0785c0e4b431f3c43fb4d625084a592fee2fc7b"
+    },
+    {
+      "file": "tests/selectionPulseLifecycle.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "0ed8b99b70d755792556eec1766952c2602fa28d7b2f0ddac2f0d94983f660eb"
+    }
+  ]
+}

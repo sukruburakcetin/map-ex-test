@@ -13,8 +13,6 @@ import { CoverageYearLegend } from '../features/coverage/CoverageYearLegend';
 import { QualityToolsSection } from '../features/coverage/QualityToolsSection';
 import { DetectionToolsSection } from '../features/detections/DetectionToolsSection';
 import { ElevationToolsSection } from '../features/elevation/ElevationToolsSection';
-import { NoteToolsSection } from '../features/field-notes/NoteToolsSection';
-import { NearbyToolsSection } from '../features/imagery/NearbyToolsSection';
 import { PointCloudCalibrationControls } from '../features/point-cloud/PointCloudCalibrationControls';
 import { PointCloudCorridorControls } from '../features/point-cloud/PointCloudCorridorControls';
 import { PointCloudElevationLegend } from '../features/point-cloud/PointCloudElevationLegend';
@@ -24,13 +22,15 @@ import { PointCloudMeasureTools, PointCloudLassoTools, PointCloudSightTools, Poi
 import { RouteControls, RoutePointControls } from '../features/routing/RouteControls';
 import { SolarToolsSection } from '../features/solar/SolarToolsSection';
 
-import { infoPanelShellStyle, infoControlsViewportStyle, infoStatusCardStyle, infoPanelResponsiveCss } from '../styles/infoBox';
+import { infoPanelShellStyle, infoControlsViewportStyle, infoStatusCardStyle, infoPanelResponsiveCss, infoDetailsCss } from '../styles/infoBox';
 
 import { miniJoyStyle } from '../utils/styles';
 
 /** Extra-time presets are owned by features/routing/RouteControls.tsx. */
 
 interface InfoBoxState {
+  detailsOpen: boolean;
+  wide: boolean;
   isOverflowing: boolean;
   canScrollDown: boolean;
   canScrollUp: boolean;
@@ -44,12 +44,15 @@ interface InfoBoxState {
  * child sections display supplied state and runtime callbacks own SDK operations.
  */
 export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
+  private panelToggleRef = React.createRef<HTMLButtonElement>();
   private scrollResizeObserver: ResizeObserver | null = null;
   private scrollContainerRef = React.createRef<HTMLDivElement>();
 
   constructor(props: InfoBoxProps) {
     super(props);
     this.state = {
+      detailsOpen: false,
+      wide: false,
       isOverflowing: false,
       canScrollDown: false,
       canScrollUp: false,
@@ -187,12 +190,31 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
 
     return (
       <div
-        className="mly-info-panel"
+        className={`mly-info-panel${this.state.detailsOpen ? " is-open" : ""}${this.state.wide ? " is-wide" : ""}`}
+        onKeyDown={event => { if (event.key === "Escape" && this.state.detailsOpen) { event.stopPropagation(); this.setState({ detailsOpen: false }, () => this.panelToggleRef.current?.focus()); } }}
         style={infoPanelShellStyle(isOverflowing)}
       >
-        <style>{infoPanelResponsiveCss}</style>
+        <style>{infoPanelResponsiveCss}{infoDetailsCss}</style>
+        <div className="mly-info-header">
+        <button ref={this.panelToggleRef} type="button" className="mly-info-toggle"
+          aria-expanded={this.state.detailsOpen} aria-label={this.state.detailsOpen ? "Close image details and tools" : "Open image details and tools"}
+          onClick={() => this.setState(previous => ({ detailsOpen: !previous.detailsOpen }))}>
+          <span className="mly-info-location" title={!hideInfoBox && address ? address : "Image tools"}>{!hideInfoBox && address ? address : "Image tools"}</span>
+          <span aria-hidden="true">{this.state.detailsOpen ? "−" : "+"}</span>
+        </button>
+        <button type="button" className="mly-info-width-toggle" hidden={!this.state.detailsOpen}
+          aria-label={this.state.wide ? "Use compact panel width" : "Widen details panel"}
+          title={this.state.wide ? "Compact width" : "Wider view"} aria-pressed={this.state.wide}
+          onClick={() => this.setState(previous => ({ wide: !previous.wide }))}>
+          <svg aria-hidden="true" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+            <path d={this.state.wide ? "M1 8h5m-2-2 2 2-2 2m11-2h-5m2-2-2 2 2 2" : "M6 8H1m2-2L1 8l2 2m7-2h5m-2-2 2 2-2 2"}/>
+          </svg>
+        </button>
+        </div>
+        <div className="mly-info-body" hidden={!this.state.detailsOpen}>
         <div
           ref={this.scrollContainerRef}
+          className="mly-info-scroll"
           onScroll={this.checkOverflow}
           style={infoControlsViewportStyle(isOverflowing)}
         >
@@ -202,14 +224,12 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
               className="info-box"
               style={infoStatusCardStyle}
             >
-              <StatusSummary currentImg={currentImg} currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} address={address} turboCreator={turboCreator} turboOrganization={turboOrganization} turboOrganizationName={turboOrganizationName} onCopyCoordinates={this.props.onCopyCoordinates} />
-
-              {turboModeActive && !hideCoverageAnalysis && <CoverageAnalysisTrigger currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} turboPointsAvailable={turboPointsAvailable} coverageAnalysisLoading={coverageAnalysisLoading} coverageResult={coverageResult} onRunCoverageAnalysis={onRunCoverageAnalysis} turboMinZoom={turboMinZoom} />}
-
-              {!hideCoverageAnalysis && <QualityToolsSection qualityViewType={this.props.qualityViewType} currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} qualityViewActive={qualityViewActive} onToggleQualityView={onToggleQualityView} selectedQualityBand={selectedQualityBand} onQualityLegendClick={onQualityLegendClick} />}
-
-              {imageId && <NearbyToolsSection nearbyCount={nearbyCount} nearbyLoading={nearbyLoading} nearbyStripOpen={nearbyStripOpen} onToggleNearbyStrip={onToggleNearbyStrip} />}
-              <NoteToolsSection fieldNotesCount={fieldNotesCount} isAnnotationMode={isAnnotationMode} fieldNotesListOpen={fieldNotesListOpen} onToggleAnnotationMode={onToggleAnnotationMode} onToggleFieldNotesList={onToggleFieldNotesList} />
+              <div className="mly-info-quick" role="group" aria-label="Image actions">
+                {!hideCoverageAnalysis && <button type="button" aria-label="Color coverage by quality" aria-pressed={!!qualityViewActive} title="Color coverage by quality" onClick={onToggleQualityView}>Quality<span className="mly-quick-state" aria-hidden="true"/></button>}
+                {imageId && <button type="button" aria-label="Nearby images" aria-expanded={!!nearbyStripOpen} onClick={onToggleNearbyStrip}>Nearby<span className="mly-quick-count">{nearbyLoading ? "…" : nearbyCount || ""}</span></button>}
+                <button type="button" aria-label={isAnnotationMode ? "Stop adding notes" : "Add note"} aria-pressed={!!isAnnotationMode} onClick={onToggleAnnotationMode}>{isAnnotationMode ? "Finish note" : "+ Note"}</button>
+                <button type="button" aria-label="View notes" aria-expanded={!!fieldNotesListOpen} onClick={onToggleFieldNotesList}>Notes<span className="mly-quick-count">{fieldNotesCount || ""}</span></button>
+              </div>
 
               {/* Turbo year legend */}
               {turboModeActive && turboColorByDate && turboYearLegend && turboYearLegend.length > 0 && (
@@ -217,6 +237,10 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
               )}
             </div>
           )}
+
+          <details className="mly-info-more"><summary>Tools & details</summary>
+              {!hideInfoBox && <div className="info-box"><StatusSummary currentImg={currentImg} currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} address={null} turboCreator={turboCreator} turboOrganization={turboOrganization} turboOrganizationName={turboOrganizationName} onCopyCoordinates={this.props.onCopyCoordinates} />{!hideCoverageAnalysis && <QualityToolsSection hideToggle qualityViewType={this.props.qualityViewType} currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} qualityViewActive={qualityViewActive} onToggleQualityView={onToggleQualityView} selectedQualityBand={selectedQualityBand} onQualityLegendClick={onQualityLegendClick} />}</div>}
+              {!hideInfoBox && turboModeActive && !hideCoverageAnalysis && <CoverageAnalysisTrigger currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} turboPointsAvailable={turboPointsAvailable} coverageAnalysisLoading={coverageAnalysisLoading} coverageResult={coverageResult} onRunCoverageAnalysis={onRunCoverageAnalysis} turboMinZoom={turboMinZoom} />}
 
           {/* 3D TAPE MEASURE */}
           {pointCloudVisible && (
@@ -308,6 +332,8 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
             onToggleAiTags={onToggleAiTags}
           />
 
+          </details>
+
           {(coverageAnalysisLoading || coverageResult) && (
             <CoverageAnalysisResults coverageAnalysisLoading={coverageAnalysisLoading} coverageAnalysisProgress={coverageAnalysisProgress} onCancelCoverageAnalysis={onCancelCoverageAnalysis} coverageResult={coverageResult} coverageSegmentsVisible={coverageSegmentsVisible} onToggleCoverageSegments={onToggleCoverageSegments} onDismissCoverageResult={onDismissCoverageResult}
               renderRoutingControls={() => (coverageSegmentsVisible && (
@@ -329,6 +355,7 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
         </div>
 
         {(this.state.canScrollDown || this.state.canScrollUp) && <ScrollDiscoveryFooter canScrollDown={this.state.canScrollDown} canScrollUp={this.state.canScrollUp} isOverflowing={isOverflowing} scrollContainerRef={this.scrollContainerRef} />}
+        </div>
 
       </div>
     );

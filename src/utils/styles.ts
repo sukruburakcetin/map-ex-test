@@ -1415,7 +1415,7 @@ export const coverageNoticeStyles = {
     logo: { width: 22, height: 22, flexShrink: 0, objectFit: "cover", borderRadius: 6 } as React.CSSProperties,
     status: { minWidth: 0, flex: "1 1 0", display: "flex", alignItems: "center", gap: 6, overflow: "hidden" } as React.CSSProperties,
     title: { minWidth: 0, fontSize: 11, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } as React.CSSProperties,
-    helpButton: { flexShrink: 0, height: 24, minWidth: 24, padding: "0 6px", border: 0, borderRadius: 6, background: "transparent", color: "#b0c3cb", fontSize: 11, whiteSpace: "nowrap", cursor: "pointer", touchAction: "manipulation" } as React.CSSProperties,
+    helpButton: { display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, width: 26, height: 24, minWidth: 24, padding: 0, border: 0, borderRadius: 6, background: "transparent", color: "#b0c3cb", fontSize: 11, whiteSpace: "nowrap", cursor: "pointer", touchAction: "manipulation" } as React.CSSProperties,
     helpPanel: { position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: "min(420px, calc(100% - 16px))", maxHeight: "calc(100% - 52px)", overflowY: "auto", overflowWrap: "anywhere", overscrollBehavior: "contain", padding: "6px 12px 10px", boxSizing: "border-box", border: "1px solid rgba(145,217,181,0.3)", borderRadius: 8, background: "#142126", color: "#fff", boxShadow: "0 6px 24px rgba(0,0,0,0.4)", zIndex: 1000 } as React.CSSProperties,
     brand: { fontSize: 9, fontWeight: 600, letterSpacing: "0.25px", color: "#91d9b5", marginBottom: 6 } as React.CSSProperties,
     message: { fontSize: 11, lineHeight: 1.45, color: "rgba(255,255,255,0.85)" } as React.CSSProperties,

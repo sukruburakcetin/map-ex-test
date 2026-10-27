@@ -1,0 +1,22 @@
+{
+  "installer": "places-popup-v6-39",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "827f6b4c949bfc94a816682c90e467071be59260eef8cea6ab2697f42acd1e12",
+      "resultSha256": "20384b8e95a9290f4991b8c2281c3acd1a89061e1a0075671d647104a580f4c4"
+    },
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "0b4c0ab9a2e584d48052532e3168654e6147cb83b883e4f0e12093994e4e6e6b",
+      "resultSha256": "5da4e9970ba934f0365ea77ad5d6975dd63ec50455ea79b9f1d9edf7595b889e"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "81df21c97412f9cfad3ef835050a9a176ff24d3868a88b793f4efe3f9e28675a",
+      "resultSha256": "b9e9a04e2a49f802ff2f8865b8c774c302522bd786e60acbc35df136be9c3ccc"
+    }
+  ]
+}

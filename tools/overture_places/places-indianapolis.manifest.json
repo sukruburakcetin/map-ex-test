@@ -1,0 +1,59 @@
+{
+  "release": "2026-10-21.0",
+  "bbox": [
+    -86.16,
+    39.75,
+    -86.1,
+    39.8
+  ],
+  "feature_count": 165,
+  "min_confidence": 0.95,
+  "created_utc": "2026-10-24T10:45:18.694493+00:00",
+  "source": "s3://overturemaps-us-west-2/release/2026-10-21.0/theme=places/type=place/*",
+  "attribution": "https://docs.overturemaps.org/attribution/",
+  "groups": {
+    "health": [
+      "hospital",
+      "clinic",
+      "medical_center",
+      "pharmacy",
+      "dentist",
+      "doctor"
+    ],
+    "education": [
+      "school",
+      "primary_school",
+      "secondary_school",
+      "university",
+      "college",
+      "kindergarten",
+      "library"
+    ],
+    "parks": [
+      "park",
+      "playground",
+      "garden",
+      "nature_reserve",
+      "national_park"
+    ],
+    "landmarks": [
+      "landmark",
+      "historic_site",
+      "monument",
+      "museum",
+      "tourist_attraction",
+      "memorial"
+    ],
+    "services": [
+      "bank",
+      "atm",
+      "post_office",
+      "gas_station",
+      "supermarket",
+      "grocery_store",
+      "police_station",
+      "fire_station"
+    ]
+  },
+  "schema": "mapillary-explorer-places-v1"
+}

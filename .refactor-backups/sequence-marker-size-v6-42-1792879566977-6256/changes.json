@@ -1,0 +1,27 @@
+{
+  "installer": "sequence-marker-size-v6-42",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/coverage/TileSequenceHighlights.ts",
+      "originalSha256": "8d6012a228a1cfbca4a5e19669d5aa5f1f607f89bfdb563bcdac195be319b833",
+      "resultSha256": "0dced3a9d4dad2c19e2fbc7dae761b8bbd38b40d06d7818c69ce48d207f14fa4"
+    },
+    {
+      "file": "tests/nativeCoverageAlignmentFix.test.cjs",
+      "originalSha256": "e69e98d9a0c931d26756262da0785c0e4b431f3c43fb4d625084a592fee2fc7b",
+      "resultSha256": "ed51be0af4f2a45180d809c0ab42927b6f89f8e085f64731e0e966b216d935ff"
+    },
+    {
+      "file": "tests/tileSequenceHighlights.test.cjs",
+      "originalSha256": "a07b3115ca96fc54c77c1b76e1dc712a250987cc2c8f03f82c963cc10bb086d9",
+      "resultSha256": "8655f25d51320721b233e08750f814585d0631a1c65f04f8cdc82f4f3700c572"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "cd586fb7e4f2eafb84896fa3daa8c774196382d1ef3f1aff29ad4b3bf68e6d16",
+      "resultSha256": "7641ba3a0a71328936c7fd5c4bbfe1ed1339a9954d48542dacba0a603ea14bad"
+    }
+  ]
+}

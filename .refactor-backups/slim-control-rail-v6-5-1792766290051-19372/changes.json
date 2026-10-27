@@ -1,0 +1,17 @@
+{
+  "installer": "slim-control-rail-v6-5",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/ControlBar.tsx",
+      "originalSha256": "915c916de73a1bfaaaf0ee257b55b458ee3666be56ce20ba28bfcbf21363974d",
+      "resultSha256": "4183acfea997ed5f2447565f420e0f91c89ba99bbc044f1c8638cf28d4082c61"
+    },
+    {
+      "file": "src/styles/controlPanels.ts",
+      "originalSha256": "f76988129ca2497323a13407882a0ed8a44de57facd0b54516436c9e88b9868e",
+      "resultSha256": "ccd8b1c90b8f7b974ef126e0d62c53f8713152a18db126b17f617847cc5bbc19"
+    }
+  ]
+}

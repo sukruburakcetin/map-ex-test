@@ -1,0 +1,17 @@
+{
+  "installer": "minimap-lifecycle-fix-v6-7",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "1baf6f53a13ff8d505ffe226a5256287349d6789ef8eda2e2fdbd6cd9d9a6581",
+      "resultSha256": "b8d62e35c185a5af4ec0288540d1e404c41271e464390920e76fdd5d72da8c40"
+    },
+    {
+      "file": "tests/minimapLifecycle.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "33bef0656965b80262a5050b632b55fbe96a6ab7dd6f63283a437405afd3e446"
+    }
+  ]
+}

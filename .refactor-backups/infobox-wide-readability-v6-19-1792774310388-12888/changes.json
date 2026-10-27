@@ -1,0 +1,27 @@
+{
+  "installer": "infobox-wide-readability-v6-19",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/styles/infoBox.ts",
+      "originalSha256": "3e4426054ce85407608e067547c4e0a35dd9bb26252b5e8fd918f6deb65bf47f",
+      "resultSha256": "e5d0d4fc86e139ee08a41e99859e23c0efd8ea3c06f9aeeea2525cd8c561d0f0"
+    },
+    {
+      "file": "src/features/coverage/CoverageAnalysisResults.tsx",
+      "originalSha256": "29267b4f93975c27750c53b90be54b02bc128ed30ffbd0a4d2a743586b7d9297",
+      "resultSha256": "b4873fbd1a0a6fa41d599d9cc95b8b797bc8a697aeac124671bd2f5533a50990"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudExportControls.tsx",
+      "originalSha256": "6a6eff2af063542cb0faa8c87c03e1d9b9bf69eb9396c4bc1dfc96d3f2d17ea8",
+      "resultSha256": "d7dfe9b979f5d228c75a13a6e97399c1e5d9f6241049d794e9fbe262a5b6a3e3"
+    },
+    {
+      "file": "src/features/routing/RouteControls.tsx",
+      "originalSha256": "fecef19b765a58070d9ccfe2a3fb325a6c7c35c1394356cca08663d7b0cb6100",
+      "resultSha256": "cc6cc8a8d3231304d5cceda6a74e9c56fa2f8357f1b94aa3cd1e8354840991f2"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "installer": "places-selection-v6-45",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "7641ba3a0a71328936c7fd5c4bbfe1ed1339a9954d48542dacba0a603ea14bad",
+      "resultSha256": "ffce9844704ee1feb52b66fb54068f42ea8876317ef8df7c89f06a1d2693c53f"
+    },
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "a95ecc973ff0b1d4dee2c023c2c1219a9a9b02f92a89f6ea3768006a8d0f262f",
+      "resultSha256": "ab57eeea4d27daec55752a9dd04bedef668e5af4b1ced5a6ed1d0b923c960a67"
+    },
+    {
+      "file": "src/components/PlacesPanel.tsx",
+      "originalSha256": "5f85f4dd7b6daefa01be52420650808c86363d9d55b8db3cfe54d6d3596370f8",
+      "resultSha256": "f5da0b638c222192d8f721212b2a77cf06e388870f9abeb4e530aadfe2e1473b"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "562fe7e59a1ed5b3ba440427faf09b6f4a4435cf7a9211d30eb758dcb0cca1fd",
+      "resultSha256": "862aec5d90ba5f8a1aa9d919c33bdc904286326a3cff606c6dbf583a68127a58"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES.md",
+      "originalSha256": "4367d8a0bc3fe2bb3f7ab7a75fa8491effb27035f5b04cbf17a463f8c678b08f",
+      "resultSha256": "cfc434af9797aaf2ac3734b56dc53aa7320608e5c8570d750d7bd8850e1fd350"
+    },
+    {
+      "file": "src/features/places/SelectedPlace.ts",
+      "originalSha256": null,
+      "resultSha256": "bca14b13560b62251f6348303b65ef6d4f11e78078662aa44e399ea54b5283af"
+    },
+    {
+      "file": "src/components/SelectedPlaceCard.tsx",
+      "originalSha256": null,
+      "resultSha256": "556cb4fd18e68e17f094c59254fce07bd2eeded48ca940bb5056fa1aeba0f4ab"
+    }
+  ]
+}

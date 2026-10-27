@@ -1,0 +1,27 @@
+{
+  "installer": "places-back-to-place-v6-59",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/SelectedPlaceCard.tsx",
+      "originalSha256": "6fe206ffe7bf3673f0ab5af8615d40a83fc27a851e7414a3b703a8272a9b00bb",
+      "resultSha256": "eb19bd7cf310b6e8d15c11e6873ff382ef755cb75584a2aa75fbb57378879524"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "193c4dcdfccf2790f08a84efcd67aa38816d933442cfcbac560e0eaf6db659b9",
+      "resultSha256": "1ff874a3600e6d109458343623f90949a63f20c8df5754a89ea2afad2e5dddba"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "526e4c777138cff0a91bb72910b745398b8c1e28f4d1f7a88d32bd421d8dce2c",
+      "resultSha256": "96603e95adb19cf7e5fa76805f0b14b602f831f4b7ec46f6a4ddda28f0aa908a"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES.md",
+      "originalSha256": "818527647d5b9644126bace29450c1ca773e09db3c99cf0c09bc7d755fda1946",
+      "resultSha256": "40bae08ad6f433628ab15821ba72af0e0961f93e98e97081d1e98205ccb52a31"
+    }
+  ]
+}

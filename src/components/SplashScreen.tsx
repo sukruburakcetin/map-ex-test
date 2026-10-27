@@ -2,37 +2,64 @@
 import { React, jsx } from "jimu-core";
 import { SplashScreenProps } from "./types";
 import { MAPILLARY_IMAGE } from "../utils/mapillary-image-base64";
-import { getSplashOverlayStyle, splashAnimationCss, splashBackdropStyle, splashCardStyle, splashLogoStyle, splashEyebrowStyle, splashTitleStyle, splashTaglineStyle, splashStatusStyle } from '../styles/splashScreen';
+import { getSplashOverlayStyle, splashAnimationCss } from '../styles/splashScreen';
 
-/** Existing route design with staggered heartbeat pulses; CSS only, reduced-motion safe. */
+/** Static panoramic viewfinder; preparation and dismissal stay independent of the artwork. */
 export const SplashScreen: React.FC<SplashScreenProps> = ({ showIntro, filtersLoaded, onDismiss }) => {
-    const gradientId = React.useRef(`mly-intro-flow-${Math.random().toString(36).slice(2)}`).current;
+    const sceneId = React.useId().replace(/:/g, '');
     React.useEffect(() => {
         if (!showIntro || filtersLoaded || !onDismiss) return;
-        // Decorative intro must not block the map if optional filter preparation fails.
         const timer = setTimeout(onDismiss, 8000);
         return () => clearTimeout(timer);
     }, [showIntro, filtersLoaded, onDismiss]);
     if (!showIntro) return null;
     return <div className="mly-intro" style={getSplashOverlayStyle(filtersLoaded)}>
       <style>{splashAnimationCss}</style>
-      <svg aria-hidden="true" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid slice" style={splashBackdropStyle}>
-        <defs><linearGradient id={gradientId} gradientUnits="userSpaceOnUse" x1="0" y1="400" x2="600" y2="0"><stop offset="0" stopColor="#52bd87" stopOpacity="0" /><stop offset="0.45" stopColor="#87f2b4" /><stop offset="0.65" stopColor="#c8ffdd" /><stop offset="1" stopColor="#52bd87" stopOpacity="0" /></linearGradient></defs>
-        <g stroke="#7eb799" strokeWidth="1" fill="none" opacity="0.17"><path d="M0 80H600M0 170H600M0 280H600M100 0V400M230 0V400M390 0V400M510 0V400" /><path d="M0 390L600 30" /></g>
-        <path className="mly-intro-route" opacity="0.17" pathLength="1" d="M40 280H230V170H390V80H550" fill="none" stroke="#6be4a0" strokeWidth="3" />
-        <g fill="none" stroke={`url(#${gradientId})`} strokeWidth="2">
-          {["M0 80H600", "M0 170H600", "M0 280H600", "M100 0V400", "M230 0V400", "M390 0V400", "M510 0V400", "M0 390L600 30", "M40 280H230V170H390V80H550"].map((road, index) =>
-            <path key={road} className="mly-intro-flow" pathLength="1" d={road} style={{ animationDelay: `${-index * 260}ms`, animationPlayState: filtersLoaded ? "paused" : "running" }} />
-          )}
+      <svg className="mly-intro-atlas" aria-hidden="true" focusable="false" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" fill="none">
+        <g stroke="#82b297" strokeWidth="1" opacity=".17">
+          {[0, 1, 2, 3, 4, 5, 6].map(line => <path key={line} transform={`translate(${line * 24} ${line * -19})`} d="M-160 240C30 80 150 105 228 212S365 355 440 250 537 82 690 110 872 231 1010 115 1220 80 1370 185"/>)}
+          {[0, 1, 2, 3, 4, 5].map(line => <path key={line} transform={`translate(${line * -24} ${line * 20})`} d="M-110 635C70 485 160 555 252 642S420 763 533 657 655 496 797 563 925 695 1040 580 1220 476 1380 559"/>)}
         </g>
+        <g stroke="#6b9d83" strokeWidth="1" opacity=".12">
+          <path d="M110 0V800M290 0V800M910 0V800M1090 0V800M0 145H1200M0 655H1200"/>
+          <path d="M0 410 260 410 260 145 510 145M690 655H940V390H1200"/>
+        </g>
+        <path d="M-40 720 170 590H290V440L530 310H750L960 170H1240" stroke="#94c9a5" strokeWidth="1.5" strokeDasharray="3 9" opacity=".2"/>
+        <g fill="#b5d6bc" opacity=".35"><circle cx="170" cy="590" r="3"/><circle cx="960" cy="170" r="3"/></g>
+        <g stroke="#a1c9b1" strokeWidth="1" opacity=".3"><path d="M104 145h12M110 139v12M1084 655h12M1090 649v12"/></g>
       </svg>
-      <div className="mly-intro-card" style={splashCardStyle}>
-        <img src={MAPILLARY_IMAGE} alt="" width={42} height={42} style={splashLogoStyle} />
-        <div style={splashEyebrowStyle}>MAPILLARY</div>
-        <div style={splashTitleStyle}>Explorer</div>
-        <p style={splashTaglineStyle}>Explore imagery. Find coverage. Plan your next capture.</p>
-        <div role="status" style={splashStatusStyle}>{filtersLoaded ? "Ready to explore" : "Preparing imagery tools…"}</div>
-
+      <div className="mly-intro-layout">
+        <div className="mly-intro-scene">
+          <svg aria-hidden="true" viewBox="0 0 640 280" preserveAspectRatio="xMidYMid slice">
+            <defs><linearGradient id={`${sceneId}-sky`} x2="0" y2="1"><stop stopColor="#36565e"/><stop offset="1" stopColor="#93aaa1"/></linearGradient></defs>
+            <rect width="640" height="280" fill={`url(#${sceneId}-sky)`}/>
+            <circle cx="414" cy="83" r="24" fill="#d7d5b0" opacity=".7"/>
+            <path d="M0 137 95 121 139 135 219 109 285 125 332 111 419 129 514 104 640 135V280H0Z" fill="#607f77"/>
+            <path d="M0 74 94 93V225L0 280Z" fill="#203f3f"/>
+            <path d="M96 100 169 118V203L96 242Z" fill="#315553"/>
+            <path d="M172 121 239 133V183L172 215Z" fill="#456a60"/>
+            <path d="M640 60 548 96V229L640 280Z" fill="#214744"/>
+            <path d="M545 106 477 124V202L545 241Z" fill="#365b50"/>
+            <path d="M475 128 415 138V184L475 215Z" fill="#4f7362"/>
+            <g fill="#abc2a3" opacity=".35"><path d="M19 109 37 112V144L19 144ZM54 116 73 120V144H54ZM112 129 127 132V155H112ZM143 136 156 139V155H143ZM564 116 584 110V144H564ZM605 101 625 95V144H605ZM489 143 503 139V158H489ZM517 135 532 131V158H517Z"/></g>
+            <path d="M304 146H349L523 280H124Z" fill="#293f40"/>
+            <path d="M304 146 147 280M349 146 500 280" fill="none" stroke="#9eb5a2" strokeWidth="2"/>
+            <path d="M326 153V163M326 178V196M326 220V259" fill="none" stroke="#d4d4ad" strokeWidth="2"/>
+            <g stroke="#294b45" strokeWidth="2"><path d="M265 150V100M390 150V106"/><path d="M265 100H278M390 106H380"/></g>
+            <g fill="#a3baa5"><ellipse cx="280" cy="100" rx="5" ry="2"/><ellipse cx="378" cy="106" rx="4" ry="2"/></g>
+            <path d="M0 266H640V280H0Z" fill="#203b35" opacity=".35"/>
+          </svg>
+          <div className="mly-intro-brand"><img src={MAPILLARY_IMAGE} alt="" width={22} height={22}/><span>Mapillary Explorer</span></div>
+          <div className="mly-viewfinder-frame" aria-hidden="true"><i/><i/><i/><i/></div>
+          <span className="mly-intro-caption" aria-hidden="true">A wider world. One street at a time.</span>
+        </div>
+        <div className="mly-intro-copy">
+          <div className="mly-intro-heading"><h2>Find your point of view.</h2><p>Street imagery, connected by the map.</p></div>
+          <div className="mly-intro-bottom">
+            {onDismiss && <button type="button" onClick={onDismiss} disabled={filtersLoaded}>Start exploring <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M2 6h8M6 2l4 4-4 4"/></svg></button>}
+            <span className="mly-intro-status" role="status">{!filtersLoaded && <span className="mly-intro-loading" aria-hidden="true"/>}{filtersLoaded ? "Ready to explore" : "Preparing your tools"}</span>
+          </div>
+        </div>
       </div>
     </div>;
 };

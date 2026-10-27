@@ -1,0 +1,32 @@
+{
+  "installer": "places-preferences-variety-v6-55",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "7a956a9266a257582931ae684c68c9ceda5b07944d957cbebec6325c8d31a6a4",
+      "resultSha256": "2c578f95730564038222f694a326f8796bec13df104cacd0d43a30f8a202e837"
+    },
+    {
+      "file": "src/features/places/nearbyPlaceImagery.ts",
+      "originalSha256": "1d0c079b88cfc31bcdfd2b9fed3c8811e8174b2dde3699d35886bb3eac768925",
+      "resultSha256": "676bd3c35f75df2d743869b6fce923caf833cd801fad9a0654360a2d68727dca"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "71a3845845742e61da75a55ce437ec35500e35a3d5dde98a98c4540be6476471",
+      "resultSha256": "f778924c41f95d907b5e8d4314be876f52293ec2d4c96b6c8ad36e75870e041f"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES.md",
+      "originalSha256": "1f66130e35c8827f3c3a058f30eeb5325336d7e24c8a0310efb5c201821febc5",
+      "resultSha256": "9a27bffeb1b26eb31c2c2a842125cb31515126c534670d0d08707aed70f72046"
+    },
+    {
+      "file": "src/features/places/placePreferences.ts",
+      "originalSha256": null,
+      "resultSha256": "3703d43fb7857ec98346c3920f274026f82904bef70748e76f59a0747f75f02b"
+    }
+  ]
+}

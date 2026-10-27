@@ -1,0 +1,17 @@
+{
+  "installer": "coverage-startup-fix-v6-8",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "b8d62e35c185a5af4ec0288540d1e404c41271e464390920e76fdd5d72da8c40",
+      "resultSha256": "41f3995baad63223b4a78f4d73f95d79436087237cd3fa7dbfe7ab9ecb3359d3"
+    },
+    {
+      "file": "tests/coverageStartup.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "0c2a3eb6c8b85238dcde5eeefb0cc0bdc8b0a98f229b0d6cd8a4be82ee5e785c"
+    }
+  ]
+}

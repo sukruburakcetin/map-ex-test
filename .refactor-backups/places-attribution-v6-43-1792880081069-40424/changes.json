@@ -1,0 +1,12 @@
+{
+  "installer": "places-attribution-v6-43",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "780c63c8524d0e14a652fe2d988d07a2e4ddac19d83dd1c0984dec7e76cece05",
+      "resultSha256": "cf1a0c0185887fde43c4337a6a151b40964b61ad8ce60f86c64e73c28553ddd1"
+    }
+  ]
+}

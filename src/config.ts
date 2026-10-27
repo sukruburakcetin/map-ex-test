@@ -7,6 +7,9 @@ export type OSRMServerMode = "public" | "custom";
 export type RoutingAuthMode = "auto" | "api-key" | "user";
 
 export interface Config {
+  /** Optional externally published Overture Places pilot; no requests until users enable it. */
+  enablePlaces?: boolean;
+  placesServiceUrl?: string;
   /**
    * Mapillary API access token used to authenticate requests to the Mapillary services.
    * Required for loading imagery, vector tiles, and related Mapillary data.
@@ -200,6 +203,9 @@ export interface Config {
    * If true, enables console.log outputs for debugging.
    */
   debugMode?: boolean;
+
+  /** Opt-in for tiled imagery comparisons; false preserves existing viewer loading. */
+  imageTiling?: boolean;
 
   /**
    * Custom categories for field notes.

@@ -1,0 +1,22 @@
+{
+  "installer": "places-popup-style-v6-50",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "d3925dbad8934a2a95c394f629738abbc5153e6c8e21b8d5d7fa988037f1915f",
+      "resultSha256": "300a6db36027f4a9fa53761eea5651bc13c8a460a8c877b661265c31f7d128cf"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES.md",
+      "originalSha256": "73c81a1e443eeded490d3582e6585aee3960a25d211a7a00996783af8bf71ec8",
+      "resultSha256": "6b5eb457768aab0c633ecd15cb8921f95ef4b442201a289bd27d5cd6f8e8c0f3"
+    },
+    {
+      "file": "src/features/places/placePopupStyles.ts",
+      "originalSha256": null,
+      "resultSha256": "9b857f5a194daf4ed14560f7354b251e43d4b90ee27902b49de4eb743cb9f148"
+    }
+  ]
+}

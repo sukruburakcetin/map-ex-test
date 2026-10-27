@@ -1,0 +1,17 @@
+{
+  "installer": "control-rail-ui-v6-4",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/ControlBar.tsx",
+      "originalSha256": "83f5be736b6bb45dc2cc1d54fc4c451d5f110d7b60ffb96fa7684fc4eb8f7516",
+      "resultSha256": "915c916de73a1bfaaaf0ee257b55b458ee3666be56ce20ba28bfcbf21363974d"
+    },
+    {
+      "file": "src/styles/controlPanels.ts",
+      "originalSha256": "e3cfffda06a4648c2ca86056ffb91ab2cd14093cecf7512e65ff18beb6b742c2",
+      "resultSha256": "f76988129ca2497323a13407882a0ed8a44de57facd0b54516436c9e88b9868e"
+    }
+  ]
+}

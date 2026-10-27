@@ -1,0 +1,27 @@
+{
+  "installer": "places-hover-feedback-v6-62",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "2cf7f6ee14088d5a8befff7fc665376730a30f672f7db744f4c059188e483526",
+      "resultSha256": "74aa3a30df4d595aa1d7e8d1577b8cb302818097d2a5b2bd8ef6ecc2084e9e97"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "1ff874a3600e6d109458343623f90949a63f20c8df5754a89ea2afad2e5dddba",
+      "resultSha256": "12a41da7c78f03bf2a809145f3feb2c063dac0b7cd9ded31e341c378c071d370"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "4481c836160f7a795d7bd49ea9b4704ef2499d4c4c023254560e1211d0513094",
+      "resultSha256": "8cc7ad53f64ca8b7fba7355a7a335d957ac967e7b698308a618292b9507dca09"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES.md",
+      "originalSha256": "9716595970ce75e32df79cd091f6c5aa70ee2108cec089d33e10a118a0cd9f48",
+      "resultSha256": "2838180dd1f94a39a5f47ce1b67c38b9c5632d623e1a627a321794c2821774fd"
+    }
+  ]
+}

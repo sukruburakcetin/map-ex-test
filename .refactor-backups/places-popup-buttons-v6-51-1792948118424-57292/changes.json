@@ -1,0 +1,17 @@
+{
+  "installer": "places-popup-buttons-v6-51",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/placePopupStyles.ts",
+      "originalSha256": "9b857f5a194daf4ed14560f7354b251e43d4b90ee27902b49de4eb743cb9f148",
+      "resultSha256": "3e9205a91f545871c785007d3734a543e938f03ec11d13b8795a87ff3c54e333"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES.md",
+      "originalSha256": "6b5eb457768aab0c633ecd15cb8921f95ef4b442201a289bd27d5cd6f8e8c0f3",
+      "resultSha256": "319597fa0ff6fbb3c71d13f385bd44bbc87964e80078ea2c1b105d874808b8cc"
+    }
+  ]
+}

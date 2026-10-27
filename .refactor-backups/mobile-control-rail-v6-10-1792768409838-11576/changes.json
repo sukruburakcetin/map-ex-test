@@ -1,0 +1,12 @@
+{
+  "installer": "mobile-control-rail-v6-10",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/styles/controlPanels.ts",
+      "originalSha256": "ccd8b1c90b8f7b974ef126e0d62c53f8713152a18db126b17f617847cc5bbc19",
+      "resultSha256": "ddca3356c37fe00f3a1a9aea3bf885b5391cd0823cb2dff88e8cee3b8342b3fd"
+    }
+  ]
+}

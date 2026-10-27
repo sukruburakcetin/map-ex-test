@@ -1,0 +1,32 @@
+{
+  "installer": "places-bearing-v6-41",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "eb994b9617b91cda75b643767cc05ac6bb6332f68a65acb2eb83ea3bcf65ef27",
+      "resultSha256": "cd586fb7e4f2eafb84896fa3daa8c774196382d1ef3f1aff29ad4b3bf68e6d16"
+    },
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "2ac210c74bb9f85802276a00d3b24d6bae21c39729a99e72633dab37a2b22014",
+      "resultSha256": "780c63c8524d0e14a652fe2d988d07a2e4ddac19d83dd1c0984dec7e76cece05"
+    },
+    {
+      "file": "src/features/places/nearbyPlaceImagery.ts",
+      "originalSha256": "c06a762c364d0c9c86fa3ffaa1cf3bc78aa6326862b54c1c684a40ab6054baa2",
+      "resultSha256": "128a998d9c3f89dd7b341f1c06f49147cbbee5c80c4bfc9a28df17e67dd495ef"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "4a4640a033ce0befe78f2326312ffc55b61b9a72ec9a67f83af26be3b7f67062",
+      "resultSha256": "562fe7e59a1ed5b3ba440427faf09b6f4a4435cf7a9211d30eb758dcb0cca1fd"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES.md",
+      "originalSha256": "18ebf24a0676dfcd48e6e5be6495430fc8fcc3efd3454a8952a05da99531a793",
+      "resultSha256": "4367d8a0bc3fe2bb3f7ab7a75fa8491effb27035f5b04cbf17a463f8c678b08f"
+    }
+  ]
+}

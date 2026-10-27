@@ -1,0 +1,17 @@
+{
+  "installer": "fullscreen-controls-v6-6",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "3f234b44d0d36f83c3e8f9b1c37385f3fc8508e1951f70b9c26ba8d92d579e94",
+      "resultSha256": "1baf6f53a13ff8d505ffe226a5256287349d6789ef8eda2e2fdbd6cd9d9a6581"
+    },
+    {
+      "file": "src/components/FullscreenControls.tsx",
+      "originalSha256": null,
+      "resultSha256": "e0033cc8a2e7adeace68b8c73cea88ccec8fc170763ee3e1aa8c08138624b867"
+    }
+  ]
+}

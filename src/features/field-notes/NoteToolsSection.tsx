@@ -30,14 +30,9 @@ export const NoteToolsSection: React.FC<NoteToolsSectionProps> = props => {
                     style={getNoteToolsLabelStyle(isAnnotationMode)}
                   >
                     <Icons.Notes size={10} />
-                    ADD NOTE
+                    {isAnnotationMode ? "Finish notes" : "Add note"}
                   </span>
-                  <span aria-hidden="true" style={{
-                    fontSize: "7px", lineHeight: 1, fontWeight: 700, flexShrink: 0,
-                    padding: "2px 4px", borderRadius: "3px",
-                    background: isAnnotationMode ? "#f5a623" : "rgba(255,255,255,0.08)",
-                    color: isAnnotationMode ? "#142126" : "rgba(255,255,255,0.7)",
-                  }}>{isAnnotationMode ? "ON" : "OFF"}</span>
+
                 </button>
 
                 {
@@ -49,7 +44,7 @@ export const NoteToolsSection: React.FC<NoteToolsSectionProps> = props => {
                     <span
                       style={getNoteToolsLabelStyle(fieldNotesListOpen)}
                     >
-                      NOTES
+                      View notes
                       {(fieldNotesCount ?? 0) > 0 && (
                         <span style={noteToolsCountStyle}>
                           {fieldNotesCount}

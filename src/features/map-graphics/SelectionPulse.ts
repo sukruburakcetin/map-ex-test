@@ -9,6 +9,10 @@ export interface PulseView<G, L> {
  map?: { add(layer: L): unknown; remove(layer: L): unknown } | null;
  graphics: { remove(graphic: G): unknown };
  toScreen(geometry: any): { x: number; y: number } | null | undefined;
+ updating?: boolean;
+ stationary?: boolean;
+ groundView?: { elevationSampler?: { queryElevation(geometry: any): any; noDataValue?: number | null;
+   on?(type: 'changed', callback: () => void): { remove(): void } } | null } | null;
 }
 export interface PulseFactories<G, L> {
  point(properties: any): any;
@@ -24,6 +28,7 @@ export class SelectionPulse<G extends PulseGraphic, L extends PulseLayer<G>, V e
  private readonly bindings: { graphic: G | null };
  private readonly factories: PulseFactories<G, L>;
  private readonly clock: RippleClock & { clearInterval(handle: any): void };
+ private groundHandle: { remove(): void } | null = null;
 
  constructor(bindings: { graphic: G | null }, factories: PulseFactories<G, L>, clock: RippleClock & { clearInterval(handle: any): void }) {
   this.bindings = bindings; this.factories = factories; this.clock = clock;
@@ -38,14 +43,14 @@ export class SelectionPulse<G extends PulseGraphic, L extends PulseLayer<G>, V e
     if (this.view === view && this.bindings.graphic &&
         this.bindings.graphic.attributes?.image_id === String(imageId) && this.layer) {
       this.bindings.graphic.geometry = anchor.geometry || this.factories.point({ longitude: lon, latitude: lat, spatialReference: { wkid: 4326 } });
-      this.layer.elevationInfo = { mode: anchor.geometry ? "absolute-height" : "on-the-ground" };
+      this.layer.elevationInfo = { mode: view.type === '3d' ? 'on-the-ground' : anchor.geometry ? "absolute-height" : "on-the-ground" };
       return this.bindings.graphic;
     }
     this.dispose();
     // Keep the geometry anchor independent from coverage rendering.
     const layer = this.factories.layer({
       id: "mapillary-active-selection", title: "Mapillary Active Image", listMode: "hide",
-      elevationInfo: { mode: anchor.geometry ? "absolute-height" : "on-the-ground" },
+      elevationInfo: { mode: view.type === '3d' ? 'on-the-ground' : anchor.geometry ? "absolute-height" : "on-the-ground" },
     });
     this.layer = layer; this.view = view;
     view.map!.add(layer);
@@ -73,12 +78,33 @@ export class SelectionPulse<G extends PulseGraphic, L extends PulseLayer<G>, V e
       }
     }
     const started = this.clock.now();
+    let surfaceGeometry: any = null;
+    let surfacePoint: any = null;
+    let sampledAt = -Infinity;
+    if (view.type === '3d') {
+      this.groundHandle = view.groundView?.elevationSampler?.on?.('changed', () => { surfaceGeometry = null; }) || null;
+    }
     const animate = (now: number) => {
       if (this.bindings.graphic !== graphic || this.view !== view || view.destroyed) return;
       const size = 12 - 2 * Math.cos((now - started) * Math.PI * 2 / 1200);
       const overlay = this.overlay;
       if (overlay) {
-        const pixel = view.toScreen(graphic.geometry as __esri.Point);
+        let projection = graphic.geometry;
+        if (view.type === '3d') {
+          // GroundView samples the currently rendered terrain synchronously; no
+          // elevation request or second animation loop. Refresh while terrain/camera changes.
+          if (surfaceGeometry !== graphic.geometry || view.updating || view.stationary === false || (!surfacePoint && now - sampledAt >= 100)) {
+            sampledAt = now;
+            surfaceGeometry = graphic.geometry; surfacePoint = null;
+            try {
+              const sampler = view.groundView?.elevationSampler;
+              const point = sampler?.queryElevation(graphic.geometry);
+              if (point && Number.isFinite(point.z) && point.z !== sampler?.noDataValue) surfacePoint = point;
+            } catch (_) { /* Keep the accepted anchor height until terrain is available. */ }
+          }
+          projection = surfacePoint || projection;
+        }
+        const pixel = view.toScreen(projection);
         const visible = pixel && Number.isFinite(pixel.x) && Number.isFinite(pixel.y) && pixel.x >= 0 && pixel.y >= 0 && pixel.x <= view.width && pixel.y <= view.height;
         overlay.style.display = visible ? "block" : "none";
         if (visible) { overlay.style.left = `${pixel.x}px`; overlay.style.top = `${pixel.y}px`; overlay.style.width = `${size}px`; overlay.style.height = `${size}px`; }
@@ -97,6 +123,7 @@ export class SelectionPulse<G extends PulseGraphic, L extends PulseLayer<G>, V e
 
  /** Remove the overlay, cancel animation/legacy interval and destroy the layer in its original view. */
  dispose(): void {
+    this.groundHandle?.remove(); this.groundHandle = null;
     this.overlay?.remove(); this.overlay = null;
     if (this.bindings.graphic) {
       const frame = (this.bindings.graphic as any)._pulseFrame;

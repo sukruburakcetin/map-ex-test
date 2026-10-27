@@ -64,9 +64,9 @@ export const coverageResultsHeaderStyle: React.CSSProperties = {
     marginTop: "1.5px",
 };
 export const coverageResultsDismissStyle: React.CSSProperties = { background: "none", border: "none", color: "white", cursor: "pointer", fontSize: "10px", margin: "0", padding: "0" };
-export const coverageResultsProgressStyle: React.CSSProperties = { textAlign: "center", fontSize: "8px", color: "#ccc", padding: "1px" };
+export const coverageResultsProgressStyle: React.CSSProperties = { textAlign: "left", fontSize: "8px", lineHeight: 1.4, color: "#b5ccbf", padding: "1px 0 3px", overflowWrap: "anywhere" };
 export const coverageResultsDotsStyle: React.CSSProperties = { display: "inline-block", width: "12px", textAlign: "left" };
-export const coverageResultsCancelStyle: React.CSSProperties = { display: "block", margin: "4px auto", fontSize: "10px", padding: "2px 6px", background: "transparent", color: "#ddd", border: "1px solid #68777a", borderRadius: "4px", cursor: "pointer" };
+export const coverageResultsCancelStyle: React.CSSProperties = { display: "block", width: "100%", boxSizing: "border-box", margin: "0", minHeight: 24, fontSize: "9px", padding: "3px 6px", background: "rgba(255,255,255,0.04)", color: "#d7e6dd", border: "1px solid rgba(154,196,170,0.25)", borderRadius: "4px", cursor: "pointer" };
 export const coverageResultsTierRowStyle: React.CSSProperties = { marginBottom: "3px" };
 export const coverageResultsTierLineStyle: React.CSSProperties = { display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "7px" };
 export const coverageResultsTierLabelGroupStyle: React.CSSProperties = { display: "flex", alignItems: "center", gap: "3px" };

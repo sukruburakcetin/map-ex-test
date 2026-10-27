@@ -298,6 +298,12 @@ export interface CoverageResult {
 
 // ControlBar props
 export interface ControlBarProps {
+    enablePlaces?: boolean;
+    placesAvailable?: boolean;
+    placesActive?: boolean;
+    placesPanelOpen?: boolean;
+    onTogglePlaces?: () => void;
+    onTogglePlacesPanel?: () => void;
     // config flags
     hideTurboFilter?: boolean;
     enableTrafficSigns?: boolean;

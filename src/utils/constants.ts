@@ -114,10 +114,10 @@ export const GEOCODE_URL =
 // Zoom level thresholds
 export const ZOOM = {
   /** Minimum zoom to show traffic sign / object VT coverage icons */
-  FEATURES_COVERAGE: 13,
+  FEATURES_COVERAGE: 14,
 
-  /** Minimum zoom to load and show clickable FeatureLayer popups */
-  FEATURES_INTERACTIVE: 16,
+  /** Native traffic-sign/object tiles expose individual features at source zoom 14. */
+  FEATURES_INTERACTIVE: 14,
 
   /** Minimum zoom for Turbo Mode coverage points */
   TURBO_MIN: 0,

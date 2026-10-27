@@ -2,7 +2,7 @@
 import { React, jsx } from 'jimu-core';
 
 const filterPanelCss = `
-.mly-filter-panel { display:flex; align-items:center; gap:3px; width:100%; max-width:100%; min-width:0; height:38px; flex:0 0 38px; box-sizing:border-box; padding:2px 3px; margin-top:1px; border:1px solid #416756; border-radius:8px; background:linear-gradient(135deg,#142d26,#10231e); color:#e1f2e8; pointer-events:auto; z-index:10001; }
+.mly-filter-panel { display:flex; align-items:center; gap:3px; width:100%; max-width:100%; min-width:0; height:38px; flex:0 0 38px; box-sizing:border-box; padding:2px 3px; background:linear-gradient(135deg,#142d26,#10231e); color:#e1f2e8; pointer-events:auto; z-index:10001; }
 .mly-filter-scroll-wrap { position:relative; flex:1 1 0; min-width:0; height:32px; }
 .mly-filter-panel .mly-filter-scroll { width:100%; min-width:0; height:30px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none !important; -ms-overflow-style:none; overscroll-behavior-x:contain; touch-action:pan-x pan-y; }
 .mly-filter-panel .mly-filter-scroll::-webkit-scrollbar { display:none !important; width:0 !important; height:0 !important; }
@@ -17,7 +17,7 @@ const filterPanelCss = `
 .mly-filter-group select { display:block; height:24px !important; min-height:24px !important; max-height:24px !important; box-sizing:border-box; margin:0; border:1px solid #507d64 !important; border-radius:5px; padding:0 4px !important; font-size:10px !important; line-height:normal; background:#173d2b !important; color:#edf7f0; color-scheme:dark; }
 .mly-filter-group .mly-filter-travel select { width:88px; min-width:0; }
 .mly-filter-size { height:24px; white-space:nowrap; }
-.mly-filter-size select { width:52px; min-width:52px; }
+.mly-filter-size select { width:64px; min-width:64px; flex:0 0 64px; }
 .mly-filter-group--features > div:first-child { flex:0 0 180px !important; width:180px !important; min-width:0; }
 .mly-filter-group--features [role="combobox"] { height:24px; min-height:24px; max-height:24px; padding:0 6px; border-color:#507d64; border-radius:5px; background:#173d2b; }
 .mly-filter-group button { box-sizing:border-box; }

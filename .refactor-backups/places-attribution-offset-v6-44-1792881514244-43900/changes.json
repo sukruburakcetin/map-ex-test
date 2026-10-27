@@ -1,0 +1,12 @@
+{
+  "installer": "places-attribution-offset-v6-44",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "cf1a0c0185887fde43c4337a6a151b40964b61ad8ce60f86c64e73c28553ddd1",
+      "resultSha256": "a95ecc973ff0b1d4dee2c023c2c1219a9a9b02f92a89f6ea3768006a8d0f262f"
+    }
+  ]
+}

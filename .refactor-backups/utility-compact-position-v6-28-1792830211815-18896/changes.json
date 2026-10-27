@@ -1,0 +1,12 @@
+{
+  "installer": "utility-compact-position-v6-28",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/styles/controlPanels.ts",
+      "originalSha256": "8fa30f5c6f0433fba7b9d84b33cdf066e237f8797e6fac3cf351edd990cb597c",
+      "resultSha256": "432bce36d405026331e2efa361da9c0560f673c20bf560a63829a50fef20880e"
+    }
+  ]
+}

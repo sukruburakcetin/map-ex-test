@@ -21,6 +21,8 @@
   "hideSyncHeadingButton": false,
   "hideCenterMapButton": false,
   "hideCoverageAnalysis": false,
+  "enablePlaces": false,
+  "placesServiceUrl": "",
   "enableTrafficSigns": true,
   "enableMapillaryObjects": true,
   "renderMode": 1,

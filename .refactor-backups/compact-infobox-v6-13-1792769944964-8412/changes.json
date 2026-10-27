@@ -1,0 +1,32 @@
+{
+  "installer": "compact-infobox-v6-13",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/styles/infoBox.ts",
+      "originalSha256": "7d1779f342cf46db48228b20f79abbc3c69d476fd029a4957f740bac4f361568",
+      "resultSha256": "1a9dd5590766361675fd45e780cf03de0deb34da8f322b2ad94c0118dc5263f8"
+    },
+    {
+      "file": "src/components/InfoBox.tsx",
+      "originalSha256": "0db29158717eeba10ccf2421419d1f88c8bb283af7f3d65195a930262dd631a1",
+      "resultSha256": "03e835096ce8effb57ec3bffcecc858b5649e2a3f20ade34d4f023b6e9d441ea"
+    },
+    {
+      "file": "src/features/coverage/QualityToolsSection.tsx",
+      "originalSha256": "fcf7149e8bd42d4b2370849f136f108c0c6ae1aef01daeff0603bca71e35ac73",
+      "resultSha256": "9a502bb30c218b214f235ce8d5f7ba904f6c9eb6aeef6e95bda8a50dd6abb649"
+    },
+    {
+      "file": "src/features/imagery/NearbyToolsSection.tsx",
+      "originalSha256": "876c8bc526d55840fe2c73d19cb9627ba8c88a3dc7af137c36837c41f92c01bc",
+      "resultSha256": "2735e80a53fc26f7d8f5cc305ce3d598f42e9be65bbdbc3f27b2ce3c962590b3"
+    },
+    {
+      "file": "src/features/field-notes/NoteToolsSection.tsx",
+      "originalSha256": "bed7813c32478b03f0a8f3187c642c951cfcf8b06a2ad7aec757c9f0fdb8a24b",
+      "resultSha256": "8c93bec250027945893629254e17621daff02218ac2663d174ce70540a1b0ed9"
+    }
+  ]
+}

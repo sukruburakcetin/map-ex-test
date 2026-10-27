@@ -1,0 +1,22 @@
+{
+  "installer": "places-camera-link-v6-47",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/SelectedPlace.ts",
+      "originalSha256": "eed3f2fc3cfc089b37d314ce3d123dcfa540ee548dc366556895850546ffe16f",
+      "resultSha256": "37d22d89ef5202ecb1510e576c3328cc15cdc341ecf80ea8240f973521a7618c"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "fb65e23c394533820c59e8624e567045333062e7dc4177da0152c8949a9c76a2",
+      "resultSha256": "622df9737190fb374e985db994843be741168f85b41c50f0c48deccbecff8f7b"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES.md",
+      "originalSha256": "5ebf53cf43ae3315e9f7e27f3dd9fd38ea804eac742bef924eaf8b72a04581a8",
+      "resultSha256": "269c2eae4c801856cf9d011400ea541a48c3288593064b881662e435da665a8d"
+    }
+  ]
+}

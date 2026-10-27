@@ -1,0 +1,37 @@
+{
+  "installer": "infobox-ux-v6-12",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/InfoBox.tsx",
+      "originalSha256": "096d4001e6c40c455db7af8a01e2dc96a1e79f14aaedcbef2dc2dab35b1f7adc",
+      "resultSha256": "0db29158717eeba10ccf2421419d1f88c8bb283af7f3d65195a930262dd631a1"
+    },
+    {
+      "file": "src/components/info-box/StatusSummary.tsx",
+      "originalSha256": "659b54b68f5205c1ec625fb824730e48c45b78d084eab4169c61ce4e9b2c7a8d",
+      "resultSha256": "9c2fa3869ab14adc4b86e4f9e04f521f14eb4ac0180898b99456aab4cdee2902"
+    },
+    {
+      "file": "src/styles/infoBox.ts",
+      "originalSha256": "7dabc8b4293cb70aadaff4a4d95d466910a196a3e0ac4fa41e6bf498336a0163",
+      "resultSha256": "7d1779f342cf46db48228b20f79abbc3c69d476fd029a4957f740bac4f361568"
+    },
+    {
+      "file": "src/features/coverage/QualityToolsSection.tsx",
+      "originalSha256": "bdfdba6d90f4083abf43a45314de48a412082a9c7f4e0d2be2f8e017e1fc54d0",
+      "resultSha256": "fcf7149e8bd42d4b2370849f136f108c0c6ae1aef01daeff0603bca71e35ac73"
+    },
+    {
+      "file": "src/features/imagery/NearbyToolsSection.tsx",
+      "originalSha256": "214c4a227a20a7306783a16cdbc87485bf31af2e5e9d90094491a5d28083da38",
+      "resultSha256": "876c8bc526d55840fe2c73d19cb9627ba8c88a3dc7af137c36837c41f92c01bc"
+    },
+    {
+      "file": "src/features/field-notes/NoteToolsSection.tsx",
+      "originalSha256": "ce2dd5c2d35ee68bcab9fa9366fb796995d557b81a7c937cb12760033dd31cb7",
+      "resultSha256": "bed7813c32478b03f0a8f3187c642c951cfcf8b06a2ad7aec757c9f0fdb8a24b"
+    }
+  ]
+}

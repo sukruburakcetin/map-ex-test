@@ -1,5 +1,7 @@
 import { GRAPH_API } from '../../utils/constants';
 import { imageAltitudeFields } from '../../utils/imageAltitude';
+import { SequenceMemoryCache, SEQUENCE_MEMORY_LIMITS, sequenceIndexWeight } from './sequenceMemoryBudget';
+import type { SequenceMemoryLimits } from './sequenceMemoryBudget';
 import type { SequenceCoordinate } from './sequenceCoordinates';
 
 export const SEQUENCE_DEMAND_LIMITS = { radius: 64, step: 32, retained: 384 } as const;
@@ -13,10 +15,15 @@ const valid = (p: SequenceCoordinate) => Number.isFinite(p.lon) && Number.isFini
  * never becomes a successful cache entry. Full routes live in the existing store.
  */
 export class SequenceDemandData {
-  private indices = new Map<string, Index>();
+  private indices: SequenceMemoryCache<Index>;
   private points = new Map<string, Map<string, SequenceCoordinate>>();
   private pendingIds = new Map<string, { controller: AbortController; users: number; promise: Promise<Index> }>();
-  constructor(private readonly fetchJson: (url: string, signal: AbortSignal) => Promise<any>) {}
+  constructor(private readonly fetchJson: (url: string, signal: AbortSignal) => Promise<any>,
+    limits: SequenceMemoryLimits = SEQUENCE_MEMORY_LIMITS.indices) {
+    this.indices = new SequenceMemoryCache(limits, index => sequenceIndexWeight(index.ids), key => this.points.delete(key));
+  }
+  /** Retained index estimates only; the current operation may use an uncached oversized index. */
+  get memoryStats(): { entries: number; items: number; estimatedBytes: number } { return this.indices.stats; }
   private async index(sequenceId: string, signal: AbortSignal): Promise<Index> {
     check(signal);
     const cached = this.indices.get(sequenceId); if (cached) return cached;
@@ -39,7 +46,6 @@ export class SequenceDemandData {
         if (!ids.size) throw new Error('This sequence has no available images');
         const ordered = Array.from(ids), index = { ids: ordered, positions: new Map(ordered.map((id, i) => [id, i])) };
         check(requestSignal); this.indices.set(sequenceId, index);
-        while (this.indices.size > 6) { const oldest = this.indices.keys().next().value!; this.indices.delete(oldest); this.points.delete(oldest); }
         return index;
       })();
       entry = { controller, promise, users: 0 }; this.pendingIds.set(sequenceId, entry);

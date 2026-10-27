@@ -1,0 +1,32 @@
+{
+  "installer": "places-imagery-choice-clarity-v6-58",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "81f31c522d31edb0193668f96f6e6cabceef696af5b741436783b1a4ce02b738",
+      "resultSha256": "53f60173509fa2fd240f681803433e8d690bda5d955aae10fa4f43bad8785ee3"
+    },
+    {
+      "file": "src/features/places/nearbyPlaceImagery.ts",
+      "originalSha256": "676bd3c35f75df2d743869b6fce923caf833cd801fad9a0654360a2d68727dca",
+      "resultSha256": "ab28084cf58e0801e8bb384eb0dbb59dce3ecd3a8a76d49060f047082b1bb932"
+    },
+    {
+      "file": "src/features/places/placePopupStyles.ts",
+      "originalSha256": "3e9205a91f545871c785007d3734a543e938f03ec11d13b8795a87ff3c54e333",
+      "resultSha256": "3f0e19ecd5975950a8fc444b5591b86ec92e46dba6cd6c7779fef6bdce3fc8b8"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "c81562f17a021501dad85f40a92a0c784e2f010f200123c3cfbfbbc67233ba8a",
+      "resultSha256": "526e4c777138cff0a91bb72910b745398b8c1e28f4d1f7a88d32bd421d8dce2c"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES.md",
+      "originalSha256": "d57cdbfc22c0932eaa50b6bbf08d82057c6005f406f44e82fd7a7d97552b96fb",
+      "resultSha256": "818527647d5b9644126bace29450c1ca773e09db3c99cf0c09bc7d755fda1946"
+    }
+  ]
+}

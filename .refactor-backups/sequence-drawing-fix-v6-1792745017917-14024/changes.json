@@ -1,0 +1,152 @@
+{
+  "installer": "sequence-drawing-fix-v6",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "02b67046000eea0520c50ff6526fcf8cafae8c82d957dda4bd7f305ea391d45d",
+      "resultSha256": "806926af8b88492dac0bce49953d8d7249559e05f011b44f94458ec7f2800a08"
+    },
+    {
+      "file": "src/features/coverage/SEQUENCE-HOVER.md",
+      "originalSha256": "0fbba257bce41ef777c894c5611ef1615ffc8090fab15749352d450ad4820070",
+      "resultSha256": "0b5bb4de1d68fa4e9afc24ee898e520ef2d4979cb38dd061878cb7967b3ad2c0"
+    },
+    {
+      "file": "tests/nativeSequenceSelection.test.cjs",
+      "originalSha256": "1c5596f16bbc43548aebc2ed8f6c27c09a679721e0f8eee32c27fec3eb444c04",
+      "resultSha256": "1495aaf77588bf74113741164caa9f27cd0cbf5d43b960c9ac6fb01e4b046c4d"
+    },
+    {
+      "file": "tests/imageFirstSelection.test.cjs",
+      "originalSha256": "6682417408a90505fdbac22fc11e43a83730ca2b96892ef43bd25967b15f6b77",
+      "resultSha256": "ba64af3eb27ead3cec7600e317ec9e67f08c37a137427994a6a23b149672b188"
+    },
+    {
+      "file": "src/features/coverage/TileSequenceHighlights.ts",
+      "originalSha256": "79d1db477a9147e249c94c2922905052df153d9960fb216ea3b78250765db037",
+      "resultSha256": "19287a6455fa72c8a2ca17019e7c611b1ba364b1268666c96694ccd51e46c4fb"
+    },
+    {
+      "file": "tests/tileSequenceHighlights.test.cjs",
+      "originalSha256": "ab8397657ff537be62c0c8499e2bc79a7eaebb3136236fb637729b8b0c42954d",
+      "resultSha256": "a07b3115ca96fc54c77c1b76e1dc712a250987cc2c8f03f82c963cc10bb086d9"
+    },
+    {
+      "file": "src/features/imagery/timeTravel.ts",
+      "originalSha256": "6619f95197ba1fa9064bae9337c6e4fa308e58d5c8077dd7e3face7a632c501b",
+      "resultSha256": "85c8ba3784439b0e8e7c32cd24874bed71f5b23f641af9f7b4630f0fa4aa6499"
+    },
+    {
+      "file": "tests/timeTravel.test.cjs",
+      "originalSha256": "55e9fa557ee75eea41f85a6475761a827f45d9368734e72384cb83f7ff23b40c",
+      "resultSha256": "f8b30dd476569b4e5ba11da507d095628e6f83ea118a220093f12befb6d6bedd"
+    },
+    {
+      "file": "tests/sequencePerformanceRuntime.test.cjs",
+      "originalSha256": "c1e962105f9b11b17744392383fc56bb2e8e4d450c1bf1b1f35170ce0f4fe241",
+      "resultSha256": "713c14377e9de42925459527245f5fcd2ea85b2d85d6ff0447b7516cf612a87c"
+    },
+    {
+      "file": "src/config.ts",
+      "originalSha256": "6719b4e80ca410c6b4676dafa180a5d016774773c1c2b5681fb780abb04c397a",
+      "resultSha256": "c6d0b2548f26dbbb6ced2fe8fcac4dd47692eca396f98626db65c1a3a78c2ca3"
+    },
+    {
+      "file": "src/features/coverage/SequenceTileIndex.ts",
+      "originalSha256": null,
+      "resultSha256": "a4436a47888542e460cb94a266930488745d1cb9c9e4ac34b6f1657ec1bb2b5e"
+    },
+    {
+      "file": "src/features/coverage/SharedTileRequests.ts",
+      "originalSha256": null,
+      "resultSha256": "3e7fa3586e66d9f8307ecc49716712556d742fcbe029d30191614daa95b51386"
+    },
+    {
+      "file": "src/features/imagery/BackgroundRequestQueue.ts",
+      "originalSha256": null,
+      "resultSha256": "a7685c3a4fdf478c830598956abf22494231deaa2ba86cb9ac77d8f71a9499c7"
+    },
+    {
+      "file": "src/features/imagery/SEQUENCE-PERFORMANCE.md",
+      "originalSha256": null,
+      "resultSha256": "b8c217b72dca5b8f70c69e28901c156c159bf5dec1e5e1160ebcc84ccf34e3e9"
+    },
+    {
+      "file": "src/features/imagery/SequenceDemandData.ts",
+      "originalSha256": "5707e29c3c9e6e54bb7dd931d94d07d3cf26522fae3fd55f1fa708121d8a4a36",
+      "resultSha256": "ac3226e1eb25fcd80444696c064fe3baa7cb9f2d61b4e8d577958f7f98021789"
+    },
+    {
+      "file": "src/features/imagery/SequencePerformance.ts",
+      "originalSha256": null,
+      "resultSha256": "6c5719673a9b3c29ba15e56d1cc82f2ff0f7e692c35a4bc18422d571cb5ac0f2"
+    },
+    {
+      "file": "src/features/imagery/nearbyDiscovery.ts",
+      "originalSha256": "0fbbe44defe1a4718dcda81b234842b051a475e65df1d7cd747f25055d1b0b61",
+      "resultSha256": "2a68515cb5ba8317e4c7ae95dcad77883577d5543b7c1604e31046ebed9cc2c9"
+    },
+    {
+      "file": "src/features/imagery/sequenceCoordinates.ts",
+      "originalSha256": "717ab607f8c4e66959f42a63383cc5afc351865185c217c04f52463e4bfafc04",
+      "resultSha256": "9580a6e514f43845e1acc4da435f94d0c0b491da3f234a3a595884e1fbc10e43"
+    },
+    {
+      "file": "src/features/imagery/sequenceMemoryBudget.ts",
+      "originalSha256": null,
+      "resultSha256": "7a6d3b6f370967a4712e1b8984bd8c240b9dae0da8924c8ae1f4cf755e65333e"
+    },
+    {
+      "file": "src/services/geocoding/reverseAddress.ts",
+      "originalSha256": "c31495293303c5329f0f653d7968c34521e21a03d0f3a186cc6af59459f35633",
+      "resultSha256": "57e41e797bad37d74c341e30baf9ff4e5a3bc2a0bc1a2eacbe189adde581a651"
+    },
+    {
+      "file": "src/setting/setting.tsx",
+      "originalSha256": "637197c4f427f36e394bcdac6b95cdc58e7a2b942e53c1c170e5762e53a91635",
+      "resultSha256": "f09485de48392f7641eb7c3eda8ed7b6038053df9e05c10f19baa3b7c72df1ca"
+    },
+    {
+      "file": "tests/backgroundRequestQueue.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "7f1986a5794a1f19a77cfc6faef4084d4ab7038eeedc43697e58404cea22f58a"
+    },
+    {
+      "file": "tests/nearbyDiscovery.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "30f1f4fca0623bb91c16818d0ccafb628d329441a58de96218fa248bf6d4dcbe"
+    },
+    {
+      "file": "tests/reverseAddress.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "5758c1b80edf852e2ff2b7089709e3e45da4687a3129840fb7dbf9065564df64"
+    },
+    {
+      "file": "tests/sequenceMemoryBudget.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "cf58acb06aed19e2530ee8f780fc57fa998ae40debd24ff43bb57b3741d5f653"
+    },
+    {
+      "file": "tests/sequencePerformance.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "393cf8cfd7dc4101646a785fa9d7a42a8a487f9a22d79775bd93715f75929863"
+    },
+    {
+      "file": "tests/sequenceTileIndex.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "be9689bdf0b85efcd69746db42e1895241752cd69891889e34816a6e53384b4e"
+    },
+    {
+      "file": "tests/sequenceV6Runtime.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "45d9d70825b232d5e588f80b2b4c1622c230bcfbf9564bf9d73d43e1f562170e"
+    },
+    {
+      "file": "tests/sharedTileRequests.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "abcf071af5bd02cca88cf26cb8b57d197eb04dae02a5218347ea649515b64830"
+    }
+  ]
+}

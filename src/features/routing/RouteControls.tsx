@@ -89,7 +89,7 @@ export type RouteControlsProps = Pick<InfoBoxProps, 'runtimeRoutingEngine' | 'is
 export const RouteControls: React.FC<RouteControlsProps> = props => {
   const { runtimeRoutingEngine, isGeneratingRoute, onChangeRuntimeRoutingEngine, runtimeTravelMode, onChangeRuntimeTravelMode, travelModeAvailability, routeData, routePickMode, onSetRoutePickMode, routeStartPoint, routeEndPoint, onResetRoutePoints, routeSpareMinutes, onChangeSpareMinutes, onGenerateRoute, routeGenerationProgress, onDownloadRouteGPX } = props;
   return (
-    <div style={routeControlsStyle}>
+    <div className="mly-route-controls" style={routeControlsStyle}>
       {/* Runtime Routing Engine */}
       {runtimeRoutingEngine && (
         <div
@@ -411,6 +411,7 @@ export const RoutePointControls: React.FC<RoutePointControlsProps> = props => {
   const { routeStartPoint, routeEndPoint, onResetRoutePoints } = props;
   return (
     <div
+      className="mly-route-points"
       style={routePointsCardStyle}
     >
       <div

@@ -22,16 +22,21 @@ export interface SequenceHighlightView<L> {
 export class SequenceHoverHighlight<L extends SequenceHighlightLayer> {
   layer: L | null = null;
   private sequenceId: string | null = null;
+  private displayedSequenceId: string | null = null;
+  private pending: AbortController | null = null;
+  private task: Promise<void> = Promise.resolve();
 
   /** Preserve the existing coverage-relative insertion, hot style update and SDK fallback.
    * Token and view are supplied by the host at each call; source configuration stays host-owned.
    */
   update(sequenceId: string | null, view: SequenceHighlightView<L> | null | undefined,
     coverageLayer: L | null | undefined, accessToken: string,
-    createLayer?: (properties: any) => L): void {
+    createLayer?: (properties: any) => L,
+    prepare?: (style: any, previous: L | null, signal: AbortSignal) => Promise<L>): void | Promise<void> {
     // Guard clause: Prevent redundant WebGL updates if the hovered sequence hasn't changed.
-    if (this.sequenceId === sequenceId) return;
+    if (this.sequenceId === sequenceId) return this.task;
     this.sequenceId = sequenceId;
+    this.pending?.abort(); this.pending = null;
 
     if (!view || !createLayer) return;
 
@@ -68,7 +73,7 @@ export class SequenceHoverHighlight<L extends SequenceHighlightLayer> {
             filter: ["==", ["get", "id"], sequenceId], // Target the specific sequence
             paint: {
               "line-color": "#00ff88",
-              "line-width": 5,
+              "line-width": 6,
               "line-opacity": 1.0,
               // Override default ArcGIS fade animations to ensure
               // the highlight snaps instantly when jumping between points.
@@ -79,6 +84,26 @@ export class SequenceHoverHighlight<L extends SequenceHighlightLayer> {
           },
         ],
       };
+
+      if (prepare) {
+        if (this.layer && this.displayedSequenceId === sequenceId && view.map.layers.includes(this.layer)) {
+          this.layer.visible = true;
+          return;
+        }
+        const controller = new AbortController(); this.pending = controller;
+        this.task = this.task.then(async () => {
+          if (controller.signal.aborted) return;
+          const layer = await prepare(highlightStyle, this.layer, controller.signal);
+          if (controller.signal.aborted) return;
+          this.layer = layer; this.displayedSequenceId = sequenceId;
+        }).catch(error => {
+          if (!controller.signal.aborted) {
+            this.sequenceId = null;
+            console.warn('highlightSequenceOnVTL failed:', error);
+          }
+        });
+        return this.task;
+      }
 
       // LAZY INITIALIZATION: Create the layer only on the very first hover event.
       if (!this.layer) {
@@ -102,8 +127,8 @@ export class SequenceHoverHighlight<L extends SequenceHighlightLayer> {
           view.map.add(this.layer, Math.max(0, turboIndex));
         }
 
-        // FAST UPDATE: Utilize `loadStyle()` to hot-swap the style object.
-        // This updates the filter in the GPU immediately without tearing down the layer.
+        // Compatibility path for callers without a preparation hook.
+        // The widget host prepares a separate replacement above instead.
         if (typeof this.layer.loadStyle === "function") {
           this.layer.loadStyle(highlightStyle);
         } else {
@@ -119,15 +144,17 @@ export class SequenceHoverHighlight<L extends SequenceHighlightLayer> {
     }
   }
 
-  /** Existing widget teardown detaches without destroying; leave hover identity unchanged. */
+  /** Cancel staged work and release the displayed hover renderer during widget cleanup. */
   detach(view: SequenceHighlightView<L> | null | undefined): void {
-    if (this.layer) { view?.map?.remove(this.layer); this.layer = null; }
+    this.pending?.abort(); this.pending = null; this.sequenceId = null; this.displayedSequenceId = null;
+    if (this.layer) { view?.map?.remove(this.layer); this.layer.destroy(); this.layer = null; }
   }
 
   /** Existing view-transfer policy removes if attached and best-effort destroys the SDK layer.
    * Reset hover identity so the same sequence can highlight in the replacement view.
    */
   reset(view: SequenceHighlightView<L>): void {
+    this.pending?.abort(); this.pending = null; this.displayedSequenceId = null;
     if (this.layer) {
       try {
         const map = view.map;

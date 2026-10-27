@@ -1,0 +1,17 @@
+{
+  "installer": "infobox-width-toggle-v6-18",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/InfoBox.tsx",
+      "originalSha256": "f1b9710aa96d4072afaf2d3c2579cbe758b2068f1fb6a49f5611bef291dfa7b8",
+      "resultSha256": "5d9a742c68c9f33e1dbf0a31e57946e3d8efaa78a2988f3c0bbc0c0b356e08d3"
+    },
+    {
+      "file": "src/styles/infoBox.ts",
+      "originalSha256": "7365771c48354e1bf79f93f776abb88428e1a343b2abc84287618d1b388dc5fd",
+      "resultSha256": "3e4426054ce85407608e067547c4e0a35dd9bb26252b5e8fd918f6deb65bf47f"
+    }
+  ]
+}

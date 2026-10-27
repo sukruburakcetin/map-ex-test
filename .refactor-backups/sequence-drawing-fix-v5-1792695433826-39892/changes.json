@@ -1,0 +1,82 @@
+{
+  "installer": "sequence-drawing-fix-v5",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "f9cfa6a45d0c9cc88f2bd4708751a63ac82637a6f75f1b81e7881bd9b7c7dd8b",
+      "resultSha256": "02b67046000eea0520c50ff6526fcf8cafae8c82d957dda4bd7f305ea391d45d"
+    },
+    {
+      "file": "src/features/coverage/SEQUENCE-HOVER.md",
+      "originalSha256": "1eb70e10c83af06ad6adc1b60022b2afe3266f43bae8bb4cf7b6669ca2ee76e5",
+      "resultSha256": "0fbba257bce41ef777c894c5611ef1615ffc8090fab15749352d450ad4820070"
+    },
+    {
+      "file": "tests/nativeSequenceSelection.test.cjs",
+      "originalSha256": "dc5f217cad2e3f26b255012d974038c38c345d00ac2baace6c7d2709f4c27dd7",
+      "resultSha256": "1c5596f16bbc43548aebc2ed8f6c27c09a679721e0f8eee32c27fec3eb444c04"
+    },
+    {
+      "file": "tests/imageFirstSelection.test.cjs",
+      "originalSha256": "11ba2b4894003ebda2c67f8c9d6e653036b5bbe8284b5b9d75579df6b98c7e92",
+      "resultSha256": "6682417408a90505fdbac22fc11e43a83730ca2b96892ef43bd25967b15f6b77"
+    },
+    {
+      "file": "src/features/coverage/TileSequenceHighlights.ts",
+      "originalSha256": "2038fa139348a5ecf770f8be2cf6a6982d94f18c5e387319c2de3af0e29b617a",
+      "resultSha256": "79d1db477a9147e249c94c2922905052df153d9960fb216ea3b78250765db037"
+    },
+    {
+      "file": "tests/tileSequenceHighlights.test.cjs",
+      "originalSha256": "554b6da0d60c2666b5927f1f7eb89cc2ff491a573c751bc75a3291c5d7e58dd0",
+      "resultSha256": "ab8397657ff537be62c0c8499e2bc79a7eaebb3136236fb637729b8b0c42954d"
+    },
+    {
+      "file": "src/utils/turboCoverageUtils.ts",
+      "originalSha256": "a4fb3c7f1e70474dabbed75485046eebacc18a50c48987a59e88a3be9d47e896",
+      "resultSha256": "c047ed6b1050b2c1c9d0b1e21a709e49ef77e0f6e2eeba79d03b1ab94da45529"
+    },
+    {
+      "file": "src/features/imagery/LiveSequenceFrames.ts",
+      "originalSha256": "b516cd99a565442e217407b1a2351528921674142bf24dfd0c84b8fb88343a02",
+      "resultSha256": "7da79dfb0e9a831a6ed8ff30cab700df977b69e4fdc68e92bbb3aa8b90ca2aaf"
+    },
+    {
+      "file": "src/features/imagery/timeTravel.ts",
+      "originalSha256": "fa677ee262187a4606ffac250f16ff96e069be0f71c8e67be41f3ca97c9ba5ca",
+      "resultSha256": "6619f95197ba1fa9064bae9337c6e4fa308e58d5c8077dd7e3face7a632c501b"
+    },
+    {
+      "file": "src/features/imagery/CachedSequencePreview.ts",
+      "originalSha256": null,
+      "resultSha256": "65a2a942a2f0b4304a2ba4432ffe5d97f456271e604d40c0bfcee33c8e71d0d3"
+    },
+    {
+      "file": "tests/pickSequenceIdentity.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "df88f6136ba614efc8a102b77a48a9154ac3516a4134d9ddc19b80877c0dad6a"
+    },
+    {
+      "file": "tests/liveSequenceFrames.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "a0ceba18582aba0454489c4797a49139a183ec05c9031f8cc4429d6aeb85c260"
+    },
+    {
+      "file": "tests/timeTravel.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "55e9fa557ee75eea41f85a6475761a827f45d9368734e72384cb83f7ff23b40c"
+    },
+    {
+      "file": "tests/cachedSequencePreview.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "0643df93743d1f1a95059968de078c669a3fae72afc7731a9995dbcfd7f25d34"
+    },
+    {
+      "file": "tests/sequencePerformanceRuntime.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "c1e962105f9b11b17744392383fc56bb2e8e4d450c1bf1b1f35170ce0f4fe241"
+    }
+  ]
+}

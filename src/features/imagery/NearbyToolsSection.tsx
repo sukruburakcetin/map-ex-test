@@ -15,6 +15,7 @@ export const NearbyToolsSection: React.FC<NearbyToolsSectionProps> = props => {
       style={nearbyToolsSectionStyle}
     >
       <button
+        type="button" aria-label="Nearby images" aria-expanded={!!nearbyStripOpen}
         onClick={onToggleNearbyStrip}
         title="Show captures nearby"
         style={nearbyToolsButtonStyle}
@@ -23,7 +24,7 @@ export const NearbyToolsSection: React.FC<NearbyToolsSectionProps> = props => {
           style={getNearbyToolsLabelStyle(nearbyStripOpen)}
         >
           <Icons.Camera size={9} />
-          NEARBY
+          Nearby
           {nearbyLoading ? (
             <span style={nearbyToolsLoadingStyle}>…</span>
           ) : nearbyCount != null && nearbyCount > 0 ? (

@@ -31,7 +31,8 @@ export const CoverageAnalysisTrigger: React.FC<CoverageAnalysisTriggerProps> = p
         style={coverageAnalysisTriggerRowStyle}
       >
         <button
-          onClick={canRun ? onRunCoverageAnalysis : undefined}
+          type="button" disabled={!canRun} aria-disabled={!canRun}
+          onClick={onRunCoverageAnalysis}
           title={tooltip}
           style={getCoverageAnalysisTriggerButtonStyle(canRun, btnBg)}
           onMouseEnter={(e) => {
@@ -49,10 +50,13 @@ export const CoverageAnalysisTrigger: React.FC<CoverageAnalysisTriggerProps> = p
               Analysing…
             </React.Fragment>
           ) : (
-            <span>{belowZoom ? "Zoom in to analyse" : noPoints ? "Analyse Not Ready" : coverageResult ? "Run New Analysis" : "Analyse Coverage"}</span>
+            <span>{belowZoom ? "Zoom in to analyse" : noPoints ? "Waiting for coverage" : coverageResult ? "Run New Analysis" : "Analyse Coverage"}</span>
           )}
         </button>
       </div>
+      {!canRun && !coverageAnalysisLoading && <div role="status" style={{ fontSize: 8, lineHeight: 1.35, color: "#b5ccbf", padding: "3px 0" }}>
+        {belowZoom ? "Move closer to analyse these streets." : "Waiting for coverage to finish loading."}
+      </div>}
     </React.Fragment>
   );
 };

@@ -1,0 +1,17 @@
+{
+  "installer": "utility-mobile-modes-v6-27",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/ImageUtilityGroup.tsx",
+      "originalSha256": "898875f1c4468753c67484e9fcba8d5793d7a09c1d22a3feabb178caecb8e2e0",
+      "resultSha256": "7f67322950ab25aa78ea7a0a216bdb6f5d7130ec818fb5f1280834fa52be19f2"
+    },
+    {
+      "file": "src/styles/controlPanels.ts",
+      "originalSha256": "f967667d05b4c9716dbad5a1572f227b4352d74edf91dde95481f656a8d96eb7",
+      "resultSha256": "8fa30f5c6f0433fba7b9d84b33cdf066e237f8797e6fac3cf351edd990cb597c"
+    }
+  ]
+}

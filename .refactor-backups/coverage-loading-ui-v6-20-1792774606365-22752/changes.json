@@ -1,0 +1,17 @@
+{
+  "installer": "coverage-loading-ui-v6-20",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/coverage/CoverageAnalysisResults.tsx",
+      "originalSha256": "b4873fbd1a0a6fa41d599d9cc95b8b797bc8a697aeac124671bd2f5533a50990",
+      "resultSha256": "2a442e9537ef6f27c31fee607e3233da48f1d58a5c7da499124b644e3d3700e6"
+    },
+    {
+      "file": "src/styles/coverageAnalysis.ts",
+      "originalSha256": "a953bdc167f744c6321aa25808dc90973c554caeb9fc129d7647bda530e7e667",
+      "resultSha256": "1144214ecc90ed63ab3487be57da80f0de974433ded204613d6c4b1c42e52924"
+    }
+  ]
+}

@@ -13,7 +13,7 @@ export type PointCloudExportControlsProps = Pick<InfoBoxProps, 'pointCloudExport
  * InfoBox retains the selection across visibility changes; runtime owns file generation.
  */
 export const PointCloudExportControls: React.FC<PointCloudExportControlsProps> = ({ format, onFormatChange, pointCloudExportLoading, onDownloadPointCloud }) => (
-<div style={cloudExportPanelStyle}>
+<div className="mly-cloud-export" style={cloudExportPanelStyle}>
             <select disabled={pointCloudExportLoading} aria-label="Point-cloud export format" title="CSV: geographic coordinates. PLY: local metric XYZ with RGB. LAS: georeferenced WGS84 UTM for QGIS." value={format} onChange={event => onFormatChange(event.target.value === "las" ? "las" : event.target.value === "ply" ? "ply" : "csv")} style={cloudExportSelectStyle}><option value="csv">CSV · Lat/Lon</option><option value="ply">PLY · XYZ/RGB</option><option value="las">LAS · QGIS/UTM</option></select>
             <button
               type="button" disabled={pointCloudExportLoading} aria-busy={!!pointCloudExportLoading}

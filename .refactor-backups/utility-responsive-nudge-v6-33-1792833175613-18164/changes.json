@@ -1,0 +1,12 @@
+{
+  "installer": "utility-responsive-nudge-v6-33",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/styles/controlPanels.ts",
+      "originalSha256": "ad9544633b5e450676fabeb30c308f996b3ccd2506b083b0434f9849689163b2",
+      "resultSha256": "9e6535a05165aeb8a2b881a4a094367107b47d1846f92074df2e3d5db745c61a"
+    }
+  ]
+}

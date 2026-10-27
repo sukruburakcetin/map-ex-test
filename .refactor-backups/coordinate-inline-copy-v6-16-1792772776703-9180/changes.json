@@ -1,0 +1,17 @@
+{
+  "installer": "coordinate-inline-copy-v6-16",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/info-box/StatusSummary.tsx",
+      "originalSha256": "bf38c75b365165ccb53a12894ba76b5fed7a5aff2f4a7192a538b6d12d6ffb02",
+      "resultSha256": "45cabc491e00a8936ee708cfb8a914641de8110a5b7170ea56eb2c4ebba04fc3"
+    },
+    {
+      "file": "src/styles/infoBox.ts",
+      "originalSha256": "69c65a2f348ff25c831ba4d662dccf61473002152ac80cca0b6f15cbc11300c5",
+      "resultSha256": "7365771c48354e1bf79f93f776abb88428e1a343b2abc84287618d1b388dc5fd"
+    }
+  ]
+}

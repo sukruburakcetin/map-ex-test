@@ -1,0 +1,17 @@
+{
+  "installer": "splash-atlas-background-v6-35",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/SplashScreen.tsx",
+      "originalSha256": "b77b2e9b9e35c57db65820f6f41fb08a90648edd1e0c6e6f5752df84c3f028a6",
+      "resultSha256": "f797ffea744fc69768464a67dbfc9351879a04de64001ed7132e3c0044136c73"
+    },
+    {
+      "file": "src/styles/splashScreen.ts",
+      "originalSha256": "d11a3c1d0090fe2aba8f3eb0f529c914a5d265d4e1c7e898eb47ac26e12b4b99",
+      "resultSha256": "0c20a2d4e9600ecc971e3a51e1b1d3b1f75f81a80c083cdc36310d1efedfd0dd"
+    }
+  ]
+}

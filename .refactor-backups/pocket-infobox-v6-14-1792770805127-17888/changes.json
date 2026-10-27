@@ -1,0 +1,17 @@
+{
+  "installer": "pocket-infobox-v6-14",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/InfoBox.tsx",
+      "originalSha256": "03e835096ce8effb57ec3bffcecc858b5649e2a3f20ade34d4f023b6e9d441ea",
+      "resultSha256": "8b4b177d6f5a5247a453ec13f3dcd1b566db5adc4555e8b22f880dc20cd507b4"
+    },
+    {
+      "file": "src/styles/infoBox.ts",
+      "originalSha256": "1a9dd5590766361675fd45e780cf03de0deb34da8f322b2ad94c0118dc5263f8",
+      "resultSha256": "1ead23639306bda57f2f3661650b9da5b9352713e3a78cde8983bccdf5663671"
+    }
+  ]
+}

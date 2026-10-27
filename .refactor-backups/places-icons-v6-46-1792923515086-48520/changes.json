@@ -1,0 +1,37 @@
+{
+  "installer": "places-icons-v6-46",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "ab57eeea4d27daec55752a9dd04bedef668e5af4b1ced5a6ed1d0b923c960a67",
+      "resultSha256": "db46a52a875dcd6de61bb677396e05124f063629abda93dd36d3fc3b237b7720"
+    },
+    {
+      "file": "src/features/places/SelectedPlace.ts",
+      "originalSha256": "bca14b13560b62251f6348303b65ef6d4f11e78078662aa44e399ea54b5283af",
+      "resultSha256": "eed3f2fc3cfc089b37d314ce3d123dcfa540ee548dc366556895850546ffe16f"
+    },
+    {
+      "file": "src/components/SelectedPlaceCard.tsx",
+      "originalSha256": "556cb4fd18e68e17f094c59254fce07bd2eeded48ca940bb5056fa1aeba0f4ab",
+      "resultSha256": "42bf7568e19282b8b64204db9912d080feaa570318c7e39fcc6386525919ccb4"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "862aec5d90ba5f8a1aa9d919c33bdc904286326a3cff606c6dbf583a68127a58",
+      "resultSha256": "fb65e23c394533820c59e8624e567045333062e7dc4177da0152c8949a9c76a2"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES.md",
+      "originalSha256": "cfc434af9797aaf2ac3734b56dc53aa7320608e5c8570d750d7bd8850e1fd350",
+      "resultSha256": "5ebf53cf43ae3315e9f7e27f3dd9fd38ea804eac742bef924eaf8b72a04581a8"
+    },
+    {
+      "file": "src/features/places/placeIcons.ts",
+      "originalSha256": null,
+      "resultSha256": "948ca35817ed23910569f095e89b30dec2313700ccdb6c9e5193f597073b6567"
+    }
+  ]
+}

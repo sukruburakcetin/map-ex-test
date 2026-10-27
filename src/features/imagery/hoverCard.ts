@@ -10,7 +10,7 @@ function cardIcon(doc: Document, kind: 'creator' | 'calendar'): SVGSVGElement | 
 }
 /** Build a non-interactive preview with textContent, stable dimensions and no HTML interpolation. */
 export function renderImageryHoverCard(host: HTMLElement, data: any, fallbackDate?: unknown, loading = false): void {
-  Object.assign(host.style, styles.shell); if (!host.style.width) host.style.width = '240px'; host.style.display = 'block'; host.setAttribute('role', 'tooltip');
+  Object.assign(host.style, styles.shell); if (!host.style.width || host.style.width === 'max-content') host.style.width = '240px'; host.style.display = 'block'; host.setAttribute('role', 'tooltip');
   host.textContent = ''; const doc = host.ownerDocument;
   const portal = doc.fullscreenElement || doc.body;
   if (portal && host.parentNode !== portal) portal.appendChild(host);
@@ -39,4 +39,32 @@ export function positionImageryHoverCard(host: HTMLElement, bounds: { left: numb
   const right = Math.max(left, Math.min(viewport.innerWidth - 8, bounds.right)), bottom = Math.max(top, Math.min(viewport.innerHeight - 8, bounds.bottom));
   const width = Math.min(240, Math.max(0, right - left)), height = Math.min(200, Math.max(0, bottom - top));
   Object.assign(host.style, { width: `${width}px`, maxHeight: `${bottom - top}px`, left: `${Math.max(left, Math.min(x + 16 + width <= right ? x + 16 : x - width - 16, right - width))}px`, top: `${Math.max(top, Math.min(y + 16, bottom - height))}px` });
+}
+
+const featureLabelSizes = new WeakMap<HTMLElement, { text: string; maxWidth: number; maxHeight: number; width: number; height: number }>();
+
+/** The shared tooltip also hosts image previews. Reset preview dimensions for a
+ * text-only feature label; measure once per label/available width, then reuse it.
+ */
+export function renderMapFeatureHoverLabel(host: HTMLElement, text: string,
+  bounds: { left: number; right: number; top: number; bottom: number }, x: number, y: number): void {
+  const doc = host.ownerDocument, viewport = doc.defaultView || { innerWidth: bounds.right, innerHeight: bounds.bottom };
+  const left = Math.max(8, bounds.left), top = Math.max(8, bounds.top);
+  const right = Math.max(left, Math.min(viewport.innerWidth - 8, bounds.right));
+  const bottom = Math.max(top, Math.min(viewport.innerHeight - 8, bounds.bottom));
+  const maxWidth = right - left, maxHeight = bottom - top, previous = featureLabelSizes.get(host);
+  const reuse = previous?.text === text && previous.maxWidth === maxWidth && previous.maxHeight === maxHeight && host.style.width === 'max-content';
+  const portal = doc.fullscreenElement || doc.body;
+  if (portal && host.parentNode !== portal) portal.appendChild(host);
+  if (!reuse) Object.assign(host.style, styles.shell, { width: 'max-content', maxWidth: `${maxWidth}px`,
+    maxHeight: `${bottom - top}px`, height: 'auto', whiteSpace: 'normal', overflowWrap: 'anywhere' });
+  host.textContent = text;
+  host.style.display = 'block'; host.setAttribute('role', 'tooltip');
+  const measured = reuse ? previous : host.getBoundingClientRect();
+  const width = Math.min(measured.width, maxWidth), height = Math.min(measured.height, bottom - top);
+  featureLabelSizes.set(host, { text, maxWidth, maxHeight, width, height });
+  Object.assign(host.style, {
+    left: `${Math.max(left, Math.min(x + 15 + width <= right ? x + 15 : x - width - 15, right - width))}px`,
+    top: `${Math.max(top, Math.min(y + 15, bottom - height))}px`,
+  });
 }

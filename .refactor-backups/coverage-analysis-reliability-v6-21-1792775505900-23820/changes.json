@@ -1,0 +1,27 @@
+{
+  "installer": "coverage-analysis-reliability-v6-21",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "d07b0e324772fee41629e47297718c5adf064c817f9473b0f000541d910a5493",
+      "resultSha256": "277ff36213b4a6c557c7783f24a9e8738edcfa1dd5b66bf20bcc5629f297e5e2"
+    },
+    {
+      "file": "src/features/coverage/CoverageAnalysisTrigger.tsx",
+      "originalSha256": "7eaee0516e11495e5f68156f33acddff75348d78146e4678d03677ad6a03ef91",
+      "resultSha256": "5a2611c07798082d92e65b786bd399b87976129d2d0428d29b3e5d33ea421c97"
+    },
+    {
+      "file": "src/features/coverage/fetchCoverageRoads.ts",
+      "originalSha256": null,
+      "resultSha256": "08019ac1654d26fb9673ac50f4fb4765f93f1c03a28808ba530ccdc89de2d141"
+    },
+    {
+      "file": "tests/coverageAnalysisReliability.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "7b350e938667bcf74670d8792feadb981c523ee513d9b11e7694713e5442f677"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "installer": "places-overlap-groups-v6-54",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "f6c5746bedb790d4f8b0bc533dceaf7d0b5e918cf71f22063a9029a17b4d29d8",
+      "resultSha256": "0298e10b1c3fddd1f90254455297ff0196785aaf4d1fb423e1502f46d2f21686"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "c6e96dfc38e572c831785b34a7b5d8db6a30dd5d873e5888fe3945ef4d0430fd",
+      "resultSha256": "71a3845845742e61da75a55ce437ec35500e35a3d5dde98a98c4540be6476471"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES.md",
+      "originalSha256": "9438f482198a779252a7793a71c0b7cca94a8344f4b87dd92e6671f87dfb0520",
+      "resultSha256": "1f66130e35c8827f3c3a058f30eeb5325336d7e24c8a0310efb5c201821febc5"
+    },
+    {
+      "file": "src/features/places/overlappingPlaces.ts",
+      "originalSha256": null,
+      "resultSha256": "be5f2340179430459f79ee176b27b4a42d2ed556c0cd34905e5aecc44f08159c"
+    }
+  ]
+}

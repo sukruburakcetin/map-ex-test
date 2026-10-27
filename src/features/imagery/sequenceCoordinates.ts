@@ -4,6 +4,7 @@
  */
 import { CACHE_KEYS, GRAPH_API } from '../../utils/constants';
 import { sequenceCacheStore } from './sequenceCacheStore';
+import { readMemorySequenceRoute, retainSequenceRoute, validatedSequenceRoute } from './sequenceMemoryBudget';
 import { imageAltitudeFields } from '../../utils/imageAltitude';
 import type { ImageAltitude } from '../../utils/imageAltitude';
 
@@ -82,8 +83,7 @@ export async function fetchSequenceCoordinates(dependencies: SequenceCoordinateD
     finally { signal?.removeEventListener("abort", abort); }
     const coords = results.flat(); // Preserve API image order even when responses finish out of order.
     if (!coords.length) throw new Error("Image coordinates are unavailable");
-    dependencies.cache[sequenceId] = coords;
-    while (Object.keys(dependencies.cache).length > 6) delete dependencies.cache[Object.keys(dependencies.cache)[0]];
+    retainSequenceRoute(dependencies.cache, sequenceId, coords);
     // Persistence is idle-scheduled and asynchronous; full coordinates stay immediately available in RAM.
     sequenceCacheStore.queue(cacheKey, coords);
     return coords;
@@ -91,20 +91,23 @@ export async function fetchSequenceCoordinates(dependencies: SequenceCoordinateD
 
 /** Read an existing complete route without starting any network work. */
 export async function readCachedSequenceCoordinates(cache: Record<string, SequenceCoordinate[]>, sequenceId: string, signal?: AbortSignal): Promise<SequenceCoordinate[] | null> {
-    const valid = (value: any) => Array.isArray(value) && value.length > 0 && value.every(p => p && p.id != null && p.heightDataVersion === 2 && Number.isFinite(p.lon) && Number.isFinite(p.lat) && Math.abs(p.lon) <= 180 && Math.abs(p.lat) <= 90);
-    const ram = cache[sequenceId];
-    if (valid(ram)) return ram;
+    if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
+    const ram = readMemorySequenceRoute(cache, sequenceId);
+    if (ram) return ram;
     const cacheKey = `${CACHE_KEYS.GEO_PREFIX}height-v2:${sequenceId}`;
     const persisted = await sequenceCacheStore.read(cacheKey);
     if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
-    if (valid(persisted)) {
-      cache[sequenceId] = persisted as SequenceCoordinate[];
-      while (Object.keys(cache).length > 6) delete cache[Object.keys(cache)[0]];
-      return persisted as SequenceCoordinate[];
-    }
+    const persistedRoute = validatedSequenceRoute<SequenceCoordinate>(persisted);
+    if (persistedRoute) { retainSequenceRoute(cache, sequenceId, persistedRoute); return persistedRoute; }
     try {
       const stored = localStorage.getItem(cacheKey);
-      if (stored) { const parsed = JSON.parse(stored); if (valid(parsed)) { cache[sequenceId] = parsed; while (Object.keys(cache).length > 6) delete cache[Object.keys(cache)[0]]; sequenceCacheStore.queue(cacheKey, parsed); return parsed; } localStorage.removeItem(cacheKey); }
+      if (stored) {
+        const route = validatedSequenceRoute<SequenceCoordinate>(JSON.parse(stored));
+        if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
+        if (route) { retainSequenceRoute(cache, sequenceId, route); sequenceCacheStore.queue(cacheKey, route); return route; }
+        localStorage.removeItem(cacheKey);
+      }
     } catch { /* Storage is optional; continue using the network/RAM. */ }
+    if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
     return null;
 }

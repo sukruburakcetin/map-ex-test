@@ -1,0 +1,17 @@
+{
+  "installer": "coordinate-card-v6-15",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/info-box/StatusSummary.tsx",
+      "originalSha256": "9c2fa3869ab14adc4b86e4f9e04f521f14eb4ac0180898b99456aab4cdee2902",
+      "resultSha256": "bf38c75b365165ccb53a12894ba76b5fed7a5aff2f4a7192a538b6d12d6ffb02"
+    },
+    {
+      "file": "src/styles/infoBox.ts",
+      "originalSha256": "1ead23639306bda57f2f3661650b9da5b9352713e3a78cde8983bccdf5663671",
+      "resultSha256": "69c65a2f348ff25c831ba4d662dccf61473002152ac80cca0b6f15cbc11300c5"
+    }
+  ]
+}

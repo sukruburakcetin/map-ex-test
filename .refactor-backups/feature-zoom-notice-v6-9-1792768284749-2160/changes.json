@@ -1,0 +1,12 @@
+{
+  "installer": "feature-zoom-notice-v6-9",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "41f3995baad63223b4a78f4d73f95d79436087237cd3fa7dbfe7ab9ecb3359d3",
+      "resultSha256": "f246eff960f59a8c9500ad2530907f900b1aa47ec49f238a71e14822d6662301"
+    }
+  ]
+}

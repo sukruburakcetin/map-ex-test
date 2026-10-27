@@ -1,0 +1,32 @@
+{
+  "installer": "sequence-drawing-fix-v2",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "34fd23a5b5f8448d4cee6be1ec08b4c33a1279a016f15763ad7ec5982c0cdf93",
+      "resultSha256": "d727cc6d79853e7345deb6c92b7e5c4d54829cb502f24bdcaa7d9ca47718fa3b"
+    },
+    {
+      "file": "src/features/coverage/NativeSequenceSelection.ts",
+      "originalSha256": "d486fed230b3dd6054a4074489929363fbd2528c83e995cdad7f1be432e74eb7",
+      "resultSha256": "772eb94a6ed5563e6654234ad6d270fa7f1039bd5b3381e7381e49927bc51ccf"
+    },
+    {
+      "file": "src/features/coverage/SequenceHoverHighlight.ts",
+      "originalSha256": "0b02ed1a6789acb3d77f25707a70093e073a88941ad560dd093b82b7279029c5",
+      "resultSha256": "4a0ede5e8cdeaeddc08856ebaea212a98b69396c5f1601753685d3573c5e9314"
+    },
+    {
+      "file": "src/features/coverage/SEQUENCE-HOVER.md",
+      "originalSha256": "b64170c2ee67734fc598ed6b73716654a46c575d429fde6a5ba0ee0cece7fdb2",
+      "resultSha256": "aaff0d6b1dc23871d3bd2d6dd361eaeefe684b01756e9c219cb2ee8847083843"
+    },
+    {
+      "file": "tests/nativeSequenceSelection.test.cjs",
+      "originalSha256": "de738d8a2ed39c4ae44ea3c2eb704dde145e3ab58d0941ed300068a9ab7f8787",
+      "resultSha256": "976a82d87d5cc3b02d730168d8cf166efdd5a00ea321ba4a951a81bc852b2623"
+    }
+  ]
+}

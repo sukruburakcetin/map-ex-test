@@ -1,0 +1,67 @@
+{
+  "installer": "sequence-drawing-fix-v4",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "d727cc6d79853e7345deb6c92b7e5c4d54829cb502f24bdcaa7d9ca47718fa3b",
+      "resultSha256": "f9cfa6a45d0c9cc88f2bd4708751a63ac82637a6f75f1b81e7881bd9b7c7dd8b"
+    },
+    {
+      "file": "src/features/coverage/NativeSequenceSelection.ts",
+      "originalSha256": "772eb94a6ed5563e6654234ad6d270fa7f1039bd5b3381e7381e49927bc51ccf",
+      "resultSha256": "b4e2085914601031b439a8fcca348bacecf5fd55a0f87c567c378574be25a8cf"
+    },
+    {
+      "file": "src/features/coverage/SequenceHoverHighlight.ts",
+      "originalSha256": "4a0ede5e8cdeaeddc08856ebaea212a98b69396c5f1601753685d3573c5e9314",
+      "resultSha256": "cd70f46362e822e82e95a190055a62a1977ee0233578f66cc41e33d5d10bde6f"
+    },
+    {
+      "file": "src/features/coverage/PreparedVectorTileLayer.ts",
+      "originalSha256": null,
+      "resultSha256": "946713e26e610b30e5bd7f8e2c4a79959ad8ec655eb799039dd0aadd47395d84"
+    },
+    {
+      "file": "src/features/coverage/SEQUENCE-HOVER.md",
+      "originalSha256": "aaff0d6b1dc23871d3bd2d6dd361eaeefe684b01756e9c219cb2ee8847083843",
+      "resultSha256": "1eb70e10c83af06ad6adc1b60022b2afe3266f43bae8bb4cf7b6669ca2ee76e5"
+    },
+    {
+      "file": "tests/nativeSequenceSelection.test.cjs",
+      "originalSha256": "976a82d87d5cc3b02d730168d8cf166efdd5a00ea321ba4a951a81bc852b2623",
+      "resultSha256": "dc5f217cad2e3f26b255012d974038c38c345d00ac2baace6c7d2709f4c27dd7"
+    },
+    {
+      "file": "tests/preparedVectorTileLayer.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "c8ef3e8621f38419f1b56c386f85949ce3e161ee4775484a0689b77e5b51acea"
+    },
+    {
+      "file": "tests/imageFirstSelection.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "11ba2b4894003ebda2c67f8c9d6e653036b5bbe8284b5b9d75579df6b98c7e92"
+    },
+    {
+      "file": "src/features/coverage/TileSequenceHighlights.ts",
+      "originalSha256": null,
+      "resultSha256": "2038fa139348a5ecf770f8be2cf6a6982d94f18c5e387319c2de3af0e29b617a"
+    },
+    {
+      "file": "src/features/coverage/NativeTileHighlightCache.ts",
+      "originalSha256": null,
+      "resultSha256": "8dbea4a5e47775baffe205f87faecea2aecd2a3a54c8525691e5b57fa0f2bd31"
+    },
+    {
+      "file": "tests/tileSequenceHighlights.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "554b6da0d60c2666b5927f1f7eb89cc2ff491a573c751bc75a3291c5d7e58dd0"
+    },
+    {
+      "file": "tests/nativeTileHighlightCache.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "7a43e571e1fd3bc20cb8cdf1cd7f2221118ce44ff12e8aa06bdf38add7624417"
+    }
+  ]
+}

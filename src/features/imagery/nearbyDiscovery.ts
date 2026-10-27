@@ -9,6 +9,7 @@ export interface NearbyDiscoveryDependencies {
   getToken: () => string;
   isInitialLoad: () => boolean;
   markInitialLoadComplete: () => void;
+  runBackground?: <T>(work: (signal: AbortSignal) => Promise<T>, signal?: AbortSignal) => Promise<T>;
 }
 
 export class NearbyImageDiscovery {
@@ -44,8 +45,19 @@ export class NearbyImageDiscovery {
 
       const url = GRAPH_API.nearbyImages(lat, lon, 50, 21) + `&access_token=${this.dependencies.getToken()}`;
 
-      fetch(url, { signal: ctrl.signal })
-        .then((r) => { if (!r.ok) throw new Error("Nearby images unavailable"); return r.json(); })
+      const request = async (signal: AbortSignal) => {
+        if (signal.aborted || ctrl.signal.aborted || this.controller !== ctrl ||
+          this.dependencies.isPaused() === false || this.dependencies.getState().imageId !== imageId)
+          throw new DOMException('Cancelled', 'AbortError');
+        const response = await fetch(url, { signal });
+        if (signal.aborted || ctrl.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
+        if (!response.ok) throw new Error("Nearby images unavailable");
+        const data = await response.json();
+        if (signal.aborted || ctrl.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
+        return data;
+      };
+      const run = this.dependencies.runBackground || ((work: (signal: AbortSignal) => Promise<any>) => work(ctrl.signal));
+      run(request, ctrl.signal)
         .then((data) => {
           if (ctrl.signal.aborted || this.dependencies.isPaused() === false || this.dependencies.getState().imageId !== imageId || this.controller !== ctrl) return;
           const images = (Array.isArray(data.data) ? data.data as NearbyImage[] : []).filter((img) => img.id !== imageId).slice(0, 20);
@@ -55,9 +67,9 @@ export class NearbyImageDiscovery {
           // Aborted or network error, keep previous images
         })
         .finally(() => {
-          if (!ctrl.signal.aborted) {
-            this.dependencies.update({ nearbyLoading: false });
-          }
+          if (this.controller !== ctrl) return;
+          this.controller = null;
+          if (!ctrl.signal.aborted) this.dependencies.update({ nearbyLoading: false });
         });
     };
 

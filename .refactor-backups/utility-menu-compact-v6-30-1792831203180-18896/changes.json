@@ -1,0 +1,17 @@
+{
+  "installer": "utility-menu-compact-v6-30",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/ImageUtilityGroup.tsx",
+      "originalSha256": "7f67322950ab25aa78ea7a0a216bdb6f5d7130ec818fb5f1280834fa52be19f2",
+      "resultSha256": "b6665d698d55bb0770b054d113b0a6a1931e322b703c4f0d7441bf9ab5c5f847"
+    },
+    {
+      "file": "src/styles/controlPanels.ts",
+      "originalSha256": "870f366a15d66dfa45bd83de3e03f77fdbc3547daba31e0b7ddc1882a9eb09f1",
+      "resultSha256": "130185ff809b295e29539b6ce7ee60a579be58192f45a8160bf0b91eeade833a"
+    }
+  ]
+}
