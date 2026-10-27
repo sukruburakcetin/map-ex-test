@@ -1,0 +1,18 @@
+{
+  "installer": "3d-ground-pulse",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "operation": "update",
+      "originalSha256": "4f37a0f7ae717c6eba161772aae2777498959b25eb9e1aad46c1cb2fce2f6ef4",
+      "resultSha256": "ebf5cf383223e30209df4e1831e41d76671fb3b8de017893aa375826619beeed"
+    },
+    {
+      "file": "tests/selectionPulseGround.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "bf8f28abc0785aceea06d64a7d5c53b376369f6949626f0fdc121bf5602e424d"
+    }
+  ]
+}

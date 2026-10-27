@@ -1,0 +1,30 @@
+{
+  "installer": "projected-3d-cone",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "9f7c25052f3b84d2aea15b4a43645b585d84c28282be945922d32f2794a74dc6",
+      "resultSha256": "a1d89ddf8b6c4a88e871ed3d0f7b913b805bfb83aaa3ae4d5a60785b92a1ce16"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "84323ea65bfe8b8564f31d556d48c48d18af160db296c6914a63cbd809fbdab5",
+      "resultSha256": "87f4b61fd398cc0f836de53f4b048e80111141a8f8e2318bfdfa24c9f65d0cd3"
+    },
+    {
+      "file": "src/features/map-graphics/projectedConeRadius.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "3b808d0a5ce5d4b92c2c19924a59a270b3b3fe12626bfa8c01c44a8d81867296"
+    },
+    {
+      "file": "tests/projectedConeRadius.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "2a6a4c23f051f0476f661ee40f26cedda3adfdc44736164c72a3ebea1009b618"
+    }
+  ]
+}

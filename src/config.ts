@@ -19,7 +19,8 @@ export interface Config {
 
   /**
    * If true, synchronizes the map view with the currently displayed image.
-   * When the image changes, the map automatically centers on that image location.
+   * By default the map recenters only when the image leaves the viewport.
+   * The runtime Lock to image button enables continuous following.
    * Accessed in widget via: this.props.config.syncMapWithImage
    */
   syncMapWithImage?: boolean;

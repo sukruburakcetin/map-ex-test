@@ -1,0 +1,24 @@
+{
+  "installer": "single-face-cone",
+  "uninstall": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/CameraConeGraphics.ts",
+      "operation": "update",
+      "originalSha256": "d584a72725de0d39c1c5b3eb27cd132e6de3403e997b49ff2025faa6d6e8111b",
+      "resultSha256": "b72e58100b6dd6b22d77f9bd77699e030e18d2c708c8f08e6f2b00ce60d341f1"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "56e401c44ff641cf4792050c7b9c08b704151823657e7322e134d470d12472ea",
+      "resultSha256": "cd8b7586ae3e8056b105d5773e069f4c4bfd54daed6b28d38d95de57277f5ad3"
+    },
+    {
+      "file": "tests/singleFaceCone.test.cjs",
+      "operation": "remove",
+      "originalSha256": "e4141e5efa1a033560112be52417b77acee633b6daed01cc274e1fcaf52300e8",
+      "resultSha256": null
+    }
+  ]
+}

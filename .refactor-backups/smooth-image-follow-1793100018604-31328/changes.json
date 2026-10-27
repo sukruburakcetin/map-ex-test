@@ -1,0 +1,30 @@
+{
+  "installer": "smooth-image-follow",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "691bf6f1d1a1da53d070ed52adf394c9276c7e2991619701e1c722beffbbec02",
+      "resultSha256": "9f7c25052f3b84d2aea15b4a43645b585d84c28282be945922d32f2794a74dc6"
+    },
+    {
+      "file": "src/features/imagery/imageFollowPolicy.ts",
+      "operation": "update",
+      "originalSha256": "ac7d35fc786b114aae233ca8a288e5660895655b0c4a2c2771737b3e34113ff3",
+      "resultSha256": "3aeead444443e5b200eadfc3519f2f695af8dd4614556959bf1e2130d6fb3158"
+    },
+    {
+      "file": "tests/imageFollowPolicy.test.cjs",
+      "operation": "update",
+      "originalSha256": "cdd1cb86ad3dc5d599f15e2624b61e8a07234cb4fc2f2b056edb941053859064",
+      "resultSha256": "1486a873561df6d1ea15309585749379c82b002e12f1ed50e2fbd30a5221e2e6"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "b0984881a50d1675b96aed2d98de42040433398b9e74f0ec6bed728a98e926f6",
+      "resultSha256": "958747044147c7214e38b2ed703c47006ebd2d7dfc4e5f7ad09888700a354890"
+    }
+  ]
+}

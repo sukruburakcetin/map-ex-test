@@ -1,0 +1,24 @@
+{
+  "installer": "clearer-3d-cone",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/projectedConeRadius.ts",
+      "operation": "update",
+      "originalSha256": "3b808d0a5ce5d4b92c2c19924a59a270b3b3fe12626bfa8c01c44a8d81867296",
+      "resultSha256": "7189355f1b68c15c0f3515c1666409efccbc7359a7513694006fa65e8743ccdd"
+    },
+    {
+      "file": "tests/projectedConeRadius.test.cjs",
+      "operation": "update",
+      "originalSha256": "2a6a4c23f051f0476f661ee40f26cedda3adfdc44736164c72a3ebea1009b618",
+      "resultSha256": "2b92bca40939c82ad0a7cf65d3a277a1f00bfe6471d8bcb2bd64fd96fe3cc3a2"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "87f4b61fd398cc0f836de53f4b048e80111141a8f8e2318bfdfa24c9f65d0cd3",
+      "resultSha256": "732926571b491e080c2ec51489c8486e248180fead4889fc966d61efcdec8a04"
+    }
+  ]
+}

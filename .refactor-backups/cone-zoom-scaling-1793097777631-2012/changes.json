@@ -1,0 +1,24 @@
+{
+  "installer": "cone-zoom-scaling",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "12a41da7c78f03bf2a809145f3feb2c063dac0b7cd9ded31e341c378c071d370",
+      "resultSha256": "207bdc5b18c5c9d50a2c918b0cf18034f67c4c4ffcbd1974ed7448f78f0ac4bf"
+    },
+    {
+      "file": "src/features/map-graphics/coneDisplayRadius.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "bcb8deaab5457af0c296ebb510ac43a0a951eb5885e899af3ae171a13357e211"
+    },
+    {
+      "file": "tests/coneDisplayRadius.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "08c6a0d6d756a7436c392890df01b22509c27bf95cf358b8a3a294afc9b79064"
+    }
+  ]
+}

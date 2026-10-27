@@ -23,7 +23,7 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
     const cloudMode = props.is3D && !props.hidePointCloud;
     const hasMore = !props.hideShareButton || !props.hideImageDownload;
     const close = (focus = false) => { setOpen(null); if (focus) trigger.current?.focus(); };
-    const hasNavigation = !props.hideCenterMapButton || (!props.hideTimeTravel && props.hasTimeTravel);
+    const hasNavigation = !!props.mapFollowEnabled || !props.hideCenterMapButton || (!props.hideTimeTravel && props.hasTimeTravel);
     const hasSceneTools = props.is3D && (!props.hideSyncHeadingButton || !props.hidePointCloud);
     const toolsActive = (props.is3D && !props.hidePointCloud && cloudOn) || (props.is3D && !props.hideSyncHeadingButton && props.syncHeading);
     React.useLayoutEffect(() => {
@@ -94,6 +94,9 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
     return <div ref={dock} className={`glass-image-utility-panel mly-utility-dock${mobile && collapsed ? ' is-collapsed' : ''}`} data-mobile={mobile ? 'true' : undefined} role="group" aria-label="Image actions">
         <style>{utilityDockCss}</style>
         {!props.hideCenterMapButton && <button type="button" className="utility-button" title="Center map on this image" aria-label="Center map on this image" onClick={props.onCenterMap}><Icons.Crosshair size={16}/></button>}
+        {props.mapFollowEnabled && <button type="button" className="utility-button" aria-label="Lock to image" aria-pressed={!!props.lockToImage}
+            title={props.lockToImage ? 'Lock to image on · Click to follow only outside the map' : 'Keep image in view · Click to lock to image'}
+            onClick={props.onToggleImageLock}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d={props.lockToImage ? 'M8 10V6a4 4 0 0 1 8 0v4' : 'M8 10V6a4 4 0 0 1 8 0'}/></svg></button>}
         {!props.hideTimeTravel && props.hasTimeTravel && <button type="button" className="utility-button" title="Explore images from other dates" aria-label="Time travel" disabled={!currentImage}
             onClick={() => { if (currentImage && props.imageId) props.onTimeTravel(currentImage.lat, currentImage.lon, props.imageId); }}><Icons.TimeTravel size={16}/></button>}
         {hasNavigation && hasSceneTools && <span className="mly-dock-divider" aria-hidden="true"/>}

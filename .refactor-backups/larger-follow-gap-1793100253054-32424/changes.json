@@ -1,0 +1,24 @@
+{
+  "installer": "larger-follow-gap",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/features/imagery/imageFollowPolicy.ts",
+      "operation": "update",
+      "originalSha256": "3aeead444443e5b200eadfc3519f2f695af8dd4614556959bf1e2130d6fb3158",
+      "resultSha256": "26ca65c7b26c57723dbca3ae955443aa1c1667a9ee890586d49951a3ce3a6718"
+    },
+    {
+      "file": "tests/imageFollowPolicy.test.cjs",
+      "operation": "update",
+      "originalSha256": "1486a873561df6d1ea15309585749379c82b002e12f1ed50e2fbd30a5221e2e6",
+      "resultSha256": "655b478699652ae78f7ba7259e2c7a3a00b19b57075e621edec8975509f51792"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "958747044147c7214e38b2ed703c47006ebd2d7dfc4e5f7ad09888700a354890",
+      "resultSha256": "2cce55a93f0e3cbbd42310977b5e120a8044dc97847314394ea9feef0236b02c"
+    }
+  ]
+}

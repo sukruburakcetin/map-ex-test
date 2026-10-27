@@ -1,0 +1,5 @@
+const fs=require('node:fs'),test=require('node:test'),assert=require('node:assert/strict'),ts=require(process.env.MAPILLARY_TYPESCRIPT||'typescript');const m={exports:{}};new Function('module','exports',ts.transpileModule(fs.readFileSync(require('node:path').join(__dirname,'../src/features/map-graphics/coneDisplayRadius.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText)(m,m.exports);const radius=m.exports.coneDisplayRadius;
+test('close zooms preserve all existing viewer radius choices',()=>{for(const r of [10,15,20,30])for(const z of [17,19,23])assert.equal(radius(r,z),r)});
+test('zooming out gradually enlarges the direction indicator',()=>{assert.equal(radius(10,16),20);assert.equal(radius(10,15),40);assert(radius(10,16.5)>10&&radius(10,16.5)<20)});
+test('enlargement is bounded by both relative and absolute caps',()=>{assert.equal(radius(10,12),80);assert.equal(radius(30,12),120);assert.equal(radius(150,12),150)});
+test('overview hides the cone without changing the selected image marker',()=>{assert.equal(radius(10,11.99),0);assert.equal(radius(10,12),80)});

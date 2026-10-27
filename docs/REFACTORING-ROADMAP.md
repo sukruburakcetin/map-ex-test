@@ -496,3 +496,33 @@ Host validation: compare circle centers, radius and outline before/after selecti
 The first native selection installer produced blue circles across unrelated sequences in the host; its portable filter tests did not establish actual renderer behavior. Replace incremental style-layer partitions with per-feature `case` color expressions on the existing styles through `setPaintProperties`. No selected style layers, membership filters or point Graphics are added. Only a matching sequence ID receives blue; other/missing IDs use the original quality/date color. All base filters and circle dimensions remain unchanged.
 
 Restore the existing cached faint overview and complete route line on the main map. Native marker refresh removes only legacy point graphics, preserving that overview. Full-coordinate route loading remains on demand for elevation. The earlier statement about suppressing the main-map overview is superseded. Refactoring remains paused at the field-note map checkpoint.
+
+## Viewport-aware image follow
+
+`features/imagery/imageFollowPolicy.ts` owns the movement decision. Synchronization now defaults to keeping the current image visible: no position update while its projected ground point remains in the viewport. Explicit `Lock to image` restores continuous following and uses the existing directional recenter settings. The lock is session state, initially off; manual Center and heading follow remain separate. 3D bearing updates move the center only while position lock is enabled. Rendered-terrain sampling is synchronous and adds no elevation requests. Missing terrain defers automatic repositioning. The runtime's `syncMapToImage` adapter is shared by confirmed image updates and immediate lock activation. Validate panning, rotated/tilted views, every configured recenter position and playback in the host.
+
+### Smooth follow before the viewport edge
+
+The default follow safe area now has a 24% CSS-pixel inset per axis, capped at 128 px. Entering this band triggers a 450 ms ease-in-out recenter even during playback, retaining zoom/scale and configured positioning. Default follow waits while the view moves; heading-only updates also defer so they cannot cancel the recenter or a user gesture. Explicit image lock retains its former timing. No additional timer, watcher or request is added. Validate camera easing and mobile edge spacing in the host.
+
+## Projected 3D cone proportions
+
+`projectedConeRadius.ts` enlarges the 3D direction cone toward a 28 CSS-pixel ground length using current-camera projections. Requested close-view radius, 8x/120 m caps and grounded pulse remain intact. Rendered-terrain sampling is synchronous, bounded to three samples per draw; missing terrain retains the previous zoom-based fallback. A cone shorter than 6 px at the cap is hidden. Existing stationary handling refreshes after tilt/orbit. 2D sizing is unchanged. Host checks: compare ground-distance views with differing zoom labels, tilted camera headings, close views and overview limits.
+
+### Clearer 3D cone beyond the pulse
+
+Increase the projected target to 44 CSS px and relax the ground caps to 24x/360 m; the earlier 8x/120 m caps could prevent a distant cone from extending beyond the fixed-screen pulse. Requested close-view radius and the 6 px overview cutoff remain. Marker placement, pulse size, cone height and 2D geometry remain unchanged. This is a direction indicator, not an image footprint.
+
+The projected 3D cone target is now 60 CSS px, retaining the 24x/360 m caps, grounded pulse and existing 2D sizing.
+
+## Shallow solid cone experiment
+
+Based on the restored multi-face cone, keep the translucent sloped top and its orange silhouette. Side faces and a curved end skirt use a subtly darker fill without outlines; omit the lower perimeter line. The curved skirt closes the end while top/side graphics are reused during playback. Grounded pulse, current projected size, height and 2D appearance are unchanged. A standalone uninstaller restores the previous outlined sides and lower perimeter.
+
+## Closed mesh cone
+
+Replace separately triangulated 3D polygons with one explicitly indexed, closed mesh: shared apex/upper arc/lower arc, outward-wound top, walls and bottom. Use local metre vertex space anchored to the existing relative-to-ground layer. A retained line graphic draws only the top perimeter. Mesh component materials preserve translucent top/darker sides; transparency blending can still show overlaps and needs host validation. The runtime loads the SDK Mesh constructor with its existing module bundle. 2D geometry, projected sizing, grounded pulse and follow policies are unchanged. Standalone uninstaller restores the previous polygon-face implementation.
+
+## 3D follow terrain fallback
+
+The original follow policy deferred every check when the optional rendered-terrain sampler was absent or returned no data. Fall back to the public SceneView `toMap` intersections of eight inset-perimeter rays and test the image against that rotated/tilted ground footprint. Preserve 24%/128 px inset, existing easing, manual movement guards and explicit image lock. Skip sky rays; fewer than three ground intersections defer navigation. No extra watcher, timer or elevation service requests. Validate tilted views and edge following in the host.

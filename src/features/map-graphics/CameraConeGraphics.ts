@@ -1,3 +1,5 @@
+import { coneMeshGeometry } from "./coneMeshGeometry";
+
 /** Camera-cone layer, terrain-relative geometry, symbols and reusable graphic membership. */
 export interface ConeGraphic { geometry: any; }
 export interface ConeLayer<G> {
@@ -39,14 +41,14 @@ export class CameraConeGraphics<G extends ConeGraphic, L extends ConeLayer<G>, V
     return this.layer;
   }
 
-  /** Build or update the existing 2D sector / 3D wedge without replacing retained graphics.
+  /** Build or update a 2D sector / shallow solid wedge, reusing top and side graphics.
    * Center is Web Mercator; latitude is degrees; heading/spread are degrees clockwise
    * from north; radius is ground metres. Geometry stays relative to the layer terrain.
    * The runtime resolves coverage anchoring and selection-layer ordering before/after this call.
    */
   render(view: V, layer: L, center: { x: number; y: number }, latitude: number,
     heading: number, radiusMeters: number, spreadDeg: number, scene: boolean,
-    createGraphic: (properties: any) => G): G {
+    createGraphic: (properties: any) => G, createMesh: (properties: any) => any = properties => properties): G {
     // One clockwise sector in projected coordinates avoids overlapping ground/top surfaces.
     const radius = radiusMeters / Math.max(0.01, Math.cos(latitude * Math.PI / 180));
     const z = scene ? 0.08 : 0;
@@ -63,6 +65,7 @@ export class CameraConeGraphics<G extends ConeGraphic, L extends ConeLayer<G>, V
       ring.push([center.x + radius * Math.sin(angle), center.y + radius * Math.cos(angle), z + height]);
     }
     ring.push([...ring[0]]);
+    if (scene) return this.renderMesh(view, layer, center, heading, radiusMeters, spreadDeg, ring, createGraphic, createMesh);
     const geometry = { type: "polygon", rings: [ring], hasZ: true, spatialReference: { wkid: 3857 } } as any;
     let graphic = this.graphic;
     if (graphic && layer.graphics.includes(graphic)) graphic.geometry = geometry;
@@ -73,24 +76,33 @@ export class CameraConeGraphics<G extends ConeGraphic, L extends ConeLayer<G>, V
       } : { type: "simple-fill", color: [255, 165, 0, 0.28], outline: { color: [255, 140, 0, 0.95], width: 1.5 } } });
       (graphic as any).__isCone = true; layer.add(graphic!); this.graphic = graphic;
     }
-    if (scene) {
-      const tip = ring[0], left = ring[1], right = ring[ring.length - 2];
-      const leftGround = [left[0], left[1], z], rightGround = [right[0], right[1], z];
-      const sides = [[tip, leftGround, left, tip], [tip, right, rightGround, tip]];
-      const ground = ring.map((p, i) => [p[0], p[1], i === 0 || i === ring.length - 1 ? 0 : z]);
-      const geometries = sides.map(side => ({ type: "polygon", rings: [side], hasZ: true, spatialReference: { wkid: 3857 } }));
-      geometries.push({ type: "polyline", paths: [ground], hasZ: true, spatialReference: { wkid: 3857 } } as any);
-      for (let i = 0; i < geometries.length; i++) {
-        if (this.parts[i]) this.parts[i].geometry = geometries[i] as any;
-        else {
-          const part = createGraphic({ geometry: geometries[i], symbol: i < 2 ? {
-            type: "polygon-3d", symbolLayers: [{ type: "fill", castShadows: false, material: { color: [255, 165, 0, 0.12] }, outline: { color: [255, 140, 0, 0.8], size: 1 } }],
-          } : { type: "line-3d", symbolLayers: [{ type: "line", size: 1, material: { color: [255, 140, 0, 0.65] } }] } });
-          (part as any).__isCone = true; layer.add(part); this.parts.push(part);
-        }
-      }
-    }
     return graphic!;
+  }
+
+  /** One closed mesh owns all shared vertices; a separate line draws only the top perimeter.
+   * SDK Mesh construction is injected by the runtime. Reassign geometry on retained
+   * graphics so rendering observes heading/radius updates without allocating layers.
+   */
+  private renderMesh(view: V, layer: L, center: { x: number; y: number }, heading: number,
+    radius: number, spread: number, ring: number[][], createGraphic: (properties: any) => G,
+    createMesh: (properties: any) => any): G {
+    const geometry = createMesh(coneMeshGeometry(center, heading, radius, spread));
+    let graphic = this.graphic;
+    if (graphic && layer.graphics.includes(graphic) && graphic.geometry?.type === "mesh") graphic.geometry = geometry;
+    else {
+      this.clear(view);
+      graphic = createGraphic({ geometry, symbol: { type: "mesh-3d",
+        symbolLayers: [{ type: "fill", castShadows: false }] } });
+      (graphic as any).__isCone = true; layer.add(graphic); this.graphic = graphic;
+    }
+    const outline = { type: "polyline", paths: [ring], hasZ: true, spatialReference: { wkid: 3857 } };
+    if (this.parts[0]) this.parts[0].geometry = outline;
+    else {
+      const part = createGraphic({ geometry: outline, symbol: { type: "line-3d",
+        symbolLayers: [{ type: "line", size: 1.5, material: { color: [255, 140, 0, 0.95] } }] } });
+      (part as any).__isCone = true; layer.add(part); this.parts.push(part);
+    }
+    return graphic;
   }
 
   /** Clear cone membership and tagged legacy view graphics without destroying the reusable layer. */

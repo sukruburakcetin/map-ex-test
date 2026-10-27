@@ -353,6 +353,9 @@ export interface ImageUtilityGroupProps {
     hasTimeTravel: boolean;
     isDownloading?: boolean;
     syncHeading: boolean;
+    mapFollowEnabled?: boolean;
+    lockToImage?: boolean;
+    onToggleImageLock?: () => void;
     is3D: boolean;
     imageId: string | null;
     sequenceImages: { id: string; lat: number; lon: number }[];

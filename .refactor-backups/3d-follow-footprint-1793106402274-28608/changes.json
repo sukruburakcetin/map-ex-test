@@ -1,0 +1,24 @@
+{
+  "installer": "3d-follow-footprint",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/features/imagery/imageFollowPolicy.ts",
+      "operation": "update",
+      "originalSha256": "bc0df0ae29a20499077d214874d78bf492ab739eff02827c2c4779e4ca70d634",
+      "resultSha256": "87681b278118917ef0be7c464834d727ddfe2d2387acbf07aace78a165a96e4c"
+    },
+    {
+      "file": "tests/imageFollowPolicy.test.cjs",
+      "operation": "update",
+      "originalSha256": "b0b9f17f5b5dac8e32d55e4a95c2e53db05310dfa6716579d0f00c0df716c9bf",
+      "resultSha256": "cdb0a8312a2a2594ed1b227cb6c2079dd89b5c692d876abe49c6d22d39c68d87"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "d8ce0b2583c7503d3555dd56594e46e0294ed4dc7032b1555a24026a6a422a9b",
+      "resultSha256": "bec1345a1ca0096895a7fd70b2f6b787c8928efa24eac660781c31f0ecb608ae"
+    }
+  ]
+}

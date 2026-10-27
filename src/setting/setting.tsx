@@ -350,7 +350,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
             {/* Extended Position Options */}
             {this.props.config.syncMapWithImage && (
               <div className="mt-2 w-100" style={{ paddingLeft: "0px" }}>
-                <div style={{ fontSize: "12px", fontWeight: 500, marginBottom: "4px" }}>Lock Position:</div>
+                <div style={{ fontSize: "12px", fontWeight: 500, marginBottom: "4px" }}>Recenter position:</div>
                 <Select size="sm" value={config.syncMapPosition || "center"} onChange={this.onSyncPositionChange} style={{ width: "100%" }}>
                   <Option value="center">Center (Default)</Option>
                   <Option value="west">West (Focus Left)</Option>
@@ -364,7 +364,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                   {config.syncMapPosition === "west" && "Best if your widget is docked on the Right."}
                   {config.syncMapPosition === "north" && "Best if your widget is docked on the Bottom."}
                   {config.syncMapPosition === "south" && "Best if your widget is docked on the Top."}
-                  {(!config.syncMapPosition || config.syncMapPosition === "center") && "Keeps the active frame in the center of the map."}
+                  {(!config.syncMapPosition || config.syncMapPosition === "center") && "Recenters here when the image leaves view. Use Lock to image for continuous following."}
                 </div>
               </div>
             )}

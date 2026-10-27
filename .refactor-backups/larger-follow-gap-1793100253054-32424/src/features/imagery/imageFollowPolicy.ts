@@ -1,0 +1,34 @@
+/** Minimal SDK boundary for checking the rendered viewport rather than its rotated extent. */
+export interface ImageFollowView {
+ type: string; width: number; height: number; stationary?: boolean;
+ toScreen(point: any): { x: number; y: number } | null | undefined;
+ groundView?: { elevationSampler?: { queryElevation(point: any): any; noDataValue?: number | null } | null } | null;
+}
+
+/** Default follow moves as the image enters an inset edge band; lock preserves continuous follow.
+ * Scene projection needs ground height because toScreen does not apply graphic-layer draping.
+ * Use only the synchronous rendered-terrain sampler, never a service request. While terrain or
+ * viewport dimensions are unavailable, defer movement instead of jumping on a false projection.
+ */
+export function shouldRecenterImage(view: ImageFollowView, point: any, locked: boolean): boolean {
+ if (locked) return true;
+ if (view.stationary === false || view.width <= 0 || view.height <= 0) return false;
+ let projection = point;
+ if (view.type === '3d') {
+  try {
+   const sampler = view.groundView?.elevationSampler;
+   const ground = sampler?.queryElevation(point);
+   if (!ground || !Number.isFinite(ground.z) || ground.z === sampler?.noDataValue) return false;
+   projection = ground;
+  } catch { return false; }
+ }
+ try {
+  // CSS-pixel inset: 8% of each dimension, capped at 48 px. Small/mobile
+  // viewports retain most of their usable area; no fixed ground-distance buffer.
+  const insetX = Math.min(48, view.width * 0.08);
+  const insetY = Math.min(48, view.height * 0.08);
+  const pixel = view.toScreen(projection);
+  return !pixel || !Number.isFinite(pixel.x) || !Number.isFinite(pixel.y) ||
+   pixel.x < insetX || pixel.y < insetY || pixel.x > view.width - insetX || pixel.y > view.height - insetY;
+ } catch { return false; }
+}

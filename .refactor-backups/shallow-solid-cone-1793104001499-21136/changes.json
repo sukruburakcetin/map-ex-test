@@ -1,0 +1,24 @@
+{
+  "installer": "shallow-solid-cone",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/CameraConeGraphics.ts",
+      "operation": "update",
+      "originalSha256": "b72e58100b6dd6b22d77f9bd77699e030e18d2c708c8f08e6f2b00ce60d341f1",
+      "resultSha256": "bc0c52b84f76ad67bbfa94340e84a7e87532a506761a656f89cafb4d7acabe98"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "cd8b7586ae3e8056b105d5773e069f4c4bfd54daed6b28d38d95de57277f5ad3",
+      "resultSha256": "a24bebab0955dc03766144d1bf59c39a3284469b878e12ad5587e0f599aad8c6"
+    },
+    {
+      "file": "tests/shallowSolidCone.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "d52fd0f5a6d32b004274d011a3b73d1da73997bff257b3c58f12c2fe5172ac5e"
+    }
+  ]
+}

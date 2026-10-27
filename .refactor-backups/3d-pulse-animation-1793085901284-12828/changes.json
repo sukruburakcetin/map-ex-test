@@ -1,0 +1,18 @@
+{
+  "installer": "3d-pulse-animation",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "operation": "update",
+      "originalSha256": "ebf5cf383223e30209df4e1831e41d76671fb3b8de017893aa375826619beeed",
+      "resultSha256": "b9bd0070e6f55f17d5ccd64e651264d3b75705b2163e017f775cf3ed655ba00d"
+    },
+    {
+      "file": "tests/selectionPulseGround.test.cjs",
+      "operation": "update",
+      "originalSha256": "bf8f28abc0785aceea06d64a7d5c53b376369f6949626f0fdc121bf5602e424d",
+      "resultSha256": "e404c0fe003b3627c13a9b44eb52c73f4841f35c72e663e8b7a361a68b656675"
+    }
+  ]
+}

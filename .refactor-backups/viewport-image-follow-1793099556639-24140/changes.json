@@ -1,0 +1,54 @@
+{
+  "installer": "viewport-image-follow",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "operation": "update",
+      "originalSha256": "207bdc5b18c5c9d50a2c918b0cf18034f67c4c4ffcbd1974ed7448f78f0ac4bf",
+      "resultSha256": "691bf6f1d1a1da53d070ed52adf394c9276c7e2991619701e1c722beffbbec02"
+    },
+    {
+      "file": "src/components/ImageUtilityGroup.tsx",
+      "operation": "update",
+      "originalSha256": "632d4f47c5e9809a4c22de6d22428ca56f26b70e684f18a4eb74650961db7274",
+      "resultSha256": "6dde5bb96e074d7185dc790a8ce2ce325d3e1f43f4d5e41bc5aa3fd85c8c2ea0"
+    },
+    {
+      "file": "src/components/types.ts",
+      "operation": "update",
+      "originalSha256": "b5866bcdc064084d2db2152bbc854f31b2a4822cedd2d3f4c10e6de7c63f96af",
+      "resultSha256": "77d9fac9ea23611031865dca42cc80d3d8b712addb3677e619adebcc441f937a"
+    },
+    {
+      "file": "src/config.ts",
+      "operation": "update",
+      "originalSha256": "a4352311d30c71af0642a21207fd3b78d2f5f0ab8099f2b3e6500e5b276016bf",
+      "resultSha256": "02475ca8aeb94036231958eca956d819a0d2ee8c4fd3ab4485de8275913585c3"
+    },
+    {
+      "file": "src/setting/setting.tsx",
+      "operation": "update",
+      "originalSha256": "20e8d1407aa449ad6af75bb96521302c939739ce3f677a28ae53409e2e01746e",
+      "resultSha256": "e575c9b0b3a4208b2cc032f9e306ecdbb99fa644b2d24068e053fdff0f6b0f52"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "6346d06907cb5b975dae14bdd08bdb37069b2f962daf2916f677107af23fae03",
+      "resultSha256": "b0984881a50d1675b96aed2d98de42040433398b9e74f0ec6bed728a98e926f6"
+    },
+    {
+      "file": "src/features/imagery/imageFollowPolicy.ts",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "ac7d35fc786b114aae233ca8a288e5660895655b0c4a2c2771737b3e34113ff3"
+    },
+    {
+      "file": "tests/imageFollowPolicy.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "cdd1cb86ad3dc5d599f15e2624b61e8a07234cb4fc2f2b056edb941053859064"
+    }
+  ]
+}

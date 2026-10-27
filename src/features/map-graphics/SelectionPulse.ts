@@ -28,7 +28,6 @@ export class SelectionPulse<G extends PulseGraphic, L extends PulseLayer<G>, V e
  private readonly bindings: { graphic: G | null };
  private readonly factories: PulseFactories<G, L>;
  private readonly clock: RippleClock & { clearInterval(handle: any): void };
- private groundHandle: { remove(): void } | null = null;
 
  constructor(bindings: { graphic: G | null }, factories: PulseFactories<G, L>, clock: RippleClock & { clearInterval(handle: any): void }) {
   this.bindings = bindings; this.factories = factories; this.clock = clock;
@@ -59,16 +58,20 @@ export class SelectionPulse<G extends PulseGraphic, L extends PulseLayer<G>, V e
       attributes: { image_id: String(imageId) },
       symbol: view.type === "3d" ? {
         type: "point-3d", disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        // A tiny, capped display lift keeps the icon clear of the cone apex.
+        verticalOffset: { screenLength: 2, minWorldLength: 0, maxWorldLength: 0.1 },
         symbolLayers: [{ type: "icon", resource: { primitive: "circle" }, material: { color: baseColor }, size: 10,
           outline: { color: "white", size: 2 }, occludedVisibility: { mode: "visible" } }],
       } : { type: "simple-marker", style: "circle", color: baseColor, size: 10, outline: { color: "white", width: 2 } },
     });
     layer.add(graphic);
     this.bindings.graphic = graphic;
-    // Map graphics can be depth-occluded in SceneView and sit under view.graphics in 2D.
-    // A single screen-projected overlay keeps selection above both without offsetting its anchor.
+    // SceneView must render the on-the-ground Graphic itself. toScreen projects
+    // geometry Z directly and does not apply layer draping, so a DOM pulse can float
+    // above terrain. The native icon keeps the pulse aligned while terrain loads.
+    // In 2D, retain the overlay above view.graphics.
     const host = view.container as HTMLElement;
-    if (host && typeof host.appendChild === "function") {
+    if (view.type !== "3d" && host && typeof host.appendChild === "function") {
       const overlay = this.factories.overlay();
       if (overlay) {
       overlay.setAttribute("aria-hidden", "true");
@@ -78,41 +81,32 @@ export class SelectionPulse<G extends PulseGraphic, L extends PulseLayer<G>, V e
       }
     }
     const started = this.clock.now();
-    let surfaceGeometry: any = null;
-    let surfacePoint: any = null;
-    let sampledAt = -Infinity;
-    if (view.type === '3d') {
-      this.groundHandle = view.groundView?.elevationSampler?.on?.('changed', () => { surfaceGeometry = null; }) || null;
-    }
+    let lastSymbolUpdate = -Infinity;
+    let lastSymbolSize = NaN;
     const animate = (now: number) => {
       if (this.bindings.graphic !== graphic || this.view !== view || view.destroyed) return;
       const size = 12 - 2 * Math.cos((now - started) * Math.PI * 2 / 1200);
       const overlay = this.overlay;
       if (overlay) {
-        let projection = graphic.geometry;
-        if (view.type === '3d') {
-          // GroundView samples the currently rendered terrain synchronously; no
-          // elevation request or second animation loop. Refresh while terrain/camera changes.
-          if (surfaceGeometry !== graphic.geometry || view.updating || view.stationary === false || (!surfacePoint && now - sampledAt >= 100)) {
-            sampledAt = now;
-            surfaceGeometry = graphic.geometry; surfacePoint = null;
-            try {
-              const sampler = view.groundView?.elevationSampler;
-              const point = sampler?.queryElevation(graphic.geometry);
-              if (point && Number.isFinite(point.z) && point.z !== sampler?.noDataValue) surfacePoint = point;
-            } catch (_) { /* Keep the accepted anchor height until terrain is available. */ }
-          }
-          projection = surfacePoint || projection;
-        }
-        const pixel = view.toScreen(projection);
+        const pixel = view.toScreen(graphic.geometry);
         const visible = pixel && Number.isFinite(pixel.x) && Number.isFinite(pixel.y) && pixel.x >= 0 && pixel.y >= 0 && pixel.x <= view.width && pixel.y <= view.height;
         overlay.style.display = visible ? "block" : "none";
         if (visible) { overlay.style.left = `${pixel.x}px`; overlay.style.top = `${pixel.y}px`; overlay.style.width = `${size}px`; overlay.style.height = `${size}px`; }
       } else {
         const symbol = graphic.symbol as any;
         if (view.type === "3d") {
-          const icon = symbol.symbolLayers.getItemAt?.(0) || symbol.symbolLayers[0];
-          icon.size = size;
+          // Graphic redraws reliably when its symbol is reassigned. Mutating a
+          // nested icon alone can leave SceneView displaying the initial size.
+          // Keep the same Graphic/anchor and bound symbol updates to ~30 Hz.
+          const nextSize = Math.round(size * 10) / 10;
+          if (now - lastSymbolUpdate >= 32 && nextSize !== lastSymbolSize) {
+            const next = typeof symbol.clone === "function" ? symbol.clone()
+              : { ...symbol, symbolLayers: symbol.symbolLayers.map((icon: any) => ({ ...icon })) };
+            const icon = next.symbolLayers.getItemAt?.(0) || next.symbolLayers[0];
+            icon.size = nextSize;
+            graphic.symbol = next;
+            lastSymbolUpdate = now; lastSymbolSize = nextSize;
+          }
         } else symbol.size = size;
       }
       (graphic as any)._pulseFrame = this.clock.request(animate);
@@ -123,7 +117,6 @@ export class SelectionPulse<G extends PulseGraphic, L extends PulseLayer<G>, V e
 
  /** Remove the overlay, cancel animation/legacy interval and destroy the layer in its original view. */
  dispose(): void {
-    this.groundHandle?.remove(); this.groundHandle = null;
     this.overlay?.remove(); this.overlay = null;
     if (this.bindings.graphic) {
       const frame = (this.bindings.graphic as any)._pulseFrame;

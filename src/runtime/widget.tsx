@@ -76,6 +76,8 @@ import { sequenceRouteMemoryStats } from "../features/imagery/sequenceMemoryBudg
 import { ActiveSequenceOverlay } from '../features/imagery/ActiveSequenceOverlay';
 import { ClickRippleAnimations } from '../features/map-graphics/ClickRippleAnimations';
 import { SelectionPulse } from '../features/map-graphics/SelectionPulse';
+import { projectedConeRadius } from "../features/map-graphics/projectedConeRadius";
+import { coneDisplayRadius } from "../features/map-graphics/coneDisplayRadius";
 import { CameraConeGraphics } from '../features/map-graphics/CameraConeGraphics';
 import { MapSymbolLegend } from '../features/map-graphics/MapSymbolLegend';
 import { syncBrowserUrl, copyBrowserShareLink } from '../features/navigation/browserUrlState';
@@ -136,6 +138,7 @@ import { loadImage, cropSpriteImage, processInChunks } from "../utils/spriteUtil
 import { Viewer, OutlineTag, PolygonGeometry, geodeticToEnu, RenderPass } from "mapillary-js";
 import "mapillary-js/dist/mapillary.css";
 import { InfoBox } from "../components/InfoBox";
+import { shouldRecenterImage } from "../features/imagery/imageFollowPolicy";
 import { sceneFollowCamera } from '../features/imagery/sceneFollowCamera';
 import { FilterBar } from "../components/FilterBar";
 import { ImageryLoading } from "../components/ImageryLoading";
@@ -300,6 +303,7 @@ interface State {
   isFetchingAlternates: boolean;
   targetDetectionId: string | null;
   syncHeading: boolean;
+  lockToImage: boolean;
   imageryRepresentative?: boolean;
   toastMessage?: React.ReactNode;
   isMeasureMode: boolean;
@@ -1293,6 +1297,7 @@ private syncMapLegendLayer() {
     isFetchingAlternates: false,
     targetDetectionId: null,
     syncHeading: false,
+    lockToImage: false,
     isLassoMode: false,
     lassoPolygon: [],
     lassoSelectedObjectIds: [],
@@ -1511,10 +1516,10 @@ private syncMapLegendLayer() {
 
       const view = this.state.jimuMapView?.view;
 
-      if (view && view.type === "3d" && this.props.config.syncMapWithImage === true && !this._isFlyInActive && this.state.syncHeading) {
+      if (view && view.type === "3d" && this.props.config.syncMapWithImage === true && !this._isFlyInActive && this.state.syncHeading && (this.state.lockToImage || view.stationary !== false)) {
         const activeImg = this._liveSequenceFrames.current || this._liveSequenceFrames.find(this.state.imageId);
 
-        if (activeImg) {
+        if (activeImg && this.state.lockToImage) {
           this.navigateMapView(view,
             {
               center: [activeImg.lon, activeImg.lat],
@@ -1615,71 +1620,7 @@ private syncMapLegendLayer() {
           void this.refreshLocalSequence();
 
           // 3. Map Synchronization Logic (With Offset)
-          if (this.props.config.syncMapWithImage === true && !this._isFlyInActive) {
-            const position = this.props.config.syncMapPosition || "center";
-            // Profile tracking follows the image position without letting goTo resolve a new zoom.
-            const followScale = view.scale;
-
-            const targetPoint = new this.ArcGISModules.Point({
-              longitude: activeImg.lon,
-              latitude: activeImg.lat,
-            });
-
-            // 3D SCENE: GPS NAVIGATION MODE
-            if (view.type === "3d") {
-              const camera = sceneFollowCamera(view, activeImg.lon, activeImg.lat);
-              if (camera) this.navigateMapView(view, camera, { animate: this._userPaused, duration: this._userPaused ? 300 : 0 });
-            }
-            // 2D MAP MODE
-            else {
-              // Standard Center
-              if (position === "center") {
-                this.navigateMapView(view, { center: targetPoint, scale: followScale }, { animate: this._userPaused, duration: this._userPaused ? 300 : 0 });
-              }
-              // Offset Logic
-              else {
-                try {
-                  const wmPoint = webMercatorUtils.geographicToWebMercator(targetPoint) as __esri.Point;
-                  const extent = view.extent;
-
-                  if (wmPoint && extent) {
-                    const width = extent.width;
-                    const height = extent.height;
-                    const offsetFactor = 0.25; // 25% shift
-
-                    let newCenterX = wmPoint.x;
-                    let newCenterY = wmPoint.y;
-
-                    if (position === "east") {
-                      // Widget Left -> Show point on Right -> Move Camera Left (West)
-                      newCenterX = wmPoint.x - width * offsetFactor;
-                    } else if (position === "west") {
-                      // Widget Right -> Show point on Left -> Move Camera Right (East)
-                      newCenterX = wmPoint.x + width * offsetFactor;
-                    } else if (position === "north") {
-                      // Widget Bottom -> Show point on Top -> Move Camera Down (South)
-                      newCenterY = wmPoint.y - height * offsetFactor;
-                    } else if (position === "south") {
-                      // Widget Top -> Show point on Bottom -> Move Camera Up (North)
-                      newCenterY = wmPoint.y + height * offsetFactor;
-                    }
-
-                    const newCenter = new this.ArcGISModules.Point({
-                      x: newCenterX,
-                      y: newCenterY,
-                      spatialReference: { wkid: 3857 },
-                    });
-
-                    this.navigateMapView(view, { center: newCenter, scale: followScale }, { animate: this._userPaused, duration: this._userPaused ? 300 : 0 });
-                  } else {
-                    this.navigateMapView(view, { center: targetPoint, scale: followScale }, { animate: this._userPaused, duration: this._userPaused ? 300 : 0 });
-                  }
-                } catch (e) {
-                  this.navigateMapView(view, { center: targetPoint, scale: followScale }, { animate: this._userPaused, duration: this._userPaused ? 300 : 0 });
-                }
-              }
-            }
-          }
+          if (this.props.config.syncMapWithImage === true) this.syncMapToImage(activeImg, view);
         }
       });
 
@@ -10853,7 +10794,7 @@ private stopSafePlayback = () => {
     if (this.ArcGISModules?.VectorTileLayer) return;
     if (!this._arcGISModulesReady) {
       this._arcGISModulesReady = (async () => {
-      const [Graphic, Point, SimpleMarkerSymbol, VectorTileLayer, FeatureLayer, GraphicsLayer, route, networkService, RouteParameters, FeatureSet, Multipoint, PointSymbol3D] = await loadArcGISJSAPIModules([
+      const [Graphic, Point, SimpleMarkerSymbol, VectorTileLayer, FeatureLayer, GraphicsLayer, route, networkService, RouteParameters, FeatureSet, Multipoint, PointSymbol3D, Mesh] = await loadArcGISJSAPIModules([
         "esri/Graphic",
         "esri/geometry/Point",
         "esri/symbols/SimpleMarkerSymbol",
@@ -10866,6 +10807,7 @@ private stopSafePlayback = () => {
         "esri/rest/support/FeatureSet",
         "esri/geometry/Multipoint",
         "esri/symbols/PointSymbol3D",
+        "esri/geometry/Mesh",
       ]);
       this.ArcGISModules = {
         Graphic,
@@ -10880,6 +10822,7 @@ private stopSafePlayback = () => {
         FeatureSet,
         Multipoint,
         PointSymbol3D,
+        Mesh,
       };
       this.log("ArcGIS API modules loaded");
       })();
@@ -11477,6 +11420,10 @@ private stopSafePlayback = () => {
              * imageId is optional; map type / center /
              * zoom must still sync without an image.
              */
+            // Recheck projected cone size after a tilt/orbit, even when zoom is unchanged.
+            const image = this._liveSequenceFrames.current || this._liveSequenceFrames.find(this.state.imageId);
+            if (view.type === "3d" && image && String(image.id) === String(this.state.imageId))
+              this.drawCone(image.lon, image.lat, this._lastBearing || 0, this.coneLengths[this.zoomStepIndex], this.coneSpreads[this.zoomStepIndex]);
             this.updateUrlWithCurrentImage(this.state.imageId ?? undefined);
           }
 
@@ -11587,6 +11534,15 @@ private stopSafePlayback = () => {
 
       this._debouncedZoomUrlUpdate();
       void this.refreshSequenceMarkerWindow();
+
+      // Share the existing cone frame: zoom events never rebuild imagery or add timers.
+      if (this._coneRedrawRaf == null) this._coneRedrawRaf = requestAnimationFrame(() => {
+        this._coneRedrawRaf = null;
+        if (this.state.jimuMapView?.view !== view || view.destroyed) return;
+        const image = this._liveSequenceFrames.current || this._liveSequenceFrames.find(this.state.imageId);
+        if (image && String(image.id) === String(this.state.imageId))
+          this.drawCone(image.lon, image.lat, this._lastBearing || 0, this.coneLengths[this.zoomStepIndex], this.coneSpreads[this.zoomStepIndex]);
+      });
 
       /*
        * Keep quality hint behavior.
@@ -12222,6 +12178,83 @@ private stopSafePlayback = () => {
     return this._cameraCone ??= new CameraConeGraphics(properties => new this.ArcGISModules.GraphicsLayer(properties));
   }
 
+  /** Keep visible by default; explicit lock reuses the existing center/direction navigation. */
+  private syncMapToImage(activeImg: { id: string; lon: number; lat: number }, view: __esri.MapView | __esri.SceneView) {
+    const followAnchor = this.getCoverageDisplayPosition(String(activeImg.id), activeImg.lon, activeImg.lat);
+    const followPoint = followAnchor.geometry || new this.ArcGISModules.Point({ longitude: followAnchor.lon, latitude: followAnchor.lat });
+    if (this.props.config.syncMapWithImage === true && !this._isFlyInActive &&
+        shouldRecenterImage(view, followPoint, this.state.lockToImage)) {
+      const position = this.props.config.syncMapPosition || "center";
+      // Profile tracking follows the image position without letting goTo resolve a new zoom.
+      const followScale = view.scale;
+      // Inset-triggered following should glide even during sequence playback.
+      // Lock mode retains immediate tracking while playing; the SDK honors reduced motion.
+      const followOptions = this.state.lockToImage
+        ? { animate: this._userPaused, duration: this._userPaused ? 300 : 0 }
+        : { animate: true, duration: 450, easing: "ease-in-out" };
+
+      const targetPoint = new this.ArcGISModules.Point({
+        longitude: activeImg.lon,
+        latitude: activeImg.lat,
+      });
+
+      // 3D SCENE: GPS NAVIGATION MODE
+      if (view.type === "3d") {
+        const camera = sceneFollowCamera(view, activeImg.lon, activeImg.lat);
+        if (camera) this.navigateMapView(view, camera, followOptions);
+      }
+      // 2D MAP MODE
+      else {
+        // Standard Center
+        if (position === "center") {
+          this.navigateMapView(view, { center: targetPoint, scale: followScale }, followOptions);
+        }
+        // Offset Logic
+        else {
+          try {
+            const wmPoint = webMercatorUtils.geographicToWebMercator(targetPoint) as __esri.Point;
+            const extent = view.extent;
+
+            if (wmPoint && extent) {
+              const width = extent.width;
+              const height = extent.height;
+              const offsetFactor = 0.25; // 25% shift
+
+              let newCenterX = wmPoint.x;
+              let newCenterY = wmPoint.y;
+
+              if (position === "east") {
+                // Widget Left -> Show point on Right -> Move Camera Left (West)
+                newCenterX = wmPoint.x - width * offsetFactor;
+              } else if (position === "west") {
+                // Widget Right -> Show point on Left -> Move Camera Right (East)
+                newCenterX = wmPoint.x + width * offsetFactor;
+              } else if (position === "north") {
+                // Widget Bottom -> Show point on Top -> Move Camera Down (South)
+                newCenterY = wmPoint.y - height * offsetFactor;
+              } else if (position === "south") {
+                // Widget Top -> Show point on Bottom -> Move Camera Up (North)
+                newCenterY = wmPoint.y + height * offsetFactor;
+              }
+
+              const newCenter = new this.ArcGISModules.Point({
+                x: newCenterX,
+                y: newCenterY,
+                spatialReference: { wkid: 3857 },
+              });
+
+              this.navigateMapView(view, { center: newCenter, scale: followScale }, followOptions);
+            } else {
+              this.navigateMapView(view, { center: targetPoint, scale: followScale }, followOptions);
+            }
+          } catch (e) {
+            this.navigateMapView(view, { center: targetPoint, scale: followScale }, followOptions);
+          }
+        }
+      }
+    }
+  }
+
   /**
    * Draws a camera view cone polygon at the given location and bearing.
    * 2D: flat orange polygon (draped onto layer)
@@ -12232,13 +12265,32 @@ private stopSafePlayback = () => {
   private drawCone(lon: number, lat: number, heading: number, radiusMeters = 5, spreadDeg = 60) {
     const view = this.state.jimuMapView?.view;
     if (!view || !this.ArcGISModules || ![lon, lat, heading, radiusMeters, spreadDeg].every(Number.isFinite) || radiusMeters <= 0 || spreadDeg <= 0 || spreadDeg >= 180) return null;
+    let displayRadius = coneDisplayRadius(radiusMeters, view.zoom);
     const anchor = this.getCoverageDisplayPosition(String(this.state.imageId), lon, lat);
     const center = lonLatToWebMercator(anchor.lon, anchor.lat);
     if (!center) return null;
+    if (view.type === "3d") {
+      // Sample only currently rendered ground; never fetch heights or touch the pulse.
+      const sampler = (view as any).groundView?.elevationSampler;
+      const angle = heading * Math.PI / 180;
+      const mercatorScale = 1 / Math.max(0.01, Math.cos(anchor.lat * Math.PI / 180));
+      const measured = projectedConeRadius(radiusMeters, metres => {
+        try {
+          const point = new this.ArcGISModules.Point({ x: center.x + metres * mercatorScale * Math.sin(angle),
+            y: center.y + metres * mercatorScale * Math.cos(angle), spatialReference: { wkid: 3857 } });
+          const ground = sampler?.queryElevation(point);
+          if (!ground || !Number.isFinite(ground.z) || ground.z === sampler?.noDataValue) return null;
+          return view.toScreen(ground);
+        } catch { return null; }
+      });
+      if (measured !== null) displayRadius = measured;
+    }
+    if (!displayRadius) { this.clearConeGraphics(); return null; }
     const layer = this.ensureConeLayer();
     if (!layer) return null;
     const graphic = this.ensureCameraConeOwner().render(view, layer, center, anchor.lat,
-      heading, radiusMeters, spreadDeg, view.type === "3d", properties => new this.ArcGISModules.Graphic(properties));
+      heading, displayRadius, spreadDeg, view.type === "3d", properties => new this.ArcGISModules.Graphic(properties),
+      properties => new this.ArcGISModules.Mesh(properties));
 
     // Keep selection above the cone without removing/readding animated graphics.
     if (this._selectionPulse?.layer && this._selectionPulse?.view === view) view.map.reorder(this._selectionPulse?.layer, view.map.layers.length - 1);
@@ -12699,6 +12751,13 @@ private stopSafePlayback = () => {
             hasTimeTravel={this.state.hasTimeTravel}
             isDownloading={this.state.isDownloading}
             syncHeading={this.state.syncHeading}
+            mapFollowEnabled={this.props.config.syncMapWithImage === true && !this.state.isFullscreen}
+            lockToImage={this.state.lockToImage}
+            onToggleImageLock={() => this.setState(previous => ({ lockToImage: !previous.lockToImage }), () => {
+              const view = this.state.jimuMapView?.view;
+              const image = this._liveSequenceFrames.current || this._liveSequenceFrames.find(this.state.imageId);
+              if (this.state.lockToImage && view && image && String(image.id) === String(this.state.imageId)) this.syncMapToImage(image, view);
+            })}
             is3D={this.state.jimuMapView?.view?.type === "3d"}
             imageId={this.state.imageId}
             sequenceImages={this.state.sequenceImages}
