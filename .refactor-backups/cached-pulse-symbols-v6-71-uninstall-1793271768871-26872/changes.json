@@ -1,0 +1,27 @@
+{
+  "installer": "cached-pulse-symbols-v6-71",
+  "uninstall": true,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "b4faa3c672d9cba3054fe5826c2d4da2be983f976b9de291540f459366fa4537",
+      "resultSha256": "e89366132f2825757cd0cb4af15c62878316b586fdbc34d365b70266429f6553"
+    },
+    {
+      "file": "tests/selectionPulseGround.test.cjs",
+      "originalSha256": "99e7e1d0e1ea57b2c90bf39e7ea03aa51129b6cd628e5b99c68e70ebc1699532",
+      "resultSha256": "44c8a5bb912bcb02a3dd86a74d5ecbffa482ef4348fe332e2dedc05886eaceab"
+    },
+    {
+      "file": "tests/pulseVisibilityProbe.test.cjs",
+      "originalSha256": "f1366228a14c818ba2372022c3e431351181d673b217c2b30f22ecdf4541ee97",
+      "resultSha256": "f938c040bd325846117be928316b089c885e66ec5636dae76d41409a8823eccb"
+    },
+    {
+      "file": "docs/PULSE-CACHED-SYMBOLS.md",
+      "originalSha256": "e82f777a58ef2c7f9ecb924169d336b8acb89c92614812b9c5732373ff024a8b",
+      "resultSha256": null
+    }
+  ]
+}

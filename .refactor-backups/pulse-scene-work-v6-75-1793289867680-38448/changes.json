@@ -1,0 +1,27 @@
+{
+  "installer": "pulse-scene-work-v6-75",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "9fccf56ae289994f92034db210a4acdc429a9de6c27a54fa96d1a83d0c915812",
+      "resultSha256": "15689fe5e22a12c423daf6aaac14132a13b8c9f2ca1e6308410d9cb8a05d5b9d"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "ed30c77b8fa0e93e93c870b4ab2fde30a2b8480ecc6a3f37b3d968321a7ce570",
+      "resultSha256": "ccb195f6e37eac4a9fbe3aa29e039b45850e724c4612e0f78e294e08f5b570e8"
+    },
+    {
+      "file": "tests/pulseVisibilityProbe.test.cjs",
+      "originalSha256": "caa9f3a0f082ebbd4f9d298b3e2244b65c853187ff627ec473a83a3f4ac558ba",
+      "resultSha256": "8aef5714995afe34d52b56a6b5eef6631a690a1ab50f48f2b697a362b782fbf4"
+    },
+    {
+      "file": "docs/PULSE-SCENE-WORK.md",
+      "originalSha256": null,
+      "resultSha256": "b4ad9ee3e015ee34a7529a34488811cd55cd328549bf171be77984eab0e2135a"
+    }
+  ]
+}

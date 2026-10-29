@@ -1,0 +1,32 @@
+{
+  "installer": "steady-3d-marker-v6-79",
+  "uninstall": true,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "b66943dd906d3568e4bddf600898d668bb62965b01a7a4d29459cee9b30d8c52",
+      "resultSha256": "ff048ab8ab199199357d87eaa7259381f50a9f20ac9b886049e6fcc2729fd362"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "ed30c77b8fa0e93e93c870b4ab2fde30a2b8480ecc6a3f37b3d968321a7ce570",
+      "resultSha256": "b0c54091a70d0c3bf6f9013eb8f6e301ef9e93af7452db69fe030a4330f4131e"
+    },
+    {
+      "file": "tests/selectionPulseGround.test.cjs",
+      "originalSha256": "f4012bf47ff9e3699b11a5b26248f9be765f01273a7cb1e1df0535b2937db114",
+      "resultSha256": "99e7e1d0e1ea57b2c90bf39e7ea03aa51129b6cd628e5b99c68e70ebc1699532"
+    },
+    {
+      "file": "tests/pulseVisibilityProbe.test.cjs",
+      "originalSha256": "bb245e45084ee304cebfaba813fce94e2676dbd651c2e9d8f714d4684eb40eeb",
+      "resultSha256": "96bb855305f08d8dd399e81219316abc4939ebea7102e921e7f49745b1f6164d"
+    },
+    {
+      "file": "docs/PULSE-STEADY-3D.md",
+      "originalSha256": "84de97a6f66142bf034e2b83f0bc386a81e4ae640233eabb6053ebf5603ceefd",
+      "resultSha256": null
+    }
+  ]
+}

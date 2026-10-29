@@ -1,0 +1,22 @@
+{
+  "installer": "ground-facing-current-image-v6-87",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/ScreenDirectionCone.ts",
+      "originalSha256": "8a8668025a907b938be4dff854a2484887f52aef4ed39a0bcc6147314cf2f54c",
+      "resultSha256": "5d2fcaf9b8b32411e3f349a64783b18c869368b3f4943b6b5e4bf93cc23258f2"
+    },
+    {
+      "file": "tests/screenDirectionCone.test.cjs",
+      "originalSha256": "b10eebc09f3c3a8367cb794a907de081b017f3897ad696a3fabe7a14003ae08d",
+      "resultSha256": "37acb0dbd4545fdf9b2f96ca8e893fda61bb57cd91358000ffdc833a1fcd43da"
+    },
+    {
+      "file": "docs/GROUND-FACING-CURRENT-IMAGE.md",
+      "originalSha256": null,
+      "resultSha256": "bab9b7c0b4e4e11fc601381ec78ad429a01684c7fafecd3c5e8ad083368d7b4f"
+    }
+  ]
+}

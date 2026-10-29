@@ -1,0 +1,6 @@
+# v6.83 plain marker and readable overview cone
+Requires v6.82. Rebuild/restart and hard-refresh. Removes CSS halo and its tracker/position conversion, SVG target and dark edge. Restores the fixed native 12pt green circle / white 2pt outline used in v6.79, retaining v6.81 flat-ground projection helper needed by cone sizing. No 3D animation, DOM marker overlays or symbol swapping; 2D animation unchanged.
+
+The tiny overview cone was limited by the old 24× / 360m physical-radius ceiling (5m requested radius could enlarge only to 120m). Enlarge toward the existing 60 CSS-pixel centerline target with 2048× / 12km safety ceiling instead. Existing sampled 40–96px footprint cap remains authoritative. At zoom 12.6 this permits enough display radius for a cone comparable to 14.1. This is a directional display indicator, not an assertion of real visible distance. Exact size is not guaranteed at extreme perspective, distant overview or unavailable rendered terrain; existing safe hiding/fallback applies. No network elevation requests added; projection work remains bounded.
+
+Affected SelectionPulse.ts, projectedConeRadius.ts and their two targeted tests. Runtime, cone geometry generation, coverage, sequence selection/hover algorithms unchanged. Uninstall restores v6.82 with its halo; rebuild/reload required.

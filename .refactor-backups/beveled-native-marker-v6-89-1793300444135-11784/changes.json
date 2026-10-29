@@ -1,0 +1,22 @@
+{
+  "installer": "beveled-native-marker-v6-89",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/nativeCurrentImageMesh.ts",
+      "originalSha256": "8cff073334e6431029ff2e30ffda05bb445e2bde7cb2aacd234bfbe7c586a2eb",
+      "resultSha256": "1cfac39cf9ae00b57399152c80c4903f0cec8161675e4832b598b1d14eb4d658"
+    },
+    {
+      "file": "tests/nativeCurrentImageMarker.test.cjs",
+      "originalSha256": "7014f82baa6e219d03725f771eb4c643ea59949817b0aee342729a8836aa6fd0",
+      "resultSha256": "905cb03fc4585fbf77c145ec64e14388ae7d1f1a8475d3428c1770f77526056b"
+    },
+    {
+      "file": "docs/BEVELED-NATIVE-MARKER-TRIAL.md",
+      "originalSha256": null,
+      "resultSha256": "9e1e0e5c9fb8b44d3bbf116003be56a3516856f48276ba11493efeee67014fad"
+    }
+  ]
+}

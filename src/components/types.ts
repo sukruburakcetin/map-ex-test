@@ -372,6 +372,7 @@ export interface ImageUtilityGroupProps {
     pointCloudVisible?: boolean;
     pointCloudAvailable?: boolean; // false = no sfm_cluster for this image
     // callbacks
+    loadTimeTravelPreview?: (imageId: string, signal: AbortSignal) => Promise<import('../features/imagery/timeTravelPreview').TravelPreview>;
     onTimeTravel: (lat: number, lon: number, imageId: string) => void;
     onShare: () => void;
     onDownload: () => void;

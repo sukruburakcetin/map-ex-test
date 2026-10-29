@@ -1,0 +1,22 @@
+{
+  "installer": "pulse-render-isolation-v6-73",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "58d311d5f29c342dee0975ca32ec717e057e32b2c6d425f4e4e3907f7526e430",
+      "resultSha256": "b889d0cfd837bb8a001c3a5c1906542956c3e78f98b6f87098e076f2cf6cc61e"
+    },
+    {
+      "file": "tests/pulseVisibilityProbe.test.cjs",
+      "originalSha256": "376e01aebb38c80321cc362a099a541b0a40e96cfc9e79965955156d7fc90ca7",
+      "resultSha256": "40ea6ebeadf25116810d3bd1ed82ebde5d7970a7ed165570c73c1321ee9bf705"
+    },
+    {
+      "file": "docs/PULSE-RENDER-ISOLATION.md",
+      "originalSha256": null,
+      "resultSha256": "1692931fa5496f109395a5fa93a8c288f9a48eba6e902b32ce321f55b8427d23"
+    }
+  ]
+}

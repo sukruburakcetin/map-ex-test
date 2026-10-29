@@ -1,0 +1,32 @@
+{
+  "installer": "native-current-image-trial-v6-88",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "4aad6391bb5c7052acdaff6f668dfdcf25a5ce5085a354e87a5bada0ea6a1985",
+      "resultSha256": "86fb961e1d6217c8225ffb786ad8e76d077416d04c136bdb303a76ed359cbabd"
+    },
+    {
+      "file": "src/features/map-graphics/NativeCurrentImageMarker.ts",
+      "originalSha256": null,
+      "resultSha256": "f7727b11affaec3a9e80485f6a247b61f272fa6dbba7789767a5f54a33e56ea3"
+    },
+    {
+      "file": "src/features/map-graphics/nativeCurrentImageMesh.ts",
+      "originalSha256": null,
+      "resultSha256": "8cff073334e6431029ff2e30ffda05bb445e2bde7cb2aacd234bfbe7c586a2eb"
+    },
+    {
+      "file": "tests/nativeCurrentImageMarker.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "7014f82baa6e219d03725f771eb4c643ea59949817b0aee342729a8836aa6fd0"
+    },
+    {
+      "file": "docs/NATIVE-CURRENT-IMAGE-TRIAL.md",
+      "originalSha256": null,
+      "resultSha256": "266513ed64e8930547e4f885d1dbbd974452f320ed429e657c86536fd74afa96"
+    }
+  ]
+}

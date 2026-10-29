@@ -1,0 +1,42 @@
+{
+  "installer": "time-travel-preview-v6-91",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "8ab96bbdb97790b1fddb0341c66430cdd6ed7c3c26700b890c7c5f9dc055511a",
+      "resultSha256": "9c62f5d412deede3b75dd713ce28dac9ef3ced1c901395faa47232ebd4982e98"
+    },
+    {
+      "file": "src/components/ImageUtilityGroup.tsx",
+      "originalSha256": "6dde5bb96e074d7185dc790a8ce2ce325d3e1f43f4d5e41bc5aa3fd85c8c2ea0",
+      "resultSha256": "f2d910bdd1925d41c136622b77523a69b23fe6c8db109458f01601967922c741"
+    },
+    {
+      "file": "src/components/types.ts",
+      "originalSha256": "77d9fac9ea23611031865dca42cc80d3d8b712addb3677e619adebcc441f937a",
+      "resultSha256": "b6a53c5dd5774141467c460debfab234b77e3fd90fc11a2c38f4648d5152a113"
+    },
+    {
+      "file": "docs/TIME-TRAVEL-PREVIEW.md",
+      "originalSha256": null,
+      "resultSha256": "84170bfdbed3f4980984b9c9fe9701ea2e58e371bbaf8c303dadf7358ff817cc"
+    },
+    {
+      "file": "src/components/TimeTravelPreview.tsx",
+      "originalSha256": null,
+      "resultSha256": "dad0cf98fa2b283bdc8e2ef98bdc241d4ce6a959d28ef9a1dff4fe53fec468cd"
+    },
+    {
+      "file": "src/features/imagery/timeTravelPreview.ts",
+      "originalSha256": null,
+      "resultSha256": "83b0f35619aac21e1ce0787b27ff0516ec09cf676d07b22e52d2a00c0e139ea4"
+    },
+    {
+      "file": "tests/timeTravelPreview.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "8a4366e08844e46f0a69aaab3a5ae6a44b74f1f5a535b709d709fcd71d1c39d9"
+    }
+  ]
+}

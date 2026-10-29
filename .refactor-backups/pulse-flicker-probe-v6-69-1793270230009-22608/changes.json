@@ -1,0 +1,27 @@
+{
+  "installer": "pulse-flicker-probe-v6-69",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "63c0c424695e6b0b68913447c220421f28c252654b8f02676219d7ffe917b6cd",
+      "resultSha256": "450e7fe07cc2fcf03bfc68ec366a2265a0ffeea6cb99f23ed639d1a70699a074"
+    },
+    {
+      "file": "tests/selectionPulseGround.test.cjs",
+      "originalSha256": "d2cead61995670cede51c90136bf93c61a121ccf9254621a47e1ab58b1774822",
+      "resultSha256": "59c830d8ffab708d80cf2ac3216f326ce3073206771f0ea91b8980294142877d"
+    },
+    {
+      "file": "tests/pulseVisibilityProbe.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "97ab62491c6799335f1a1dfd347988b0e88b19bfb0f02348612775bfbce3c66a"
+    },
+    {
+      "file": "docs/PULSE-FLICKER-PROBE.md",
+      "originalSha256": null,
+      "resultSha256": "ca7a2ff8560c361d8d4c770f9dd0722e18917eb97e28bc7fac2f804359f3bcbe"
+    }
+  ]
+}

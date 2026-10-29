@@ -1,0 +1,27 @@
+{
+  "installer": "pulse-stationary-split-v6-76",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "15689fe5e22a12c423daf6aaac14132a13b8c9f2ca1e6308410d9cb8a05d5b9d",
+      "resultSha256": "1489be01edfdafe72885b4343dc03fc053f4c81f0321ecd7cb608e1790b972dc"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "ccb195f6e37eac4a9fbe3aa29e039b45850e724c4612e0f78e294e08f5b570e8",
+      "resultSha256": "b0c54091a70d0c3bf6f9013eb8f6e301ef9e93af7452db69fe030a4330f4131e"
+    },
+    {
+      "file": "tests/pulseVisibilityProbe.test.cjs",
+      "originalSha256": "8aef5714995afe34d52b56a6b5eef6631a690a1ab50f48f2b697a362b782fbf4",
+      "resultSha256": "657d6a1fb8c897d246f6f107cb613a6b68935fdb5991f19580bb9e3270b15692"
+    },
+    {
+      "file": "docs/PULSE-STATIONARY-SPLIT.md",
+      "originalSha256": null,
+      "resultSha256": "cd936dc7d4b26e023412777739a106cfde2394f0528737ed185fc52e1f82b12c"
+    }
+  ]
+}

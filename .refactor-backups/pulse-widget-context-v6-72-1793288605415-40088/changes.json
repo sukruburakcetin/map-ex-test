@@ -1,0 +1,22 @@
+{
+  "installer": "pulse-widget-context-v6-72",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "b4faa3c672d9cba3054fe5826c2d4da2be983f976b9de291540f459366fa4537",
+      "resultSha256": "58d311d5f29c342dee0975ca32ec717e057e32b2c6d425f4e4e3907f7526e430"
+    },
+    {
+      "file": "tests/pulseVisibilityProbe.test.cjs",
+      "originalSha256": "f1366228a14c818ba2372022c3e431351181d673b217c2b30f22ecdf4541ee97",
+      "resultSha256": "376e01aebb38c80321cc362a099a541b0a40e96cfc9e79965955156d7fc90ca7"
+    },
+    {
+      "file": "docs/PULSE-WIDGET-CONTEXT.md",
+      "originalSha256": null,
+      "resultSha256": "f55054bd720e65793d6b867210cb715ba67fab14737adfcb692d9125659fc8bd"
+    }
+  ]
+}

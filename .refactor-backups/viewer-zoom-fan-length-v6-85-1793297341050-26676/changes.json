@@ -1,0 +1,22 @@
+{
+  "installer": "viewer-zoom-fan-length-v6-85",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/ScreenDirectionCone.ts",
+      "originalSha256": "95cc50c7bac861bec39a7bfdd1ccb365ff04e37e6d49e356bec99d744cb792a1",
+      "resultSha256": "7c777094ec981062f18e81fcfb81ae42e8310d3f514f62eb74cea387849cdf99"
+    },
+    {
+      "file": "tests/screenDirectionCone.test.cjs",
+      "originalSha256": "eba9e5bec854deb50fa1011d75282f171b08902838d20a48d92f298cd265a6ab",
+      "resultSha256": "cfefd1cd86ddf11367b6115ee324376c2b18c159ba33bef735d9ed5c97688f68"
+    },
+    {
+      "file": "docs/VIEWER-ZOOM-FAN-LENGTH.md",
+      "originalSha256": null,
+      "resultSha256": "3497136a07f4ad68ba81f39537d513dec3a0b6f67cee668a6075b270e54b4b75"
+    }
+  ]
+}

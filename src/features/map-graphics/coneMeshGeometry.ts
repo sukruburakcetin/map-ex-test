@@ -10,7 +10,7 @@ export function coneMeshGeometry(center: { x: number; y: number }, heading: numb
  for (let i = 0; i <= segments; i++) {
   const degrees = heading - spread / 2 + spread * i / segments;
   const angle = degrees * Math.PI / 180;
-  position.push(radius * Math.sin(angle), radius * Math.cos(angle), 0.08 + rise * Math.cos((degrees - heading) * Math.PI / 180));
+  position.push(radius * Math.sin(angle), radius * Math.cos(angle), Math.min(0.08, radius * 0.008) + rise * Math.cos((degrees - heading) * Math.PI / 180));
  }
  for (let i = 0; i <= segments; i++) position.push(position[3 * (i + 1)], position[3 * (i + 1) + 1], 0);
  const upper = (i: number) => i + 1;

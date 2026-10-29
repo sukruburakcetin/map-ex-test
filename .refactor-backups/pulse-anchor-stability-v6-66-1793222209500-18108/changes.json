@@ -1,0 +1,32 @@
+{
+  "installer": "pulse-anchor-stability-v6-66",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "c6b324d9274eb871adf36471409f9570bd7826843259b3596794d302461d1c46",
+      "resultSha256": "ed30c77b8fa0e93e93c870b4ab2fde30a2b8480ecc6a3f37b3d968321a7ce570"
+    },
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "3354da97e6051a084f6d0628839b980fa46395afd0edc86950a91ed04db71999",
+      "resultSha256": "289e252354413a7334c29fccce64645723e1200a28d3a5dc12662bd322e88543"
+    },
+    {
+      "file": "tests/selectionPulseGround.test.cjs",
+      "originalSha256": "73e8352f68c57e91bdab77ac5e5019124532f91ef8cb82a7c860b6f1b4d1d9f9",
+      "resultSha256": "f5ce6acdba4c13a35586e3db8cf8d21c544f9b77cd6f555ee99a7319fc437e0c"
+    },
+    {
+      "file": "tests/pulseAnchorRecovery.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "f2318ed8a39bd9adbee9eb028106dc2b43cc73e07172244d7d5979ef0c96207b"
+    },
+    {
+      "file": "docs/PULSE-ANCHOR-STABILITY.md",
+      "originalSha256": null,
+      "resultSha256": "e622c2270789aef1679e8dadbd97059404cbd2975572f88b69f6cbb15f593433"
+    }
+  ]
+}

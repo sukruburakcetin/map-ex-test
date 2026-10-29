@@ -1,0 +1,22 @@
+{
+  "installer": "pulse-live-isolation-v6-78",
+  "uninstall": true,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "ff048ab8ab199199357d87eaa7259381f50a9f20ac9b886049e6fcc2729fd362",
+      "resultSha256": "c1be6c359b77ba4bbba0be6582d3becc7fd10e83bd64f63a38765f5c2a4e080e"
+    },
+    {
+      "file": "tests/pulseVisibilityProbe.test.cjs",
+      "originalSha256": "96bb855305f08d8dd399e81219316abc4939ebea7102e921e7f49745b1f6164d",
+      "resultSha256": "3df42c5cfb842dd6b3b461795b81b4ee31d0df3f3cb15e047e69e548862537d4"
+    },
+    {
+      "file": "docs/PULSE-LIVE-ISOLATION.md",
+      "originalSha256": "e8c03381f2383986659178cd2c587fab5a5ed8741c019187ab304bcd2a1bf52f",
+      "resultSha256": null
+    }
+  ]
+}

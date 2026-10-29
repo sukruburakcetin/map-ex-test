@@ -1,0 +1,32 @@
+{
+  "installer": "camera-cone-css-halo-v6-81",
+  "uninstall": true,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "c7ab32a4c5307c0eecee52d4b3acd8675ffca9c8017d22cb52eca4f082d3fa2d",
+      "resultSha256": "d2b1b046c495da16014167a3aada409cdcb5ba65d6ac0948545a9bfc3c2a8b99"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "9f4d326a8d98a4b992658d05c1ceb573671e500760b0558e8870be37fd0af4c1",
+      "resultSha256": "ed30c77b8fa0e93e93c870b4ab2fde30a2b8480ecc6a3f37b3d968321a7ce570"
+    },
+    {
+      "file": "tests/selectionPulseGround.test.cjs",
+      "originalSha256": "0e37fe7d8e56a31e941cb7a64a28a17eedb2faddda6dc1ad357e47f171ce145a",
+      "resultSha256": "bd14cfc406f4bc8299916c482e9e4c596f0f8b71b50f1ea8ae6f351cd3fec084"
+    },
+    {
+      "file": "tests/projectedConeRadius.test.cjs",
+      "originalSha256": "d7226f1f6d5602699f44a6f9220dd743c965b545780527f48ce5d9e545c4ab87",
+      "resultSha256": "3001952af65962e2d005910e15b6e69bee71164117a3d955ad6421bd10a9665e"
+    },
+    {
+      "file": "docs/CAMERA-CONE-AND-CSS-HALO.md",
+      "originalSha256": "e4f9d049334b8343c8e43228fc6853ef12ee05761328e733d4239ea184362f8b",
+      "resultSha256": null
+    }
+  ]
+}

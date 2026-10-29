@@ -1,0 +1,7 @@
+# v6.76 stationary stage diagnostic
+Requires v6.75, rebuild/restart and hard-refresh. Mode: 3d-stationary-split-v76.
+Adds pauseSceneWork('coverage'), ('anchor'), ('preview'). Only the named stage in the Turbo stationary callback is skipped; cone remains enabled. These controls do not suppress calls to these functions from other paths, or cancel already-running work. Default off, automatically reset by restore/disposal. No production fix or selection/hover algorithm changes.
+
+For each test start fresh: isolate(), compare(), pauseSceneWork('anchor'), clear(). Keep the same image selected, playback stopped. Rotate camera to prior problematic angle and wait stationary 30 seconds. Export report and observation. Then restart with isolate(), compare(), pauseSceneWork('coverage'), clear(). Label reports anchor paused / coverage paused. These fresh comparison cycles prevent carrying over an already flickering temporary marker. Do not use restore between command setup and camera test; it resets the pause.
+
+Third stage preview is independently pausable if neither result isolates the problem; it is not silently grouped with coverage or anchor. Use restore() afterward. Report skipped:<stage> counts verify guard execution; skipped counts do not prove a graphics operation would have been necessary or caused the blink. Coverage refresh may have internal effects beyond its name, so a successful test identifies a call path, not yet the exact rendering fault.

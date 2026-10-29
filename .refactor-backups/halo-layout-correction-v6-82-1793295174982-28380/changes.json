@@ -1,0 +1,32 @@
+{
+  "installer": "halo-layout-correction-v6-82",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "d2b1b046c495da16014167a3aada409cdcb5ba65d6ac0948545a9bfc3c2a8b99",
+      "resultSha256": "95cea6d5c8a52570cba6e7daf0fd4734e08f69b44adc2328cfe46083d3c8e162"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "ed30c77b8fa0e93e93c870b4ab2fde30a2b8480ecc6a3f37b3d968321a7ce570",
+      "resultSha256": "9f4d326a8d98a4b992658d05c1ceb573671e500760b0558e8870be37fd0af4c1"
+    },
+    {
+      "file": "tests/selectionPulseGround.test.cjs",
+      "originalSha256": "bd14cfc406f4bc8299916c482e9e4c596f0f8b71b50f1ea8ae6f351cd3fec084",
+      "resultSha256": "1de2d93aa66c6da0dbe1ed91d6ade71eeeb1faf7971a8ff22e1a65adca60980f"
+    },
+    {
+      "file": "tests/projectedConeRadius.test.cjs",
+      "originalSha256": "3001952af65962e2d005910e15b6e69bee71164117a3d955ad6421bd10a9665e",
+      "resultSha256": "d7226f1f6d5602699f44a6f9220dd743c965b545780527f48ce5d9e545c4ab87"
+    },
+    {
+      "file": "docs/HALO-NO-LAYOUT-MUTATION.md",
+      "originalSha256": null,
+      "resultSha256": "a4889b5ceebd86278a9d129ed7c6940a9772181ec2a2f457d29d6349cd93c19f"
+    }
+  ]
+}

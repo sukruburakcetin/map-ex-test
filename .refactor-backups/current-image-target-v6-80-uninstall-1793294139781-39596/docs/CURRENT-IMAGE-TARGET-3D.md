@@ -1,0 +1,6 @@
+# v6.80 static current-image target
+Requires v6.79. Install/rebuild/restart and refresh. Uses one SVG image in one IconSymbol3DLayer on the existing single Graphic/layer. Green center (supplied baseColor array or Color.toRgba), white ring, dark green outer edge, all centered. Icon 14pt with padding in 24×24 SVG; visible outer diameter approximately 17 CSS pixels at DPR1, close to the prior 16 CSS pixel icon. No additional graphics, stacked 3D icon layers, DOM overlay, animation, timer, symbol swaps, terrain requests or external image downloads. Occluded visibility and on-ground placement retained. 2D remains unchanged. SVG resource is generated only when creating the marker, not per frame. White/dark border remains opaque; center alpha follows supplied RGBA.
+
+This is a visual trial based on the steady-marker strategy, not a claim the original flicker was fixed or that this new symbol is already validated on the user's GPU. Use --uninstall to return exactly to v6.79 if appearance/rendering is unsuitable, then rebuild/reload.
+
+Affected source SelectionPulse.ts; tests selectionPulseGround.test.cjs; adds this document. Historical diagnostics remain inactive. Runtime, cone, sequence selection and hover algorithms unchanged.

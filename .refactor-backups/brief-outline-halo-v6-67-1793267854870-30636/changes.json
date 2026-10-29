@@ -1,0 +1,22 @@
+{
+  "installer": "brief-outline-halo-v6-67",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "289e252354413a7334c29fccce64645723e1200a28d3a5dc12662bd322e88543",
+      "resultSha256": "24ff03a46f943e7bc0c3b90d5c433e60d86e30ce5501a79632a88f5728e16d10"
+    },
+    {
+      "file": "tests/selectionPulseGround.test.cjs",
+      "originalSha256": "f5ce6acdba4c13a35586e3db8cf8d21c544f9b77cd6f555ee99a7319fc437e0c",
+      "resultSha256": "dc099b3629298d83d9bb4f7befd1de687ff5717ef8758f9d6d02ed954903c63d"
+    },
+    {
+      "file": "docs/BRIEF-OUTLINE-HALO.md",
+      "originalSha256": null,
+      "resultSha256": "89aadab438aeae4b924e41fbb2e897c0d76e7e0deae7e2e81d6e1c08bd09b07f"
+    }
+  ]
+}

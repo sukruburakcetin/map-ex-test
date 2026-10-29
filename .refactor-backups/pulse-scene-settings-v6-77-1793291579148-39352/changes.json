@@ -1,0 +1,22 @@
+{
+  "installer": "pulse-scene-settings-v6-77",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "1489be01edfdafe72885b4343dc03fc053f4c81f0321ecd7cb608e1790b972dc",
+      "resultSha256": "c1be6c359b77ba4bbba0be6582d3becc7fd10e83bd64f63a38765f5c2a4e080e"
+    },
+    {
+      "file": "tests/pulseVisibilityProbe.test.cjs",
+      "originalSha256": "657d6a1fb8c897d246f6f107cb613a6b68935fdb5991f19580bb9e3270b15692",
+      "resultSha256": "3df42c5cfb842dd6b3b461795b81b4ee31d0df3f3cb15e047e69e548862537d4"
+    },
+    {
+      "file": "docs/PULSE-SCENE-SETTINGS.md",
+      "originalSha256": null,
+      "resultSha256": "b8401c74b4a5c35e420e1835c96b8df9cdb31d5c41b9c5c5eaa884158adc7163"
+    }
+  ]
+}

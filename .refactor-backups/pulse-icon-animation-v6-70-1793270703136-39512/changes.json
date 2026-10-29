@@ -1,0 +1,27 @@
+{
+  "installer": "pulse-icon-animation-v6-70",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "450e7fe07cc2fcf03bfc68ec366a2265a0ffeea6cb99f23ed639d1a70699a074",
+      "resultSha256": "e89366132f2825757cd0cb4af15c62878316b586fdbc34d365b70266429f6553"
+    },
+    {
+      "file": "tests/selectionPulseGround.test.cjs",
+      "originalSha256": "59c830d8ffab708d80cf2ac3216f326ce3073206771f0ea91b8980294142877d",
+      "resultSha256": "44c8a5bb912bcb02a3dd86a74d5ecbffa482ef4348fe332e2dedc05886eaceab"
+    },
+    {
+      "file": "tests/pulseVisibilityProbe.test.cjs",
+      "originalSha256": "97ab62491c6799335f1a1dfd347988b0e88b19bfb0f02348612775bfbce3c66a",
+      "resultSha256": "f938c040bd325846117be928316b089c885e66ec5636dae76d41409a8823eccb"
+    },
+    {
+      "file": "docs/PULSE-INPLACE-ANIMATION.md",
+      "originalSha256": null,
+      "resultSha256": "8a1ec7229a9360ebc9189eb869930cd5d00e9d16c594800a70e7207e428761a6"
+    }
+  ]
+}

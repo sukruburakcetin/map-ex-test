@@ -1,0 +1,22 @@
+{
+  "installer": "current-image-target-v6-80",
+  "uninstall": true,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "d2b1b046c495da16014167a3aada409cdcb5ba65d6ac0948545a9bfc3c2a8b99",
+      "resultSha256": "b66943dd906d3568e4bddf600898d668bb62965b01a7a4d29459cee9b30d8c52"
+    },
+    {
+      "file": "tests/selectionPulseGround.test.cjs",
+      "originalSha256": "bd14cfc406f4bc8299916c482e9e4c596f0f8b71b50f1ea8ae6f351cd3fec084",
+      "resultSha256": "f4012bf47ff9e3699b11a5b26248f9be765f01273a7cb1e1df0535b2937db114"
+    },
+    {
+      "file": "docs/CURRENT-IMAGE-TARGET-3D.md",
+      "originalSha256": "a0da1c42912055759950264be4be8819cf802981370747d48037f69566d2b243",
+      "resultSha256": null
+    }
+  ]
+}

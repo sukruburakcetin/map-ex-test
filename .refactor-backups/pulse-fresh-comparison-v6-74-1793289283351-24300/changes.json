@@ -1,0 +1,22 @@
+{
+  "installer": "pulse-fresh-comparison-v6-74",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "b889d0cfd837bb8a001c3a5c1906542956c3e78f98b6f87098e076f2cf6cc61e",
+      "resultSha256": "9fccf56ae289994f92034db210a4acdc429a9de6c27a54fa96d1a83d0c915812"
+    },
+    {
+      "file": "tests/pulseVisibilityProbe.test.cjs",
+      "originalSha256": "40ea6ebeadf25116810d3bd1ed82ebde5d7970a7ed165570c73c1321ee9bf705",
+      "resultSha256": "caa9f3a0f082ebbd4f9d298b3e2244b65c853187ff627ec473a83a3f4ac558ba"
+    },
+    {
+      "file": "docs/PULSE-FRESH-COMPARISON.md",
+      "originalSha256": null,
+      "resultSha256": "e29e703c83f95c017f58e56c201871922b63c6effc9545edcf3d2b3bb6c77a61"
+    }
+  ]
+}

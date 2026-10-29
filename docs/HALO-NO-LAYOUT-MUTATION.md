@@ -1,0 +1,6 @@
+# v6.82 halo layout correction
+Install over v6.80 or v6.81. No need to reinstall v6.81 if already rolled back. This includes the v6.81 flat-ground cone projection correction and CSS halo, but removes every map container CSS positioning write. Halo coordinates convert to the existing offset parent, including scrolling, borders and scaling. Setup/tracking failures disable the optional decoration without disposing the static native marker. No changes to coverage readiness timeout or its error handling. Requires a full reload to clear live v6.81 container styling.
+
+The reported Coverage readiness timed out warning is not a root-cause diagnosis. The container mutation is a concrete integration risk addressed here, not a proven explanation of the white screen. If the scene still blanks, rollback and do not extend coverage timeouts to conceal it. --uninstall restores whichever supported version was present before installation; rebuild/reload afterward.
+
+Browser and regression checks cover zero host position mutation, screen alignment, scroll/scale conversion, failure cleanup and native marker identity. They cannot reproduce the user's complete Experience Builder configuration. Selection/hover algorithms remain unchanged.

@@ -51,7 +51,7 @@ export class CameraConeGraphics<G extends ConeGraphic, L extends ConeLayer<G>, V
     createGraphic: (properties: any) => G, createMesh: (properties: any) => any = properties => properties): G {
     // One clockwise sector in projected coordinates avoids overlapping ground/top surfaces.
     const radius = radiusMeters / Math.max(0.01, Math.cos(latitude * Math.PI / 180));
-    const z = scene ? 0.08 : 0;
+    const z = scene ? Math.min(0.08, radiusMeters * 0.008) : 0;
     // The apex belongs to the native ground image center; lift only the wedge's
     // other surfaces. A fixed 8 cm apex lift becomes several pixels at close zoom.
     const ring: number[][] = [[center.x, center.y, 0]];

@@ -1,0 +1,42 @@
+{
+  "installer": "cone-screen-cap-v6-65",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "3fc60ab223a80b7402a22d15022d2b81a7fe2e3e26734bb05081b6e62b650b4c",
+      "resultSha256": "c6b324d9274eb871adf36471409f9570bd7826843259b3596794d302461d1c46"
+    },
+    {
+      "file": "src/features/map-graphics/CameraConeGraphics.ts",
+      "originalSha256": "d95f3fea839c024d8dc2bae24449ef9b3bd68eaab9c2b5f9ad66d49a386ca26e",
+      "resultSha256": "807b54f5374cefddd6ba61915a5a4afbf700276654e0795a4976a5de00dbd23e"
+    },
+    {
+      "file": "src/features/map-graphics/coneMeshGeometry.ts",
+      "originalSha256": "f2c3c6a426403ea63e0e429f99b6830c7c1182b2e939229d2b9bcd463f0af702",
+      "resultSha256": "360cd68d2003d07328eb866ca2ce32d862411102ce51f3f437654a35fd247b95"
+    },
+    {
+      "file": "tests/projectedConeRadius.test.cjs",
+      "originalSha256": "7a14e5d8658b747d6f2510e7eb5fb8450db76878a6e48cf45ba92d9bd223cf67",
+      "resultSha256": "3001952af65962e2d005910e15b6e69bee71164117a3d955ad6421bd10a9665e"
+    },
+    {
+      "file": "src/features/map-graphics/capConeFootprint.ts",
+      "originalSha256": null,
+      "resultSha256": "123748b43c246cc5d242011932b26aec6c9e4bb7f76d603853db22b7d8203bb7"
+    },
+    {
+      "file": "tests/coneFootprintCap.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "ed5c18b292463b3e06fd225bdd1dd893c989f344bb8adfc308f3d22415c8e7af"
+    },
+    {
+      "file": "docs/CONE-SCREEN-CAP.md",
+      "originalSha256": null,
+      "resultSha256": "7cf08a14a9bfd64e40f2540b6064daa37bfd0ad7946ca870bd8c21c7b1a501fc"
+    }
+  ]
+}

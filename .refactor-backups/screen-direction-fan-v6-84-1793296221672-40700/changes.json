@@ -1,0 +1,32 @@
+{
+  "installer": "screen-direction-fan-v6-84",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "9f4d326a8d98a4b992658d05c1ceb573671e500760b0558e8870be37fd0af4c1",
+      "resultSha256": "94204ead897820e88c2b493be629d0a8fe7141796332c35c28ec4121c7a70246"
+    },
+    {
+      "file": "tests/projectedConeRadius.test.cjs",
+      "originalSha256": "8468ea300854ee007c531efa734685d4d9d2c72d9e04d6792e8bdebf9259099c",
+      "resultSha256": "43bf4c64adfb40e0657b39a50879cef19dab1a84b1bb18e99546bf8a9f1fa435"
+    },
+    {
+      "file": "src/features/map-graphics/ScreenDirectionCone.ts",
+      "originalSha256": null,
+      "resultSha256": "95cc50c7bac861bec39a7bfdd1ccb365ff04e37e6d49e356bec99d744cb792a1"
+    },
+    {
+      "file": "tests/screenDirectionCone.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "eba9e5bec854deb50fa1011d75282f171b08902838d20a48d92f298cd265a6ab"
+    },
+    {
+      "file": "docs/SCREEN-DIRECTION-CONE.md",
+      "originalSha256": null,
+      "resultSha256": "374d43c7db0127ce986eefb9e15bd2e1ee683dce03ce68251e58b79399c4891b"
+    }
+  ]
+}

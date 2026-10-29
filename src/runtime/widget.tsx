@@ -75,7 +75,10 @@ import { SequencePerformance } from "../features/imagery/SequencePerformance";
 import { sequenceRouteMemoryStats } from "../features/imagery/sequenceMemoryBudget";
 import { ActiveSequenceOverlay } from '../features/imagery/ActiveSequenceOverlay';
 import { ClickRippleAnimations } from '../features/map-graphics/ClickRippleAnimations';
-import { SelectionPulse } from '../features/map-graphics/SelectionPulse';
+import { NativeCurrentImageMarker } from '../features/map-graphics/NativeCurrentImageMarker';
+import { ScreenDirectionCone } from '../features/map-graphics/ScreenDirectionCone';
+import { SelectionPulse, renderedGroundPoint } from '../features/map-graphics/SelectionPulse';
+import { capConeFootprint } from "../features/map-graphics/capConeFootprint";
 import { projectedConeRadius } from "../features/map-graphics/projectedConeRadius";
 import { coneDisplayRadius } from "../features/map-graphics/coneDisplayRadius";
 import { CameraConeGraphics } from '../features/map-graphics/CameraConeGraphics';
@@ -175,6 +178,7 @@ import { PendingNoteMarker } from '../features/field-notes/PendingNoteMarker';
 import { createFieldNoteViewerRenderer } from '../features/field-notes/viewerRenderer';
 import { selectViewerFieldNotes } from '../features/field-notes/viewerSelection';
 import type { EnterpriseNotesLoader } from '../features/field-notes/enterpriseList';
+import { loadTimeTravelPreview } from '../features/imagery/timeTravelPreview';
 import { TimeTravelAvailability } from '../features/imagery/timeTravel';
 import { CachedSequencePreview } from '../features/imagery/CachedSequencePreview';
 import { copyCoordinates } from '../services/browser/coordinateClipboard';
@@ -825,6 +829,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _nativeImageAnchorAbort: AbortController | null = null;
   private _nativeImageAnchorKey = '';
   private _clickRippleAnimations: ClickRippleAnimations<__esri.Graphic, __esri.MapView | __esri.SceneView> | null = null;
+  private _nativeCurrentImageMarker: NativeCurrentImageMarker | null = null;
+  private _screenDirectionCone: ScreenDirectionCone | null = null;
   private _cameraCone: CameraConeGraphics<__esri.Graphic, __esri.GraphicsLayer, __esri.MapView | __esri.SceneView> | null = null;
   private _turboMetadataCache = new TurboMetadataCache<any>();
   private _turboTileCache = new TurboTileCache();
@@ -1117,6 +1123,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private coneLengths = [10, 15, 20, 30];
   private zoomStepIndex = 0;
   private _lastBearing: number = 0;
+  private _coneCameraWatch: __esri.WatchHandle | null = null;
   private _coneRedrawRaf: number | null = null;
 
   // Debounced function
@@ -2666,6 +2673,7 @@ private syncMapLegendLayer() {
     this._nativeSequenceSelection.detach();
 
     // Clean up zoom watcher and cancel any pending zoom URL update
+    this._coneCameraWatch?.remove(); this._coneCameraWatch = null;
     if (this.zoomDisplayHandle) {
       this.zoomDisplayHandle.remove();
       this.zoomDisplayHandle = null;
@@ -5691,6 +5699,14 @@ private syncMapLegendLayer() {
   private getCoverageDisplayPosition(imageId: string, lon: number, lat: number): { lon: number; lat: number; geometry?: __esri.Point } {
     const selected = this._coverageSelectionTargets.anchor(this.coverageSelectionContext(), String(imageId));
     return selected ? { lon: selected.lon, lat: selected.lat, geometry: selected.geometry } : { lon, lat };
+  }
+
+  /** Revisit presentation anchoring after startup zoom/style settles; never pick another image. */
+  private refreshActivePulseAnchor(view: __esri.MapView | __esri.SceneView): void {
+    if (this.state.jimuMapView?.view !== view || view.destroyed || view.stationary === false || !this.state.turboModeActive || view.zoom < 14) return;
+    const id = String(this.state.imageId || '');
+    const image = this._liveSequenceFrames.find(id) || this.state.sequenceImages?.find(frame => String(frame.id) === id);
+    if (id && image && Number.isFinite(image.lon) && Number.isFinite(image.lat)) void this.resolveNativeImageAnchor(id, image.lon, image.lat);
   }
 
   /** Resolve only the current image, after opening. Warm bytes/index hits do no
@@ -11323,6 +11339,8 @@ private stopSafePlayback = () => {
     // clearSolarGraphics above already releases the solar map layer through its owner.
     this._elevationProfile?.clear(view, true);
 
+    this._nativeCurrentImageMarker?.clear();
+    this._screenDirectionCone?.clear();
     this._cameraCone?.dispose(view);
 
     this._nativeSequenceSelection.detach();
@@ -11445,6 +11463,7 @@ private stopSafePlayback = () => {
               return;
             }
 
+            this.refreshActivePulseAnchor(view);
             if (this._isFlyInActive) {
               return;
             }
@@ -11478,6 +11497,7 @@ private stopSafePlayback = () => {
      * Remove the previous MapView's watcher before
      * attaching anything to the new 2D/3D view.
      */
+    this._coneCameraWatch?.remove(); this._coneCameraWatch = null;
     if (this.zoomDisplayHandle) {
       this.zoomDisplayHandle.remove();
       this.zoomDisplayHandle = null;
@@ -11528,6 +11548,7 @@ private stopSafePlayback = () => {
         return;
       }
 
+      this.refreshActivePulseAnchor(view);
       this.setState({
         currentZoom: newZoom,
       });
@@ -11535,14 +11556,7 @@ private stopSafePlayback = () => {
       this._debouncedZoomUrlUpdate();
       void this.refreshSequenceMarkerWindow();
 
-      // Share the existing cone frame: zoom events never rebuild imagery or add timers.
-      if (this._coneRedrawRaf == null) this._coneRedrawRaf = requestAnimationFrame(() => {
-        this._coneRedrawRaf = null;
-        if (this.state.jimuMapView?.view !== view || view.destroyed) return;
-        const image = this._liveSequenceFrames.current || this._liveSequenceFrames.find(this.state.imageId);
-        if (image && String(image.id) === String(this.state.imageId))
-          this.drawCone(image.lon, image.lat, this._lastBearing || 0, this.coneLengths[this.zoomStepIndex], this.coneSpreads[this.zoomStepIndex]);
-      });
+      this.requestConeRedraw(view);
 
       /*
        * Keep quality hint behavior.
@@ -11555,6 +11569,8 @@ private stopSafePlayback = () => {
         }
       }
     });
+
+    if (view.type === '3d') this._coneCameraWatch = view.watch('camera', () => this.requestConeRedraw(view));
 
     // Restore manual Turbo Mode or Auto-Initialize if Config is ON
     {
@@ -11579,6 +11595,7 @@ private stopSafePlayback = () => {
             } else {
               await this.enableTurboCoverageLayer();
             }
+            this.refreshActivePulseAnchor(view);
             if (this.state.sequenceId && this._selectionAbort && !this._liveSequenceFrames.complete)
               void this.showCachedSequencePreview(this.state.sequenceId, this._selectionRequestId, this._selectionAbort.signal);
           }
@@ -12032,7 +12049,11 @@ private stopSafePlayback = () => {
     const view = this.state.jimuMapView?.view;
     if (!view || !this.ArcGISModules || !Number.isFinite(lon) || !Number.isFinite(lat)) return null;
     const anchor = this.getCoverageDisplayPosition(String(imageId), lon, lat);
-    const graphic = this.ensureSelectionPulseOwner().show(view, anchor, lon, lat, baseColor, imageId);
+    const graphic = this.ensureSelectionPulseOwner().show(view, anchor, lon, lat, baseColor, imageId, false);
+    {
+      try { this.ensureScreenDirectionCone()?.showMarker(view, anchor.lon, anchor.lat, baseColor, String(imageId)); }
+      catch (error) { console.warn('[Mapillary] Combined marker unavailable; using native marker', error); }
+    }
     if (this.state.turboModeActive && imageId) void this.resolveNativeImageAnchor(String(imageId), lon, lat);
     return graphic;
   }
@@ -12163,6 +12184,8 @@ private stopSafePlayback = () => {
    * Must be called instead of (or before) view.graphics.remove(this.currentConeGraphic).
    */
   private clearConeGraphics() {
+    this._nativeCurrentImageMarker?.hideCone();
+    this._screenDirectionCone?.hideCone();
     this.ensureCameraConeOwner().clear(this.state.jimuMapView?.view);
   }
 
@@ -12171,6 +12194,30 @@ private stopSafePlayback = () => {
     const { jimuMapView } = this.state;
     if (!jimuMapView || !this.ArcGISModules?.GraphicsLayer) return null;
     return this.ensureCameraConeOwner().ensure(jimuMapView.view);
+  }
+
+  private ensureScreenDirectionCone(): ScreenDirectionCone | NativeCurrentImageMarker | null {
+    if (typeof document === 'undefined') return null;
+    if (this.state.jimuMapView?.view.type === '3d') {
+      return this._nativeCurrentImageMarker ??= new NativeCurrentImageMarker(
+        { point: p => new this.ArcGISModules.Point(p), mesh: p => new this.ArcGISModules.Mesh(p),
+          layer: p => new this.ArcGISModules.GraphicsLayer(p), graphic: p => new this.ArcGISModules.Graphic(p),
+          element: () => document.createElement('div') },
+        { request: cb => requestAnimationFrame(cb), cancel: frame => cancelAnimationFrame(frame) },
+        (presented, view) => {
+          if (this._selectionPulse?.view === view && this._selectionPulse.layer && this._selectionPulse.layer.visible === presented)
+            this._selectionPulse.layer.visible = !presented;
+        });
+    }
+    return this._screenDirectionCone ??= new ScreenDirectionCone(
+      properties => new this.ArcGISModules.Point(properties), () => document.createElement('div'),
+      { request: callback => requestAnimationFrame(callback), cancel: frame => cancelAnimationFrame(frame) },
+      (presented, view) => {
+        if (this._selectionPulse?.view === view && this._selectionPulse.layer) {
+          const visible = !presented;
+          if (this._selectionPulse.layer.visible !== visible) this._selectionPulse.layer.visible = visible;
+        }
+      });
   }
 
   /** Bind the SDK factory once; clearing before SDK readiness does not construct a layer. */
@@ -12262,28 +12309,68 @@ private stopSafePlayback = () => {
    * Uses this.ensureConeLayer() with elevationInfo { mode: "relative-to-ground" }
    * so that the cone is always rendered on the terrain surface regardless of elevation.
    */
+  /** Share one pending frame across zoom, camera and existing bearing updates. */
+  private requestConeRedraw(view: __esri.MapView | __esri.SceneView): void {
+    if (this.state.jimuMapView?.view !== view || view.destroyed || this._coneRedrawRaf != null) return;
+    this._coneRedrawRaf = requestAnimationFrame(() => {
+      this._coneRedrawRaf = null;
+      if (this.state.jimuMapView?.view !== view || view.destroyed) return;
+      const image = this._liveSequenceFrames.current || this._liveSequenceFrames.find(this.state.imageId);
+      if (image && String(image.id) === String(this.state.imageId))
+        this.drawCone(image.lon, image.lat, this._lastBearing || 0, this.coneLengths[this.zoomStepIndex], this.coneSpreads[this.zoomStepIndex]);
+    });
+  }
+
   private drawCone(lon: number, lat: number, heading: number, radiusMeters = 5, spreadDeg = 60) {
     const view = this.state.jimuMapView?.view;
     if (!view || !this.ArcGISModules || ![lon, lat, heading, radiusMeters, spreadDeg].every(Number.isFinite) || radiusMeters <= 0 || spreadDeg <= 0 || spreadDeg >= 180) return null;
+    const screenCone = this.ensureScreenDirectionCone();
+    if (screenCone) {
+      const anchor = this.getCoverageDisplayPosition(String(this.state.imageId), lon, lat);
+      if (this._cameraCone?.graphic || this._cameraCone?.parts.length) this._cameraCone.clear(view);
+      try { screenCone.show(view, anchor.lon, anchor.lat, heading, radiusMeters, spreadDeg); }
+      catch (error) { screenCone.clear(); console.warn('[Mapillary] Direction fan unavailable', error); }
+      return null;
+    }
+    // Non-DOM fallback retains the bounded native ground indicator.
     let displayRadius = coneDisplayRadius(radiusMeters, view.zoom);
     const anchor = this.getCoverageDisplayPosition(String(this.state.imageId), lon, lat);
     const center = lonLatToWebMercator(anchor.lon, anchor.lat);
     if (!center) return null;
     if (view.type === "3d") {
       // Sample only currently rendered ground; never fetch heights or touch the pulse.
-      const sampler = (view as any).groundView?.elevationSampler;
       const angle = heading * Math.PI / 180;
       const mercatorScale = 1 / Math.max(0.01, Math.cos(anchor.lat * Math.PI / 180));
       const measured = projectedConeRadius(radiusMeters, metres => {
         try {
           const point = new this.ArcGISModules.Point({ x: center.x + metres * mercatorScale * Math.sin(angle),
             y: center.y + metres * mercatorScale * Math.cos(angle), spatialReference: { wkid: 3857 } });
-          const ground = sampler?.queryElevation(point);
-          if (!ground || !Number.isFinite(ground.z) || ground.z === sampler?.noDataValue) return null;
-          return view.toScreen(ground);
+          const ground = renderedGroundPoint(view, point, properties => new this.ArcGISModules.Point(properties));
+          return ground ? view.toScreen(ground) : null;
         } catch { return null; }
       });
       if (measured !== null) displayRadius = measured;
+    }
+    // A direction indicator must not become a large ground footprint at close zoom.
+    const maxPixels = Math.max(40, Math.min(96, Math.min(view.width || 384, view.height || 384) * 0.25));
+    const scene = view.type === '3d', angle = heading * Math.PI / 180;
+    const mercatorScale = 1 / Math.max(0.01, Math.cos(anchor.lat * Math.PI / 180));
+    const bounded = displayRadius > 0 ? capConeFootprint(displayRadius, spreadDeg, scene, maxPixels, (distance, offset, up) => {
+      try {
+        const theta = angle + offset * Math.PI / 180;
+        const point = new this.ArcGISModules.Point({ x: center.x + distance * mercatorScale * Math.sin(theta), y: center.y + distance * mercatorScale * Math.cos(theta), spatialReference: { wkid: 3857 } });
+        if (!scene) return view.toScreen(point);
+        const ground = renderedGroundPoint(view, point, properties => new this.ArcGISModules.Point(properties));
+        if (!ground) return null;
+        return view.toScreen(new this.ArcGISModules.Point({ x: ground.x, y: ground.y, z: ground.z + up, spatialReference: ground.spatialReference }));
+      } catch { return null; }
+    }) : 0;
+    if (bounded !== null) displayRadius = bounded;
+    else {
+      // Missing terrain/projection: retain a conservative zoom-derived ground cap.
+      const resolution = view.type === '2d' && Number.isFinite(view.resolution) && view.resolution > 0 ? view.resolution : 156543.03392804097 / 2 ** view.zoom;
+      const metresPerPixel = resolution / mercatorScale;
+      if (Number.isFinite(metresPerPixel) && metresPerPixel > 0) displayRadius = Math.min(displayRadius, maxPixels * metresPerPixel / 2);
     }
     if (!displayRadius) { this.clearConeGraphics(); return null; }
     const layer = this.ensureConeLayer();
@@ -12302,6 +12389,8 @@ private stopSafePlayback = () => {
    * its animation interval.
    */
   private clearGreenPulse() {
+    this._nativeCurrentImageMarker?.hideMarker();
+    this._screenDirectionCone?.hideMarker();
     this._nativeImageAnchorAbort?.abort(); this._nativeImageAnchorAbort = null; this._nativeImageAnchorKey = '';
     this.ensureSelectionPulseOwner().dispose();
   }
@@ -12469,6 +12558,8 @@ private stopSafePlayback = () => {
    * 2. Compass Angle Difference < 22.5°.
    * 3. Must be from a different date (to be "Time Travel").
    */
+  private loadTimeTravelPreview = (imageId: string, signal: AbortSignal) => loadTimeTravelPreview(imageId, this.accessToken, signal);
+
   private checkForTimeTravel = (currentImageId: string): Promise<void> => {
     this._timeTravelAvailability ??= new TimeTravelAvailability(() => this.accessToken, (imageId, hasTimeTravel) => {
       if (String(this.state.imageId) === imageId) this.setState({ hasTimeTravel });
@@ -12761,15 +12852,10 @@ private stopSafePlayback = () => {
             is3D={this.state.jimuMapView?.view?.type === "3d"}
             imageId={this.state.imageId}
             sequenceImages={this.state.sequenceImages}
+            loadTimeTravelPreview={this.loadTimeTravelPreview}
             onTimeTravel={(lat, lon, imageId) => {
               const url = `https://www.mapillary.com/app/time-travel?lat=${lat}&lng=${lon}&z=17&pKey=${imageId}&focus=photo`;
-              this.showToast(
-                <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <Icons.TimeTravel style={{ color: "#FFD700", width: 14, height: 14 }} /> Opening Time Travel in new tab...
-                </span>,
-                2000,
-              );
-              setTimeout(() => window.open(url, "_blank"), 2000);
+              window.open(url, "_blank", "noopener,noreferrer");
             }}
             onShare={this.copyShareLink}
             onDownload={this.downloadActiveImage}

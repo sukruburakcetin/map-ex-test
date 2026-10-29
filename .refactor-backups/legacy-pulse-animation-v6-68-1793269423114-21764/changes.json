@@ -1,0 +1,22 @@
+{
+  "installer": "legacy-pulse-animation-v6-68",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "24ff03a46f943e7bc0c3b90d5c433e60d86e30ce5501a79632a88f5728e16d10",
+      "resultSha256": "63c0c424695e6b0b68913447c220421f28c252654b8f02676219d7ffe917b6cd"
+    },
+    {
+      "file": "tests/selectionPulseGround.test.cjs",
+      "originalSha256": "dc099b3629298d83d9bb4f7befd1de687ff5717ef8758f9d6d02ed954903c63d",
+      "resultSha256": "d2cead61995670cede51c90136bf93c61a121ccf9254621a47e1ab58b1774822"
+    },
+    {
+      "file": "docs/LEGACY-PULSE-RESTORE.md",
+      "originalSha256": null,
+      "resultSha256": "f036d9a24360cb49bcaa9e9ca872611b562055befd4b932625dbf582704cc3ef"
+    }
+  ]
+}

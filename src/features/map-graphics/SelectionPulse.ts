@@ -21,6 +21,18 @@ export interface PulseFactories<G, L> {
  overlay(): HTMLDivElement | null;
 }
 
+/** Project only rendered terrain; an explicitly empty Ground is the flat z=0 plane. */
+export function renderedGroundPoint(view: any, geometry: any, createPoint: (properties: any) => any): any | null {
+ try {
+  const sampler = view.groundView?.elevationSampler, ground = sampler?.queryElevation(geometry);
+  if (ground && Number.isFinite(ground.z) && ground.z !== sampler?.noDataValue) return ground;
+  if (view.map?.ground?.layers?.length !== 0) return null;
+  const xy = Number.isFinite(geometry.x) && Number.isFinite(geometry.y)
+   ? { x: geometry.x, y: geometry.y } : { longitude: geometry.longitude, latitude: geometry.latitude };
+  return createPoint({ ...xy, z: 0, spatialReference: geometry.spatialReference });
+ } catch { return null; }
+}
+
 export class SelectionPulse<G extends PulseGraphic, L extends PulseLayer<G>, V extends PulseView<G, L>> {
  layer: L | null = null;
  view: V | null = null;
@@ -35,9 +47,9 @@ export class SelectionPulse<G extends PulseGraphic, L extends PulseLayer<G>, V e
 
  /** Reuse the same image/view pulse without restarting its phase; otherwise replace all owned resources.
   * The caller supplies the WGS84 position and independent coverage anchor. Preserve the original
-  * 1200 ms pulse, screen projection and symbol fallback when a DOM overlay is unavailable.
+  * 1200 ms 2D pulse, screen projection and symbol fallback; 3D uses a steady 12 pt icon.
   */
- show(view: V, anchor: { geometry?: any }, lon: number, lat: number, baseColor: any, imageId: string | null): G {
+ show(view: V, anchor: { geometry?: any }, lon: number, lat: number, baseColor: any, imageId: string | null, animate2D = true): G {
     // Viewer events and route hydration may redraw the same image. Preserve its pulse phase.
     if (this.view === view && this.bindings.graphic &&
         this.bindings.graphic.attributes?.image_id === String(imageId) && this.layer) {
@@ -58,14 +70,14 @@ export class SelectionPulse<G extends PulseGraphic, L extends PulseLayer<G>, V e
       attributes: { image_id: String(imageId) },
       symbol: view.type === "3d" ? {
         type: "point-3d", disableDepthTestDistance: Number.POSITIVE_INFINITY,
-        // A tiny, capped display lift keeps the icon clear of the cone apex.
-        verticalOffset: { screenLength: 2, minWorldLength: 0, maxWorldLength: 0.1 },
-        symbolLayers: [{ type: "icon", resource: { primitive: "circle" }, material: { color: baseColor }, size: 10,
+        symbolLayers: [{ type: "icon", resource: { primitive: "circle" }, material: { color: baseColor }, size: 12,
           outline: { color: "white", size: 2 }, occludedVisibility: { mode: "visible" } }],
       } : { type: "simple-marker", style: "circle", color: baseColor, size: 10, outline: { color: "white", width: 2 } },
     });
     layer.add(graphic);
     this.bindings.graphic = graphic;
+    // Stable 3D baseline validated during diagnostics: no animation or symbol swaps.
+    if (view.type === '3d' || !animate2D) return graphic;
     // SceneView must render the on-the-ground Graphic itself. toScreen projects
     // geometry Z directly and does not apply layer draping, so a DOM pulse can float
     // above terrain. The native icon keeps the pulse aligned while terrain loads.
@@ -81,8 +93,6 @@ export class SelectionPulse<G extends PulseGraphic, L extends PulseLayer<G>, V e
       }
     }
     const started = this.clock.now();
-    let lastSymbolUpdate = -Infinity;
-    let lastSymbolSize = NaN;
     const animate = (now: number) => {
       if (this.bindings.graphic !== graphic || this.view !== view || view.destroyed) return;
       const size = 12 - 2 * Math.cos((now - started) * Math.PI * 2 / 1200);
@@ -94,20 +104,7 @@ export class SelectionPulse<G extends PulseGraphic, L extends PulseLayer<G>, V e
         if (visible) { overlay.style.left = `${pixel.x}px`; overlay.style.top = `${pixel.y}px`; overlay.style.width = `${size}px`; overlay.style.height = `${size}px`; }
       } else {
         const symbol = graphic.symbol as any;
-        if (view.type === "3d") {
-          // Graphic redraws reliably when its symbol is reassigned. Mutating a
-          // nested icon alone can leave SceneView displaying the initial size.
-          // Keep the same Graphic/anchor and bound symbol updates to ~30 Hz.
-          const nextSize = Math.round(size * 10) / 10;
-          if (now - lastSymbolUpdate >= 32 && nextSize !== lastSymbolSize) {
-            const next = typeof symbol.clone === "function" ? symbol.clone()
-              : { ...symbol, symbolLayers: symbol.symbolLayers.map((icon: any) => ({ ...icon })) };
-            const icon = next.symbolLayers.getItemAt?.(0) || next.symbolLayers[0];
-            icon.size = nextSize;
-            graphic.symbol = next;
-            lastSymbolUpdate = now; lastSymbolSize = nextSize;
-          }
-        } else symbol.size = size;
+        symbol.size = size;
       }
       (graphic as any)._pulseFrame = this.clock.request(animate);
     };
@@ -134,3 +131,4 @@ export class SelectionPulse<G extends PulseGraphic, L extends PulseLayer<G>, V e
     this.layer = null; this.view = null;
   }
 }
+

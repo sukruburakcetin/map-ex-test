@@ -1,0 +1,27 @@
+{
+  "installer": "unified-current-image-marker-v6-86",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/ScreenDirectionCone.ts",
+      "originalSha256": "7c777094ec981062f18e81fcfb81ae42e8310d3f514f62eb74cea387849cdf99",
+      "resultSha256": "8a8668025a907b938be4dff854a2484887f52aef4ed39a0bcc6147314cf2f54c"
+    },
+    {
+      "file": "tests/screenDirectionCone.test.cjs",
+      "originalSha256": "cfefd1cd86ddf11367b6115ee324376c2b18c159ba33bef735d9ed5c97688f68",
+      "resultSha256": "b10eebc09f3c3a8367cb794a907de081b017f3897ad696a3fabe7a14003ae08d"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "94204ead897820e88c2b493be629d0a8fe7141796332c35c28ec4121c7a70246",
+      "resultSha256": "4aad6391bb5c7052acdaff6f668dfdcf25a5ce5085a354e87a5bada0ea6a1985"
+    },
+    {
+      "file": "docs/UNIFIED-CURRENT-IMAGE-MARKER.md",
+      "originalSha256": null,
+      "resultSha256": "c57d6f3596c5e1be93cc38bef46b344f658dcd4b77cbe741e8b6950d9a3c36bd"
+    }
+  ]
+}

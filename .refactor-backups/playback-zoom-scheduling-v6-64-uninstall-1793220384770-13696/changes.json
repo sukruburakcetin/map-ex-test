@@ -1,0 +1,32 @@
+{
+  "installer": "playback-zoom-scheduling-v6-64",
+  "uninstall": true,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "70de718f4d1d119d652235a384e2d22c05d1fc439a7f5057b35106bb81819891",
+      "resultSha256": "3fc60ab223a80b7402a22d15022d2b81a7fe2e3e26734bb05081b6e62b650b4c"
+    },
+    {
+      "file": "tests/imageFollowPolicy.test.cjs",
+      "originalSha256": "7470e64212070847b663c63c952522cbe20f7314472a890ca274b9c8421c8157",
+      "resultSha256": "eff251a36f20fa72b39bd0818910f2d26b1c4e34e088169a49711a81a5f41556"
+    },
+    {
+      "file": "src/features/imagery/PlaybackZoomUi.ts",
+      "originalSha256": "bd79a46f993e72aaf9f1e621ed1ea9c52f319b46536414b934dfdbe08c7fd9a4",
+      "resultSha256": null
+    },
+    {
+      "file": "tests/playbackZoomUi.test.cjs",
+      "originalSha256": "70548e05b4d44f8fffb5d24d83fb702e439f7dc92781ce274c52a90fff50e5c5",
+      "resultSha256": null
+    },
+    {
+      "file": "docs/PLAYBACK-ZOOM.md",
+      "originalSha256": "1ed727349de20ddbefd02e5faf31f33807aa9ebcaa1b2876024d0485cda6e572",
+      "resultSha256": null
+    }
+  ]
+}

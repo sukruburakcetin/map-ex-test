@@ -1,0 +1,32 @@
+{
+  "installer": "clean-marker-consistent-cone-v6-83",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/SelectionPulse.ts",
+      "originalSha256": "95cea6d5c8a52570cba6e7daf0fd4734e08f69b44adc2328cfe46083d3c8e162",
+      "resultSha256": "806d06cff035a567775e58ce34a7c9411ec084072c3cc40363bd19010c2e6a06"
+    },
+    {
+      "file": "src/features/map-graphics/projectedConeRadius.ts",
+      "originalSha256": "89f803512a0170fc99716b5c8b991c1054ade0083f01f75e7269dbcb64950d5c",
+      "resultSha256": "718724a2261b8cbd56ab5d6212691b7bea9383c709605a59464a8302407aa654"
+    },
+    {
+      "file": "tests/selectionPulseGround.test.cjs",
+      "originalSha256": "1de2d93aa66c6da0dbe1ed91d6ade71eeeb1faf7971a8ff22e1a65adca60980f",
+      "resultSha256": "e4fdce0e97337d7f664c4e48bde79ee7ff0868ab3517dd96b950f376f064e1d5"
+    },
+    {
+      "file": "tests/projectedConeRadius.test.cjs",
+      "originalSha256": "d7226f1f6d5602699f44a6f9220dd743c965b545780527f48ce5d9e545c4ab87",
+      "resultSha256": "8468ea300854ee007c531efa734685d4d9d2c72d9e04d6792e8bdebf9259099c"
+    },
+    {
+      "file": "docs/CLEAN-MARKER-CONSISTENT-CONE.md",
+      "originalSha256": null,
+      "resultSha256": "b25df63523b253855e127f6d4242e81ad83a9ba58f66d839d24c3fc0139d8868"
+    }
+  ]
+}

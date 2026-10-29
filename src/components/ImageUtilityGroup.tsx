@@ -1,12 +1,16 @@
 /** @jsx jsx */
 import { React, jsx } from "jimu-core";
 import ReactDOM from "react-dom";
+import { TimeTravelPreview } from "./TimeTravelPreview";
 import { utilityDockCss } from '../styles/controlPanels';
 import * as Icons from "./Icons";
 import { ImageUtilityGroupProps } from "./types";
 
 /** Compact viewer actions. SDK work remains in the supplied runtime callbacks. */
 export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
+    const [travelOpen, setTravelOpen] = React.useState(false);
+    const travelTrigger = React.useRef<HTMLButtonElement>(null);
+    const closeTravel = React.useCallback(() => { setTravelOpen(false); travelTrigger.current?.focus(); }, []);
     const [open, setOpen] = React.useState<"more" | "cloud" | null>(null);
     const [collapsed, setCollapsed] = React.useState(() => {
         try { return sessionStorage.getItem('mly-utility-collapsed-v1') === '1'; } catch { return false; }
@@ -42,7 +46,7 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
     React.useLayoutEffect(() => { if (mobile && collapsed) setOpen(null); }, [mobile, collapsed]);
 
 
-    React.useLayoutEffect(() => { setOpen(null); }, [props.imageId, props.is3D]);
+    React.useLayoutEffect(() => { setOpen(null); setTravelOpen(false); }, [props.imageId, props.is3D, props.hideTimeTravel]);
     React.useEffect(() => { if ((open === "more" && !hasMore) || (open === "cloud" && !cloudMode)) setOpen(null); }, [open, hasMore, cloudMode]);
     React.useLayoutEffect(() => {
         if (!open || !trigger.current || !menu.current || !dock.current) return;
@@ -97,8 +101,8 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
         {props.mapFollowEnabled && <button type="button" className="utility-button" aria-label="Lock to image" aria-pressed={!!props.lockToImage}
             title={props.lockToImage ? 'Lock to image on · Click to follow only outside the map' : 'Keep image in view · Click to lock to image'}
             onClick={props.onToggleImageLock}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d={props.lockToImage ? 'M8 10V6a4 4 0 0 1 8 0v4' : 'M8 10V6a4 4 0 0 1 8 0'}/></svg></button>}
-        {!props.hideTimeTravel && props.hasTimeTravel && <button type="button" className="utility-button" title="Explore images from other dates" aria-label="Time travel" disabled={!currentImage}
-            onClick={() => { if (currentImage && props.imageId) props.onTimeTravel(currentImage.lat, currentImage.lon, props.imageId); }}><Icons.TimeTravel size={16}/></button>}
+        {!props.hideTimeTravel && props.hasTimeTravel && <button ref={travelTrigger} type="button" className="utility-button" aria-haspopup="dialog" aria-expanded={travelOpen} title="Explore images from other dates" aria-label="Time travel" disabled={!currentImage}
+            onClick={() => { if (currentImage && props.imageId) { if (props.loadTimeTravelPreview) { setOpen(null); setTravelOpen(true); } else props.onTimeTravel(currentImage.lat, currentImage.lon, props.imageId); } }}><Icons.TimeTravel size={16}/></button>}
         {hasNavigation && hasSceneTools && <span className="mly-dock-divider" aria-hidden="true"/>}
         {props.is3D && !props.hideSyncHeadingButton && <button type="button" className="utility-button" aria-label="Follow camera heading" aria-pressed={props.syncHeading}
             title={props.syncHeading ? 'Follow camera heading · Click to keep north fixed' : 'Follow camera heading'} onClick={props.onToggleSyncHeading}>{props.syncHeading ? <Icons.CompassLocked/> : <Icons.CompassUnlocked/>}</button>}
@@ -124,6 +128,8 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
             </svg>
             {collapsed && toolsActive && <span className="mly-dock-collapsed-active" aria-hidden="true"/>}
         </button>}
+        {travelOpen && props.imageId && props.loadTimeTravelPreview && <TimeTravelPreview key={props.imageId} imageId={props.imageId} load={props.loadTimeTravelPreview} onClose={closeTravel}
+            onExternal={() => { if (currentImage && props.imageId) props.onTimeTravel(currentImage.lat, currentImage.lon, props.imageId); }}/>}
         {open && ((open === "more" && hasMore) || (open === "cloud" && cloudMode)) && ReactDOM.createPortal(<div ref={menu} id={menuId} role="dialog" aria-label={open === "cloud" ? "Point-cloud mode" : "More image actions"} className="mly-utility-popover" style={{ ...position, position: 'fixed', zIndex: 2147483000 }}>
             {open === "more" && !props.hideShareButton && <button type="button" onClick={() => { close(true); props.onShare(); }}><Icons.Share size={15}/><span>Share view</span></button>}
             {open === "more" && !props.hideImageDownload && <button type="button" disabled={props.isDownloading} onClick={() => { close(true); props.onDownload(); }}><Icons.Download size={15}/><span>{props.isDownloading ? 'Downloading image…' : 'Download image'}</span></button>}
