@@ -2,13 +2,17 @@
 import { React, jsx } from 'jimu-core';
 
 const filterPanelCss = `
-.mly-filter-panel { display:flex; align-items:center; gap:3px; width:100%; max-width:100%; min-width:0; height:38px; flex:0 0 38px; box-sizing:border-box; padding:2px 3px; background:linear-gradient(135deg,#142d26,#10231e); color:#e1f2e8; pointer-events:auto; z-index:10001; }
-.mly-filter-scroll-wrap { position:relative; flex:1 1 0; min-width:0; height:32px; }
-.mly-filter-panel .mly-filter-scroll { width:100%; min-width:0; height:30px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none !important; -ms-overflow-style:none; overscroll-behavior-x:contain; touch-action:pan-x pan-y; }
+.mly-filter-panel { display:flex; align-items:center; gap:3px; width:100%; max-width:100%; min-width:0; height:42px; flex:0 0 42px; box-sizing:border-box; padding:2px 3px; background:linear-gradient(135deg,#142d26,#10231e); color:#e1f2e8; pointer-events:auto; z-index:10001; }
+.mly-filter-scroll-wrap { position:relative; flex:1 1 0; min-width:0; height:36px; }
+.mly-filter-panel .mly-filter-scroll { width:100%; min-width:0; height:28px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none !important; -ms-overflow-style:none; overscroll-behavior-x:contain; touch-action:pan-x pan-y; }
 .mly-filter-panel .mly-filter-scroll::-webkit-scrollbar { display:none !important; width:0 !important; height:0 !important; }
 .mly-filter-panel .mly-filter-scroll::-webkit-scrollbar-button { display:none !important; width:0 !important; height:0 !important; }
-.mly-filter-progress { position:absolute; left:0; right:0; bottom:0; height:2px; overflow:hidden; pointer-events:none; border-radius:1px; background:rgba(106,167,133,.10); }
-.mly-filter-progress > span { display:block; position:absolute; top:0; height:2px; border-radius:1px; background:#548b70; }
+.mly-filter-progress { position:absolute; left:0; right:0; bottom:0; height:8px; cursor:pointer; touch-action:none; border-radius:2px; outline-offset:0; }
+.mly-filter-progress::before { content:""; position:absolute; left:0; right:0; top:3px; height:2px; background:rgba(106,167,133,.18); border-radius:1px; }
+.mly-filter-progress > span { display:block; position:absolute; top:3px; height:2px; border-radius:1px; background:#548b70; cursor:grab; }
+.mly-filter-progress:active > span { cursor:grabbing; }
+.mly-filter-progress:focus-visible { outline:1px solid #76dba5; }
+
 .mly-filter-scroll:focus-visible, .mly-filter-panel button:focus-visible, .mly-filter-panel input:focus-visible, .mly-filter-panel select:focus-visible { outline:2px solid #76dba5 !important; outline-offset:-2px; }
 .mly-filter-row { display:flex; align-items:center; justify-content:center; gap:5px; width:max-content; min-width:100%; height:28px; box-sizing:border-box; }
 .mly-filter-group { display:flex; align-items:center; gap:6px; flex:0 0 auto; height:28px; padding:0 4px; box-sizing:border-box; border:1px solid #416756; border-radius:6px; background:#1b392d; }
@@ -36,6 +40,7 @@ export const FilterScrollRegion: React.FC<{ children: React.ReactNode }> = ({ ch
   const viewport = React.useRef<HTMLDivElement>(null);
   const row = React.useRef<HTMLDivElement>(null);
   const progressThumb = React.useRef<HTMLSpanElement>(null);
+  const progressTrack = React.useRef<HTMLDivElement>(null);
   const [id] = React.useState(() => `mly-filter-scroll-${++nextFilterScrollId}`);
   const [edges, setEdges] = React.useState({ overflow: false, left: false, right: false });
   React.useEffect(() => {
@@ -44,11 +49,15 @@ export const FilterScrollRegion: React.FC<{ children: React.ReactNode }> = ({ ch
     const win = el.ownerDocument.defaultView;
     const update = () => {
       const end = Math.max(0, el.scrollWidth - el.clientWidth);
-      // Update the two-pixel decoration directly; scrolling does not rerender filters.
+      // Keep the two-pixel visual thumb and ARIA values synchronized without rerendering filters.
+      const trackWidth = progressTrack.current?.clientWidth || el.clientWidth;
+      const thumbWidth = Math.min(trackWidth, Math.max(16, trackWidth * el.clientWidth / Math.max(1, el.scrollWidth)));
       if (progressThumb.current) {
-        progressThumb.current.style.width = `${el.scrollWidth ? Math.min(1, el.clientWidth / el.scrollWidth) * 100 : 100}%`;
-        progressThumb.current.style.left = `${el.scrollWidth ? Math.max(0, Math.min(end, el.scrollLeft)) / el.scrollWidth * 100 : 0}%`;
+        progressThumb.current.style.width = `${thumbWidth}px`;
+        progressThumb.current.style.left = `${end ? Math.max(0, Math.min(end, el.scrollLeft)) / end * (trackWidth - thumbWidth) : 0}px`;
       }
+      progressTrack.current?.setAttribute('aria-valuemax', String(Math.round(end)));
+      progressTrack.current?.setAttribute('aria-valuenow', String(Math.round(el.scrollLeft)));
       const next = { overflow: end > 1, left: el.scrollLeft > 1, right: el.scrollLeft < end - 1 };
       setEdges(old => old.overflow === next.overflow && old.left === next.left && old.right === next.right ? old : next);
     };
@@ -63,12 +72,62 @@ export const FilterScrollRegion: React.FC<{ children: React.ReactNode }> = ({ ch
       if (Math.abs(next - el.scrollLeft) < .5) return;
       event.preventDefault(); event.stopPropagation(); el.scrollLeft = next;
     };
+    // Pointer capture keeps thumb dragging active outside the thin visual track.
+    // The 8px hit area sits below controls; only the painted bar remains 2px tall.
+    const track = progressTrack.current;
+    let drag: { id: number; x: number; scroll: number; ratio: number } | null = null;
+    const down = (event: PointerEvent) => {
+      if (!track || drag || event.isPrimary === false || (event.pointerType === 'mouse' && event.button !== 0)) return;
+      const end = Math.max(0, el.scrollWidth - el.clientWidth);
+      const bounds = track.getBoundingClientRect();
+      const thumb = progressThumb.current;
+      const thumbWidth = thumb?.getBoundingClientRect().width || 0;
+      const travel = bounds.width - thumbWidth;
+      if (end <= 0 || travel <= 0) return;
+      event.preventDefault(); event.stopPropagation();
+      if (event.target !== thumb) el.scrollLeft = Math.max(0, Math.min(end, (event.clientX - bounds.left - thumbWidth / 2) / travel * end));
+      drag = { id: event.pointerId, x: event.clientX, scroll: el.scrollLeft, ratio: end / travel };
+      try { track.setPointerCapture(event.pointerId); } catch { /* Detached hosts cannot capture. */ }
+      update();
+    };
+    const pointerMove = (event: PointerEvent) => {
+      if (!drag || drag.id !== event.pointerId) return;
+      event.preventDefault(); event.stopPropagation();
+      el.scrollLeft = drag.scroll + (event.clientX - drag.x) * drag.ratio;
+      update();
+    };
+    const endDrag = (event: PointerEvent) => {
+      if (!drag || drag.id !== event.pointerId) return;
+      drag = null; event.stopPropagation();
+      try { if (track?.hasPointerCapture(event.pointerId)) track.releasePointerCapture(event.pointerId); } catch { /* Host teardown. */ }
+    };
+    const trackKey = (event: KeyboardEvent) => {
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
+      const amount = event.key === 'ArrowLeft' ? -40 : event.key === 'ArrowRight' ? 40
+        : event.key === 'PageUp' ? -el.clientWidth : event.key === 'PageDown' ? el.clientWidth : null;
+      if (amount === null && event.key !== 'Home' && event.key !== 'End') return;
+      event.preventDefault(); event.stopPropagation();
+      el.scrollLeft = event.key === 'Home' ? 0 : event.key === 'End' ? el.scrollWidth : el.scrollLeft + (amount || 0);
+      update();
+    };
+    track?.addEventListener('pointerdown', down);
+    track?.addEventListener('pointermove', pointerMove);
+    track?.addEventListener('pointerup', endDrag);
+    track?.addEventListener('pointercancel', endDrag);
+    track?.addEventListener('lostpointercapture', endDrag);
+    track?.addEventListener('keydown', trackKey);
+    track?.addEventListener('wheel', wheel, { passive: false });
     el.addEventListener('scroll', update, { passive: true });
     el.addEventListener('wheel', wheel, { passive: false });
     const observer = win?.ResizeObserver ? new win.ResizeObserver(update) : null;
     observer?.observe(el); observer?.observe(content);
     win?.addEventListener('resize', update); update();
     return () => {
+      if (drag) { try { if (track?.hasPointerCapture(drag.id)) track.releasePointerCapture(drag.id); } catch { /* Detached track. */ } drag = null; }
+      track?.removeEventListener('pointerdown', down); track?.removeEventListener('pointermove', pointerMove);
+      track?.removeEventListener('pointerup', endDrag); track?.removeEventListener('pointercancel', endDrag);
+      track?.removeEventListener('lostpointercapture', endDrag); track?.removeEventListener('keydown', trackKey);
+      track?.removeEventListener('wheel', wheel);
       el.removeEventListener('scroll', update); el.removeEventListener('wheel', wheel);
       observer?.disconnect(); win?.removeEventListener('resize', update);
     };
@@ -87,7 +146,7 @@ export const FilterScrollRegion: React.FC<{ children: React.ReactNode }> = ({ ch
       if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); move(event.key === 'ArrowLeft' ? -1 : 1); }
       else if (event.key === 'Home' || event.key === 'End') { event.preventDefault(); el.scrollTo({ left: event.key === 'Home' ? 0 : el.scrollWidth, behavior: 'smooth' }); }
     }}><div ref={row} className="mly-filter-row">{children}</div></div>
-    <div className="mly-filter-progress" aria-hidden="true" style={{ display: edges.overflow ? 'block' : 'none' }}><span ref={progressThumb} /></div>
+    <div ref={progressTrack} className="mly-filter-progress" role="scrollbar" aria-label="Scroll filters horizontally" aria-orientation="horizontal" aria-controls={id} aria-valuemin={0} tabIndex={0} style={{ display: edges.overflow ? 'block' : 'none' }}><span ref={progressThumb} /></div>
     </div>
     {edges.overflow && <button type="button" className="mly-filter-nav" aria-label="Scroll filters right" aria-controls={id} disabled={!edges.right} onClick={() => move(1)}>›</button>}
   </div>;

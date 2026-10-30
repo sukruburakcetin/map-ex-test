@@ -63,13 +63,13 @@ export const CoverageAnalysisResults: React.FC<CoverageAnalysisResultsProps> = p
 
                   const row = (color: string, label: string, age: string, pct: number, km: number) => (
                     <div style={coverageResultsTierRowStyle}>
-                      <div style={coverageResultsTierLineStyle}>
-                        <div style={coverageResultsTierLabelGroupStyle}>
+                      <div className="mly-coverage-tier-line" style={coverageResultsTierLineStyle}>
+                        <div className="mly-coverage-tier-label" style={coverageResultsTierLabelGroupStyle}>
                           <div style={getCoverageResultsTierDotStyle(color)} />
                           <span style={coverageResultsTierLabelStyle}>{label}</span>
                           <span style={coverageResultsTierAgeStyle}>{age}</span>
                         </div>
-                        <span style={coverageResultsTierPercentStyle}>{pct}%</span>
+                        <span className="mly-coverage-tier-percent" style={coverageResultsTierPercentStyle}>{pct}%</span>
                       </div>
                       <div style={coverageResultsTierDistanceStyle}>{km} km</div>
                     </div>

@@ -49,7 +49,9 @@ export const coverageResultsPanelStyle: React.CSSProperties = {
     border: "1px solid rgba(30, 144, 255, 0.3)",
     backdropFilter: "blur(5px)",
     pointerEvents: "auto",
-    width: "96px",
+    width: "100%",
+    minWidth: 0,
+    maxWidth: "100%",
     boxSizing: "border-box",
 };
 export const coverageResultsHeaderStyle: React.CSSProperties = {

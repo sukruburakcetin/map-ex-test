@@ -1,0 +1,42 @@
+{
+  "installer": "panel-spacing-scrollbar",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/styles/infoBox.ts",
+      "operation": "update",
+      "originalSha256": "87b5766415654a8993d5223cd4a59d7357461dcdfb028c9897dd54abdd38bcef",
+      "resultSha256": "c8e39e1a9a3f3fb8290128f0a2a18a256df5cb7ac5e1fdb7550bb2ca41738e0f"
+    },
+    {
+      "file": "src/components/FilterScrollRegion.tsx",
+      "operation": "update",
+      "originalSha256": "638b764debf3234c74ea67300e48dc6c7240b09a42240621317c8d56e7debb0c",
+      "resultSha256": "afcf444e0f164833ebda26ed46bc46025a8f869e4f2f34fe38119950e4fd8ca9"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudToolSections.tsx",
+      "operation": "update",
+      "originalSha256": "ceb3d49f8bb37d6ec18b45a293593e093b406d4bb75e5029b2176753b3fbaaf7",
+      "resultSha256": "edd2077a5ad9d14392f08f08c5cd4bef56ddd9f59e40f0a925291285de12cb4a"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudCalibrationControls.tsx",
+      "operation": "update",
+      "originalSha256": "c4cfd31c8e1ea5aaea044197ea153f602f14849d0606467aa365b037a9824db8",
+      "resultSha256": "9f22e8df7c1207bdcd8b96fb422680a2ab72e6051b0a1e6a4ba13e8f88371b80"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "c44b87615832d989694520644aa8b6e0308ba7e2304b93c476871b63ba25f16d",
+      "resultSha256": "f53aac6bf35360e7466af7d4e6a0eb864082df3d36118c0e26ebc2bf88ce28e8"
+    },
+    {
+      "file": "tests/panelControls.browser.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "279abe29f09d1af41f4e2a3cd26368c277518d84f9f87d8d4d3e75d94ff55fa2"
+    }
+  ]
+}

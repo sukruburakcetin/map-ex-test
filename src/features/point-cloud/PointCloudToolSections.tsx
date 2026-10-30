@@ -18,9 +18,9 @@ export const PointCloudMeasureTools: React.FC<PointCloudMeasureToolsProps> = ({ 
                 title="Toggle 3D Tape Measure"
                 style={cloudToolToggleStyle}
               >
-                <span style={cloudMeasureHeadingStyle(isMeasureMode)}>
+                <span className="mly-tool-heading" style={cloudMeasureHeadingStyle(isMeasureMode)}>
                   <Icons.Measure size={12} style={cloudToolIconStyle} />
-                  MEASURE
+                  <span className="mly-tool-text">MEASURE</span>
                 </span>
                 <div
                   style={cloudMeasureTrackStyle(isMeasureMode)}
@@ -63,12 +63,12 @@ export const PointCloudLassoTools: React.FC<PointCloudLassoToolsProps> = ({ isLa
                 title="Toggle Lasso Point Selection"
                 style={cloudToolToggleStyle}
               >
-                <span style={cloudLassoHeadingStyle(isLassoMode)}>
+                <span className="mly-tool-heading" style={cloudLassoHeadingStyle(isLassoMode)}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={cloudToolIconStyle}>
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM12 22c-5.52 0-10-4.48-10-10S6.48 2 12 2s10 4.48 10 10-4.48 10-10 10z" />
                     <circle cx="12" cy="12" r="3" fill="currentColor" />
                   </svg>
-                  LASSO
+                  <span className="mly-tool-text">LASSO</span>
                 </span>
                 <div
                   style={cloudLassoTrackStyle(isLassoMode)}
@@ -107,9 +107,9 @@ export const PointCloudSightTools: React.FC<PointCloudSightToolsProps> = ({ isSi
                 title="Toggle 3D Line of Sight"
                 style={cloudToolToggleStyle}
               >
-                <span style={cloudSightHeadingStyle(isSightMode)}>
+                <span className="mly-tool-heading" style={cloudSightHeadingStyle(isSightMode)}>
                   <Icons.Eye size={12} style={cloudToolIconStyle} />
-                  SIGHT
+                  <span className="mly-tool-text">SIGHT</span>
                 </span>
                 <div
                   style={cloudSightTrackStyle(isSightMode)}
@@ -151,9 +151,9 @@ export const PointCloudViewshedTools: React.FC<PointCloudViewshedToolsProps> = (
                 title="Toggle 3D Viewshed (Blind Spot) Analysis"
                 style={cloudToolToggleStyle}
               >
-                <span style={cloudViewshedHeadingStyle(isViewshedMode)}>
+                <span className="mly-tool-heading" style={cloudViewshedHeadingStyle(isViewshedMode)}>
                   <Icons.Viewshed size={12} style={cloudToolIconStyle} />
-                  VIEWSHED
+                  <span className="mly-tool-text">VIEWSHED</span>
                 </span>
                 <div
                   style={cloudViewshedTrackStyle(isViewshedMode)}

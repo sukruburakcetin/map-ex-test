@@ -260,7 +260,9 @@ export function getRouteExtraTimeValueStyle(extraDurationMinutes: number, reques
 /** Preserved waypoint controls remain usable independently of coverage-analysis results. */
 export const routePointsCardStyle: React.CSSProperties = {
     marginTop: "4px",
-    width: "96px",
+    width: "100%",
+    minWidth: 0,
+    maxWidth: "100%",
     padding: "4px",
     boxSizing: "border-box",
     background: "rgba(20, 20, 20, 0.65)",

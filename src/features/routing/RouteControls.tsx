@@ -93,7 +93,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
       {/* Runtime Routing Engine */}
       {runtimeRoutingEngine && (
         <div
-          style={routeChoiceRowStyle}
+          className="mly-route-choice" style={routeChoiceRowStyle}
         >
           <span
             style={routeChoiceLabelStyle}
@@ -124,7 +124,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
       {/* Runtime Travel Mode */}
       {runtimeTravelMode && (
         <div
-          style={routeChoiceRowStyle}
+          className="mly-route-choice" style={routeChoiceRowStyle}
         >
           <span
             style={routeChoiceLabelStyle}
@@ -163,7 +163,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
       {!routeData ? (
         <div style={routeDraftStyle}>
           {/* Point A and B Selection Buttons */}
-          <div style={routePointButtonsStyle}>
+          <div className="mly-route-pick-buttons" style={routePointButtonsStyle}>
             <button
               onClick={() => onSetRoutePickMode?.(routePickMode === "start" ? null : "start")}
               title="Select Start Point (A) on map"
@@ -229,7 +229,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
            * --------------------------------------------------------
            */}
           <div
-            style={routeResultHeaderStyle}
+            className="mly-route-metric-row" style={routeResultHeaderStyle}
           >
             <span>A ➔ B CAPTURE</span>
 
@@ -283,7 +283,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
            */}
           {routeData.targetRealizationPercent != null && (
             <div
-              style={routeRealizationStyle}
+              className="mly-route-metric-row" style={routeRealizationStyle}
             >
               <span
                 style={routeMutedLabelStyle}
@@ -355,7 +355,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
            */}
           {routeData.extraDurationMinutes != null && routeData.requestedExtraMinutes != null && (
             <div
-              style={routeExtraTimeStyle}
+              className="mly-route-metric-row" style={routeExtraTimeStyle}
             >
               <span
                 style={routeExtraTimeLabelStyle}
@@ -380,7 +380,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
            * --------------------------------------------------------
            */}
           <div
-            style={routeResultActionsStyle}
+            className="mly-route-result-actions" style={routeResultActionsStyle}
           >
             <button
               onClick={onDownloadRouteGPX}

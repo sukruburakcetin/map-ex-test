@@ -21,9 +21,9 @@ export const PointCloudCalibrationControls: React.FC<PointCloudCalibrationContro
                 title="Calibrate Point Cloud GPS Drift"
                 style={calibrationToggleStyle}
               >
-                <span style={calibrationHeadingStyle(showCalibrationPanel)}>
+                <span className="mly-tool-heading" style={calibrationHeadingStyle(showCalibrationPanel)}>
                   <Icons.Crosshair size={12} style={calibrationIconStyle} />
-                  CALIBRATE
+                  <span className="mly-tool-text">CALIBRATE</span>
                 </span>
                 <div style={calibrationDisclosureStyle}>{showCalibrationPanel ? "▼" : "▲"}</div>
               </button>

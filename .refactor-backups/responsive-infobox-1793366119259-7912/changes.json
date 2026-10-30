@@ -1,0 +1,60 @@
+{
+  "installer": "responsive-infobox",
+  "uninstall": false,
+  "changes": [
+    {
+      "file": "src/styles/infoBox.ts",
+      "operation": "update",
+      "originalSha256": "5f229b961645b821ae0cae8306f5b632bcd597dd0c2705566322e6b5561dbbe2",
+      "resultSha256": "87b5766415654a8993d5223cd4a59d7357461dcdfb028c9897dd54abdd38bcef"
+    },
+    {
+      "file": "src/styles/coverageAnalysis.ts",
+      "operation": "update",
+      "originalSha256": "1144214ecc90ed63ab3487be57da80f0de974433ded204613d6c4b1c42e52924",
+      "resultSha256": "c432eebe584899f2b745bf2d159a699fb718cf9bb499256b5e18dda8fe8274c5"
+    },
+    {
+      "file": "src/styles/routing.ts",
+      "operation": "update",
+      "originalSha256": "e7891548db5e2a0c54456b1633e134a49f940cbfd73d1c4afeb4bad4e792fe88",
+      "resultSha256": "de1378e471140b110f51830a80dec659eacfff2bfe0405459eb5f7c2d4d6e7e2"
+    },
+    {
+      "file": "src/features/coverage/CoverageAnalysisResults.tsx",
+      "operation": "update",
+      "originalSha256": "2a442e9537ef6f27c31fee607e3233da48f1d58a5c7da499124b644e3d3700e6",
+      "resultSha256": "784c34b849b789e2a09f8863e9a020d1271ff38bbb9985d54f0e62998b24c313"
+    },
+    {
+      "file": "src/features/routing/RouteControls.tsx",
+      "operation": "update",
+      "originalSha256": "aa6ac9c84242cc91d449d13225adc48f7633b6eb32212aa62ec41852af50731e",
+      "resultSha256": "8f48f5cd3d05b216465b2c3dca60ea2ed4a463cbc5ebcce3a5d8ec2f8472a9fa"
+    },
+    {
+      "file": "src/components/info-box/ScrollDiscoveryFooter.tsx",
+      "operation": "update",
+      "originalSha256": "e223d321cd2a01b5359fe879bc9ba448f2a70e9d61cd72394d6afc0326a3b5ff",
+      "resultSha256": "b4221a8b73578ac08f77f967bea80babb8fbb09055c73eaee6c98508103b8674"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "operation": "update",
+      "originalSha256": "bec1345a1ca0096895a7fd70b2f6b787c8928efa24eac660781c31f0ecb608ae",
+      "resultSha256": "c44b87615832d989694520644aa8b6e0308ba7e2304b93c476871b63ba25f16d"
+    },
+    {
+      "file": "tests/infoBoxFooter.test.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "414e3495c8816b682d359b3ac0d1306ac56e467a45d827a26e0d41e9792325ae"
+    },
+    {
+      "file": "tests/infoBoxLayout.browser.cjs",
+      "operation": "create",
+      "originalSha256": null,
+      "resultSha256": "dba5db82aafc5892dd52ba27f528fce6a6b55db818485ae30400c182023328aa"
+    }
+  ]
+}
