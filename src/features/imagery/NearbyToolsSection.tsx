@@ -1,5 +1,6 @@
 /** @jsx jsx */
 /** Nearby-capture trigger presentation. Discovery, playback scheduling and tray state remain parent-owned. */
+import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 import * as Icons from '../../components/Icons';
 import type { InfoBoxProps } from '../../components/types';
@@ -9,23 +10,24 @@ export type NearbyToolsSectionProps = Pick<InfoBoxProps, 'nearbyCount' | 'nearby
 
 /** Forward the tray toggle without effects or requests; InfoBox retains its image-selected visibility guard. */
 export const NearbyToolsSection: React.FC<NearbyToolsSectionProps> = props => {
+ const { t, locale } = useWidgetLocale();
+
   const { nearbyCount, nearbyLoading, nearbyStripOpen, onToggleNearbyStrip } = props;
   return (
     <div
       style={nearbyToolsSectionStyle}
     >
       <button
-        type="button" aria-label="Nearby images" aria-expanded={!!nearbyStripOpen}
+        type="button" aria-label={t('uiNearbyImages')} aria-expanded={!!nearbyStripOpen}
         onClick={onToggleNearbyStrip}
-        title="Show captures nearby"
+        title={t('uiShowCapturesNearby')}
         style={nearbyToolsButtonStyle}
       >
         <span
           style={getNearbyToolsLabelStyle(nearbyStripOpen)}
         >
           <Icons.Camera size={9} />
-          Nearby
-          {nearbyLoading ? (
+           {t('uiNearby')} {nearbyLoading ? (
             <span style={nearbyToolsLoadingStyle}>…</span>
           ) : nearbyCount != null && nearbyCount > 0 ? (
             <span

@@ -1,0 +1,102 @@
+{
+  "installer": "english-turkish-pilot-v6-101",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "e9dd780c94366fe8b6f6c847b474da4caba465bafc15aa8d4c027c7b5794c06e",
+      "resultSha256": "1e214c45048712eb5e70582206d79a57664f337d95130ce0440723df136994c0"
+    },
+    {
+      "file": "src/components/ImageUtilityGroup.tsx",
+      "originalSha256": "f2d910bdd1925d41c136622b77523a69b23fe6c8db109458f01601967922c741",
+      "resultSha256": "e9767271ad630bff42b5cdbba7cabf846bb8df7cb95453dedd157513ef0fae3a"
+    },
+    {
+      "file": "src/components/FilterBar.tsx",
+      "originalSha256": "7fc489c3b6d3e11a912cf6949c20bb82b07d24496aa694d13632e56163735dae",
+      "resultSha256": "dacb3b4ecae85451afb5a48d733cc309d6a91b574dce0bfbb4ea672cfa0a4978"
+    },
+    {
+      "file": "src/components/FilterScrollRegion.tsx",
+      "originalSha256": "d9e2d724005a2219ae39ca546da0cd142f677e6d02a56d0da25bcb00198f2362",
+      "resultSha256": "02b68aefd6633141347f524b95af8ba19f2d59d24c50e919f4664bed643a361d"
+    },
+    {
+      "file": "src/components/TimeTravelPreview.tsx",
+      "originalSha256": "dad0cf98fa2b283bdc8e2ef98bdc241d4ce6a959d28ef9a1dff4fe53fec468cd",
+      "resultSha256": "0a999d3666ef62b66adb9c13e60650f5ef2ce1f10828778d4b62c4ec3edcc927"
+    },
+    {
+      "file": "src/components/GlassDatePicker.tsx",
+      "originalSha256": "08a42646cf1bc2d6647f36434f8e3d44ef1a644df92923736db48edaabeda13d",
+      "resultSha256": "d8ddce13a70610d02338e8c0cb7888dce0c0a8aeb8710c55175c8f355d3c495b"
+    },
+    {
+      "file": "src/config.ts",
+      "originalSha256": "02475ca8aeb94036231958eca956d819a0d2ee8c4fd3ab4485de8275913585c3",
+      "resultSha256": "5eb8a653a796aa2e485a0963a903c84b0f6187dc9e1fb5a48a393efd3b399d4a"
+    },
+    {
+      "file": "config.json",
+      "originalSha256": "04407502f04c2c3c7b50f57a34b918189c7db829e5e1c6321031bbc0396b44ad",
+      "resultSha256": "e2ecc142545019d5533a9a7da452c629f87f21e8cda5412ed85d40a61d3fe4b1"
+    },
+    {
+      "file": "src/setting/setting.tsx",
+      "originalSha256": "e575c9b0b3a4208b2cc032f9e306ecdbb99fa644b2d24068e053fdff0f6b0f52",
+      "resultSha256": "0874c6fca34269e4538e3c17576dd51ed55b9c5d4f0c0067d6a89b4e1f1018f7"
+    },
+    {
+      "file": "src/i18n/messages.ts",
+      "originalSha256": null,
+      "resultSha256": "7d31c32470e77f5aa4defdbb2748ea9083e7b6ba5a11e49ffcf0144b8d3a3fb8"
+    },
+    {
+      "file": "src/i18n/core.ts",
+      "originalSha256": null,
+      "resultSha256": "43212f88644d733199a135d726d3e16c2fca4c3fb1553ec27caf6574bff897f2"
+    },
+    {
+      "file": "src/i18n/WidgetLocale.tsx",
+      "originalSha256": null,
+      "resultSha256": "055507cdb8f135b101ef29110155de3fb6f0658b884266283081fc1de5b75e8a"
+    },
+    {
+      "file": "src/i18n/locales/tr.ts",
+      "originalSha256": null,
+      "resultSha256": "7990b43bd5514e50428e31f3e8ef0718a44c5078cf9ed5390fddcd71e8f29d44"
+    },
+    {
+      "file": "tests/localizationCatalog.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "74ad752f9455492338d381e1aff0c17cac5eb22f5ad7a9c47c83a58f414e9177"
+    },
+    {
+      "file": "docs/localization/ENGLISH-TURKISH-PILOT.md",
+      "originalSha256": null,
+      "resultSha256": "742db4f3be65dd48370562d3fe2d42a39c5cd6546b7901315b81e8d98a0feebb"
+    },
+    {
+      "file": "docs/localization/GLOSSARY.md",
+      "originalSha256": null,
+      "resultSha256": "6845aef46f6c1e2a5347c6814e020db378d2c30cbcba6cb728c76436550119b7"
+    },
+    {
+      "file": "src/i18n/settingsMessages.ts",
+      "originalSha256": null,
+      "resultSha256": "c9a6378d5363abfd365b5b295425c26591a97e711551eec36555278de535a188"
+    },
+    {
+      "file": "src/i18n/SettingsLocale.tsx",
+      "originalSha256": null,
+      "resultSha256": "9210e1602760be924dcf6a62c7c76412294ad5d94957297c8ac305a26d11a05b"
+    },
+    {
+      "file": "src/i18n/locales/settings-tr.ts",
+      "originalSha256": null,
+      "resultSha256": "0afbcd2fa0f9c3ef9af39a7928ca38ef5bb070bc3d2494c87d95f5341dcebfe9"
+    }
+  ]
+}

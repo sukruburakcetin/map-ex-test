@@ -1,4 +1,6 @@
 {
+  "widgetLanguage": "auto",
+  "allowUserLanguageChoice": true,
   "mapillaryAccessToken": "",
   "turboModeOnly": true,
   "coverageLayerAlwaysOn": true,

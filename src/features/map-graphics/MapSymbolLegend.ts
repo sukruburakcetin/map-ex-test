@@ -12,7 +12,7 @@ export class MapSymbolLegend<L extends SymbolLegendLayer, V extends SymbolLegend
   layer: L | null = null;
   private map: NonNullable<SymbolLegendView<L>["map"]> | null = null;
   private readonly createLayer: (properties: any) => L;
-  constructor(createLayer: (properties: any) => L) { this.createLayer = createLayer; }
+  constructor(createLayer: (properties: any) => L, private readonly l10n: Presentation = englishPresentation) { this.createLayer = createLayer; }
 
   /** Reuse the current view's legend or create its empty client-side FeatureLayer.
    * Widget ID scopes the layer identity; missing IDs retain the existing explorer fallback.
@@ -25,18 +25,18 @@ export class MapSymbolLegend<L extends SymbolLegendLayer, V extends SymbolLegend
     if (this.layer) return;
     // Empty client-side layer: legend renderer only, no coverage feature copies.
     this.layer = this.createLayer({
-      id: `mapillary-symbol-legend-${widgetId || "explorer"}`, title: "Mapillary Explorer Symbols",
+      id: `mapillary-symbol-legend-${widgetId || "explorer"}`, title: this.l10n.text("Mapillary Explorer Symbols"),
       source: [], fields: [{ name: "OBJECTID", type: "oid" }, { name: "symbol_role", type: "string" }],
       objectIdField: "OBJECTID", geometryType: "point", spatialReference: { wkid: 4326 },
       popupEnabled: false, legendEnabled: true,
       renderer: { type: "unique-value", field: "symbol_role", defaultSymbol: null,
         uniqueValueInfos: [
-          { value: "active", label: "Active Image", symbol: { type: "simple-marker", color: "#00ff00", size: 9, outline: { color: "white", width: 1 } } },
-          { value: "sequence", label: "Nearby Frames", symbol: { type: "simple-marker", color: "blue", size: 7, outline: { color: "yellow", width: 1 } } },
-          { value: "hover", label: "Hovered Image", symbol: { type: "simple-marker", color: "brown", size: 7, outline: { color: "white", width: 1 } } },
-          { value: "first", label: "First Selected Image", symbol: { type: "simple-marker", color: [0,0,0,0], size: 7, outline: { color: "cyan", width: 1.5 } } },
-          { value: "next", label: "Next Frame", symbol: { type: "simple-marker", color: "yellow", size: 7, outline: { color: "orange", width: 1 } } },
-          { value: "note", label: "Field Note", symbol: { type: "simple-marker", style: "diamond", color: "#f5a623", size: 7, outline: { color: "white", width: 1 } } },
+          { value: "active", label: this.l10n.text("Active Image"), symbol: { type: "simple-marker", color: "#00ff00", size: 9, outline: { color: "white", width: 1 } } },
+          { value: "sequence", label: this.l10n.text("Nearby Frames"), symbol: { type: "simple-marker", color: "blue", size: 7, outline: { color: "yellow", width: 1 } } },
+          { value: "hover", label: this.l10n.text("Hovered Image"), symbol: { type: "simple-marker", color: "brown", size: 7, outline: { color: "white", width: 1 } } },
+          { value: "first", label: this.l10n.text("First Selected Image"), symbol: { type: "simple-marker", color: [0,0,0,0], size: 7, outline: { color: "cyan", width: 1.5 } } },
+          { value: "next", label: this.l10n.text("Next Frame"), symbol: { type: "simple-marker", color: "yellow", size: 7, outline: { color: "orange", width: 1 } } },
+          { value: "note", label: this.l10n.text("Field Note"), symbol: { type: "simple-marker", style: "diamond", color: "#f5a623", size: 7, outline: { color: "white", width: 1 } } },
         ] },
     });
     this.map = map;
@@ -50,6 +50,16 @@ export class MapSymbolLegend<L extends SymbolLegendLayer, V extends SymbolLegend
   /** Remove the legend from the original owning view, then destroy its layer.
    * Callers keep the existing clear order on view changes, hideLegend and widget teardown.
    */
+  refreshLocale(): void {
+    const layer = this.layer as any;
+    if (!layer) return;
+    layer.title = this.l10n.text('Mapillary Explorer Symbols');
+    const renderer = layer.renderer?.clone?.() || layer.renderer;
+    if (!renderer?.uniqueValueInfos) return;
+    const labels: Record<string,string> = {active:'Active Image',sequence:'Nearby Frames',hover:'Hovered Image',first:'First Selected Image',next:'Next Frame',note:'Field Note'};
+    renderer.uniqueValueInfos = renderer.uniqueValueInfos.map((entry:any)=>({...entry,label:this.l10n.text(labels[entry.value] || entry.label)}));
+    layer.renderer = renderer;
+  }
   clear(): void {
     const layer = this.layer, map = this.map;
     this.layer = null; this.map = null;
@@ -58,4 +68,5 @@ export class MapSymbolLegend<L extends SymbolLegendLayer, V extends SymbolLegend
       finally { layer.destroy(); }
     }
   }
-}
+}import { Presentation, englishPresentation } from '../../i18n/PresentationText';
+

@@ -1,6 +1,8 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 /** Routing controls and extra-time picker UI. Route services, analysis and waypoint state remain parent-owned. */
+import { OwnedMessage } from '../../i18n/WidgetLocale';
+import { useWidgetLocale, WidgetLocaleContext } from '../../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 import ReactDOM from 'react-dom';
 import type { InfoBoxProps } from '../../components/types';
@@ -13,6 +15,9 @@ interface ExtraTimePickerProps {
 }
 
 class ExtraTimePicker extends React.PureComponent<ExtraTimePickerProps, { open: boolean }> {
+ static contextType = WidgetLocaleContext;
+ declare context: React.ContextType<typeof WidgetLocaleContext>;
+
   state = { open: false };
   private trigger = React.createRef<HTMLButtonElement>();
   private menu = React.createRef<HTMLDivElement>();
@@ -62,20 +67,20 @@ class ExtraTimePicker extends React.PureComponent<ExtraTimePickerProps, { open: 
     const { value, disabled, onChange } = this.props;
     const stepStyle: React.CSSProperties = { background: "none", border: "none", color: "white", fontSize: "8px", padding: "2px 3px", cursor: disabled ? "default" : "pointer" };
     return <div style={{ display: "flex", alignItems: "center", gap: "2px", minWidth: 0 }}>
-      <button type="button" aria-label="Decrease extra time by 5 minutes" disabled={disabled || value <= 5} onClick={() => onChange?.(Math.max(5, value - 5))} style={{ ...stepStyle, opacity: disabled || value <= 5 ? 0.4 : 1 }}>−</button>
-      <button type="button" ref={this.trigger} aria-haspopup="dialog" aria-expanded={this.state.open && !disabled} aria-label={`Extra time: ${value} minutes. Choose a preset`} title="Added travel time beyond the direct A → B route" disabled={disabled}
+      <button type="button" aria-label={this.context.t('uiDecreaseExtraTimeBy5Minutes')} disabled={disabled || value <= 5} onClick={() => onChange?.(Math.max(5, value - 5))} style={{ ...stepStyle, opacity: disabled || value <= 5 ? 0.4 : 1 }}>−</button>
+      <button type="button" ref={this.trigger} aria-haspopup="dialog" aria-expanded={this.state.open && !disabled} aria-label={this.context.t('uiExtraPreset',{minutes:value})} title={this.context.t('uiAddedTravelTimeBeyondTheDirectAB')} disabled={disabled}
         onClick={() => this.setState({ open: !this.state.open }, () => { if (this.state.open) (this.menu.current?.querySelector<HTMLButtonElement>("button[aria-pressed='true']") || this.menu.current?.querySelector<HTMLButtonElement>("button[data-preset]"))?.focus(); })}
-        style={{ background: "rgba(243,156,18,0.09)", border: "1px solid rgba(243,156,18,0.3)", borderRadius: "3px", color: "#f39c12", fontSize: "6.5px", fontWeight: 700, whiteSpace: "nowrap", padding: "2px 3px", cursor: disabled ? "default" : "pointer" }}>{value} min</button>
-      <button type="button" aria-label="Increase extra time by 5 minutes" disabled={disabled || value >= 120} onClick={() => onChange?.(Math.min(120, value + 5))} style={{ ...stepStyle, opacity: disabled || value >= 120 ? 0.4 : 1 }}>+</button>
+        style={{ background: "rgba(243,156,18,0.09)", border: "1px solid rgba(243,156,18,0.3)", borderRadius: "3px", color: "#f39c12", fontSize: "6.5px", fontWeight: 700, whiteSpace: "nowrap", padding: "2px 3px", cursor: disabled ? "default" : "pointer" }}>{value}  {this.context.t('uiMin')} </button>
+      <button type="button" aria-label={this.context.t('uiIncreaseExtraTimeBy5Minutes')} disabled={disabled || value >= 120} onClick={() => onChange?.(Math.min(120, value + 5))} style={{ ...stepStyle, opacity: disabled || value >= 120 ? 0.4 : 1 }}>+</button>
       {this.state.open && !disabled && ReactDOM.createPortal(
-        <div ref={this.menu} role="dialog" aria-label="Choose extra route time" style={{ ...this.position(), background: "#142126", color: "#fff", border: "1px solid rgba(243,156,18,0.3)", borderRadius: "8px", padding: "8px", boxShadow: "0 6px 24px rgba(0,0,0,0.45)", fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+        <div ref={this.menu} role="dialog" aria-label={this.context.t('uiChooseExtraRouteTime')} style={{ ...this.position(), background: "#142126", color: "#fff", border: "1px solid rgba(243,156,18,0.3)", borderRadius: "8px", padding: "8px", boxShadow: "0 6px 24px rgba(0,0,0,0.45)", fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-            <span style={{ fontSize: "11px", fontWeight: 600 }}>Extra time · {value} min</span>
-            <button type="button" aria-label="Close extra time presets" onClick={() => this.close(true)} style={{ background: "none", border: "none", color: "#bac7cb", width: "28px", height: "28px", cursor: "pointer", fontSize: "18px" }}>×</button>
+            <span style={{ fontSize: "11px", fontWeight: 600 }}> {this.context.t('uiExtraTime')} {value}  {this.context.t('uiMin')} </span>
+            <button type="button" aria-label={this.context.t('uiCloseExtraTimePresets')} onClick={() => this.close(true)} style={{ background: "none", border: "none", color: "#bac7cb", width: "28px", height: "28px", cursor: "pointer", fontSize: "18px" }}>×</button>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "4px" }}>
             {[15, 30, 45, 60, 90, 120].map(minutes => <button key={minutes} type="button" data-preset aria-pressed={value === minutes} disabled={disabled} onClick={() => { onChange?.(minutes); this.close(true); }}
-              style={{ minHeight: "44px", padding: "4px", borderRadius: "5px", border: `1px solid ${value === minutes ? "#f39c12" : "rgba(255,255,255,0.14)"}`, background: value === minutes ? "rgba(243,156,18,0.16)" : "rgba(255,255,255,0.04)", color: value === minutes ? "#f6bc58" : "#e3eaed", fontSize: "12px", fontWeight: value === minutes ? 700 : 500, cursor: "pointer" }}>{minutes} min</button>)}
+              style={{ minHeight: "44px", padding: "4px", borderRadius: "5px", border: `1px solid ${value === minutes ? "#f39c12" : "rgba(255,255,255,0.14)"}`, background: value === minutes ? "rgba(243,156,18,0.16)" : "rgba(255,255,255,0.04)", color: value === minutes ? "#f6bc58" : "#e3eaed", fontSize: "12px", fontWeight: value === minutes ? 700 : 500, cursor: "pointer" }}>{minutes}  {this.context.t('uiMin')} </button>)}
           </div>
         </div>, document.fullscreenElement || document.body)}
     </div>;
@@ -87,6 +92,8 @@ export type RouteControlsProps = Pick<InfoBoxProps, 'runtimeRoutingEngine' | 'is
 
 /** Render route drafting/progress/results and forward original callbacks; no requests or route calculation occur here. */
 export const RouteControls: React.FC<RouteControlsProps> = props => {
+ const { t, locale , owned} = useWidgetLocale();
+
   const { runtimeRoutingEngine, isGeneratingRoute, onChangeRuntimeRoutingEngine, runtimeTravelMode, onChangeRuntimeTravelMode, travelModeAvailability, routeData, routePickMode, onSetRoutePickMode, routeStartPoint, routeEndPoint, onResetRoutePoints, routeSpareMinutes, onChangeSpareMinutes, onGenerateRoute, routeGenerationProgress, onDownloadRouteGPX } = props;
   return (
     <div className="mly-route-controls" style={routeControlsStyle}>
@@ -98,8 +105,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
           <span
             style={routeChoiceLabelStyle}
           >
-            Engine:
-          </span>
+             {t('uiEngine')} </span>
 
           <select
             value={runtimeRoutingEngine}
@@ -112,12 +118,10 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
             style={getRouteEngineSelectStyle(isGeneratingRoute)}
           >
             <option value="world" style={routeOptionStyle}>
-              Esri World
-            </option>
+               {t('uiEsriWorld')} </option>
 
             <option value="osrm" style={routeOptionStyle}>
-              OSRM
-            </option>
+               {t('uiOsrm')} </option>
           </select>
         </div>
       )}
@@ -129,8 +133,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
           <span
             style={routeChoiceLabelStyle}
           >
-            Mode:
-          </span>
+             {t('uiMode')} </span>
 
           <div
             style={routeModeGroupStyle}
@@ -146,15 +149,14 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
               style={getRouteModeSelectStyle(isGeneratingRoute)}
             >
               <option value="drive" disabled={travelModeAvailability ? !travelModeAvailability.drive : false} style={routeOptionStyle}>
-                🚗 Drive
-              </option>
+                 {t('uiDrive')} </option>
 
               <option value="walk" disabled={travelModeAvailability ? !travelModeAvailability.walk : false} style={routeOptionStyle}>
-                {travelModeAvailability && !travelModeAvailability.walk ? "🚶 Walk - Esri only" : "🚶 Walk"}
+                {travelModeAvailability && !travelModeAvailability.walk ? t('uiWalkEsriOnly') : t('uiWalk')}
               </option>
 
               <option value="bike" disabled={travelModeAvailability ? !travelModeAvailability.bike : false} style={routeOptionStyle}>
-                {travelModeAvailability && !travelModeAvailability.bike ? "🚲 Bike - unavailable" : "🚲 Bike"}
+                {travelModeAvailability && !travelModeAvailability.bike ? t('uiBikeUnavailable') : t('uiBike')}
               </option>
             </select>
           </div>
@@ -166,18 +168,18 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
           <div className="mly-route-pick-buttons" style={routePointButtonsStyle}>
             <button
               onClick={() => onSetRoutePickMode?.(routePickMode === "start" ? null : "start")}
-              title="Select Start Point (A) on map"
+              title={t('uiSelectStartPointAOnMap')}
               style={getRouteStartButtonStyle(routePickMode, !!routeStartPoint)}
             >
-              {routePickMode === "start" ? "Click..." : routeStartPoint ? "A: ✓" : "A: Pick"}
+              {routePickMode === "start" ? t('uiClick') : routeStartPoint ? t('uiA') : t('uiAPick')}
             </button>
 
             <button
               onClick={() => onSetRoutePickMode?.(routePickMode === "end" ? null : "end")}
-              title="Select Destination Point (B) on map"
+              title={t('uiSelectDestinationPointBOnMap')}
               style={getRouteEndButtonStyle(routePickMode, !!routeEndPoint)}
             >
-              {routePickMode === "end" ? "Click..." : routeEndPoint ? "B: ✓" : "B: Pick"}
+              {routePickMode === "end" ? t('uiClick') : routeEndPoint ? t('uiB') : t('uiBPick')}
             </button>
           </div>
 
@@ -185,16 +187,15 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
           {(routeStartPoint || routeEndPoint) && (
             <button
               onClick={onResetRoutePoints}
-              title="Clear A and B route points"
+              title={t('uiClearAAndBRoutePoints')}
               style={routeClearPointsStyle}
             >
-              ✕ Clear A / B
-            </button>
+               {t('uiClearAB')} </button>
           )}
 
           {/* Extra time beyond the direct A to B route */}
-          <div title="Added travel time beyond the direct A → B route" style={routeBudgetStyle}>
-            <span style={routeBudgetLabelStyle} title="Extra Time">ET</span>
+          <div title={t('uiAddedTravelTimeBeyondTheDirectAB')} style={routeBudgetStyle}>
+            <span style={routeBudgetLabelStyle} title={t('uiExtraTime2')}> {t('uiEt')} </span>
             <ExtraTimePicker value={routeSpareMinutes ?? 15} disabled={!!isGeneratingRoute} onChange={onChangeSpareMinutes} />
           </div>
 
@@ -212,9 +213,9 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
             <span style={routeGenerateLabelStyle}>
               {isGeneratingRoute
                 ? routeGenerationProgress
-                  ? `Routing... ${Math.round((routeGenerationProgress.usedMinutes / routeGenerationProgress.budgetMinutes) * 100)}%`
-                  : "Routing..."
-                : "Generate Route"}
+                  ? <OwnedMessage source={"Routing... {value0}%"} values={{value0:String(Math.round((routeGenerationProgress.usedMinutes / routeGenerationProgress.budgetMinutes) * 100))}}/>
+                  : t('uiRouting')
+                : t('uiGenerateRoute')}
             </span>
           </button>
         </div>
@@ -231,13 +232,12 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
           <div
             className="mly-route-metric-row" style={routeResultHeaderStyle}
           >
-            <span>A ➔ B CAPTURE</span>
+            <span> {t('uiABCapture')} </span>
 
             <span
               style={routeResultDurationStyle}
             >
-              {Math.round(routeData.duration / 60)} min
-            </span>
+              {Math.round(routeData.duration / 60)}  {t('uiMin')} </span>
           </div>
 
           {/*
@@ -248,8 +248,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
           <div
             style={routeResultDistanceStyle}
           >
-            {(routeData.distance / 1000).toFixed(1)} km
-          </div>
+            {(routeData.distance / 1000).toFixed(1)}  {t('uiKm')} </div>
 
           {/*
            * --------------------------------------------------------
@@ -258,14 +257,13 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
            */}
           {routeData.usefulCoverageMeters != null && (
             <div
-              title={"Selected missing/stale road traversed by " + "the final route that was not already covered " + "by the normal A → B baseline."}
+              title={owned("Selected missing/stale road traversed by") + owned("the final route that was not already covered") + owned("by the normal A → B baseline.")}
               style={routeUsefulCoverageStyle}
             >
               <div
                 style={routeMetricLabelStyle}
               >
-                USEFUL NEW COVERAGE
-              </div>
+                 {t('uiUsefulNewCoverage')} </div>
 
               <div
                 style={routeUsefulDistanceStyle}
@@ -288,8 +286,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
               <span
                 style={routeMutedLabelStyle}
               >
-                Target realization
-              </span>
+                 {t('uiTargetRealization')} </span>
 
               <span
                 style={routeMetricValueStyle}
@@ -309,14 +306,13 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
           >
             {routeData.incrementalNoneMeters != null && (
               <div
-                title="New useful coverage on roads with no current Mapillary coverage."
+                title={t('uiNewUsefulCoverageOnRoadsWithNoCurrent')}
                 style={routeMissingStyle}
               >
                 <div
                   style={routeMissingLabelStyle}
                 >
-                  MISSING
-                </div>
+                   {t('uiMissing')} </div>
 
                 <div
                   style={routeBreakdownValueStyle}
@@ -329,14 +325,13 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
 
             {routeData.incrementalStaleMeters != null && (
               <div
-                title="New useful coverage on stale Mapillary road coverage."
+                title={t('uiNewUsefulCoverageOnStaleMapillaryRoadCoverage')}
                 style={routeStaleStyle}
               >
                 <div
                   style={routeStaleLabelStyle}
                 >
-                  STALE
-                </div>
+                   {t('uiStale')} </div>
 
                 <div
                   style={routeBreakdownValueStyle}
@@ -360,8 +355,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
               <span
                 style={routeExtraTimeLabelStyle}
               >
-                Extra time
-              </span>
+                 {t('uiExtraTime3')} </span>
 
               <span
                 style={getRouteExtraTimeValueStyle(routeData.extraDurationMinutes, routeData.requestedExtraMinutes)}
@@ -369,7 +363,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
                 {routeData.extraDurationMinutes.toFixed(0)}
                 {" / "}
                 {routeData.requestedExtraMinutes.toFixed(0)}
-                {" min"}
+                {<OwnedMessage source={"min"}/>}
               </span>
             </div>
           )}
@@ -386,12 +380,11 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
               onClick={onDownloadRouteGPX}
               style={routeGpxStyle}
             >
-              ⬇️ GPX
-            </button>
+               {t('uiGpx')} </button>
 
             <button
               onClick={onResetRoutePoints}
-              title={"Clear route and A/B waypoints"}
+              title={owned("Clear route and A/B waypoints")}
               style={routeResetStyle}
             >
               ✕
@@ -408,6 +401,8 @@ export type RoutePointControlsProps = Pick<InfoBoxProps, 'routeStartPoint' | 'ro
 
 /** Display preserved A/B points and forward reset; InfoBox owns visibility after results clear or map switches. */
 export const RoutePointControls: React.FC<RoutePointControlsProps> = props => {
+ const { t, locale , owned} = useWidgetLocale();
+
   const { routeStartPoint, routeEndPoint, onResetRoutePoints } = props;
   return (
     <div
@@ -417,8 +412,7 @@ export const RoutePointControls: React.FC<RoutePointControlsProps> = props => {
       <div
         style={routePointsHeadingStyle}
       >
-        ROUTE POINTS
-      </div>
+         {t('uiRoutePoints')} </div>
 
       {/* A / B status */}
       <div
@@ -427,24 +421,23 @@ export const RoutePointControls: React.FC<RoutePointControlsProps> = props => {
         <div
           style={getRoutePointAStyle(!!routeStartPoint)}
         >
-          A {routeStartPoint ? "✓" : "—"}
+           {t('uiA2')} {routeStartPoint ? "✓" : "—"}
         </div>
 
         <div
           style={getRoutePointBStyle(!!routeEndPoint)}
         >
-          B {routeEndPoint ? "✓" : "—"}
+           {t('uiB2')} {routeEndPoint ? "✓" : "—"}
         </div>
       </div>
 
       {/* Remove preserved A/B points */}
       <button
         onClick={onResetRoutePoints}
-        title="Remove A and B route points"
+        title={t('uiRemoveAAndBRoutePoints')}
         style={routePointsClearStyle}
       >
-        ✕ Clear A / B
-      </button>
+         {t('uiClearAB')} </button>
     </div>
   );
 };

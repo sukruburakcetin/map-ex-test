@@ -1,0 +1,37 @@
+{
+  "installer": "language-startup-v6-105",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/i18n/WidgetLocale.tsx",
+      "originalSha256": "0073bef4ac221d06fff9e41ea42d4d1a08b23b95fe322993785ff7cebf166e41",
+      "resultSha256": "9418ccf94f1c37e7d449f8200e9ef7adef1a4be5ba8ece455c82550f831a0353"
+    },
+    {
+      "file": "src/i18n/SettingsLocale.tsx",
+      "originalSha256": "8f4e9b3e1717cb3e0962ed40aa01d142723849b26691e110a0a6eac27cb09baa",
+      "resultSha256": "c7deda14aab42b301f6c7eda376cd8d2e1072d9ab6fd522cdf8aeb5becbbef17"
+    },
+    {
+      "file": "src/setting/setting.tsx",
+      "originalSha256": "9c548ac0de8bf2c3ea2fa66c8ca113b0f42b6bc3483c2e7c433d22152b927909",
+      "resultSha256": "d483874d00dddd3502a79fc9b4eedc6549c905eeb38b6c92aabfe812ac5ccdc1"
+    },
+    {
+      "file": "tests/localizationCatalog.test.cjs",
+      "originalSha256": "a65d016950d346a583378ef151358069c42b60301f8095351ff0cdddefa3d2ce",
+      "resultSha256": "815148765b05952184417f6c946e69d055791cca2be1adc16808aa5215ef04af"
+    },
+    {
+      "file": "src/i18n/startupMessages.ts",
+      "originalSha256": null,
+      "resultSha256": "e7d07c4eee7a290978f3b431f62351c03c11fd4218c84b0a51f18c94e5b22f6b"
+    },
+    {
+      "file": "docs/localization/STARTUP-v6.105.md",
+      "originalSha256": null,
+      "resultSha256": "87ae1e5507a28e7f67a5400a9c7fde6694b29fbb199339663ac162a129a37225"
+    }
+  ]
+}

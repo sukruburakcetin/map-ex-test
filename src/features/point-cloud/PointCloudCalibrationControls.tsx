@@ -1,4 +1,5 @@
 /** @jsx jsx */
+import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 import * as Icons from '../../components/Icons';
 import type { InfoBoxProps } from '../../components/types';
@@ -12,18 +13,18 @@ export type PointCloudCalibrationControlsProps = Pick<InfoBoxProps, 'showCalibra
  * Runtime owns alignment offsets and scene updates. InfoBox retains cloud visibility and supplies
  * the existing shared joystick style for compatibility with legacy style layouts.
  */
-export const PointCloudCalibrationControls: React.FC<PointCloudCalibrationControlsProps> = ({ showCalibrationPanel, nudgeStep, onToggleCalibrationPanel, onJoystickNudge, onResetCalibration, onSetNudgeStep, miniJoyStyle }) => (
+export const PointCloudCalibrationControls: React.FC<PointCloudCalibrationControlsProps> = ({ showCalibrationPanel, nudgeStep, onToggleCalibrationPanel, onJoystickNudge, onResetCalibration, onSetNudgeStep, miniJoyStyle }) => { const { t, locale } = useWidgetLocale(); return (
 <div
               style={calibrationPanelStyle(showCalibrationPanel)}
             >
               <button
                 onClick={onToggleCalibrationPanel}
-                title="Calibrate Point Cloud GPS Drift"
+                title={t('uiCalibratePointCloudGpsDrift')}
                 style={calibrationToggleStyle}
               >
                 <span className="mly-tool-heading" style={calibrationHeadingStyle(showCalibrationPanel)}>
                   <Icons.Crosshair size={12} style={calibrationIconStyle} />
-                  <span className="mly-tool-text">CALIBRATE</span>
+                  <span className="mly-tool-text"> {t('uiCalibrate')} </span>
                 </span>
                 <div style={calibrationDisclosureStyle}>{showCalibrationPanel ? "▼" : "▲"}</div>
               </button>
@@ -33,11 +34,9 @@ export const PointCloudCalibrationControls: React.FC<PointCloudCalibrationContro
                   {/* Step size toggle */}
                   <div style={calibrationStepsStyle}>
                     <label style={calibrationFineStepStyle(nudgeStep)}>
-                      <input type="radio" checked={nudgeStep === 0.1} onChange={() => onSetNudgeStep?.(0.1)} style={calibrationHiddenRadioStyle} /> 0.1m
-                    </label>
+                      <input type="radio" checked={nudgeStep === 0.1} onChange={() => onSetNudgeStep?.(0.1)} style={calibrationHiddenRadioStyle} />  {t('ui01m')} </label>
                     <label style={calibrationCoarseStepStyle(nudgeStep)}>
-                      <input type="radio" checked={nudgeStep === 1.0} onChange={() => onSetNudgeStep?.(1.0)} style={calibrationHiddenRadioStyle} /> 1.0m
-                    </label>
+                      <input type="radio" checked={nudgeStep === 1.0} onChange={() => onSetNudgeStep?.(1.0)} style={calibrationHiddenRadioStyle} />  {t('ui10m')} </label>
                   </div>
 
                   {/* Micro D-Pad */}
@@ -51,11 +50,10 @@ export const PointCloudCalibrationControls: React.FC<PointCloudCalibrationContro
                       ◀
                     </button>
                     <button
-                      onClick={onResetCalibration}
+                      title={t('uiResetCalibration')} aria-label={t('uiResetCalibration')} onClick={onResetCalibration}
                       style={calibrationResetStyle(miniJoyStyle)}
                     >
-                      RST
-                    </button>
+                       {t('uiRst')} </button>
                     <button onClick={() => onJoystickNudge?.("x", 1)} style={miniJoyStyle}>
                       ▶
                     </button>
@@ -69,13 +67,11 @@ export const PointCloudCalibrationControls: React.FC<PointCloudCalibrationContro
                   {/* Vertical Z-controls */}
                   <div style={calibrationVerticalRowStyle}>
                     <button onClick={() => onJoystickNudge?.("z", -1)} style={calibrationVerticalButtonStyle(miniJoyStyle)}>
-                      ▼ Z
-                    </button>
+                       {t('uiZ')} </button>
                     <button onClick={() => onJoystickNudge?.("z", 1)} style={calibrationVerticalButtonStyle(miniJoyStyle)}>
-                      ▲ Z
-                    </button>
+                       {t('uiZ2')} </button>
                   </div>
                 </div>
               )}
             </div>
-);
+); };

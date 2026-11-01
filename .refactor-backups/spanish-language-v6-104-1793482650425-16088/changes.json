@@ -1,0 +1,62 @@
+{
+  "installer": "spanish-language-v6-104",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/i18n/core.ts",
+      "originalSha256": "43212f88644d733199a135d726d3e16c2fca4c3fb1553ec27caf6574bff897f2",
+      "resultSha256": "bab22273a950ff3fe446647765050e077949b95698f7d91ba9dae3feab0fa5c5"
+    },
+    {
+      "file": "src/i18n/WidgetLocale.tsx",
+      "originalSha256": "e2f69e4bd9824e555dc54fa80bcd540584f08d808993c615607a4f35b5b1b214",
+      "resultSha256": "0073bef4ac221d06fff9e41ea42d4d1a08b23b95fe322993785ff7cebf166e41"
+    },
+    {
+      "file": "src/i18n/SettingsLocale.tsx",
+      "originalSha256": "1a2d35634535c0b12f631c51b835e654cb0a4b0508ce73f63090a01aaf306c1d",
+      "resultSha256": "8f4e9b3e1717cb3e0962ed40aa01d142723849b26691e110a0a6eac27cb09baa"
+    },
+    {
+      "file": "src/config.ts",
+      "originalSha256": "5eb8a653a796aa2e485a0963a903c84b0f6187dc9e1fb5a48a393efd3b399d4a",
+      "resultSha256": "f951ff4b434ce9faf49aabfe3d9b653563ec72e00cb35310bf9efa596b7d36b0"
+    },
+    {
+      "file": "src/setting/setting.tsx",
+      "originalSha256": "10e3c1ba577524edd95da7e8099c2670f1b82c49181b52768965dc46d60e3783",
+      "resultSha256": "9c548ac0de8bf2c3ea2fa66c8ca113b0f42b6bc3483c2e7c433d22152b927909"
+    },
+    {
+      "file": "tests/localizationCatalog.test.cjs",
+      "originalSha256": "d20c3c1a4aeea62992fc5a0649a4f8dcdc70b4ac9ee6deb96414d3019b21a2de",
+      "resultSha256": "a65d016950d346a583378ef151358069c42b60301f8095351ff0cdddefa3d2ce"
+    },
+    {
+      "file": "src/i18n/settingsMessages.ts",
+      "originalSha256": "c914180cb81aa75359c159ebfa90b9da7e7eb59413023e052e72c15e0cda431f",
+      "resultSha256": "981022addc4594dc2e35315ace42f22165e1ebf7a686773958498d3f7da17605"
+    },
+    {
+      "file": "src/i18n/locales/settings-tr.ts",
+      "originalSha256": "11b97538e5df09a21ffa347a88821f358fafdafc61cc8f578bbdb05daebe9b8d",
+      "resultSha256": "566b69a089794f7e5cf574347e89bea0124ad3c4d2b9ebc8c1113ba7a61b8064"
+    },
+    {
+      "file": "src/i18n/locales/es.ts",
+      "originalSha256": null,
+      "resultSha256": "966f43b10101b3618f72681b7988ef5cf18aacc05062fa9a6250a75d46a97fb5"
+    },
+    {
+      "file": "src/i18n/locales/settings-es.ts",
+      "originalSha256": null,
+      "resultSha256": "0fb5f27d0ac61441edc68ce35921e4ab8c9a75522ab03cf2a7d43a4a72ef1808"
+    },
+    {
+      "file": "docs/localization/SPANISH-v6.104.md",
+      "originalSha256": null,
+      "resultSha256": "bd1f479044c7b9618e11716fad6c02156897160e8388edf12fbc837a235d0d93"
+    }
+  ]
+}

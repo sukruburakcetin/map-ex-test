@@ -1,0 +1,27 @@
+{
+  "installer": "stable-direction-hover-v6-93",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/DirectionHoverMarker.ts",
+      "originalSha256": "9c61552e1690ee02c14984f67411164940ad8fa558397c1390f33cf388f00e29",
+      "resultSha256": "586687c5a425e93276d0bfce3b65c3a3a0a1f4163b3188fe07081d9669fe4a09"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "9c62f5d412deede3b75dd713ce28dac9ef3ced1c901395faa47232ebd4982e98",
+      "resultSha256": "17b53a2ae8d38b3f9a011b8ff8fba6484db62b7fe37649eaa81b04343ed83f75"
+    },
+    {
+      "file": "docs/STABLE-3D-DIRECTION-HOVER.md",
+      "originalSha256": null,
+      "resultSha256": "0a1348d0bccabb36bb8cab9db6f08f5c4402afc9ed110652ddcadef59e5a952e"
+    },
+    {
+      "file": "tests/directionHoverStable.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "14170d8bf3da8245a8ec26ea451b45235481936efaffbb0862f868ea50a22472"
+    }
+  ]
+}

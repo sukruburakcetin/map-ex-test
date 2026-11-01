@@ -1,6 +1,6 @@
 const fs=require('node:fs'),path=require('node:path'),test=require('node:test'),assert=require('node:assert/strict'),ts=require(process.env.MAPILLARY_TYPESCRIPT||'typescript');
 const compile=s=>ts.transpileModule(s,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText,root=path.resolve(__dirname,'..');
-function load(name){const m={exports:{}};new Function('require','module','exports',compile(fs.readFileSync(path.join(root,name==='geoUtils'?'src/utils':'src/features/places',name+'.ts'),'utf8')))(id=>load(path.posix.basename(id)),m,m.exports);return m.exports;}
+function load(name){const file=path.resolve(root,name.endsWith('.ts')?name:path.join(name==='geoUtils'?'src/utils':'src/features/places',name+'.ts')),m={exports:{}};new Function('require','module','exports',compile(fs.readFileSync(file,'utf8')))(id=>load(path.relative(root,path.resolve(path.dirname(file),id+'.ts'))),m,m.exports);return m.exports;}
 const model=load('placesModel'),{PlacesController}=load('PlacesController');
 const row=(i=1,extra={})=>({attributes:{gers_id:'gers-'+i,place_name:'School '+i,category:'school',place_group:'education',confidence:.98,...extra},geometry:{x:.5,y:.5}});
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
@@ -60,7 +60,7 @@ test('POI click stops automatic popup handling before asynchronous hitTest and r
  const w={props:{state:'OPENED'},state:{jimuMapView:{view},turboModeActive:true,placesActive:true},_places:owner,_coverageSelectionTargets:{snapshot:()=>null},coverageSelectionContext:()=>({}),_sharedNotesLayer:null,_pointCloudHits:{route:()=>false},setState(){},showPlacesHit(results,id){assert.deepEqual(results,[]);target=id;opened++;return true;}};
  const handler=new Function('view','TURBO_LIMITS',compile('return '+callback.getText(sf))).call(w,view,{pickRadiusPx:10});const pending=handler({x:10,y:10,stopPropagation(){stopped++;}});assert.equal(stopped,1);assert.equal(opened,0);resolve({results:[]});await pending;assert.equal(target,'gers-1');assert.equal(opened,1);
 });
-const nearby=load('nearbyPlaceImagery');const geoModule={exports:{}};new Function('module','exports',compile(fs.readFileSync(path.join(root,'src/utils/geoUtils.ts'),'utf8')))(geoModule,geoModule.exports);const distance=geoModule.exports.distanceMeters;
+const nearby=load('nearbyPlaceImagery');const distance=load('geoUtils').distanceMeters;
 test('nearby imagery starts within 75m and rejects original/computed coordinate jumps',()=>{
  const place={lon:-86.13,lat:39.78},image=(id,metres,computed)=>({id,sequence:'seq',geometry:{coordinates:[place.lon,place.lat+metres/111195]},...(computed===undefined?{}:{computed_geometry:{coordinates:[place.lon,place.lat+computed/111195]}})});
  assert(nearby.choosePlaceImagery(place,[image('near',30),image('far',200)],75,distance).distance<31);

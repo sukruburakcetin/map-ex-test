@@ -1,5 +1,15 @@
+import { CoverageHoverResume } from '../features/coverage/CoverageHoverResume';
+import { hoverBearingImageId, HoverBearingHintCache } from '../features/imagery/hoverBearingTarget';
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
+import { OwnedMessage } from '../i18n/WidgetLocale';
+import { enterprisePopupContent } from '../i18n/enterprisePopup';
+import { englishPresentation } from '../i18n/PresentationText';
+import type { LocaleValue } from '../i18n/WidgetLocale';
+import type { MessageKey } from '../i18n/messages';
+import { en } from '../i18n/messages';
+import { message } from '../i18n/core';
+import { LocaleContent, WidgetLocaleProvider } from '../i18n/WidgetLocale';
 import { rankPlaceImagery, facePlaceInPanorama, placeImageryBbox, PlaceImagery } from '../features/places/nearbyPlaceImagery';
 import { ArcGISPlaces } from "../features/places/ArcGISPlaces";
 import { placePreferenceKey, readPlaceCategory, savePlaceCategory } from '../features/places/placePreferences';
@@ -87,6 +97,8 @@ import { syncBrowserUrl, copyBrowserShareLink } from '../features/navigation/bro
 import type { BrowserUrlStateHost, BrowserShareLinkHost } from '../features/navigation/browserUrlState';
 import { readSharedLinkParameters, restoreSharedMapCamera, restoreSharedViewerBearing } from '../features/navigation/sharedLinkRestoration';
 import type { SharedViewerBearingHost } from '../features/navigation/sharedLinkRestoration';
+import { needsHoverBearingMetadata, mergeHoverBearingMetadata, hoverPreviewBearing } from '../features/imagery/hoverBearingMetadata';
+import { HoverBearingSector } from '../features/map-graphics/HoverBearingSector';
 import { DirectionHoverMarker } from '../features/map-graphics/DirectionHoverMarker';
 import { DirectionHoverDiscovery } from '../features/imagery/DirectionHoverDiscovery';
 import { skipUnavailableSequenceFrames, stopSequencePlayback } from '../features/imagery/playbackRecovery';
@@ -416,12 +428,12 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _placesUrl = '';
   private _placesExploreAbort: AbortController | null = null;
   private placesPauseReason = (): string => {
-    if (this.props.state === 'CLOSED') return 'Open the widget to load nearby places.';
-    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return 'Return to this tab to load nearby places.';
-    if (this.state.isFullscreen) return 'Return to the main map to load nearby places.';
-    if (this.state.isLoading || this._imageryOpeningRequest != null) return 'Places will update after the image finishes loading.';
-    if (this._userPaused === false) return 'Pause image playback to update nearby places.';
-    if (this._placesExploreAbort && !this._placesExploreAbort.signal.aborted) return 'Finding imagery near the selected place…';
+    if (this.props.state === 'CLOSED') return this._owned("Open the widget to load nearby places.");
+    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return this._owned("Return to this tab to load nearby places.");
+    if (this.state.isFullscreen) return this._owned("Return to the main map to load nearby places.");
+    if (this.state.isLoading || this._imageryOpeningRequest != null) return this._owned("Places will update after the image finishes loading.");
+    if (this._userPaused === false) return this._owned("Pause image playback to update nearby places.");
+    if (this._placesExploreAbort && !this._placesExploreAbort.signal.aborted) return this._owned("Finding imagery near the selected place…");
     return '';
   };
   private placesBusy = () => !!this.placesPauseReason();
@@ -437,12 +449,12 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     if (this._places && this._placesView !== view) { this._placesView = view; this._places.rebindView(); }
     if (!this._places && this.ArcGISModules?.FeatureLayer) {
       this._placesView = view; this._placesUrl = url;
-      this._places = new ArcGISPlaces({ id: String(this.props.id), url, modules: this.ArcGISModules,
+      this._places = new ArcGISPlaces({ id: String(this.props.id), url, presentation:this._presentation, modules: this.ArcGISModules,
         view: () => this.state.jimuMapView?.view, geographic: extent => webMercatorUtils.webMercatorToGeographic(extent),
         list: placesList => this.setState({ placesList }),
         selected: selectedPlace => {
           const frame = this._liveSequenceFrames.current;
-          const placesCameraDistance = selectedPlace && frame ? placeCameraDistanceLabel(distanceMeters(frame.lat, frame.lon, selectedPlace.lat, selectedPlace.lon)) : null;
+          const placesCameraDistance = selectedPlace && frame ? placeCameraDistanceLabel(distanceMeters(frame.lat, frame.lon, selectedPlace.lat, selectedPlace.lon), this._presentation) : null;
           this.setState({ selectedPlace, placesCameraDistance, ...(!selectedPlace ? { placesShowLink: false } : {}) });
           if (selectedPlace && frame) this._places?.selection.updateCamera(frame.lon, frame.lat);
         }, busy: this.placesBusy, pauseReason: this.placesPauseReason, status: placesStatus => this.setState({ placesStatus }), explore: (place, radius, signal) => this.explorePlace(place, radius, signal), openImagery: image => { void this.openPlaceImagery(image); } });
@@ -452,7 +464,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   };
   private placesPreferenceKey = () => placePreferenceKey(this.props.id, typeof window !== 'undefined' ? window.location.pathname : '', this.props.config.placesServiceUrl);
   private togglePlaces = () => {
-    if (!this.state.placesActive && (!this.state.jimuMapView?.view?.ready || !this.ArcGISModules?.FeatureLayer)) { this.showToast('The map is preparing. Try Places again shortly.', 3500); return; }
+    if (!this.state.placesActive && (!this.state.jimuMapView?.view?.ready || !this.ArcGISModules?.FeatureLayer)) { this.showToast(this._t('appTheMapIsPreparingTryPlacesAgainShortly'), 3500); return; }
     const placesGroup = this.state.placesActive ? this.state.placesGroup : readPlaceCategory(() => window.localStorage, this.placesPreferenceKey(), this.state.placesGroup);
     this.setState(previous => ({ placesActive: !previous.placesActive, placesPanelOpen: !previous.placesActive, placesGroup, ...(previous.placesActive ? { selectedPlace: null, placesShowLink: false, placesList: [], placesCameraDistance: null } : {}) }), this.syncPlaces);
   };
@@ -478,7 +490,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._places?.selection.updateCamera(lon, lat);
     const place = this.state.selectedPlace;
     if (!place) return;
-    const label = placeCameraDistanceLabel(distanceMeters(lat, lon, place.lat, place.lon));
+    const label = placeCameraDistanceLabel(distanceMeters(lat, lon, place.lat, place.lon), this._presentation);
     if (label !== this.state.placesCameraDistance) this.setState({ placesCameraDistance: label });
   }
   private showPlacesHit(results: any[], targetId?: string | null): boolean { return !!this._places?.open(results, targetId); }
@@ -515,14 +527,14 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         try {
           const targetBearing = await facePlaceInPanorama(viewer, image, current);
           // Existing viewer bearing events own the actual bearing/cone/URL updates.
-          if (targetBearing == null && image.direction === 'panorama' && current()) this.showToast('Image opened. Its viewing direction could not be adjusted.', 3500);
+          if (targetBearing == null && image.direction === 'panorama' && current()) this.showToast(this._t('appImageOpenedItsViewingDirectionCouldNotBeAdjusted'), 3500);
         } catch (error) {
           this.log('[Mapillary places] Panorama orientation unavailable:', error);
-          if (current()) this.showToast('Image opened. Its viewing direction could not be adjusted.', 3500);
+          if (current()) this.showToast(this._t('appImageOpenedItsViewingDirectionCouldNotBeAdjusted'), 3500);
         }
       }
     }
-    catch { this.showToast('Nearby imagery could not open. Choose another image point or try again.', 4000); }
+    catch { this.showToast(this._t('appNearbyImageryCouldNotOpenChooseAnotherImagePoint'), 4000); }
   }
 
   private mapillaryVTLayer: __esri.VectorTileLayer | null = null;
@@ -656,16 +668,16 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     for (const [label, value] of [["First seen", metadata.firstSeen], ["Last seen", metadata.lastSeen]] as const) {
       const row = document.createElement("div");
       const date = value == null ? null : new Date(typeof value === "string" && /^\d+$/.test(value) ? Number(value) : value);
-      row.textContent = `${label}: ${date && Number.isFinite(date.getTime()) ? date.toLocaleDateString() : "Not available"}`;
+      row.textContent = `${label}: ${date && Number.isFinite(date.getTime()) ? this._presentation.date(date) : "Not available"}`;
       content.appendChild(row);
     }
     if (this.state.featureMetadataLoading || this.state.featureMetadataError) {
       const status = document.createElement("p");
-      status.textContent = this.state.featureMetadataLoading ? "Loading dates…" : this.state.featureMetadataError;
+      this._presentation.bind(status,"textContent",()=>this.state.featureMetadataLoading ? this._owned("Loading dates…") : this.state.featureMetadataError);
       status.setAttribute("role", "status"); content.appendChild(status);
     }
     const button = document.createElement("button");
-    button.type = "button"; button.textContent = "Associated images";
+    button.type = "button"; this._presentation.bind(button,"textContent",()=>this._owned("Associated images"));
     button.style.cssText = "padding:3px 7px;font-size:12px;white-space:nowrap;cursor:pointer";
     button.onclick = () => this.setState({ nearbyStripOpen: true, imageTrayTab: "object", fieldNotesListOpen: false });
     content.appendChild(button);
@@ -739,7 +751,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       if (!current()) return;
       if (display.limited) {
         layer.removeAll();
-        if (!this._coverageRenderLimited) this.showToast("Zoom closer to draw classified streets. Full-area analysis and routing data remain available.", 5000);
+        if (!this._coverageRenderLimited) this.showToast(this._t('appZoomCloserToDrawClassifiedStreetsFullAreaAnalysis'), 5000);
         this._coverageRenderLimited = true; return;
       }
       this._coverageRenderLimited = false;
@@ -761,7 +773,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       // One synchronous commit after preparation; no per-segment layer updates.
       layer.removeAll(); layer.addMany(graphics);
     } catch (error) {
-      if (current()) this.showToast("Classified streets could not be drawn. Analysis and routing data are retained.", 4000);
+      if (current()) this.showToast(this._t('appClassifiedStreetsCouldNotBeDrawnAnalysisAndRouting'), 4000);
     }
   }
 
@@ -828,6 +840,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _selectionPulse: SelectionPulse<__esri.Graphic, __esri.GraphicsLayer, __esri.MapView | __esri.SceneView> | null = null;
   private _nativeImageAnchorAbort: AbortController | null = null;
   private _nativeImageAnchorKey = '';
+  private _directionAnchorAbort: AbortController | null = null;
+  private _directionBearings = new Map<string, { token: string; bearing?: number }>();
   private _clickRippleAnimations: ClickRippleAnimations<__esri.Graphic, __esri.MapView | __esri.SceneView> | null = null;
   private _nativeCurrentImageMarker: NativeCurrentImageMarker | null = null;
   private _screenDirectionCone: ScreenDirectionCone | null = null;
@@ -846,11 +860,14 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _turboHoverInfoAbort: AbortController | null = null;
   private _turboPickWarning: string | null = null;
   private _turboDismissedWarning: string | null = null;
+  private _hoverBearingHints = new HoverBearingHintCache();
   private _coverageFrameLookup: CoverageFrameLookup | null = null;
   private _coverageFrameHoverTimer: ReturnType<typeof setTimeout> | null = null;
   private _coverageFrameHoverTarget: { key: string; sequenceId: string; location: { lon: number; lat: number } } | null = null;
   private _turboHoveredScreen: { x: number; y: number } | null = null;
   private _representativePickCache: RepresentativePickCache | null = null;
+  private _coverageHoverResume: CoverageHoverResume | null = null;
+  private _coverageHoverHandler: ((event: any) => void) | null = null;
   private _turboMapLeaveCleanup: (() => void) | null = null;
   private _turboClickPickAbort: AbortController | null = null;
 
@@ -880,11 +897,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       this.recordPointCloudIssue("Cloud unavailable for this image. " + message + " Try the next image or retry.", session.automatic);
     },
     onFinish: () => this.setState({ pointCloudLoading: false }),
-    onWrongView: () => this.showToast("Point Cloud is only available in 3D map mode."),
+    onWrongView: () => this.showToast(this._t('appPointCloudIsOnlyAvailableIn3dMapMode')),
     onPrevious: previous => this.setState({ pointCloudPrevious: previous }),
     onCloseForBrowsing: () => {
       this.clearPointCloud(true);
-      this.showToast("Point cloud closed for browsing. Choose Auto-follow in its mode menu to keep it active.", 3500);
+      this.showToast(this._t('appPointCloudClosedForBrowsingChooseAutoFollowIn'), 3500);
     },
     waitForMapEdits: () => this._pointCloudMapLayer?.pending.catch(() => {}) || Promise.resolve(),
     schedule: (callback, delay) => setTimeout(callback, delay),
@@ -968,7 +985,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     placeViewshed: geometry => this.ensureViewshedOwner().place(geometry),
     readRenderer: () => this._pointCloudViewerRenderer,
     readViewer: () => this.mapillaryViewer,
-    notifyUpdating: () => this.showToast("Updating point-cloud display. Select the point again in a moment.", 2000),
+    notifyUpdating: () => this.showToast(this._t('appUpdatingPointCloudDisplaySelectThePointAgainIn'), 2000),
   });
   /** Bind tool policy to live React state and existing feature owners; no new resources. */
   private _pointCloudTools = new PointCloudTools({
@@ -1176,6 +1193,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _turboHoverInterval: any = null;
   private _turboHoverFrame: number | null = null;
   private _turboHoverOverlay: HTMLDivElement | null = null;
+  private _turboHoverAnchor: HTMLDivElement | null = null;
+  private _turboHoverBearing: HoverBearingSector | null = null;
   private _coverageAlignmentDiagnostic: NativeCoverageAlignmentDiagnostic | null = null;
   private readonly _nativeSequenceSelection = new TileSequenceHighlights();
   private _activeSequenceOverlay: ActiveSequenceOverlay<__esri.GraphicsLayer, __esri.Graphic, __esri.MapView | __esri.SceneView> | null = null;
@@ -1197,7 +1216,7 @@ private syncMapLegendLayer() {
     const targetType = this._startupUrlParameters?.get(SHARE_PARAMS.MAP_TYPE);
     // The host may expose its default 3D view before switching to a shared 2D view.
     if (!this._sharedStateRestoreComplete && (targetType === "2d" || targetType === "3d") && view.type !== targetType) return;
-    this._mapSymbolLegend ??= new MapSymbolLegend(properties => new this.ArcGISModules.FeatureLayer(properties));
+    this._mapSymbolLegend ??= new MapSymbolLegend(properties => new this.ArcGISModules.FeatureLayer(properties),this._presentation);
     this._mapSymbolLegend.sync(view, this.props.id);
   }
 
@@ -1237,8 +1256,7 @@ private syncMapLegendLayer() {
       this.showToast(
         <span style={{ display: "flex", alignItems: "center", gap: "6px", color: "#ffc107" }}>
           <Icons.Warning size={14} />
-          (403) Skipping unavailable frame...
-        </span>,
+           {this._t('app403SkippingUnavailableFrame')} </span>,
         2000,
       );
     },
@@ -1695,6 +1713,10 @@ private syncMapLegendLayer() {
       getView: () => this.state.jimuMapView?.view,
       getMinimap: () => this.minimapGraphicsLayer,
       createGraphic: properties => new this.ArcGISModules.Graphic(properties),
+      createGroundMarker: presented => new ScreenDirectionCone(
+        properties => new this.ArcGISModules.Point(properties), () => document.createElement('div'),
+        { request: callback => requestAnimationFrame(callback), cancel: frame => cancelAnimationFrame(frame) },
+        visible => presented(visible)),
       setInterval: (callback, milliseconds) => setInterval(callback, milliseconds),
       clearInterval: handle => clearInterval(handle),
     });
@@ -1704,11 +1726,80 @@ private syncMapLegendLayer() {
   private drawDirectionHighlight(hoveredImg: { id: string; lon: number; lat: number }) {
     const view = this.state.jimuMapView?.view;
     if (!view || !this.ArcGISModules) return;
-    this.ensureDirectionHoverMarker().draw(view, hoveredImg);
+    if (view.type !== '3d') { this.ensureDirectionHoverMarker().draw(view, hoveredImg); return; }
+    void this.resolveDirectionHoverAnchor(view, hoveredImg);
+  }
+
+  /** Resolve this exact navigation image in coverage tiles; never choose a neighbouring ID. */
+  private async resolveDirectionHoverAnchor(view: __esri.MapView | __esri.SceneView, image: { id: string; lon: number; lat: number }) {
+    this._directionAnchorAbort?.abort();
+    const controller = new AbortController(); this._directionAnchorAbort = controller;
+    const context = { ...this.coverageSelectionContext() }, token = this.accessToken;
+    const current = () => this._directionAnchorAbort === controller && !controller.signal.aborted &&
+      this.state.jimuMapView?.view === view && !view.destroyed && this.accessToken === token &&
+      this.coverageSelectionContext().revision === context.revision && this.coverageSelectionContext().layer === context.layer;
+    const { lon, lat } = image;
+    try {
+      if (context.enabled && context.individual && !this._coverageSelectionTargets.anchor(context, image.id)) {
+        const zoom = ZOOM.TILE_FETCH, n = 2 ** zoom;
+        const x = Math.max(0, Math.min(n - 1, Math.floor((lon + 180) / 360 * n)));
+        const latitude = Math.max(-85.05112878, Math.min(85.05112878, lat));
+        const y = Math.max(0, Math.min(n - 1, Math.floor((1 - Math.asinh(Math.tan(latitude * Math.PI / 180)) / Math.PI) / 2 * n)));
+        const tiles: [number, number, number][] = [[x, y, zoom]];
+        // API and tile quantization can straddle a boundary. Reuse adjacent cached bytes only.
+        for (const [tileKey] of this._turboTileCache.snapshot()) {
+          const [z, tx, ty] = tileKey.split('/').map(Number);
+          if (z === zoom && Math.abs(tx - x) <= 1 && Math.abs(ty - y) <= 1 && (tx !== x || ty !== y)) tiles.push([tx, ty, z]);
+        }
+        for (const tile of tiles) {
+          if (!current()) return;
+          const [tx, ty, z] = tile;
+          const cached = this._turboTileCache.get(`${z}/${tx}/${ty}`);
+          const buffer = cached ?? await this.runSequenceBackground(signal => this.getTurboTileBuffer(tile, signal), controller.signal);
+          if (!current()) return;
+          if (!buffer.byteLength) continue;
+          const index = this._sequenceTileIndex.has(buffer)
+            ? await this.getSequenceTileIndex(buffer, controller.signal)
+            : await this.runSequenceBackground(signal => this.getSequenceTileIndex(buffer, signal), controller.signal);
+          if (!current()) return;
+          const point = nativeImageAnchor(buffer, index, bytes => new VectorTile(new Pbf(new Uint8Array(bytes))), tile, image.id);
+          if (!point) continue;
+          const geometry = new this.ArcGISModules.Point({ ...point, spatialReference: { wkid: 3857 } });
+          this._coverageSelectionTargets.retain(this.coverageSelectionContext(), image.id, geometry);
+          break;
+        }
+      }
+    } catch (error) {
+      if (current() && (error as any)?.name !== 'AbortError') this.log('[Mapillary] Direction coverage anchor unavailable:', error);
+    } finally {
+      if (current()) {
+        const anchor = this.getCoverageDisplayPosition(image.id, lon, lat);
+        this.ensureDirectionHoverMarker().draw(view, { id: image.id, lon: anchor.lon, lat: anchor.lat });
+        // Draw the aligned disk immediately; enrich its cone only while this hover remains current.
+        try {
+          let metadata = this._directionBearings.get(image.id);
+          if (!metadata || metadata.token !== token) {
+            const data = await this.runSequenceBackground(signal => this.fetchMapillaryJson(
+              `${GRAPH_API.BASE}/${encodeURIComponent(image.id)}?fields=computed_compass_angle,compass_angle,is_pano`, token, signal), controller.signal);
+            if (!current()) return;
+            const angle = data.computed_compass_angle ?? data.compass_angle;
+            metadata = { token, bearing: !data.is_pano && Number.isFinite(angle) ? angle : undefined };
+            this._directionBearings.delete(image.id); this._directionBearings.set(image.id, metadata);
+            if (this._directionBearings.size > 64) this._directionBearings.delete(this._directionBearings.keys().next().value!);
+          }
+          if (current() && metadata.bearing !== undefined)
+            this.ensureDirectionHoverMarker().draw(view, { id: image.id, lon: anchor.lon, lat: anchor.lat, bearing: metadata.bearing });
+        } catch (error) {
+          if (current() && (error as any)?.name !== 'AbortError') this.log('[Mapillary] Direction bearing unavailable:', error);
+        }
+      }
+      if (this._directionAnchorAbort === controller) this._directionAnchorAbort = null;
+    }
   }
 
   /** Release the navigation-target marker, matching minimap marker and pulse interval. */
   private clearDirectionHighlight() {
+    this._directionAnchorAbort?.abort(); this._directionAnchorAbort = null;
     this._directionHighlight?.clear();
   }
 
@@ -1962,7 +2053,7 @@ private syncMapLegendLayer() {
       if (!current()) return;
       this._localSequenceDeferredRequest = null;
       if (imageOpened) {
-        this.setState({ sequenceRouteLoading: false, selectionError: "Image is open, but map tracking could not load. Retry to refresh its location.", selectionCanRetry: true });
+        this.setState({ sequenceRouteLoading: false, selectionError: this._owned("Image is open, but map tracking could not load. Retry to refresh its location."), selectionCanRetry: true });
         return;
       }
       this.setState({ sequenceRouteLoading: false });
@@ -1984,7 +2075,7 @@ private syncMapLegendLayer() {
       if (!previous) { this._lastSuccessfulSelection = null; this.setState({ imageId: null, sequenceImages: [], sequenceId: null, selectedSequenceId: null }); }
       const status = (err as any)?.status;
       const unavailable = status === 401 || status === 403 || status === 404;
-      this.setState({ selectionError: unavailable ? "This image is unavailable. Choose another point." : "Image could not load. Check your connection, retry, or choose another point.", selectionCanRetry: !unavailable });
+      this.setState({ selectionError: unavailable ? this._owned("This image is unavailable. Choose another point.") : this._owned("Image could not load. Check your connection, retry, or choose another point."), selectionCanRetry: !unavailable });
     } finally {
       imageTiming?.cancel();
       if (this._imageSequenceTiming === imageTiming) this._imageSequenceTiming = undefined;
@@ -2115,7 +2206,7 @@ private syncMapLegendLayer() {
         if (!current()) return;
         this._liveSequenceFrames.remember(sequenceId, points);
         if (performance.now() - lastProgress >= LIVE_SEQUENCE_LIMITS.progressInterval || loaded === total) {
-          lastProgress = performance.now(); this.setState(() => !current() ? null : ({ sequenceRouteProgress: `${loaded.toLocaleString()}/${total.toLocaleString()}` }));
+          lastProgress = performance.now(); this.setState(() => !current() ? null : ({ sequenceRouteProgress: `${this._presentation.number(loaded)}/${this._presentation.number(total)}` }));
         }
         // Bound preview graphics; busy playback/panning takes priority over previews.
         if (this.state.turboModeActive || !this._userPaused || view.stationary === false || points.length < 2 || previewCount >= LIVE_SEQUENCE_LIMITS.previewSegments || !this.ArcGISModules?.Graphic) return;
@@ -2139,7 +2230,7 @@ private syncMapLegendLayer() {
       const retryImageId = this._liveSequenceFrames.current?.id || this.state.imageId;
       if (retryImageId) this._selectionRetry = { sequenceId, imageId: retryImageId };
       this.setState({ sequenceRouteLoading: false, sequenceRouteProgress: undefined,
-        selectionError: 'Image tracking is active, but the sequence route could not load. Retry or choose another point.', selectionCanRetry: true });
+        selectionError: this._owned("Image tracking is active, but the sequence route could not load. Retry or choose another point."), selectionCanRetry: true });
       console.warn('[Mapillary sequence] Background route unavailable:', error);
     }
   }
@@ -3757,7 +3848,7 @@ private syncMapLegendLayer() {
           metadataOK = true;
           this.setState({ selectedFeatureMetadata: resolvedMetadata }, () => this.updateSelectedObjectPopup());
         } catch (error) {
-          if (current()) this.setState({ featureMetadataError: "Dates could not be loaded." });
+          if (current()) this.setState({ featureMetadataError: this._owned("Dates could not be loaded.") });
         } finally { if (current()) this.setState({ featureMetadataLoading: false }, () => this.updateSelectedObjectPopup()); }
       })(),
       (async () => {
@@ -3791,7 +3882,7 @@ private syncMapLegendLayer() {
           }
 
         } catch (error) {
-          if (current()) this.setState({ alternateImagesError: "Images could not be loaded. Try again." });
+          if (current()) this.setState({ alternateImagesError: this._owned("Images could not be loaded. Try again.") });
         } finally { if (current()) this.setState({ isFetchingAlternates: false }); }
       })(),
     ]);
@@ -3909,7 +4000,7 @@ private syncMapLegendLayer() {
         this._isFlyInActive = false;
       }
     } catch (e) {
-      if (current()) this.setState({ alternateImagesError: "This image could not be opened. Try another capture or retry." });
+      if (current()) this.setState({ alternateImagesError: this._owned("This image could not be opened. Try another capture or retry.") });
       console.error(e);
     }
   };
@@ -4564,7 +4655,7 @@ private syncMapLegendLayer() {
       if (this._sharedNotesDisposed || layer.destroyed || layer !== (kind === "signs" ? this.mapillaryTrafficSignsLayer : this.mapillaryObjectsLayer)) return;
       const scale = (kind === "signs" ? this.state.signSpriteScale : this.state.objectSpriteScale) || 1;
       layer.setLayoutProperties(id, { ...layer.getLayoutProperties(id), "icon-size": 0.5 * scale });
-    } catch (error) { if (!this._sharedNotesDisposed) this.showToast("Icon size could not be applied. Try again after the layer loads.", 4000); }
+    } catch (error) { if (!this._sharedNotesDisposed) this.showToast(this._t('appIconSizeCouldNotBeAppliedTryAgainAfter'), 4000); }
   }
 
   private initMapillaryTrafficSignsLayer() {
@@ -4792,12 +4883,11 @@ private syncMapLegendLayer() {
       if (method === "clipboard") {
         this.showToast(
           <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <Icons.Check size={14} /> Link copied to clipboard
-          </span>,
+            <Icons.Check size={14} />  {this._t('appLinkCopiedToClipboard')} </span>,
         );
-      } else this.showToast("✓ Link copied to clipboard");
+      } else this.showToast(this._t('appLinkCopiedToClipboard2'));
     },
-    onFailure: () => this.showToast("⚠ Could not copy, please copy from address bar"),
+    onFailure: () => this.showToast(this._t('appCouldNotCopyPleaseCopyFromAddressBar')),
     onError: error => console.error("Error generating link:", error),
   };
 
@@ -5022,8 +5112,7 @@ private syncMapLegendLayer() {
       if (!imageUrl) {
         this.showToast(
           <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <Icons.Warning size={14} /> High-resolution image not available
-          </span>,
+            <Icons.Warning size={14} />  {this._t('appHighResolutionImageNotAvailable')} </span>,
         );
         return;
       }
@@ -5051,15 +5140,13 @@ private syncMapLegendLayer() {
 
       this.showToast(
         <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <Icons.Download size={14} /> Image downloaded
-        </span>,
+          <Icons.Download size={14} />  {this._t('appImageDownloaded')} </span>,
       );
     } catch (err) {
       console.error("Failed to download image:", err);
       this.showToast(
         <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <Icons.Warning size={14} /> Download failed
-        </span>,
+          <Icons.Warning size={14} />  {this._t('appDownloadFailed')} </span>,
       );
     } finally {
       this.setState({ isDownloading: false });
@@ -5240,12 +5327,15 @@ private syncMapLegendLayer() {
       } catch (err) {
         if (current()) {
           console.warn("[Turbo] Coverage load failed", err);
-          this.updateTurboPickWarning("Coverage could not load. Check your connection and choose Retry.", "retry");
+          this.updateTurboPickWarning(this._t('appCoverageCouldNotLoadCheckYourConnectionAndChoose'), "retry");
         }
       } finally {
         if (requestId === this._turboRequestCount) {
           this.finishTurboLoading();
-          if (loaded && current() && attached()) this.showTurboInteractionHelp();
+          if (loaded && current() && attached()) {
+            this.showTurboInteractionHelp();
+            this._coverageHoverResume?.ready(view, requestId);
+          }
         }
       }
     });
@@ -5766,36 +5856,35 @@ private syncMapLegendLayer() {
   private getCoverageBarPresentation(): { text: string; action?: "show" | "data" | "tilt" | "zoom" | "retry"; label?: string; busy?: boolean } {
     const view = this.state.jimuMapView?.view;
     const zoom = view?.zoom ?? 0;
-    if (this.state.coverageFrameResolving) return { text: "Finding nearby image…", busy: true };
-    if (this.state.isLoading) return { text: "Opening image…", busy: true };
-    if (this.state.imageId && this.state.sequenceRouteLoading) return { text: this.state.sequenceRouteProgress ? `Profile route · ${this.state.sequenceRouteProgress}` : "Loading profile route…", busy: true };
-    if (this.state.turboLoading || this.state.turboUpdatingVisible) return { text: "Loading coverage…", busy: !!this.state.turboUpdatingVisible };
-    if (this.state.turboModeActive && this.getTurboOrganizationId() === -1) return { text: "Enter a valid organization ID" };
-    if (this.state.turboModeActive && this.getTurboOrganizationId() !== undefined && zoom < 6) return { text: "Zoom closer for organization coverage", action: "show", label: "Zoom to coverage" };
-    if (this.state.imageId && this.state.selectionError) return { text: this.state.selectionError.startsWith("Image is open") ? "Image ready · Sequence unavailable" : "Image could not load" };
-    if (this.state.turboModeActive && this.state.turboFilterOnFoot !== undefined && zoom < 6) return { text: "Zoom closer for travel-method coverage", action: "show", label: "Zoom to images" };
+    if (this.state.coverageFrameResolving) return { text: this._t('appFindingNearbyImage'), busy: true };
+    if (this.state.isLoading) return { text: this._t('appOpeningImage'), busy: true };
+    if (this.state.imageId && this.state.sequenceRouteLoading) return { text: this.state.sequenceRouteProgress ? this._t('uiProfileRoute',{progress:this.state.sequenceRouteProgress}) : this._t('uiLoadingProfileRoute'), busy: true };
+    if (this.state.turboLoading || this.state.turboUpdatingVisible) return { text: this._t('appLoadingCoverage'), busy: !!this.state.turboUpdatingVisible };
+    if (this.state.turboModeActive && this.getTurboOrganizationId() === -1) return { text: this._t('appEnterAValidOrganizationId') };
+    if (this.state.turboModeActive && this.getTurboOrganizationId() !== undefined && zoom < 6) return { text: this._t('appZoomCloserForOrganizationCoverage'), action: "show", label: this._t('appZoomToCoverage') };
+    if (this.state.imageId && this.state.selectionError) return { text: this.state.selectionError.startsWith("Image is open") ? this._t('uiImageReadyNoSequence') : this._t('uiImageCouldNotLoad') };
+    if (this.state.turboModeActive && this.state.turboFilterOnFoot !== undefined && zoom < 6) return { text: this._t('appZoomCloserForTravelMethodCoverage'), action: "show", label: this._t('appZoomToImages') };
     if ((this.state.trafficSignsActive || this.state.objectsActive) && zoom + 1e-4 < ZOOM.FEATURES_INTERACTIVE) {
-      const data = this.state.trafficSignsActive && this.state.objectsActive ? "traffic signs and objects" : this.state.trafficSignsActive ? "traffic signs" : "objects";
-      return { text: `Zoom in to explore ${data}`, action: "data", label: "Zoom closer" };
+      return { text: this._t(this.state.trafficSignsActive && this.state.objectsActive ? 'uiExploreSignsObjects' : this.state.trafficSignsActive ? 'uiExploreSigns' : 'uiExploreObjects'), action: "data", label: this._t('appZoomCloser') };
     }
-    if (this.state.turboModeActive && zoom < 14) return { text: "Zoom closer for image points", action: "show", label: "Zoom to images" };
+    if (this.state.turboModeActive && zoom < 14) return { text: this._t('appZoomCloserForImagePoints'), action: "show", label: this._t('appZoomToImages') };
     const error = !!this.state.zoomWarningMessage && this.shouldShowCoverageNotice() && !this.state.turboWarningIsHelp;
-    if (error && this.state.turboWarningAction === "retry") return { text: "Coverage unavailable", action: "retry", label: "Retry" };
-    if (!this.state.turboModeActive) return { text: error ? "Coverage needs attention" : "Mapillary coverage" };
+    if (error && this.state.turboWarningAction === "retry") return { text: this._t('appCoverageUnavailable'), action: "retry", label: this._t('appRetry') };
+    if (!this.state.turboModeActive) return { text: error ? this._t('appCoverageNeedsAttention') : this._t('uiMapillaryCoverage') };
     if (view?.type === "3d" && (view as __esri.SceneView).camera?.tilt > 45) {
       let valid = 0;
       for (const y of [0.1, 0.5, 0.9]) for (const x of [0.1, 0.5, 0.9]) {
         const ground = view.toMap({ x: view.width * x, y: view.height * y });
         if (ground && Number.isFinite(ground.longitude) && Number.isFinite(ground.latitude)) valid++;
       }
-      if (valid < 5) return { text: "Tilt hides image points", action: "tilt", label: "Reduce tilt" };
+      if (valid < 5) return { text: this._t('appTiltHidesImagePoints'), action: "tilt", label: this._t('appReduceTilt') };
     }
-    if (zoom < 14) return { text: "Zoom closer for image points", action: "show", label: "Zoom to images" };
-    if (error) return { text: "Coverage needs attention", ...(this.state.turboWarningAction === "zoom" ? { action: "zoom" as const, label: "Move closer" } : {}) };
-    if (this.state.trafficSignsActive || this.state.objectsActive) return { text: this.state.trafficSignsActive && this.state.objectsActive ? "Select a traffic sign, object or image point" : this.state.trafficSignsActive ? "Select a traffic sign or image point" : "Select an object or image point" };
-    if (!this.state.turboModeActive && this.state.imageId && this.state.nearbyFramesHintVisible) return { text: "Blue dots: nearby frames" };
-    if (this.state.imageId) return { text: "Select another point to explore" };
-    return { text: this.state.imageId ? "Select another point to explore" : "Select a visible image point" };
+    if (zoom < 14) return { text: this._t('appZoomCloserForImagePoints'), action: "show", label: this._t('appZoomToImages') };
+    if (error) return { text: this._t('appCoverageNeedsAttention'), ...(this.state.turboWarningAction === "zoom" ? { action: "zoom" as const, label: this._t('appMoveCloser') } : {}) };
+    if (this.state.trafficSignsActive || this.state.objectsActive) return { text: this.state.trafficSignsActive && this.state.objectsActive ? this._t('uiSelectSignObjectImage') : this.state.trafficSignsActive ? this._t('uiSelectSignImage') : this._t('uiSelectObjectImage') };
+    if (!this.state.turboModeActive && this.state.imageId && this.state.nearbyFramesHintVisible) return { text: this._t('appBlueDotsNearbyFrames') };
+    if (this.state.imageId) return { text: this._t('appSelectAnotherPointToExplore') };
+    return { text: this.state.imageId ? this._t('appSelectAnotherPointToExplore') : this._t('uiSelectImagePoint') };
   }
 
   private shouldShowCoverageBar(): boolean {
@@ -5805,42 +5894,42 @@ private syncMapLegendLayer() {
   private getExplorerGuideContext(): string[] {
     const context: string[] = [];
     const creator = this.state.turboFilterUsername || this.props.config.turboCreator;
-    if (creator) context.push(`Creator: ${creator}`);
+    if (creator) context.push(this._t('uiCreator',{name:creator}));
     const organization = this.getTurboOrganizationId();
-    if (organization !== undefined) context.push(organization > 0 ? `Organization: ${organization}` : "Organization: invalid ID");
+    if (organization !== undefined) context.push(organization > 0 ? this._t('uiOrganization',{name:organization}) : this._t('uiInvalidOrganization'));
     const start = this.state.turboFilterStartDate, end = this.state.turboFilterEndDate;
-    if (start || end) context.push(`Dates: ${start || "any"} → ${end || "latest"}`);
-    if (this.state.turboFilterOnFoot !== undefined) context.push(this.state.turboFilterOnFoot ? "Travel: On foot" : "Travel: Other travel");
-    if (this.state.turboFilterIsPano === true) context.push("360° only");
-    else if (this.state.turboFilterIsPano === false) context.push("Non-360° only");
-    if (this.state.turboColorByDate) context.push(this.state.selectedTurboYear ? `Year: ${this.state.selectedTurboYear}` : "Colored by year");
-    if (this.state.qualityViewActive) context.push(this.state.selectedQualityBand ? `Quality: ${this.state.selectedQualityBand}` : "Quality mode on");
+    if (start || end) context.push(this._t('uiDateRange',{start:start || this._t('uiAnyDate'),end:end || this._t('uiLatest')}));
+    if (this.state.turboFilterOnFoot !== undefined) context.push(this.state.turboFilterOnFoot ? this._t('uiTravelFoot') : this._t('uiTravelOther'));
+    if (this.state.turboFilterIsPano === true) context.push(this._t('uiPanoOnly'));
+    else if (this.state.turboFilterIsPano === false) context.push(this._t('uiNonPanoOnly'));
+    if (this.state.turboColorByDate) context.push(this.state.selectedTurboYear ? this._t('uiYear',{year:this.state.selectedTurboYear}) : this._t('uiColorYear'));
+    if (this.state.qualityViewActive) context.push(this.state.selectedQualityBand ? this._t('uiQualityBand',{band:this.state.selectedQualityBand}) : this._t('uiQualityOn'));
     if (this.state.trafficSignsActive) {
       const code = this._mapFeatureFilterCodes.get("signs");
-      context.push(code && code !== DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS ? `Signs: ${formatTrafficSignName(code)}` : "Traffic signs on");
+      context.push(code && code !== DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS ? this._t('uiSigns',{name:formatTrafficSignName(code)}) : this._t('uiSignsOn'));
     }
     if (this.state.objectsActive) {
       const code = this._mapFeatureFilterCodes.get("objects");
-      context.push(code && code !== DEFAULT_FILTER_LABELS.OBJECTS ? `Objects: ${objectNameMap[code] || code}` : "Objects on");
+      context.push(code && code !== DEFAULT_FILTER_LABELS.OBJECTS ? this._t('uiObjectsFilter',{name:objectNameMap[code] || code}) : this._t('uiObjectsOn'));
     }
     return context;
   }
 
   private getCoverageBarHint(touch = false): string {
-    if (this.getTurboOrganizationId() === -1) return "Use the numeric ID from your Mapillary organization";
-    if (this.getTurboOrganizationId() !== undefined && (this.state.jimuMapView?.view?.zoom ?? 0) < 6) return "Zoom closer to view this organization's coverage";
-    if (this.state.turboFilterOnFoot !== undefined && (this.state.jimuMapView?.view?.zoom ?? 0) < 6) return "Zoom closer for travel-method coverage";
-    if (this.state.turboLoading) return "You can keep exploring while coverage loads";
+    if (this.getTurboOrganizationId() === -1) return this._owned("Use the numeric ID from your Mapillary organization");
+    if (this.getTurboOrganizationId() !== undefined && (this.state.jimuMapView?.view?.zoom ?? 0) < 6) return this._owned("Zoom closer to view this organization's coverage");
+    if (this.state.turboFilterOnFoot !== undefined && (this.state.jimuMapView?.view?.zoom ?? 0) < 6) return this._owned("Zoom closer for travel-method coverage");
+    if (this.state.turboLoading) return this._owned("You can keep exploring while coverage loads");
     const zoom = this.state.jimuMapView?.view?.zoom ?? 0;
     if (this.state.trafficSignsActive || this.state.objectsActive) {
       const feature = this.state.trafficSignsActive && this.state.objectsActive ? "sign or object" : this.state.trafficSignsActive ? "traffic sign" : "object";
       if (zoom + 1e-4 < ZOOM.FEATURES_INTERACTIVE) return touch
-        ? `Zoom closer, then tap a ${feature}`
-        : `Zoom closer, then hover or click a ${feature}`;
-      return touch ? `Tap a ${feature} for details` : `Hover or click a ${feature} for details`;
+        ? this._owned("Zoom closer, then tap a {value0}",{value0:String(feature)})
+        : this._owned("Zoom closer, then hover or click a {value0}",{value0:String(feature)});
+      return touch ? this._owned("Tap a {value0} for details",{value0:String(feature)}) : this._owned("Hover or click a {value0} for details",{value0:String(feature)});
     }
-    if (zoom < 14) return touch ? "Tap a coverage line to open imagery" : "Click a coverage line to open a representative image";
-    return touch ? "Tap a point to open imagery" : "Hover to preview · Click to open";
+    if (zoom < 14) return touch ? this._owned("Tap a coverage line to open imagery") : this._owned("Click a coverage line to open a representative image");
+    return touch ? this._owned("Tap a point to open imagery") : this._owned("Hover to preview · Click to open");
   }
 
   /** Explain actual nearby dots once per tab/widget, using the existing guide bar.
@@ -5894,15 +5983,15 @@ private syncMapLegendLayer() {
 
   private showTurboInteractionHelp() {
     if (!this.state.turboModeActive || !this.turboCoverageLayer) return;
-    if (this.getTurboOrganizationId() === -1) { this.updateTurboPickWarning("Enter a valid numeric organization ID."); return; }
-    if (this.getTurboOrganizationId() !== undefined && (this.state.jimuMapView?.view?.zoom ?? 0) < 6) { this.updateTurboPickWarning("Zoom closer to view this organization's coverage.", "show", true); return; }
+    if (this.getTurboOrganizationId() === -1) { this.updateTurboPickWarning(this._t('appEnterAValidNumericOrganizationId')); return; }
+    if (this.getTurboOrganizationId() !== undefined && (this.state.jimuMapView?.view?.zoom ?? 0) < 6) { this.updateTurboPickWarning(this._t('appZoomCloserToViewThisOrganizationSCoverage'), "show", true); return; }
     if ((this.state.jimuMapView?.view?.zoom ?? 14) < 14) {
-      this.updateTurboPickWarning("Click a coverage line or overview point to open its representative image when available. Zoom closer for individual image hover and selection. Help explains selection and camera limits.", "zoom", true); return;
+      this.updateTurboPickWarning(this._t('appClickACoverageLineOrOverviewPointToOpen'), "zoom", true); return;
     }
     const scene = this.state.jimuMapView?.view?.type === "3d";
     this.updateTurboPickWarning(scene
-      ? "3D: Hover a visible coverage dot to preview; tap or click it to open imagery. Zoom closer or reduce tilt if terrain hides dots."
-      : "Hover a coverage dot to preview; tap or click it to open imagery. Zoom closer if dots overlap. Lines alone do not select an image.", "zoom", true);
+      ? this._owned("3D: Hover a visible coverage dot to preview; tap or click it to open imagery. Zoom closer or reduce tilt if terrain hides dots.")
+      : this._owned("Hover a coverage dot to preview; tap or click it to open imagery. Zoom closer if dots overlap. Lines alone do not select an image."), "zoom", true);
   }
 
   private dismissTurboInteractionHelp() {
@@ -5960,7 +6049,7 @@ private syncMapLegendLayer() {
             if (this.state.jimuMapView?.view !== view) return;
             if (view.zoom < targetZoom) await view.goTo({ ...location, zoom: targetZoom + 1, tilt: 0 });
             if (view.zoom < targetZoom) {
-              this.updateTurboPickWarning("The scene cannot reach the required selection zoom. Check the map zoom constraints or use the map controls to move closer.");
+              this.updateTurboPickWarning(this._t('appTheSceneCannotReachTheRequiredSelectionZoomCheck'));
               return;
             }
           } else await view.goTo({ ...location, zoom: targetZoom });
@@ -5968,7 +6057,7 @@ private syncMapLegendLayer() {
         else if (view.type === "3d") await view.goTo({ tilt: 0 });
         if (this.state.jimuMapView?.view === view && this.state.turboModeActive) await this.enableTurboCoverageLayer();
       } catch (error) {
-        if ((error as any)?.name !== "AbortError") this.updateTurboPickWarning("The camera could not reach an image selection view. Use the map controls to move closer or reduce tilt.");
+        if ((error as any)?.name !== "AbortError") this.updateTurboPickWarning(this._t('appTheCameraCouldNotReachAnImageSelectionView'));
       }
     } else if (action === "retry") {
       this._turboDismissedWarning = null;
@@ -5983,13 +6072,13 @@ private syncMapLegendLayer() {
       if (!Number.isFinite(view.scale) || view.scale <= 0) return;
       const targetScale = Math.max(view.scale / 2, (view as any).constraints?.maxScale || 0);
       if (targetScale >= view.scale) {
-        this.updateTurboPickWarning("The map is already at its closest allowed scale. Choose a separate coverage dot or adjust the active filters.");
+        this.updateTurboPickWarning(this._t('appTheMapIsAlreadyAtItsClosestAllowedScale'));
         return;
       }
       try { await view.goTo({ scale: targetScale }); }
       catch (error) {
         if ((error as any)?.name !== "AbortError" && this.state.jimuMapView?.view === view && this.state.turboModeActive) {
-          this.updateTurboPickWarning("The map could not zoom closer. Use the map controls, then choose a visible coverage dot.");
+          this.updateTurboPickWarning(this._t('appTheMapCouldNotZoomCloserUseTheMap'));
         }
       }
     }
@@ -6173,6 +6262,7 @@ private syncMapLegendLayer() {
   /** One pulse and one metadata request for the image actually under the pointer. */
   private updateTurboHover(graphic: __esri.Graphic, globalX: number, globalY: number) {
     const attrs = graphic.attributes;
+    const view = this.state.jimuMapView?.view;
     const imageId = String(attrs?.image_id || "");
     if (!imageId) { this.clearTurboHoverDetails(); return; }
     const changed = this._currentHoveredFeatureId !== imageId;
@@ -6186,43 +6276,102 @@ private syncMapLegendLayer() {
     if (!attrs.turbo_representative) this._coverageSelectionTargets.hover(
       this.coverageSelectionContext(), imageId, graphic.geometry as __esri.Point, attrs.sequence_id);
     this._coverageAlignmentDiagnostic?.capture(graphic, globalX, globalY);
+    const previousFrameTarget = this._coverageFrameHoverTarget;
     this.prepareCoverageFrameHover(graphic);
-    if (!changed || !this.tooltipDiv) return;
+    const regionalHover = !!attrs.turbo_representative && !!attrs.sequence_id && !!view && view.zoom >= 6 && view.zoom < 14;
+    const frameTarget = regionalHover ? this._coverageFrameHoverTarget : null;
+    const movedOnLine = regionalHover && frameTarget !== previousFrameTarget;
+    if ((!changed && !movedOnLine) || !this.tooltipDiv) return;
+    // Metadata may change along the same representative line; leave its pulse and picking intact.
+    if (movedOnLine && !changed) {
+      this._turboHoverInfoAbort?.abort();
+      if (this._hoverTimeout) clearTimeout(this._hoverTimeout);
+      this._turboHoverBearing?.clear();
+    }
     const bounds = this.state.jimuMapView?.view?.container?.getBoundingClientRect();
     positionImageryHoverCard(this.tooltipDiv, bounds || { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight }, globalX, globalY);
     const controller = new AbortController(); this._turboHoverInfoAbort = controller;
-    const view = this.state.jimuMapView?.view;
+    const frames = this.state.sequenceImages || [];
+    const sequenceId = attrs.sequence_id ? String(attrs.sequence_id) : undefined;
+    const organizationId = this.getTurboOrganizationId();
+    const localRoute = !!attrs.turbo_representative && !!sequenceId && organizationId === undefined &&
+      this.state.sequenceId === sequenceId && !!this._liveSequenceFrames.complete;
     const isCurrent = () => !controller.signal.aborted && this._currentHoveredFeatureId === imageId &&
-      this.state.turboModeActive && this.state.jimuMapView?.view === view && !!this.tooltipDiv;
-    this._hoverTimeout = setTimeout(async () => {
+      this.state.turboModeActive && this.state.jimuMapView?.view === view && (!regionalHover || this._coverageFrameHoverTarget === frameTarget) &&
+      (!localRoute || (this.state.sequenceImages === frames && this.state.sequenceId === sequenceId)) && !!this.tooltipDiv;
+    const started = performance.now();
+    const dwell = regionalHover ? Math.max(150, TURBO_LIMITS.hoverDetailsDelayMs) : TURBO_LIMITS.hoverDetailsDelayMs;
+    const geometry = graphic.geometry as __esri.Point;
+    const location = frameTarget?.location || (Number.isFinite(geometry?.longitude) && Number.isFinite(geometry?.latitude)
+      ? { lon: geometry.longitude, lat: geometry.latitude } : undefined);
+    const localKey = localRoute && location ? JSON.stringify([sequenceId,location.lon,location.lat]) : undefined;
+    // Tile hints cannot override the active-route click policy; local hints also bind to the route array.
+    const cachedPreviewId = localKey ? this._hoverBearingHints.peek(view, frames, localKey)
+      : regionalHover && frameTarget ? this._coverageFrameLookup?.peek(view, sequenceId!, frameTarget.location)
+      : !regionalHover && !localRoute ? imageId : undefined;
+    const present = (previewId: string, data: any, fallbackDate: any) => {
+      if (!isCurrent()) return;
+      if (String(data.id) === previewId && this._turboHoverAnchor) {
+        this._turboHoverBearing ??= new HoverBearingSector(
+          properties => new this.ArcGISModules.Point(properties), () => document.createElement('div'));
+        this._turboHoverBearing.show(this._turboHoverAnchor,
+          hoverPreviewBearing(data, this._lastBearing), !!data.is_pano);
+      }
+      renderImageryHoverCard(this.tooltipDiv, data, fallbackDate, undefined, this._presentation);
+      this.highlightSequenceOnVTL(data.sequence || attrs.sequence_id || null);
+    };
+    const enrich = async (previewId: string, cached: any, fallbackDate: any) => {
+      if (!isCurrent()) return;
+      try {
+        const responseData = await this.runSequenceBackground(async signal => {
+          const response = await fetch(`${GRAPH_API.BASE}/${previewId}?fields=id,sequence,geometry,creator,captured_at,thumb_256_url,computed_compass_angle,compass_angle,is_pano`, {
+            headers: { Authorization: `OAuth ${this.accessToken}` }, signal,
+          });
+          if (!response.ok) throw new Error(`Image details: HTTP ${response.status}`);
+          return response.json();
+        }, controller.signal);
+        if (!isCurrent()) return;
+        const data = mergeHoverBearingMetadata(cached, responseData, previewId);
+        this._turboMetadataCache.set(previewId, data);
+        present(previewId, data, fallbackDate);
+      } catch (error) {
+        if (isCurrent()) renderImageryHoverCard(this.tooltipDiv, cached || null, fallbackDate, undefined, this._presentation);
+      }
+    };
+    const resolvePreview = async () => {
       this._hoverTimeout = null;
       if (!isCurrent()) return;
-      const cached = this._turboMetadataCache.get(imageId);
-      renderImageryHoverCard(this.tooltipDiv, cached, attrs.captured_at, !cached);
       try {
-        let data = cached;
-        if (!data) {
-          data = await this.runSequenceBackground(async signal => {
-            const response = await fetch(`${GRAPH_API.BASE}/${imageId}?fields=id,sequence,geometry,creator,captured_at,thumb_256_url`, {
-              headers: { Authorization: `OAuth ${this.accessToken}` }, signal,
-            });
-            if (!response.ok) throw new Error(`Image details: HTTP ${response.status}`);
-            return response.json();
-          }, controller.signal);
-          if (!isCurrent()) return;
-          this._turboMetadataCache.set(imageId, data);
-        }
-        if (!isCurrent()) return;
-        renderImageryHoverCard(this.tooltipDiv, data, attrs.captured_at);
-        this.highlightSequenceOnVTL(data.sequence || attrs.sequence_id || null);
+        const previewId = cachedPreviewId || await hoverBearingImageId({ imageId, sequenceId,
+          representative: !!attrs.turbo_representative, zoom: view?.zoom ?? 0, location,
+          activeSequence: this.state.sequenceId, loadedRoute: !!this._liveSequenceFrames.complete,
+          frames, organizationId, signal: controller.signal,
+          distance: distanceMeters, lookup: (sequence, point, signal) => this.ensureCoverageFrameLookup().resolve(view, sequence, point, signal) });
+        if (!isCurrent() || !previewId) return;
+        if (localKey) this._hoverBearingHints.remember(view, frames, localKey, previewId);
+        const fallbackDate = previewId === imageId ? attrs.captured_at : undefined;
+        const entry = this._turboMetadataCache.get(previewId);
+        const cached = entry && String(entry.id) === previewId ? entry : undefined;
+        if (cached && !needsHoverBearingMetadata(cached)) { present(previewId, cached, fallbackDate); return; }
+        // Cached thumbnails/text are useful immediately; only missing network enrichment waits.
+        renderImageryHoverCard(this.tooltipDiv, cached, fallbackDate, !cached, this._presentation);
+        const remaining = dwell - (performance.now() - started);
+        if (remaining > 0) this._hoverTimeout = setTimeout(async () => {
+          this._hoverTimeout = null;
+          await enrich(previewId, cached, fallbackDate);
+        }, remaining);
+        else await enrich(previewId, cached, fallbackDate);
       } catch (error) {
-        if (isCurrent()) renderImageryHoverCard(this.tooltipDiv, null, attrs.captured_at);
+        if (isCurrent()) renderImageryHoverCard(this.tooltipDiv, null, undefined, undefined, this._presentation);
       }
-    }, this._turboMetadataCache.get(imageId) ? 0 : TURBO_LIMITS.hoverDetailsDelayMs);
+    };
+    if (cachedPreviewId && this._turboMetadataCache.has(cachedPreviewId)) void resolvePreview();
+    else this._hoverTimeout = setTimeout(resolvePreview, dwell);
   }
 
 
   private disableTurboCoverageLayer(restoreStyle = true) {
+    this._coverageHoverResume?.leave();
     this._turboClickPickAbort?.abort(); this._coverageFrameLookup?.clear();
     this.setState({ coverageFrameResolving: false });
     this._nativeSequenceSelection.detach();
@@ -6291,7 +6440,12 @@ private syncMapLegendLayer() {
     if (host && typeof host.appendChild === "function" && typeof document !== "undefined") {
       const overlay = document.createElement("div"); overlay.setAttribute("aria-hidden", "true");
       Object.assign(overlay.style, { position: "absolute", pointerEvents: "none", zIndex: "9", width: "6px", height: "6px", border: "1.5px solid white", borderRadius: "50%", boxSizing: "border-box", background: "rgba(165,42,42,0.95)", transform: "translate(-50%,-50%)", display: "none" });
-      host.appendChild(overlay); this._turboHoverOverlay = overlay;
+      const anchor = document.createElement("div"); anchor.setAttribute("aria-hidden", "true");
+      Object.assign(anchor.style, { position: "absolute", pointerEvents: "none", zIndex: "9", width: "60px", height: "60px", transform: "translate(-50%,-50%)", display: "none" });
+      // Siblings share a fixed center. Only the brown disk changes dimensions.
+      Object.assign(overlay.style, { left: "30px", top: "30px", zIndex: "1", display: "block" });
+      anchor.appendChild(overlay); host.appendChild(anchor);
+      this._turboHoverAnchor = anchor; this._turboHoverOverlay = overlay;
     } else {
       this._turboHoverGraphicsLayer = null;
       view.graphics.add(hover);
@@ -6304,8 +6458,13 @@ private syncMapLegendLayer() {
       if (overlay) {
         const p = view.toScreen(hover.geometry as __esri.Point);
         const visible = p && Number.isFinite(p.x) && Number.isFinite(p.y) && p.x >= 0 && p.y >= 0 && p.x <= view.width && p.y <= view.height;
-        overlay.style.display = visible ? "block" : "none";
-        if (visible) { overlay.style.left = `${p.x}px`; overlay.style.top = `${p.y}px`; overlay.style.width = `${size}px`; overlay.style.height = `${size}px`; }
+        const anchor = this._turboHoverAnchor;
+        if (anchor) {
+          anchor.style.display = visible ? "block" : "none";
+          if (visible) { anchor.style.left = `${p.x}px`; anchor.style.top = `${p.y}px`; }
+        }
+        if (visible) { overlay.style.width = `${size}px`; overlay.style.height = `${size}px`; }
+        this._turboHoverBearing?.update(view, hover.geometry, visible ? p : null, now);
       } else {
         const symbol = hover.symbol as any;
         if (view.type === "3d") (symbol.symbolLayers.getItemAt?.(0) || symbol.symbolLayers[0]).size = size; else symbol.size = size;
@@ -6324,7 +6483,9 @@ private syncMapLegendLayer() {
     this._coverageSelectionTargets.clearHover();
     if (this._turboHoverFrame != null) cancelAnimationFrame(this._turboHoverFrame);
     this._turboHoverFrame = null;
+    this._turboHoverBearing?.clear(); this._turboHoverBearing = null;
     this._turboHoverOverlay?.remove(); this._turboHoverOverlay = null;
+    this._turboHoverAnchor?.remove(); this._turboHoverAnchor = null;
     if (this._turboHoverInterval) {
       clearInterval(this._turboHoverInterval);
       this._turboHoverInterval = null;
@@ -6427,11 +6588,11 @@ private syncMapLegendLayer() {
     const { jimuMapView } = this.state;
     if (this.state.coverageAnalysisLoading || this._coverageAnalysisAbort) return;
     if (!jimuMapView || !this.turboCoverageLayer || this.state.turboLoading) {
-      this.showToast("Coverage is still loading. Try again when it is ready.", 4000);
+      this.showToast(this._t('appCoverageIsStillLoadingTryAgainWhenItIs'), 4000);
       return;
     }
     if (Date.now() < this._coverageRoadRetryAt) {
-      this.showToast(`Road server is rate-limited. Try again in ${Math.ceil((this._coverageRoadRetryAt - Date.now()) / 1000)} seconds.`, 5000);
+      this.showToast(<OwnedMessage source={"Road server is rate-limited. Try again in {value0} seconds."} values={{value0:String(Math.ceil((this._coverageRoadRetryAt - Date.now()) / 1000))}}/>, 5000);
       return;
     }
 
@@ -6453,11 +6614,11 @@ private syncMapLegendLayer() {
     const areaWatch = view.watch("extent", () => {
       if (!signal.aborted && !current()) {
         this.cancelCoverageAnalysis();
-        this.showToast("Analysis stopped because the map area changed. Run it again for this area.", 5000);
+        this.showToast(this._t('appAnalysisStoppedBecauseTheMapAreaChangedRunIt'), 5000);
       }
     });
     const progress = (message: string) => { if (current()) this.setState({ coverageAnalysisProgress: message }); };
-    this.setState({ coverageAnalysisLoading: true, coverageAnalysisProgress: "Fetching streets…" });
+    this.setState({ coverageAnalysisLoading: true, coverageAnalysisProgress: this._owned("Fetching streets…") });
     let stage: "roads" | "imagery" | "classification" = "roads";
 
     try {
@@ -6477,7 +6638,7 @@ private syncMapLegendLayer() {
       if (!osmData || osmData.remark || !Array.isArray(osmData.elements)) throw new Error("Road server returned incomplete data. Please retry later; previous results are preserved.");
       const segments = parseOverpassRoads(osmData);
       if (!segments.length) {
-        this.showToast("No road network found in this area.");
+        this.showToast(this._t('appNoRoadNetworkFoundInThisArea'));
         return;
       }
 
@@ -6485,7 +6646,7 @@ private syncMapLegendLayer() {
       const innerBbox = insetBbox([west, south, east, north], STREET_COVERAGE_CONFIG.ANALYSIS_INSET_METERS);
       const innerSegments = segments.filter((seg) => segmentMidpointInBbox(seg, innerBbox));
       if (!innerSegments.length) {
-        this.showToast("Analysis area too small after edge filtering. Zoom out slightly.");
+        this.showToast(this._t('appAnalysisAreaTooSmallAfterEdgeFilteringZoomOut'));
         return;
       }
 
@@ -6500,11 +6661,11 @@ private syncMapLegendLayer() {
       await this.visitTurboCoverage([west, south, east, north], filters, signal, (point: TurboPoint) => {
         points.push([point.lon, point.lat]);
         pointTimestamps.push(point.capturedAt);
-        if (points.length % 25000 === 0) progress(`Loading imagery: ${points.length.toLocaleString()} points…`);
+        if (points.length % 25000 === 0) progress(`Loading imagery: ${this._presentation.number(points.length)} points…`);
       });
       if (!current()) return;
       if (!points.length) {
-        this.showToast("No coverage points found for this area and the selected filters.");
+        this.showToast(this._t('appNoCoveragePointsFoundForThisAreaAndThe'));
         return;
       }
 
@@ -6518,7 +6679,7 @@ private syncMapLegendLayer() {
         STREET_COVERAGE_CONFIG.MIN_POINTS_PER_SEGMENT,
         STREET_COVERAGE_CONFIG.HIGHWAY_THRESHOLDS,
         pointTimestamps,
-        { signal, onProgress: (completed: number, total: number) => progress(completed === 0 ? "Indexing imagery…" : `Classifying roads: ${completed.toLocaleString()} / ${total.toLocaleString()}`),
+        { signal, onProgress: (completed: number, total: number) => progress(completed === 0 ? "Indexing imagery…" : `Classifying roads: ${this._presentation.number(completed)} / ${this._presentation.number(total)}`),
           onTransferred: () => { points = []; pointTimestamps = []; } },
       );
       if (!current()) return;
@@ -6572,7 +6733,7 @@ private syncMapLegendLayer() {
       this._coverageRenderWatch = view.watch("stationary", (stationary: boolean) => { if (stationary) void this.refreshCoverageViewport(view); });
       await this.refreshCoverageViewport(view);
     } catch (error) {
-      if (revision === this._coverageRenderRevision) { this.stopCoverageRendering(); this.setState({ coverageSegmentsVisible: false }); this.showToast("Unable to initialize classified streets.",4000); }
+      if (revision === this._coverageRenderRevision) { this.stopCoverageRendering(); this.setState({ coverageSegmentsVisible: false }); this.showToast(this._t('appUnableToInitializeClassifiedStreets'),4000); }
     }
   }
 
@@ -6846,7 +7007,7 @@ private syncMapLegendLayer() {
     const { routeStartPoint, routeEndPoint, routeSpareMinutes } = this.state;
 
     if (!routeStartPoint || !routeEndPoint) {
-      this.showToast("Lütfen haritadan A (Başlangıç) ve B (Bitiş) noktalarını seçin!", 3500);
+      this.showToast(this._t('appLTfenHaritadanABaLangVeBBiti'), 3500);
       return;
     }
 
@@ -7258,11 +7419,11 @@ private syncMapLegendLayer() {
     const { jimuMapView } = this.state;
 
     if (!jimuMapView?.view?.map || jimuMapView.view.destroyed) {
-      this.showToast("Map view is reconnecting. Wait for the map, then generate the route again.", 4500);
+      this.showToast(this._t('appMapViewIsReconnectingWaitForTheMapThen'), 4500);
       return;
     }
     if (!this._coverageSegments || this._coverageSegments.length === 0) {
-      this.showToast("Run Street Coverage Analysis first.", 3000);
+      this.showToast(this._t('appRunStreetCoverageAnalysisFirst'), 3000);
       return;
     }
 
@@ -7368,7 +7529,7 @@ private syncMapLegendLayer() {
       const allTargets = this.buildCaptureTargetSegments();
 
       if (!allTargets.length) {
-        this.showToast("No stale or missing roads found in this analysis area.", 3500);
+        this.showToast(this._t('appNoStaleOrMissingRoadsFoundInThisAnalysis'), 3500);
         return;
       }
 
@@ -7379,7 +7540,7 @@ private syncMapLegendLayer() {
       const optimizerTargets = allTargets;
 
       if (!optimizerTargets.length) {
-        this.showToast("No stale or missing roads found in this analysis area.", 3500);
+        this.showToast(this._t('appNoStaleOrMissingRoadsFoundInThisAnalysis'), 3500);
 
         return;
       }
@@ -7530,7 +7691,7 @@ private syncMapLegendLayer() {
       this.log(`[CaptureRoute] Opportunity segment counts: ` + opportunities.map((opportunity) => opportunity.segments.length).join(", "));
 
       if (!opportunities.length) {
-        this.showToast("No suitable stale/missing roads found near your A → B route.", 4500);
+        this.showToast(this._t('appNoSuitableStaleMissingRoadsFoundNearYourA'), 4500);
 
         return;
       }
@@ -7594,7 +7755,7 @@ private syncMapLegendLayer() {
       this.log(`[CaptureRoute] Rejected by anchor cap: ` + `${selection.rejectedForAnchorCount}`);
 
       if (!selection.opportunities.length) {
-        this.showToast(`No beneficial capture detour found within ${spareMinutes} minutes.`, 4000);
+        this.showToast(<OwnedMessage source={"No beneficial capture detour found within {value0} minutes."} values={{value0:String(spareMinutes)}}/>, 4000);
 
         return;
       }
@@ -9355,7 +9516,7 @@ private syncMapLegendLayer() {
        */
 
       this.showToast(
-        `🚗 Capture Route Ready · ` + `${actualExtraMinutes.toFixed(0)} min detour · ` + `${(incrementalCoverage.incrementalCoveredMeters / 1000).toFixed(1)} km useful coverage`,
+        <OwnedMessage source="🚗 Capture Route Ready · {minutes} min detour · {distance} km useful coverage" values={{minutes:this._presentation.number(actualExtraMinutes,{maximumFractionDigits:0}),distance:this._presentation.number(incrementalCoverage.incrementalCoveredMeters/1000,{minimumFractionDigits:1,maximumFractionDigits:1})}}/>,
         5000,
       );
     } catch (err) {
@@ -9366,9 +9527,9 @@ private syncMapLegendLayer() {
       if (message.startsWith("Routing is not configured") || message.startsWith("No routing service is configured")) {
         this.showToast(message, 6000);
       } else if (this.isRoutingAuthenticationError(err)) {
-        this.showToast("Routing authorization failed. " + "Sign in to ArcGIS or ask the Experience " + "author to configure a routing API key.", 6500);
+        this.showToast(<OwnedMessage source="Routing authorization failed. Sign in to ArcGIS or ask the Experience author to configure a routing API key."/>,6500);
       } else {
-        this.showToast("Could not generate capture route.", 4000);
+        this.showToast(this._t('appCouldNotGenerateCaptureRoute'), 4000);
       }
     } finally {
       const currentView = this.state.jimuMapView?.view;
@@ -9437,10 +9598,10 @@ private syncMapLegendLayer() {
     this.drawRoutePointMarker(type, coords[0], coords[1]);
     if (type === "start") {
       this.setState({ routeStartPoint: coords, routePickMode: null });
-      this.showToast("🟢 Start Point (A) set.", 2000);
+      this.showToast(this._t('appStartPointASet'), 2000);
     } else {
       this.setState({ routeEndPoint: coords, routePickMode: null });
-      this.showToast("🔴 Destination Point (B) set.", 2000);
+      this.showToast(this._t('appDestinationPointBSet'), 2000);
     }
   };
 
@@ -9549,10 +9710,11 @@ private syncMapLegendLayer() {
    * A retained previous cloud remains visible while the status card offers recovery.
    */
   private recordPointCloudIssue = (message: string, automatic: boolean, toastMessage = message) => {
+    this._localizedCloudSummary=undefined;
     const paused = this._pointCloudAcquisition.recordIssue(automatic);
     const text = paused ? "Auto-follow paused after 3 problem images. Resume to try again. " + message : message;
     this.setState({ pointCloudAutoPaused: !!paused, pointCloudLoading: false, pointCloudVisible: !!this._pointCloudAcquisition.result, pointCloudPrevious: !!this._pointCloudAcquisition.result && this._pointCloudAcquisition.result.imageId !== this.state.imageId, pointCloudAvailable: undefined, pointCloudIncomplete: true, pointCloudSummary: text });
-    this.showToast(paused ? "Auto-follow paused after 3 problem images. Use Resume in the cloud status card." : toastMessage, 5000);
+    this.showToast(paused ? <OwnedMessage source={"Auto-follow paused after 3 problem images. Use Resume in the cloud status card."}/> : toastMessage, 5000);
   };
 
   /** Forward load intent; acquisition serializes transport and waits for pending map edits. */
@@ -9593,13 +9755,13 @@ private syncMapLegendLayer() {
       applyEdits: (layer, edits) => layer.applyEdits(edits as __esri.FeatureLayerApplyEditsEdits),
       readView: () => this.state.jimuMapView?.view,
       diff: diffPointCloudFeatures,
-      onSummary: (result, count) => this.setState({ pointCloudSummary: summarizePointCloud(result, count) }),
+      onSummary: (result, count) => { const imageId=result.imageId; this._localizedCloudSummary=()=>this._pointCloudAcquisition.result?.imageId === imageId ? summarizePointCloud(this._pointCloudAcquisition.result,count,this._presentation) : ""; this.setState({ pointCloudSummary: this._localizedCloudSummary() }); },
       onLayerReady: () => this.updatePointCloudDisplay(),
       onSettled: () => {
         if (this.state.isLassoMode && this.state.lassoPolygon?.length >= 3) this.calculateLassoSelection();
         else if (this.state.lassoSelectedObjectIds?.length) this.highlightLassoInArcGIS();
       },
-      onToast: count => this.showToast(`3D scene updated (${count.toLocaleString()} points)`, 2500),
+      onToast: count => this.showToast(<OwnedMessage source={"3D scene updated ({value0} points)"} values={{value0:String(this._presentation.number(count))}}/>, 2500),
       onError: error => this.setState({ pointCloudIncomplete: true, pointCloudSummary: (error as Error).message }),
       yieldEdits: () => new Promise<void>(resolve => setTimeout(resolve, 0)),
     });
@@ -9668,7 +9830,7 @@ private syncMapLegendLayer() {
         this.showToast(
           <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <Icons.GroundGrid size={14} />
-            <b>Ground Mode:</b> {this._groundMode ? `ON (Buildings > ${POINT_CLOUD_CONFIG.GROUND_MODE_HEIGHT_M}m Hidden)` : "OFF (Full Cloud)"}
+            <b> {this._t('appGroundMode')} </b> {this._groundMode ? <OwnedMessage source={"ON (Buildings > {value0}m Hidden)"} values={{value0:String(POINT_CLOUD_CONFIG.GROUND_MODE_HEIGHT_M)}}/> : this._t('appOffFullCloud')}
           </span>,
           3000,
         );
@@ -9683,7 +9845,7 @@ private syncMapLegendLayer() {
           () => {
             this.showToast(
               <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <b>Color Mode:</b> {this.state.pointCloudColorMode === "elevation" ? "Elevation Heatmap" : "True RGB"}
+                <b> {this._t('appColorMode')} </b> {this.state.pointCloudColorMode === "elevation" ? this._t('appElevationHeatmap') : this._t('appTrueRgb')}
               </span>,
               3000,
             );
@@ -9707,9 +9869,9 @@ private syncMapLegendLayer() {
       this.showToast(
         <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <Icons.Crosshair size={14} />
-          <b>Total Offset:</b>
-          {Math.abs(this._nudgeX).toFixed(1)}m {this._nudgeX > 0 ? "E" : "W"},{Math.abs(this._nudgeY).toFixed(1)}m {this._nudgeY > 0 ? "N" : "S"}
-          {Math.abs(this._nudgeZ).toFixed(1)}m {this._nudgeZ > 0 ? "Up" : "Dn"}
+          <b> {this._t('appTotalOffset')} </b>
+          {Math.abs(this._nudgeX).toFixed(1)} {this._t('appM')} {this._nudgeX > 0 ? this._t('appE') : this._t('appW')},{Math.abs(this._nudgeY).toFixed(1)} {this._t('appM')} {this._nudgeY > 0 ? this._t('appN') : this._t('appS')}
+          {Math.abs(this._nudgeZ).toFixed(1)} {this._t('appM')} {this._nudgeZ > 0 ? this._t('appUp') : this._t('appDn')}
         </span>,
         1000,
       );
@@ -9745,8 +9907,7 @@ private syncMapLegendLayer() {
       this.showToast(
         <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <Icons.Crosshair size={14} />
-          <b>Offset:</b> X:{this._nudgeX.toFixed(1)}m, Y:{this._nudgeY.toFixed(1)}m, Z:{this._nudgeZ.toFixed(1)}m
-        </span>,
+          <b> {this._t('appOffset')} </b>  {this._t('appX')} {this._nudgeX.toFixed(1)} {this._t('appMY')} {this._nudgeY.toFixed(1)} {this._t('appMZ')} {this._nudgeZ.toFixed(1)} {this._t('appM')} </span>,
         1000,
       );
     });
@@ -9756,7 +9917,7 @@ private syncMapLegendLayer() {
    * Reset east/north/up offsets and rebuild the map immediately; no terrain resampling.
    */
   private resetCalibration = () => {
-    this._pointCloudCalibration.reset(() => this.showToast("Cloud reset to Mapillary coordinates.", 2000));
+    this._pointCloudCalibration.reset(() => this.showToast(this._t('appCloudResetToMapillaryCoordinates'), 2000));
   };
 
   /**
@@ -10093,9 +10254,9 @@ private syncMapLegendLayer() {
     const revision = this._sharedNotesRevision;
     const layer: __esri.FeatureLayer = new this.ArcGISModules.FeatureLayer({ url, id: "mapillary-shared-field-notes", title: "Enterprise Field Notes", outFields: ["category", "note_text", "image_id", "created_at"], refreshInterval: 0,
       elevationInfo: { mode: "on-the-ground" }, renderer: { type: "simple", symbol: { type: "simple-marker", style: "diamond", color: "#35b7c4", size: 12, outline: { color: "white", width: 1 } } },
-      popupTemplate: { title: "Enterprise Field Note", content: [{ type: "fields", fieldInfos: [{ fieldName: "category", label: "Category" }, { fieldName: "note_text", label: "Note" }, { fieldName: "created_at", label: "Created", format: { dateFormat: "short-date-short-time" } }, { fieldName: "image_id", label: "Mapillary image" }] }] } });
+      popupTemplate: { title: this._owned("Enterprise Field Note"), content: [{ type: "fields", fieldInfos: [{ fieldName: "category", label: this._owned("Category") }, { fieldName: "note_text", label: this._owned("Note") }, { fieldName: "created_at", label: this._owned("Created"), format: { dateFormat: "short-date-short-time" } }, { fieldName: "image_id", label: this._owned("Mapillary image") }] }] } });
     this._sharedNotesLayer = layer; this._sharedNotesView = view;
-    this.setState({ sharedNotesMessage: "Loading enterprise notes…" });
+    this.setState({ sharedNotesMessage: this._owned("Loading enterprise notes…") });
     try {
       await layer.load();
       if (revision !== this._sharedNotesRevision || this.state.jimuMapView?.view !== view || !view.map || view.destroyed) return;
@@ -10104,22 +10265,23 @@ private syncMapLegendLayer() {
       if (workflow) {
         layer.outFields = ["*"];
         layer.renderer = { type: "unique-value", field: "status", defaultSymbol: { type: "simple-marker", style: "diamond", color: "#35b7c4", size: 12, outline: { color: "white", width: 1 } }, uniqueValueInfos: [
-          { value: "open", label: "Open", symbol: { type: "simple-marker", style: "diamond", color: "#35b7c4", size: 12 } },
-          { value: "in_progress", label: "In progress", symbol: { type: "simple-marker", style: "diamond", color: "#f5a623", size: 12 } },
-          { value: "completed", label: "Completed", symbol: { type: "simple-marker", style: "circle", color: "#05a056", size: 10 } },
-          { value: "dismissed", label: "Dismissed", symbol: { type: "simple-marker", style: "circle", color: "#888888", size: 10 } }
+          { value: "open", label: this._owned("Open"), symbol: { type: "simple-marker", style: "diamond", color: "#35b7c4", size: 12 } },
+          { value: "in_progress", label: this._owned("In progress"), symbol: { type: "simple-marker", style: "diamond", color: "#f5a623", size: 12 } },
+          { value: "completed", label: this._owned("Completed"), symbol: { type: "simple-marker", style: "circle", color: "#05a056", size: 10 } },
+          { value: "dismissed", label: this._owned("Dismissed"), symbol: { type: "simple-marker", style: "circle", color: "#888888", size: 10 } }
         ] } as any;
-        layer.popupTemplate = { title: "Enterprise Field Note", content: [{ type: "fields", fieldInfos: [
-          { fieldName: "category", label: "Category" }, { fieldName: "note_text", label: "Note" },
-          { fieldName: "status", label: "Status" }, { fieldName: "resolution_note", label: "Resolution" },
-          { fieldName: "created_at", label: "Created", format: { dateFormat: "short-date-short-time" } }
-        ] }], actions: [{ type: "button", id: "edit-enterprise-note", title: "Update note", className: "esri-icon-edit" }, { type: "button", id: "enterprise-note-attachments", title: "Attachments", className: "esri-icon-attachment" }] };
+        layer.popupTemplate = { title: this._owned("Enterprise Field Note"), content: [{ type: "fields", fieldInfos: [
+          { fieldName: "category", label: this._owned("Category") }, { fieldName: "note_text", label: this._owned("Note") },
+          { fieldName: "status", label: this._owned("Status") }, { fieldName: "resolution_note", label: this._owned("Resolution") },
+          { fieldName: "created_at", label: this._owned("Created"), format: { dateFormat: "short-date-short-time" } }
+        ] }], actions: [{ type: "button", id: "edit-enterprise-note", title: this._owned("Update note"), className: "esri-icon-edit" }, { type: "button", id: "enterprise-note-attachments", title: this._owned("Attachments"), className: "esri-icon-attachment" }] };
       }
-      if (!workflow && layer.capabilities?.data?.supportsAttachment && layer.popupTemplate) layer.popupTemplate.actions?.add({ type: "button", id: "enterprise-note-attachments", title: "Attachments", className: "esri-icon-attachment" } as any);
+      if(layer.popupTemplate)layer.popupTemplate.content=enterprisePopupContent(this._presentation,workflow) as any;
+      if (!workflow && layer.capabilities?.data?.supportsAttachment && layer.popupTemplate) layer.popupTemplate.actions?.add({ type: "button", id: "enterprise-note-attachments", title: this._owned("Attachments"), className: "esri-icon-attachment" } as any);
       const group = await this.ensureFieldNotesGroup(view);
       if (!group || revision !== this._sharedNotesRevision || layer.destroyed) return;
       group.layers.add(layer); this.enforceMapillaryLayerOrder(view);
-      this.setState({ sharedNotesMessage: "Enterprise map · updates every 15 seconds" });
+      this.setState({ sharedNotesMessage: this._owned("Enterprise map · updates every 15 seconds") });
       void this.drawFieldNoteGraphics();
       this._sharedNotesTimer = setInterval(() => {
         if (document.visibilityState !== "hidden" && revision === this._sharedNotesRevision && this.state.jimuMapView?.view === view && view.map && !view.destroyed && !layer.destroyed) layer.refresh();
@@ -10127,7 +10289,7 @@ private syncMapLegendLayer() {
     } catch (error) {
       if (revision !== this._sharedNotesRevision) return;
       this.clearSharedNotesView();
-      this.setState({ sharedNotesMessage: "Enterprise notes unavailable. Local notes remain available. Retry or check the layer configuration." });
+      this.setState({ sharedNotesMessage: this._owned("Enterprise notes unavailable. Local notes remain available. Retry or check the layer configuration.") });
       console.warn("[FieldNotes] Shared display failed", error);
     }
   }
@@ -10188,7 +10350,7 @@ private syncMapLegendLayer() {
       }
       await this.patchSharedFieldNote(id, { sharedStatus: "shared", sharedError: undefined });
       this._sharedNotesLayer?.refresh();
-      if (!this._sharedNotesDisposed) this.showToast("Note shared with your organization.", 3000);
+      if (!this._sharedNotesDisposed) this.showToast(this._t('appNoteSharedWithYourOrganization'), 3000);
     } catch (error) {
       await this.patchSharedFieldNote(id, { sharedStatus: "failed", sharedError: (error as Error)?.message || "Sharing failed. Retry when connected." });
     } finally {
@@ -10285,7 +10447,7 @@ private syncMapLegendLayer() {
         if (!await this.patchSharedFieldNote(editor.localId, patch)) throw new Error("Browser storage is unavailable. Export your notes before refreshing the page.");
       }
       if (revision === this._noteEditorRevision && !this._sharedNotesDisposed) {
-        this.setState({ fieldNoteEditor: null }); this.showToast(editor.globalId ? "Shared note updated." : "Local note updated. Enterprise record unchanged.", 3000);
+        this.setState({ fieldNoteEditor: null }); this.showToast(editor.globalId ? <OwnedMessage source={"Shared note updated."}/> : <OwnedMessage source={"Local note updated. Enterprise record unchanged."}/>, 3000);
       }
     } catch (error) {
       if (revision === this._noteEditorRevision && !this._sharedNotesDisposed) this.setState({ fieldNoteEditor: { ...editor, saving: false, error: (error as Error).message } });
@@ -10385,7 +10547,7 @@ private syncMapLegendLayer() {
       const url = URL.createObjectURL(response.data);
       const link = document.createElement("a"); link.href = url; link.download = panel.items.find(item => item.id === id)?.name || "attachment"; link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch (error) { if (!this._sharedNotesDisposed) this.showToast("Attachment download failed. Check your access or connection.", 5000); }
+    } catch (error) { if (!this._sharedNotesDisposed) this.showToast(this._t('appAttachmentDownloadFailedCheckYourAccessOrConnection'), 5000); }
   };
 
   /** Restore via the existing storage helper, then refresh both note renderers after state commits. */
@@ -10613,7 +10775,7 @@ private syncMapLegendLayer() {
       },
       () => {
         if (this.state.isSolarMode) {
-          this.showToast("Solar Modeling Enabled. Sun position computed from photo metadata.", 3000);
+          this.showToast(this._t('appSolarModelingEnabledSunPositionComputedFromPhotoMetadata'), 3000);
           this.updateSolarGraphics();
         } else {
           this.clearSolarGraphics();
@@ -10639,7 +10801,7 @@ private syncMapLegendLayer() {
 
     const currentImg = this.state.sequenceImages.find((img) => img.id === this.state.imageId);
     if (!currentImg || !currentImg.captured_at) {
-      this.showToast("Cannot model solar data: Image is missing a timestamp.", 3000);
+      this.showToast(this._t('appCannotModelSolarDataImageIsMissingATimestamp'), 3000);
       this.clearSolarGraphics();
       return;
     }
@@ -10648,7 +10810,7 @@ private syncMapLegendLayer() {
     const sun = getSunPosition(currentImg.captured_at, currentImg.lat, currentImg.lon);
 
     if (sun.altitude <= 0) {
-      this.showToast("Sun was below the horizon when this photo was taken (Night/Twilight).", 4000);
+      this.showToast(this._t('appSunWasBelowTheHorizonWhenThisPhotoWas'), 4000);
       this.clearSolarGraphics();
       return;
     }
@@ -10703,7 +10865,7 @@ private syncMapLegendLayer() {
       if (next) {
         this._fullRouteFailure = '';
         this.updateElevationProfile();
-        this.showToast(this._liveSequenceFrames.complete ? "Elevation profile enabled." : "Loading route for elevation profile…", 2500);
+        this.showToast(this._liveSequenceFrames.complete ? <OwnedMessage source={"Elevation profile enabled."}/> : <OwnedMessage source={"Loading route for elevation profile…"}/>, 2500);
       } else {
         this.clearElevationProfile();
       }
@@ -10732,7 +10894,7 @@ private clearElevationProfile = () => {
   /** Bind SDK factories once; profile resources and pending updates belong to this owner. */
   private ensureElevationProfileOwner(): ElevationProfileController {
     this._elevationProfile ??= new ElevationProfileController(
-      ids => loadArcGISJSAPIModules(ids), () => this.ArcGISModules.Graphic, () => this._profileFlowHost,
+      ids => loadArcGISJSAPIModules(ids), () => this.ArcGISModules.Graphic, () => this._profileFlowHost, this._presentation
     );
     return this._elevationProfile;
   }
@@ -10749,7 +10911,7 @@ private updateElevationProfile = async () => {
       if (!sequenceImages) return;
       if (sequenceImages.length < 2) {
         this.clearElevationProfile(); this.setState({ isElevationProfileActive: false });
-        this.showToast("This sequence needs at least two located images for a profile.", 3000); return;
+        this.showToast(this._t('appThisSequenceNeedsAtLeastTwoLocatedImagesFor'), 3000); return;
       }
       await this.ensureElevationProfileOwner().update(view, sequenceImages, () =>
         this.props.config.enableElevationProfile === true && this.state.isElevationProfileActive && this.state.jimuMapView?.view === view);
@@ -10970,7 +11132,7 @@ private stopSafePlayback = () => {
 
     if (this._coverageAnalysisCurrent && !this._coverageAnalysisCurrent()) {
       this.cancelCoverageAnalysis();
-      this.showToast("Analysis stopped because its map area or filters changed. Run it again to update the results.", 5000);
+      this.showToast(this._t('appAnalysisStoppedBecauseItsMapAreaOrFiltersChanged'), 5000);
     }
     if (prevProps.config.enablePlaces !== this.props.config.enablePlaces || prevProps.config.placesServiceUrl !== this.props.config.placesServiceUrl || prevProps.state !== this.props.state ||
       prevState.jimuMapView?.view !== this.state.jimuMapView?.view || prevState.isLoading !== this.state.isLoading || prevState.isFullscreen !== this.state.isFullscreen) this.syncPlaces();
@@ -11189,6 +11351,8 @@ private stopSafePlayback = () => {
   // - Ensures all intervals, observers, and event listeners are removed
   // - to prevent memory leaks when widget is closed or reloaded.
   componentWillUnmount() {
+    this._coverageHoverResume?.dispose(); this._coverageHoverResume = null; this._coverageHoverHandler = null;
+    this._presentationHandle?.remove(); this._presentationHandle=null;
     this._placesExploreAbort?.abort(); this._places?.dispose(); this._places = null;
     document.removeEventListener('visibilitychange', this._sequenceVisibilityChange);
     this._hoverTimingAbort?.abort();
@@ -11275,6 +11439,7 @@ private stopSafePlayback = () => {
     this._pointCloudMapLayer?.invalidate();
     this._rings?.onViewChange(view);
 
+    this._coverageHoverResume?.dispose(); this._coverageHoverResume = null; this._coverageHoverHandler = null;
     // Remove click / hover handlers from the previous active view
     if (this.mapClickHandle) {
       try {
@@ -11627,8 +11792,26 @@ private stopSafePlayback = () => {
     this._turboMapLeaveCleanup?.();
     this._turboMapLeaveCleanup = null;
     const mapContainer = view.container as HTMLElement;
+    const hoverResume = new CoverageHoverResume(view, (revision, pointer) => {
+      if (this.state.jimuMapView?.view !== view || view.destroyed || view.stationary === false || view.interacting || !mapContainer || mapContainer.isConnected === false ||
+          this.props.state === 'CLOSED' || !this.state.turboModeActive || revision !== this._turboRequestCount ||
+          !this.turboCoverageLayer || view.map?.findLayerById(LAYER_IDS.COVERAGE_VT) !== this.turboCoverageLayer ||
+          mapContainer?.ownerDocument?.visibilityState === 'hidden' || pointer.x < 0 || pointer.y < 0 ||
+          pointer.x > view.width || pointer.y > view.height) return false;
+      // Do not revive map hover under an overlaid form, popup or a different container.
+      const x = pointer.native?.clientX, y = pointer.native?.clientY;
+      if (Number.isFinite(x) && Number.isFinite(y) && typeof mapContainer.ownerDocument?.elementFromPoint === 'function') {
+        const bounds = mapContainer.getBoundingClientRect();
+        if (Math.abs(x! - bounds.left - pointer.x) > 1 || Math.abs(y! - bounds.top - pointer.y) > 1) return false;
+        const element = mapContainer.ownerDocument.elementFromPoint(x!, y!);
+        return !!element && mapContainer.contains(element) && !element.closest('button,input,select,textarea,[role="dialog"],.esri-popup');
+      }
+      return true;
+    }, pointer => this._coverageHoverHandler?.(pointer));
+    this._coverageHoverResume = hoverResume;
     if (mapContainer) {
       const onMapLeave = () => {
+        hoverResume.leave();
         this._places?.setHover(null);
         this._turboHoverPickAbort?.abort();
         this.clearTurboHoverDetails();
@@ -11653,6 +11836,8 @@ private stopSafePlayback = () => {
       };
       mapContainer.addEventListener("mouseleave", onMapLeave);
       this._turboMapLeaveCleanup = () => {
+        hoverResume.dispose();
+        if (this._coverageHoverResume === hoverResume) { this._coverageHoverResume = null; this._coverageHoverHandler = null; }
         mapContainer.removeEventListener("mouseleave", onMapLeave);
         if (hoverHitTestTimeout) clearTimeout(hoverHitTestTimeout);
       };
@@ -11661,6 +11846,7 @@ private stopSafePlayback = () => {
     // CLICK HANDLER
     this.mapClickHandle = view.on("click", async (evt) => {
       if (this.props.state === "CLOSED") return;
+      this._coverageHoverResume?.leave();
       this._placesExploreAbort?.abort(); this._placesExploreAbort = null;
       const clickStartedAt = performance.now();
       // Freeze the individual preview identity before hit tests or pointer movement.
@@ -11883,15 +12069,15 @@ private stopSafePlayback = () => {
                       const nearby = await this.ensureCoverageFrameLookup().resolve(view, String(seqId), location, pickController.signal);
                       if (pickController.signal.aborted || this._turboClickPickAbort !== pickController || this.state.jimuMapView?.view !== view) return;
                       if (!nearby) {
-                        this.updateTurboPickWarning("No nearby frame was found here. Zoom closer to select an image point.", "zoom");
+                        this.updateTurboPickWarning(this._t('appNoNearbyFrameWasFoundHereZoomCloserTo'), "zoom");
                         return;
                       }
                       imageId = nearby;
                     } catch (error) {
                       if (pickController.signal.aborted || this._turboClickPickAbort !== pickController || this.state.jimuMapView?.view !== view) return;
                       this.updateTurboPickWarning((error as any)?.name === "TimeoutError"
-                        ? "Nearby imagery is taking longer to respond. Try again; downloaded tiles will be reused."
-                        : "Nearby imagery could not load. Check your connection and try again.", "zoom");
+                        ? this._owned("Nearby imagery is taking longer to respond. Try again; downloaded tiles will be reused.")
+                        : this._owned("Nearby imagery could not load. Check your connection and try again."), "zoom");
                       return;
                     } finally {
                       if (this._turboClickPickAbort === pickController) this.setState({ coverageFrameResolving: false });
@@ -11915,22 +12101,23 @@ private stopSafePlayback = () => {
           // Clicked empty space
           this.drawClickRipple(point.longitude, point.latitude, [255, 140, 0], 0.6, 2);
           this.updateTurboPickWarning(view.zoom < 14
-            ? "No selectable representative image was found here. Choose a coverage line or overview point, or zoom closer for individual image selection."
-            : "No image point was found at this position. Choose a visible dot, zoom closer if dots overlap, or adjust the active filters.", "zoom");
+            ? this._owned("No selectable representative image was found here. Choose a coverage line or overview point, or zoom closer for individual image selection.")
+            : this._owned("No image point was found at this position. Choose a visible dot, zoom closer if dots overlap, or adjust the active filters."), "zoom");
           return;
         }
 
         // Imagery exploration uses Turbo; unrelated map tools remain available.
-        this.showToast("Enable Turbo coverage to select street imagery.", 3000);
+        this.showToast(this._t('appEnableTurboCoverageToSelectStreetImagery'), 3000);
       } catch (error) {
         console.error("Click error", error);
-        if (this.state.turboModeActive && (error as any)?.name !== "AbortError") this.updateTurboPickWarning("Image lookup could not load. Check your connection and choose Retry.", "retry");
+        if (this.state.turboModeActive && (error as any)?.name !== "AbortError") this.updateTurboPickWarning(this._t('appImageLookupCouldNotLoadCheckYourConnectionAnd'), "retry");
 
       }
     });
 
     // HOVER HANDLER
-    this.pointerMoveHandle = view.on("pointer-move", (evt) => {
+    this.pointerMoveHandle = view.on("pointer-move", this._coverageHoverHandler = (evt) => {
+      this._coverageHoverResume?.move(evt);
       this._coverageAlignmentDiagnostic?.pointer(view, { x: evt.x, y: evt.y });
       this._turboHoverPickAbort?.abort();
       if (this._turboHoveredScreen && (evt.x - this._turboHoveredScreen.x) ** 2 + (evt.y - this._turboHoveredScreen.y) ** 2 > (view.zoom < 14 ? TURBO_LIMITS.pickRadiusPx : TURBO_LIMITS.hoverRadiusPx) ** 2) {
@@ -12032,7 +12219,7 @@ private stopSafePlayback = () => {
           if (!hoverController.signal.aborted) {
             this._places?.setHover(null);
             this.clearTurboHoverDetails();
-            if (this.state.turboModeActive && this.state.jimuMapView?.view === view) this.updateTurboPickWarning("Image lookup could not load. Check your connection and choose Retry.", "retry");
+            if (this.state.turboModeActive && this.state.jimuMapView?.view === view) this.updateTurboPickWarning(this._t('appImageLookupCouldNotLoadCheckYourConnectionAnd'), "retry");
           }
         }
       }, 0); // Process the latest queued pointer position.
@@ -12575,7 +12762,7 @@ private stopSafePlayback = () => {
   private showToast(message: React.ReactNode, duration: number = 2500, owner?: "point-cloud-progress") {
     if (this._toastTimer) clearTimeout(this._toastTimer);
     this._toastOwner = owner;
-    this.setState({ toastMessage: message });
+    this.setState({ toastMessage: typeof message === "string" ? <OwnedMessage source={message}/> : message });
     this._toastTimer = setTimeout(() => {
       this.setState({ toastMessage: undefined });
       this._toastOwner = undefined;
@@ -12607,8 +12794,7 @@ private stopSafePlayback = () => {
 
       this.showToast(
         <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <Icons.Crosshair size={14} /> Map centered on current frame
-        </span>,
+          <Icons.Crosshair size={14} />  {this._t('appMapCenteredOnCurrentFrame')} </span>,
       );
     }
   };
@@ -12628,12 +12814,10 @@ private stopSafePlayback = () => {
       <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
         {newSyncHeading ? (
           <>
-            <Icons.CompassLocked size={14} /> Map rotation synced to camera
-          </>
+            <Icons.CompassLocked size={14} />  {this._t('appMapRotationSyncedToCamera')} </>
         ) : (
           <>
-            <Icons.CompassUnlocked size={14} /> Map rotation unlocked
-          </>
+            <Icons.CompassUnlocked size={14} />  {this._t('appMapRotationUnlocked')} </>
         )}
       </span>,
     );
@@ -12708,7 +12892,35 @@ private stopSafePlayback = () => {
   //   - Initial empty message
   //   - Sequence dropdown (availableSequences.length > 1)
   //   - Info box + legend (only when image loaded)
+  private _runtimeLocale: LocaleValue | null = null;
+  private get _presentation() { return this._runtimeLocale?.presentation || englishPresentation; }
+  private _owned = (source:string,values?:Record<string,string|number>) => this._runtimeLocale?.owned(source,values) ?? englishPresentation.text(source,values);
+  private _presentationHandle: {remove():void} | null = null;
+  private _presentationOwner: unknown = null;
+  private bindPresentation = (locale:LocaleValue) => {
+    if(this._presentationOwner===locale.presentation)return;
+    this._presentationHandle?.remove();this._presentationOwner=locale.presentation;
+    this._presentationHandle=locale.presentation.onChange(()=>this.refreshPresentation());
+  };
+  private _localizedCloudSummary?:()=>string;
+  private refreshPresentation() {
+    const summary=this._localizedCloudSummary?.();if(summary && this.state.pointCloudVisible)this.setState({pointCloudSummary:summary});
+    this._mapSymbolLegend?.refreshLocale();this._places?.refreshLocale();this._elevationProfile?.refreshLocale();
+    const layer=this._sharedNotesLayer as any;
+    if(layer && !layer.destroyed){
+      const popup=layer.popupTemplate;
+      if(popup){popup.title=this._owned(popup.title);for(const section of popup.content?.toArray?.() || (Array.isArray(popup.content)?popup.content:[]))for(const info of section.fieldInfos || [])if(info.label)info.label=this._owned(info.label);for(const action of popup.actions?.toArray?.() || popup.actions || [])if(action.title)action.title=this._owned(action.title);}
+      const renderer=layer.renderer?.clone?.();if(renderer?.uniqueValueInfos){renderer.uniqueValueInfos=renderer.uniqueValueInfos.map((entry:any)=>({...entry,label:this._owned(entry.label)}));layer.renderer=renderer;}
+    }
+  }
+  private _t = (key: MessageKey, values?: Record<string,string|number>) => this._runtimeLocale?.t(key, values) ?? message(en, key, values);
+  private renderLocaleContent = (locale: LocaleValue) => { this._runtimeLocale = locale; return this.renderLocalizedContent(); };
   render() {
+    return <WidgetLocaleProvider key={this.props.id} appLocale={this.props.intl?.locale} widgetId={this.props.id}
+      defaultLanguage={this.props.config.widgetLanguage || "auto"} allowUserChoice={this.props.config.allowUserLanguageChoice !== false}><LocaleContent render={this.renderLocaleContent} onCommit={this.bindPresentation}/></WidgetLocaleProvider>;
+  }
+
+  private renderLocalizedContent() {
     const mapWidgetId = this.props.useMapWidgetIds?.[0];
 
     // This is the viewer container. It will be placed either in normal widget or fullscreen portal.
@@ -12723,7 +12935,7 @@ private stopSafePlayback = () => {
         }}
       >
         {/* This empty div is controlled by Mapillary, React will never touch its internals */}
-        <div ref={this.viewerContainer} style={{ width: "100%", height: "100%", position: "relative" }} />
+        <div dir="ltr" ref={this.viewerContainer} style={{ width: "100%", height: "100%", position: "relative" }} />
 
         {/* [4.5.0 Update] LASSO SVG OVERLAY */}
         {/* Renders the dashed cyan line while dragging. */}
@@ -12781,7 +12993,7 @@ private stopSafePlayback = () => {
         {this.state.featuresLoading && (
           <div style={glassStyles.featuresLoadingBadge}>
             <div style={glassStyles.featuresLoadingSpinner} />
-            <span style={glassStyles.featuresLoadingText}>Loading features...</span>
+            <span style={glassStyles.featuresLoadingText}> {this._t('appLoadingFeatures')} </span>
           </div>
         )}
 
@@ -12802,11 +13014,10 @@ private stopSafePlayback = () => {
                   backgroundClip: "text",
                 }}
               >
-                CLICK A POINT TO VIEW IMAGERY
-              </span>
+                 {this._t('appClickAPointToViewImagery')} </span>
 
               {/* Kept intact for TypeScript mapping, automatically hidden by glassStyles config */}
-              <span style={glassStyles.initialStateTextSecondary}>(Mapillary imagery will appear here)</span>
+              <span style={glassStyles.initialStateTextSecondary}> {this._t('appMapillaryImageryWillAppearHere')} </span>
             </div>
           </div>
         )}
@@ -12826,7 +13037,7 @@ private stopSafePlayback = () => {
                 <Icons.NoImage size={32} />
               </div>
 
-              <span>No nearby Mapillary imagery found.</span>
+              <span> {this._t('appNoNearbyMapillaryImageryFound')} </span>
             </div>
           </div>
         )}
@@ -12924,8 +13135,8 @@ private stopSafePlayback = () => {
                 color: "rgba(255,255,255,0.45)",
               }}
             >
-              <div role="tablist" aria-label="Image sources" style={{ display: "flex", gap: 8 }}>
-                {(["nearby", "object"] as const).map(tab => <button key={tab} role="tab" aria-selected={(this.state.imageTrayTab || "nearby") === tab} onClick={() => this.setState({ imageTrayTab: tab })} style={{ background: "none", border: 0, color: (this.state.imageTrayTab || "nearby") === tab ? "#8bdbb7" : "#bbb", padding: "6px", cursor: "pointer" }}>{tab === "nearby" ? `Nearby (${(this.state.nearbyImages || []).length})` : `Selected object (${this.state.alternateImages.length})`}</button>)}
+              <div role="tablist" aria-label={this._t('appImageSources')} style={{ display: "flex", gap: 8 }}>
+                {(["nearby", "object"] as const).map(tab => <button key={tab} role="tab" aria-selected={(this.state.imageTrayTab || "nearby") === tab} onClick={() => this.setState({ imageTrayTab: tab })} style={{ background: "none", border: 0, color: (this.state.imageTrayTab || "nearby") === tab ? "#8bdbb7" : "#bbb", padding: "6px", cursor: "pointer" }}>{tab === "nearby" ? <OwnedMessage source={"Nearby ({value0})"} values={{value0:String((this.state.nearbyImages || []).length)}}/> : <OwnedMessage source={"Selected object ({value0})"} values={{value0:String(this.state.alternateImages.length)}}/>}</button>)}
               </div>
               <button
                 onClick={() => this.setState({ nearbyStripOpen: false })}
@@ -12944,7 +13155,7 @@ private stopSafePlayback = () => {
             </div>
 
             {/* Rows stay mounted while switching tabs, preserving independent scroll positions. */}
-            <div role="tabpanel" aria-label="Nearby images"
+            <div role="tabpanel" aria-label={this._t('appNearbyImages')}
               style={{
                 display: this.state.imageTrayTab === "object" ? "none" : "flex",
                 flex: "1 1 0",
@@ -12965,7 +13176,7 @@ private stopSafePlayback = () => {
                 // stays highlighted when no carousel pick is pending
                 const isCurrent = this._nearbySelectedId ? img.id === this._nearbySelectedId : img.id === this.state.imageId;
 
-                const date = new Date(img.captured_at).toLocaleDateString(undefined, {
+                const date = new Date(img.captured_at).toLocaleDateString(this._runtimeLocale?.formatLocale, {
                   year: "numeric",
                   month: "short",
                 });
@@ -13020,21 +13231,21 @@ private stopSafePlayback = () => {
                 );
               })}
             </div>
-            <div role="tabpanel" aria-label="Selected object images" style={{ display: this.state.imageTrayTab === "object" ? "flex" : "none", gap: 6, flex: "1 1 0", minHeight: 0, overflowX: "auto", overflowY: "hidden", alignItems: "flex-start", color: "#ddd", fontSize: 12 }}>
-              {this.state.isFetchingAlternates && <span style={{ alignSelf: "center" }} role="status">Loading associated images…</span>}
-              {this.state.alternateImagesError && <span style={{ alignSelf: "center" }} role="alert">{this.state.alternateImagesError} <button onClick={() => { const location = this.state.selectedFeatureLocation; const id = this.state.selectedFeatureMetadata?.id; if (location && id) void this.fetchAlternateImages(id, location.lat, location.lon); }}>Retry</button></span>}
-              {!this.state.isFetchingAlternates && !this.state.alternateImagesError && !this.state.alternateImages.length && <span>No associated images available. Select a sign or object to see its captures.</span>}
-              {this.state.alternateImages.map(img => <button key={img.id} onClick={() => void this._handleSelectAlternateImage(img)} aria-label={`Open associated image ${img.id}`} title={`${img.detectionLabel || "Detected object"} · ${Number.isFinite(img.capturedAt) ? new Date(img.capturedAt).toLocaleDateString() : "Date unavailable"}`} style={{ flex: "0 0 auto", width: "var(--tray-card-width)", padding: 0, background: "#182321", color: "#ddd", border: img.id === this.state.imageId ? "2px solid #05a056" : "2px solid transparent", borderRadius: 5, overflow: "hidden", cursor: "pointer" }}>
+            <div role="tabpanel" aria-label={this._t('appSelectedObjectImages')} style={{ display: this.state.imageTrayTab === "object" ? "flex" : "none", gap: 6, flex: "1 1 0", minHeight: 0, overflowX: "auto", overflowY: "hidden", alignItems: "flex-start", color: "#ddd", fontSize: 12 }}>
+              {this.state.isFetchingAlternates && <span style={{ alignSelf: "center" }} role="status"> {this._t('appLoadingAssociatedImages')} </span>}
+              {this.state.alternateImagesError && <span style={{ alignSelf: "center" }} role="alert">{<OwnedMessage source={String(this.state.alternateImagesError ?? "")}/>} <button onClick={() => { const location = this.state.selectedFeatureLocation; const id = this.state.selectedFeatureMetadata?.id; if (location && id) void this.fetchAlternateImages(id, location.lat, location.lon); }}> {this._t('appRetry')} </button></span>}
+              {!this.state.isFetchingAlternates && !this.state.alternateImagesError && !this.state.alternateImages.length && <span> {this._t('appNoAssociatedImagesAvailableSelectASignOrObject')} </span>}
+              {this.state.alternateImages.map(img => <button key={img.id} onClick={() => void this._handleSelectAlternateImage(img)} aria-label={this._owned("Open associated image {value0}",{value0:String(img.id)})} title={`${img.detectionLabel || "Detected object"} · ${Number.isFinite(img.capturedAt) ? new Date(img.capturedAt).toLocaleDateString(this._runtimeLocale?.formatLocale) : this._t('appDateUnavailable')}`} style={{ flex: "0 0 auto", width: "var(--tray-card-width)", padding: 0, background: "#182321", color: "#ddd", border: img.id === this.state.imageId ? "2px solid #05a056" : "2px solid transparent", borderRadius: 5, overflow: "hidden", cursor: "pointer" }}>
                 <span style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "var(--tray-image-height)", background: "#0f1618" }}>
                   <span style={{ display: "inline-block", position: "relative", lineHeight: 0 }}>
-                  <img src={img.thumbUrl} alt="Associated camera capture" loading="lazy" style={{ width: "auto", height: "auto", maxWidth: "var(--tray-card-width)", maxHeight: "var(--tray-image-height)", display: "block" }} />
+                  <img src={img.thumbUrl} alt={this._t('appAssociatedCameraCapture')} loading="lazy" style={{ width: "auto", height: "auto", maxWidth: "var(--tray-card-width)", maxHeight: "var(--tray-image-height)", display: "block" }} />
                   {img.detectionBounds && <svg aria-hidden="true" viewBox="0 0 1 1" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
                     <rect {...img.detectionBounds} fill="none" stroke="#111" strokeWidth={4} vectorEffect="non-scaling-stroke" />
                     <rect {...img.detectionBounds} fill="none" stroke="#ffe45e" strokeWidth={2} vectorEffect="non-scaling-stroke" />
                   </svg>}
                   </span>
                 </span>
-                <span style={{ display: "block", padding: "3px 4px", height: 20, boxSizing: "border-box", fontSize: 10, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{img.detectionBounds ? "Outlined" : "Outline unavailable"} · Captured {Number.isFinite(img.capturedAt) ? new Date(img.capturedAt).toLocaleDateString() : "Date unavailable"}</span>
+                <span style={{ display: "block", padding: "3px 4px", height: 20, boxSizing: "border-box", fontSize: 10, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{img.detectionBounds ? this._t('appOutlined') : this._t('appOutlineUnavailable')}  {this._t('appCaptured')} {Number.isFinite(img.capturedAt) ? new Date(img.capturedAt).toLocaleDateString(this._runtimeLocale?.formatLocale) : this._t('appDateUnavailable')}</span>
               </button>)}
             </div>
           </div>
@@ -13055,7 +13266,7 @@ private stopSafePlayback = () => {
 
     const normalMode = (
       <div
-        className={`widget-mapillary jimu-widget ${this.state.showAiTags ? "" : "hide-mly-tags"}`}
+        dir={this._runtimeLocale?.direction || "ltr"} lang={this._runtimeLocale?.formatLocale || "en-US"} className={`widget-mapillary jimu-widget ${this.state.showAiTags ? "" : "hide-mly-tags"}`}
         style={{
           width: "100%",
           height: "100%",
@@ -13083,23 +13294,21 @@ private stopSafePlayback = () => {
                 <Icons.Warning size={36} />
               </div>
 
-              <h3 style={glassStyles.missingMapTitle}>Map Connection Required</h3>
+              <h3 style={glassStyles.missingMapTitle}> {this._t('appMapConnectionRequired')} </h3>
 
-              <p style={glassStyles.missingMapText}>The Mapillary Explorer needs to be linked to a Map Widget to function properly.</p>
+              <p style={glassStyles.missingMapText}> {this._t('appTheMapillaryExplorerNeedsToBeLinkedToA')} </p>
 
               <div style={glassStyles.missingMapInstructionsBox}>
-                <div style={glassStyles.missingMapInstructionsTitle}>HOW TO FIX:</div>
+                <div style={glassStyles.missingMapInstructionsTitle}> {this._t('appHowToFix')} </div>
                 <ol style={glassStyles.missingMapInstructionsList}>
                   <li>
-                    Open this widget's <b>Settings</b> panel
-                  </li>
+                     {this._t('appOpenThisWidgetS')} <b> {this._t('appSettings')} </b>  {this._t('appPanel')} </li>
                   <li>
-                    Go to the <b>Source</b> tab
-                  </li>
+                     {this._t('appGoToThe')} <b> {this._t('appSource')} </b>  {this._t('appTab')} </li>
                   <li>
-                    Click <b>Select Map widget</b>
+                     {this._t('appClick')} <b> {this._t('appSelectMapWidget')} </b>
                   </li>
-                  <li>Select your target map name</li>
+                  <li> {this._t('appSelectYourTargetMapName')} </li>
                 </ol>
               </div>
             </div>
@@ -13113,7 +13322,7 @@ private stopSafePlayback = () => {
 
 
         {(this.state.toastMessage || this.state.pointCloudLoading) && <div style={{ ...glassStyles.toastContainer, top: this.state.isLoading ? 12 : undefined, bottom: this.state.isLoading ? "auto" : glassStyles.toastContainer.bottom, display: "flex", alignItems: "center", gap: 10, maxWidth: "calc(100% - 24px)", width: "max-content", whiteSpace: "normal", boxSizing: "border-box" }}>
-          <div style={{ flex: "1 1 auto", minWidth: 0, maxWidth: "100%", whiteSpace: "normal", overflowWrap: "anywhere" }}>{this.state.toastMessage || "Loading point cloud…"}</div>
+          <div style={{ flex: "1 1 auto", minWidth: 0, maxWidth: "100%", whiteSpace: "normal", overflowWrap: "anywhere" }}>{this.state.toastMessage || <OwnedMessage source={"Loading point cloud…"}/>}</div>
 
         </div>}
 
@@ -13454,37 +13663,37 @@ private stopSafePlayback = () => {
                 {coveragePresentation.label}
               </button>
             )}
-            <button ref={this._coverageHelpButton} className="mly-coverage-help-button" type="button" aria-controls={coverageHelpId} aria-expanded={!!this.state.coverageHelpOpen} onClick={() => this.state.coverageHelpOpen ? this.closeCoverageHelp() : this.setState({ coverageHelpOpen: true })} aria-label="Explorer guide and active filters" title="Explorer guide and active filters" style={coverageNoticeStyles.helpButton}><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ display: "block", flexShrink: 0, pointerEvents: "none" }}><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3"/><circle cx="8" cy="4.75" r="0.75" fill="currentColor"/><path d="M8 7.25v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg></button>
+            <button ref={this._coverageHelpButton} className="mly-coverage-help-button" type="button" aria-controls={coverageHelpId} aria-expanded={!!this.state.coverageHelpOpen} onClick={() => this.state.coverageHelpOpen ? this.closeCoverageHelp() : this.setState({ coverageHelpOpen: true })} aria-label={this._t('appExplorerGuideAndActiveFilters')} title={this._t('appExplorerGuideAndActiveFilters')} style={coverageNoticeStyles.helpButton}><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ display: "block", flexShrink: 0, pointerEvents: "none" }}><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3"/><circle cx="8" cy="4.75" r="0.75" fill="currentColor"/><path d="M8 7.25v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg></button>
 
           </div>
         )}
         {this.state.selectionError && (
           <div role="alert" style={{ ...coverageNoticeStyles.helpPanel, zIndex: 1100 }}>
-            <div style={coverageNoticeStyles.message}>{this.state.selectionError}</div>
+            <div style={coverageNoticeStyles.message}>{<OwnedMessage source={String(this.state.selectionError ?? "")}/>}</div>
             <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-              {this.state.selectionCanRetry && <button type="button" onClick={() => void this.retrySelectedImage()} style={coverageNoticeStyles.action}>Retry image</button>}
-              <button type="button" aria-label="Dismiss image error" onClick={() => this.setState({ selectionError: undefined })} style={coverageNoticeStyles.action}>Dismiss</button>
+              {this.state.selectionCanRetry && <button type="button" onClick={() => void this.retrySelectedImage()} style={coverageNoticeStyles.action}> {this._t('appRetryImage')} </button>}
+              <button type="button" aria-label={this._t('appDismissImageError')} onClick={() => this.setState({ selectionError: undefined })} style={coverageNoticeStyles.action}> {this._t('appDismiss')} </button>
             </div>
           </div>
         )}
         {coverageBarVisible && this.state.coverageHelpOpen && (
-          <div id={coverageHelpId} className="mly-coverage-help" role="dialog" aria-label="Coverage help" aria-modal="false" tabIndex={-1} ref={this._focusCoverageHelp} onKeyDown={event => { if (event.key === "Escape") this.closeCoverageHelp(); }} style={coverageNoticeStyles.helpPanel}>
+          <div id={coverageHelpId} className="mly-coverage-help" role="dialog" aria-label={this._t('appCoverageHelp')} aria-modal="false" tabIndex={-1} ref={this._focusCoverageHelp} onKeyDown={event => { if (event.key === "Escape") this.closeCoverageHelp(); }} style={coverageNoticeStyles.helpPanel}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><img src={MAPILLARY_IMAGE} alt="" aria-hidden="true" style={coverageNoticeStyles.logo} /><div style={coverageNoticeStyles.brand}>MAPILLARY EXPLORER · GUIDE</div></div>
-              <button type="button" aria-label="Close coverage help" onClick={() => this.closeCoverageHelp()} style={coverageNoticeStyles.close}>×</button>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><img src={MAPILLARY_IMAGE} alt="" aria-hidden="true" style={coverageNoticeStyles.logo} /><div style={coverageNoticeStyles.brand}> {this._t('appMapillaryExplorerGuide')} </div></div>
+              <button type="button" aria-label={this._t('appCloseCoverageHelp')} onClick={() => this.closeCoverageHelp()} style={coverageNoticeStyles.close}>×</button>
             </div>
             <div style={{ ...coverageNoticeStyles.message, marginBottom: 6 }}><strong>{coveragePresentation.text}</strong></div>
-            <div style={coverageNoticeStyles.message}>{this.state.turboFilterOnFoot !== undefined ? "Travel-method coverage starts at regional zoom; zoom closer to see matching coverage lines. " : "At the farthest zooms, hover an overview dot to preview its representative image; tap or click to open it. "}At regional zooms, click a coverage line to open a representative image. Zoom closer to select individual images. Hover a point to preview it; tap or click to open imagery.</div>
-            <div aria-label="Selected sequence symbols" style={{ ...coverageNoticeStyles.message, marginTop: 8 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 7 }}><span aria-hidden="true" style={{ width: 18, borderTop: "2px solid #739dff", flexShrink: 0 }} /><span>Blue line · Selected sequence</span></div>
-              <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 3 }}><span aria-hidden="true" style={{ width: 6, height: 6, margin: "0 6px", borderRadius: "50%", background: "blue", border: this.state.turboModeActive ? "1px solid white" : "1px solid #e3da30", flexShrink: 0 }} /><span>{this.state.turboModeActive ? "Blue circles · Selected sequence" : "Blue dots · Nearby frames"}</span></div>
-              <p style={{ margin: "5px 0 0" }}>{this.state.turboModeActive ? "Blue circles belong to the active sequence. Its faint blue overview remains visible; other coverage keeps its normal colors." : "More imagery may continue beyond the dots. Select coverage elsewhere to explore. Route previews follow available coverage tiles."}</p>
+            <div style={coverageNoticeStyles.message}>{this.state.turboFilterOnFoot !== undefined ? this._t('appTravelMethodCoverageStartsAtRegionalZoomZoomCloser') : this._t('appAtTheFarthestZoomsHoverAnOverviewDotTo')} {this._t('appAtRegionalZoomsClickACoverageLineToOpen')} </div>
+            <div aria-label={this._t('appSelectedSequenceSymbols')} style={{ ...coverageNoticeStyles.message, marginTop: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 7 }}><span aria-hidden="true" style={{ width: 18, borderTop: "2px solid #739dff", flexShrink: 0 }} /><span> {this._t('appBlueLineSelectedSequence')} </span></div>
+              <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 3 }}><span aria-hidden="true" style={{ width: 6, height: 6, margin: "0 6px", borderRadius: "50%", background: "blue", border: this.state.turboModeActive ? "1px solid white" : "1px solid #e3da30", flexShrink: 0 }} /><span>{this.state.turboModeActive ? this._t('appBlueCirclesSelectedSequence') : this._t('appBlueDotsNearbyFrames2')}</span></div>
+              <p style={{ margin: "5px 0 0" }}>{this.state.turboModeActive ? this._t('appBlueCirclesBelongToTheActiveSequenceItsFaint') : this._t('appMoreImageryMayContinueBeyondTheDotsSelectCoverage')}</p>
             </div>
-            {!!guideContext.length && <div style={{ ...coverageNoticeStyles.message, marginTop: 8 }}><strong>Active settings</strong><ul style={{ margin: "4px 0", paddingLeft: 18 }}>{guideContext.map(item => <li key={item}>{item}</li>)}</ul></div>}
-            {coverageNoticeVisible && !this.state.turboWarningIsHelp && <p style={coverageNoticeStyles.message}>{this.state.zoomWarningMessage}</p>}
+            {!!guideContext.length && <div style={{ ...coverageNoticeStyles.message, marginTop: 8 }}><strong> {this._t('appActiveSettings')} </strong><ul style={{ margin: "4px 0", paddingLeft: 18 }}>{guideContext.map(item => <li key={item}>{item}</li>)}</ul></div>}
+            {coverageNoticeVisible && !this.state.turboWarningIsHelp && <p style={coverageNoticeStyles.message}>{<OwnedMessage source={String(this.state.zoomWarningMessage ?? "")}/>}</p>}
             <label style={coverageNoticeStyles.optOut}>
               <input type="checkbox" checked={!this.shouldShowCoverageNotice()} onChange={event => { if (event.currentTarget.checked) this.hideCoverageNotices(); }} style={{ margin: 0, width: 16, height: 16, accentColor: "#91d9b5" }} />
-              <span>Hide the guide bar until the page is refreshed</span>
+              <span> {this._t('appHideTheGuideBarUntilThePageIsRefreshed')} </span>
             </label>
           </div>
         )}
@@ -13497,7 +13706,7 @@ private stopSafePlayback = () => {
     const fullscreenImage = this.state.sequenceImages.find(image => image.id === this.state.imageId)
       || this._lastSuccessfulSelection?.sequenceImages.find(image => image.id === this.state.imageId);
     const fullscreenMode = ReactDOM.createPortal(
-      <div className={`mly-fullscreen-viewer${this.state.minimapExpanded ? " mly-minimap-expanded" : ""}`} style={{ ...fullscreenOverlayStyle, containerType: "size" }}>
+      <div dir={this._runtimeLocale?.direction || "ltr"} lang={this._runtimeLocale?.formatLocale || "en-US"} className={`mly-fullscreen-viewer${this.state.minimapExpanded ? " mly-minimap-expanded" : ""}`} style={{ ...fullscreenOverlayStyle, containerType: "size" }}>
         <style>{`
           .mly-fullscreen-viewer.mly-minimap-expanded .minimap-container {
             width: min(420px, calc(100% - 24px)) !important; max-width: 420px !important;
@@ -13553,17 +13762,17 @@ private stopSafePlayback = () => {
         />
 
         {!this.props.config.hideInfoBox && fullscreenImage && <div className="mly-fullscreen-location">
-          <div title={this.state.address || "Current image"} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{this.state.address || "Current image"}</div>
-          <button type="button" title="Copy latitude and longitude" aria-label="Copy current image coordinates" onClick={() => void this.copyImageCoordinates(fullscreenImage.lat, fullscreenImage.lon)}>{fullscreenImage.lat.toFixed(6)}, {fullscreenImage.lon.toFixed(6)}</button>
+          <div title={this.state.address || this._t('currentImage')} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{this.state.address || this._t('currentImage')}</div>
+          <button type="button" title={this._t('appCopyLatitudeAndLongitude')} aria-label={this._t('appCopyCurrentImageCoordinates')} onClick={() => void this.copyImageCoordinates(fullscreenImage.lat, fullscreenImage.lon)}>{fullscreenImage.lat.toFixed(6)}, {fullscreenImage.lon.toFixed(6)}</button>
         </div>}
         {/* Minimap frame keeps React controls separate from ArcGIS-managed content. */}
         <div className="minimap-container" style={getMinimapContainerStyle(this.state.showMinimap)}>
           {this.state.minimapExpanded && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 36, padding: "3px 36px 3px 8px", boxSizing: "border-box", background: "#14251d", color: "#e2ece7", fontSize: 10 }}>
-            <div title={this.state.address || "Current image"} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{this.state.address || "Current image"}</div>
-            {!this.props.config.hideInfoBox && fullscreenImage && <button type="button" title="Copy latitude and longitude" onClick={() => void this.copyImageCoordinates(fullscreenImage.lat, fullscreenImage.lon)} style={{ padding: 0, border: 0, background: "none", color: "#bdd8c8", font: "inherit", cursor: "pointer" }}>{fullscreenImage.lat.toFixed(6)}, {fullscreenImage.lon.toFixed(6)}</button>}
+            <div title={this.state.address || this._t('currentImage')} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{this.state.address || this._t('currentImage')}</div>
+            {!this.props.config.hideInfoBox && fullscreenImage && <button type="button" title={this._t('appCopyLatitudeAndLongitude')} onClick={() => void this.copyImageCoordinates(fullscreenImage.lat, fullscreenImage.lon)} style={{ padding: 0, border: 0, background: "none", color: "#bdd8c8", font: "inherit", cursor: "pointer" }}>{fullscreenImage.lat.toFixed(6)}, {fullscreenImage.lon.toFixed(6)}</button>}
           </div>}
           <div ref={this.minimapContainer} style={{ width: "100%", height: this.state.minimapExpanded ? "calc(100% - 36px)" : "100%", marginTop: this.state.minimapExpanded ? 36 : 0 }} />
-          <button type="button" aria-label={this.state.minimapExpanded ? "Collapse minimap" : "Expand minimap"} aria-expanded={!!this.state.minimapExpanded} title={this.state.minimapExpanded ? "Collapse minimap" : "Expand minimap"} onClick={() => this.setState(prev => ({ minimapExpanded: !prev.minimapExpanded }))} style={{ position: "absolute", top: 3, right: 3, zIndex: 10002, width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #ffffff45", borderRadius: 4, background: "#17251ede", color: "white", cursor: "pointer" }}>
+          <button type="button" aria-label={this.state.minimapExpanded ? this._t('appCollapseMinimap') : this._t('appExpandMinimap')} aria-expanded={!!this.state.minimapExpanded} title={this.state.minimapExpanded ? this._t('appCollapseMinimap') : this._t('appExpandMinimap')} onClick={() => this.setState(prev => ({ minimapExpanded: !prev.minimapExpanded }))} style={{ position: "absolute", top: 3, right: 3, zIndex: 10002, width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #ffffff45", borderRadius: 4, background: "#17251ede", color: "white", cursor: "pointer" }}>
             {this.state.minimapExpanded ? <Icons.Minimize size={14} /> : <Icons.Maximize size={14} />}
           </button>
         </div>

@@ -1,0 +1,12 @@
+{
+  "installer": "compact-filter-bar-v6-92",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/FilterScrollRegion.tsx",
+      "originalSha256": "60fe7d6dda4798bbe3e839f6ce832ed09cb24ac395095a6b8076accde5949cf4",
+      "resultSha256": "d9e2d724005a2219ae39ca546da0cd142f677e6d02a56d0da25bcb00198f2362"
+    }
+  ]
+}

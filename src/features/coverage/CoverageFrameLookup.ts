@@ -1,6 +1,6 @@
 export interface FrameLookupLocation { lon: number; lat: number }
 type Loader = (sequence: string, location: FrameLookupLocation, signal: AbortSignal) => Promise<string | undefined>;
-interface Entry { controller: AbortController; promise: Promise<string | undefined>; users: number; settled: boolean; expires: number; release?: ReturnType<typeof setTimeout> }
+interface Entry { controller: AbortController; promise: Promise<string | undefined>; users: number; settled: boolean; expires: number; value?: string; release?: ReturnType<typeof setTimeout> }
 
 /** Metre-scale identity shared by a stable hover and the click that follows it. */
 export function coverageFrameKey(sequence: string, location: FrameLookupLocation): string {
@@ -35,6 +35,13 @@ export class CoverageFrameLookup {
     this.hover = controller; previous?.abort(); return promise;
   }
 
+  /** Read a completed, unexpired hint without starting work or acquiring a consumer. */
+  peek(view: unknown, sequence: string, location: FrameLookupLocation): string | undefined {
+    if (this.view !== view) return undefined;
+    const entry = this.entries.get(coverageFrameKey(sequence, location));
+    return entry?.settled && !entry.controller.signal.aborted && entry.expires >= Date.now() ? entry.value : undefined;
+  }
+
   /** Join a producer or cached success with independent cancellation. */
   resolve(view: unknown, sequence: string, location: FrameLookupLocation, signal: AbortSignal): Promise<string | undefined> {
     if (signal.aborted) return Promise.reject(new DOMException('Cancelled', 'AbortError'));
@@ -50,7 +57,7 @@ export class CoverageFrameLookup {
       entry = { controller, promise: null!, users: 0, settled: false, expires: Infinity };
       const owned = entry;
       entry.promise = abortable(Promise.resolve().then(() => this.load(sequence, location, controller.signal)), controller.signal).then(value => {
-        owned.settled = true; owned.expires = Date.now() + 30000;
+        owned.settled = true; owned.value = value; owned.expires = Date.now() + 30000;
         if (!value && this.entries.get(key) === owned) this.entries.delete(key);
         this.trim(); return value;
       }, error => { owned.settled = true; if (this.entries.get(key) === owned) this.entries.delete(key); throw error; });

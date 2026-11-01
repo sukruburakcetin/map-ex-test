@@ -1,4 +1,5 @@
 /** @jsx jsx */
+import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 import type { InfoBoxProps } from '../../components/types';
 import { solarPanelStyle, solarToggleStyle, solarHeadingStyle, solarIconStyle, solarTrackStyle, solarThumbStyle, solarDescriptionStyle } from '../../styles/solarControls';
@@ -8,13 +9,13 @@ export type SolarToolsSectionProps = Pick<InfoBoxProps, 'isSolarMode' | 'onToggl
 /** Display the solar switch and active-mode explanation; forward clicks without owning model state.
  * InfoBox retains the feature-enabled visibility guard. Rendering starts no calculations or requests.
  */
-export const SolarToolsSection: React.FC<SolarToolsSectionProps> = ({ isSolarMode, onToggleSolarMode }) => (
+export const SolarToolsSection: React.FC<SolarToolsSectionProps> = ({ isSolarMode, onToggleSolarMode }) => { const { t, locale } = useWidgetLocale(); return (
 <div
             style={solarPanelStyle(isSolarMode)}
           >
             <button
               onClick={onToggleSolarMode}
-              title="Toggle Solar Glare & Shadow Modeling"
+              title={t('uiToggleSolarGlareShadowModeling')}
               style={solarToggleStyle}
             >
               <span style={solarHeadingStyle(isSolarMode)}>
@@ -39,8 +40,7 @@ export const SolarToolsSection: React.FC<SolarToolsSectionProps> = ({ isSolarMod
                   <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
                   <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                 </svg>
-                SOLAR
-              </span>
+                 {t('uiSolar')} </span>
               <div
                 style={solarTrackStyle(isSolarMode)}
               >
@@ -52,8 +52,7 @@ export const SolarToolsSection: React.FC<SolarToolsSectionProps> = ({ isSolarMod
 
             {isSolarMode && (
               <div style={solarDescriptionStyle}>
-                Sun &amp; Shadow position modeled based on exact photo timestamp.
-              </div>
+                 {t('uiSunAmpShadowPositionModeledBasedOnExact')} </div>
             )}
           </div>
-);
+); };

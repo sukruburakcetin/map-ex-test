@@ -1,3 +1,4 @@
+import { Presentation, englishPresentation } from '../../i18n/PresentationText';
 import { ProfileFrameChart } from './profileIndicator';
 import { ProfileFlowDock, useFlowProfile } from './ProfileFlowDock';
 import type { ElevationIndicatorWidget } from './profileIndicator';
@@ -37,8 +38,12 @@ export class ElevationProfileController {
   private mobileExpanded = false;
   private dock: ProfileFlowDock | null = null;
   constructor(private readonly loadModules: (ids: string[]) => Promise<any[]>, private readonly getGraphic: () => SDKConstructor,
-    private readonly getFlowHost: () => HTMLElement | null = () => null) {}
+    private readonly getFlowHost: () => HTMLElement | null = () => null, private readonly l10n: Presentation = englishPresentation) {}
 
+  refreshLocale(): void {
+    for(const line of this.widget?.profiles.toArray() || []) if(line.title) line.title=this.l10n.text(line.title);
+    this.chart?.refresh();
+  }
   refreshLayout(): void { this.chart?.refreshLayout(); }
 
   track(imageId: string | null): void {
@@ -88,9 +93,9 @@ export class ElevationProfileController {
       const inputGraphic = new Graphic({ geometry: polyline });
       if (needsTerrainSource) this.terrainSource = new ElevationLayer({ url: 'https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer' });
       const profiles: any[] = [needsTerrainSource
-        ? { type: 'query', source: this.terrainSource, title: 'Terrain Surface', color: '#2ecc71', viewVisualizationEnabled: false }
-        : { type: 'ground', title: 'Terrain Surface', color: '#2ecc71', viewVisualizationEnabled: false }];
-      if (view.type === '3d') profiles.push({ type: 'view', title: '3D Infrastructure', color: '#3498db', viewVisualizationEnabled: false });
+        ? { type: 'query', source: this.terrainSource, title: this.l10n.text('Terrain Surface'), color: '#2ecc71', viewVisualizationEnabled: false }
+        : { type: 'ground', title: this.l10n.text('Terrain Surface'), color: '#2ecc71', viewVisualizationEnabled: false }];
+      if (view.type === '3d') profiles.push({ type: 'view', title: this.l10n.text('3D Infrastructure'), color: '#3498db', viewVisualizationEnabled: false });
       const doc = this.getFlowHost()?.ownerDocument || (typeof document !== 'undefined' ? document : null);
       const renderContainer = doc?.createElement('div');
       this.widget = new ElevationProfile({ container: renderContainer, view, profiles, input: inputGraphic, unit: 'meters', unitOptions: ['meters'],
@@ -115,7 +120,7 @@ export class ElevationProfileController {
           try { this.dock?.place(mobile); }
           catch (error) { if (!view.destroyed) console.warn('[Mapillary profile] Could not reposition profile:', error); }
         },
-      });
+      }, this.l10n);
       this.chart.setFrame(this.confirmedImageId);
       this.chartWatch = reactiveUtils.watch(() => [this.widget?.viewModel.progress,
         ...this.widget?.profiles.toArray().flatMap((line: any) => [line.visible, line.samples]) || []], () => this.chart?.refresh());

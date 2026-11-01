@@ -1,5 +1,7 @@
 /** @jsx jsx */
+import { firstWeekday } from '../i18n/core';
 import { React, jsx } from "jimu-core";
+import { WidgetLocaleContext } from '../i18n/WidgetLocale';
 import ReactDOM from "react-dom";
 import { ACCENT, NAV_BTN, dateWrapperStyle, getDateTriggerStyle, dateIconStyle, dateLabelStyle, dateClearStyle, dateCalendarStyle, dateYearNavigationStyle, dateYearLabelStyle, dateMonthNavigationStyle, dateMonthLabelStyle, dateWeekHeaderGridStyle, dateWeekHeaderStyle, dateDayGridStyle, getDateDayStyle, dateTodaySectionStyle, dateTodayButtonStyle } from '../styles/glassDatePicker';
 
@@ -26,16 +28,7 @@ interface GlassDatePickerState {
 }
 
 // Helpers
-const MONTHS = ["January","February","March","April","May","June",
-                "July","August","September","October","November","December"];
-const DAYS   = ["Su","Mo","Tu","We","Th","Fr","Sa"];
 
-function toYMD(d: Date): string {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${dd}`;
-}
 
 function daysInMonth(year: number, month: number): number {
     return new Date(year, month + 1, 0).getDate();
@@ -49,6 +42,8 @@ function firstDayOfMonth(year: number, month: number): number {
 
 //  Component
 export class GlassDatePicker extends React.PureComponent<GlassDatePickerProps, GlassDatePickerState> {
+    static contextType = WidgetLocaleContext;
+    declare context: React.ContextType<typeof WidgetLocaleContext>;
     private menuRef = React.createRef<HTMLDivElement>();
     private closeFloatingMenu = (event?: Event) => {
         if (!this.props.floatingMenu || (event?.target instanceof Node && this.menuRef.current?.contains(event.target))) return;
@@ -155,12 +150,15 @@ export class GlassDatePicker extends React.PureComponent<GlassDatePickerProps, G
     };
 
     render() {
-        const { selected, isClearable, placeholderText = "Date", disabled = false } = this.props;
+        const { t, formatLocale:locale } = this.context;
+        const { selected, isClearable, placeholderText = t('date'), disabled = false } = this.props;
+        const weekStart = firstWeekday(locale);
+        const weekdays = Array.from({length:7}, (_,i) => new Intl.DateTimeFormat(locale,{weekday:'short'}).format(new Date(2024,0,7+(i+weekStart)%7)));
         const { open, viewYear, viewMonth, hoveredDay } = this.state;
 
-        const label      = selected ? toYMD(selected) : placeholderText;
+        const label      = selected ? new Intl.DateTimeFormat(locale).format(selected) : placeholderText;
         const totalDays  = daysInMonth(viewYear, viewMonth);
-        const firstDay   = firstDayOfMonth(viewYear, viewMonth);
+        const firstDay   = (firstDayOfMonth(viewYear, viewMonth) - weekStart + 7) % 7;
         const selDay     = selected?.getDate();
         const selMonth   = selected?.getMonth();
         const selYear    = selected?.getFullYear();
@@ -198,31 +196,31 @@ export class GlassDatePicker extends React.PureComponent<GlassDatePickerProps, G
 
                 {/* Calendar panel (absolute child, opens upward) */}
                 {open && this.renderFloatingMenu(
-                    <div ref={this.menuRef}
+                    <div dir={this.context.direction} ref={this.menuRef}
                         onClick={e => e.stopPropagation()}
                         style={{ ...dateCalendarStyle, ...this.floatingMenuStyle() }}
                     >
                         {/* Year navigation */}
                         <div style={dateYearNavigationStyle}>
-                            <button type="button" onClick={this.prevYear} style={NAV_BTN}>«</button>
+                            <button type="button" aria-label={t('previousYear')} onClick={this.prevYear} style={NAV_BTN}>{this.context.direction==='rtl'?'»':'«'}</button>
                             <span style={dateYearLabelStyle}>
-                                {viewYear}
+                                {new Intl.NumberFormat(locale,{useGrouping:false}).format(viewYear)}
                             </span>
-                            <button type="button" onClick={this.nextYear} style={NAV_BTN}>»</button>
+                            <button type="button" aria-label={t('nextYear')} onClick={this.nextYear} style={NAV_BTN}>{this.context.direction==='rtl'?'«':'»'}</button>
                         </div>
 
                         {/* Month navigation */}
                         <div style={dateMonthNavigationStyle}>
-                            <button type="button" onClick={this.prevMonth} style={NAV_BTN}>‹</button>
+                            <button type="button" aria-label={t('previousMonth')} onClick={this.prevMonth} style={NAV_BTN}>{this.context.direction==='rtl'?'›':'‹'}</button>
                             <span style={dateMonthLabelStyle}>
-                                {MONTHS[viewMonth]}
+                                {new Intl.DateTimeFormat(locale,{month:'long'}).format(new Date(viewYear,viewMonth,1))}
                             </span>
-                            <button type="button" onClick={this.nextMonth} style={NAV_BTN}>›</button>
+                            <button type="button" aria-label={t('nextMonth')} onClick={this.nextMonth} style={NAV_BTN}>{this.context.direction==='rtl'?'‹':'›'}</button>
                         </div>
 
                         {/* Day-of-week headers */}
                         <div style={dateWeekHeaderGridStyle}>
-                            {DAYS.map(d => (
+                            {weekdays.map(d => (
                                 <div key={d} style={dateWeekHeaderStyle}>
                                     {d}
                                 </div>
@@ -254,7 +252,7 @@ export class GlassDatePicker extends React.PureComponent<GlassDatePickerProps, G
                                         onMouseLeave={() => this.setState({ hoveredDay: -1 })}
                                         style={getDateDayStyle(bg, isSelected, isToday)}
                                     >
-                                        {day}
+                                        {new Intl.NumberFormat(locale,{useGrouping:false}).format(day)}
                                     </div>
                                 );
                             })}
@@ -277,7 +275,7 @@ export class GlassDatePicker extends React.PureComponent<GlassDatePickerProps, G
                                 }}
                                 style={dateTodayButtonStyle}
                             >
-                                Today
+                                {t('today')}
                             </button>
                         </div>
                     </div>

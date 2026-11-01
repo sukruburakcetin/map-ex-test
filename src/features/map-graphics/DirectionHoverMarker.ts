@@ -1,190 +1,82 @@
-/** Pulsing navigation-target marker, matching minimap marker and interval lifetime. */
-export interface DirectionMarkerGraphic { symbol: any; }
+/** Ground-aligned navigation target; 3D is steady, 2D retains its existing pulse. */
+export interface DirectionMarkerGraphic { symbol: any; geometry?: any; visible?: boolean; }
 export interface DirectionMarkerView<G> {
-  type: string;
-  graphics: { add(graphic: G): unknown; remove(graphic: G): unknown };
+ type: string;
+ graphics: { add(graphic: G): unknown; remove(graphic: G): unknown };
 }
 export interface DirectionMarkerMinimap<G> {
-  graphics: { forEach(callback: (graphic: G) => void): void };
-  add(graphic: G): unknown;
-  remove(graphic: G): unknown;
+ graphics: { forEach(callback: (graphic: G) => void): void };
+ add(graphic: G): unknown; remove(graphic: G): unknown;
+}
+interface GroundMarker {
+ showMarker(view: any, lon: number, lat: number, color: any, imageId: string): void;
+ show?(view: any, lon: number, lat: number, heading: number, metres: number, spread: number): void;
+ hideCone?(): void;
+ clear(): void;
 }
 export interface DirectionMarkerHost<G> {
-  getView(): DirectionMarkerView<G> | null | undefined;
-  getMinimap(): DirectionMarkerMinimap<G> | null;
-  createGraphic(properties: any): G;
-  setInterval(callback: () => void, milliseconds: number): ReturnType<typeof setInterval>;
-  clearInterval(handle: ReturnType<typeof setInterval>): void;
+ getView(): DirectionMarkerView<G> | null | undefined;
+ getMinimap(): DirectionMarkerMinimap<G> | null;
+ createGraphic(properties: any): G;
+ createGroundMarker?(presented: (visible: boolean) => void): GroundMarker;
+ setInterval(callback: () => void, milliseconds: number): ReturnType<typeof setInterval>;
+ clearInterval(handle: ReturnType<typeof setInterval>): void;
 }
-
-/** Owns the yellow direction-hover visuals; coordinate lookup and hover identity stay host-owned.
- * Preserves the 60 ms interval, 16–20 px pulse, 3D lift/callout and tagged minimap cleanup.
- * The host readers retain the existing cleanup policy of using the currently active view/layer.
- */
 export class DirectionHoverMarker<G extends DirectionMarkerGraphic> {
-  graphic: G | null = null;
-  private readonly host: DirectionMarkerHost<G>;
-  constructor(host: DirectionMarkerHost<G>) { this.host = host; }
-  private get minimapGraphicsLayer(): DirectionMarkerMinimap<G> | null { return this.host.getMinimap(); }
-
-  /** Draw a WGS84 navigation target after the host has resolved its coordinates.
-   * Replaces the previous marker and timer; no image requests or subscriptions are created here.
-   */
-  draw(view: DirectionMarkerView<G>, hoveredImg: { id: string; lon: number; lat: number }): void {
-    // Remove any existing highlight before drawing a new one
-    this.clear();
-    const is3D = view.type === "3d";
-
-    const geometry = {
-      type: "point",
-      longitude: hoveredImg.lon,
-      latitude: hoveredImg.lat,
-      spatialReference: { wkid: 4326 },
-    };
-
-    // Helper function to create the correct symbol for 2D or 3D
-    const getSymbol = (currentSize: number) => {
-      if (is3D) {
-        return {
-          type: "point-3d",
-
-          /*
-           * Keep the hover marker visible while the
-           * SceneView camera rotates / changes pitch.
-           */
-          disableDepthTestDistance: Number.POSITIVE_INFINITY,
-
-          symbolLayers: [
-            {
-              type: "icon",
-
-              /*
-               * JSAPI native visibility behavior.
-               * Same fix used by the green pulse.
-               */
-              occludedVisibility: {
-                mode: "visible",
-              },
-
-              resource: {
-                primitive: "circle",
-              },
-
-              material: {
-                color: [255, 255, 0, 0.8],
-              },
-
-              outline: {
-                color: [255, 165, 0, 1],
-                size: 2,
-              },
-
-              size: currentSize,
-            },
-          ],
-
-          /*
-           * Keep your existing lifted hover design.
-           * Unlike the green point, this is already
-           * sufficiently undraped from the ground.
-           */
-          verticalOffset: {
-            screenLength: 45,
-            maxWorldLength: 100,
-            minWorldLength: 5,
-          },
-
-          callout: {
-            type: "line",
-            size: 2,
-            color: [255, 165, 0, 1],
-
-            border: {
-              color: [0, 0, 0, 0.3],
-            },
-          },
-        };
-      } else {
-        // Standard 2D rendering
-        return {
-          type: "simple-marker",
-          style: "circle",
-          color: [255, 255, 0, 0.8],
-          size: currentSize,
-          outline: { color: [255, 165, 0, 1], width: 3 },
-        };
-      }
-    };
-
-    const graphic = this.host.createGraphic({
-      geometry: geometry,
-      symbol: getSymbol(16) as any,
-    });
-
-    view.graphics.add(graphic);
-    this.graphic = graphic;
-
-    // Also add a simple yellow marker to the minimap so the hover is visible there too
-    if (this.minimapGraphicsLayer) {
-      const minimapHoverGraphic = this.host.createGraphic({
-        geometry: geometry,
-        symbol: {
-          type: "simple-marker",
-          style: "circle",
-          color: [255, 255, 0, 0.85],
-          size: 12,
-          outline: { color: [255, 165, 0, 1], width: 2 },
-        } as any,
-      });
-      (minimapHoverGraphic as any).__isDirectionHover = true;
-      this.minimapGraphicsLayer.add(minimapHoverGraphic);
-    }
-
-    // Pulse animation state
-    let growing = true;
-    let size = 16;
-
-    // Creates a pulsing effect by oscillating marker size
-    const pulseInterval = this.host.setInterval(() => {
-      if (!this.graphic) {
-        this.host.clearInterval(pulseInterval);
-        return;
-      }
-
-      size += growing ? 0.5 : -0.5;
-      if (size >= 20) growing = false;
-      if (size <= 16) growing = true;
-
-      this.graphic.symbol = getSymbol(size) as any;
-    }, 60);
-
-    // Store interval reference for cleanup
-    (graphic as any)._pulseInterval = pulseInterval;
+ graphic: G | null = null;
+ private view: DirectionMarkerView<G> | null = null;
+ private minimap: DirectionMarkerMinimap<G> | null = null;
+ private minimapGraphic: G | null = null;
+ private ground: GroundMarker | null = null;
+ private timer: ReturnType<typeof setInterval> | null = null;
+ constructor(private readonly host: DirectionMarkerHost<G>) {}
+ draw(view: DirectionMarkerView<G>, image: {id: string; lon: number; lat: number; bearing?: number}): void {
+  const geometry={type:'point',longitude:image.lon,latitude:image.lat,spatialReference:{wkid:4326}};
+  const symbol=(size:number)=>view.type==='3d'?{
+   type:'point-3d',symbolLayers:[{type:'icon',resource:{primitive:'circle'},material:{color:[255,193,7,1]},size:12,
+    outline:{color:'white',size:2},occludedVisibility:{mode:'visible'}}]
+  }:{type:'simple-marker',style:'circle',color:[255,255,0,.8],size,outline:{color:[255,165,0,1],width:3}};
+  // Reposition the existing 3D target without rebuilding its Graphic or display owner.
+  if(this.view===view && view.type==='3d' && this.graphic){
+   this.graphic.geometry=geometry;
+   if(this.minimapGraphic)this.minimapGraphic.geometry=geometry;
+   this.showGroundTarget(view,image);
+   return;
   }
-
-  /** Stop the active pulse, remove the map graphic and remove tagged minimap markers only.
-   * Repeated clears are harmless; unrelated minimap graphics remain untouched.
-   */
-  clear(): void {
-    if (this.graphic) {
-      // Stop pulse animation
-      if ((this.graphic as any)._pulseInterval) {
-        this.host.clearInterval((this.graphic as any)._pulseInterval);
-      }
-      // Remove graphic from the map view
-      const view = this.host.getView();
-      if (view) {
-        view.graphics.remove(this.graphic);
-      }
-      // Remove from minimap too
-      if (this.minimapGraphicsLayer) {
-        const toRemove: G[] = [];
-        this.minimapGraphicsLayer.graphics.forEach((g: G) => {
-          if ((g as any).__isDirectionHover) toRemove.push(g);
-        });
-        toRemove.forEach((g) => this.minimapGraphicsLayer!.remove(g));
-      }
-      this.graphic = null;
-    }
+  this.clear();this.view=view;
+  const graphic=this.host.createGraphic({geometry,symbol:symbol(16)});
+  this.graphic=graphic;view.graphics.add(graphic);
+  this.minimap=this.host.getMinimap();
+  if(this.minimap){
+   this.minimapGraphic=this.host.createGraphic({geometry,symbol:{type:'simple-marker',style:'circle',color:[255,255,0,.85],size:12,outline:{color:[255,165,0,1],width:2}}});
+   (this.minimapGraphic as any).__isDirectionHover=true;this.minimap.add(this.minimapGraphic);
   }
+  if(view.type==='3d'){
+   // ScreenDirectionCone uses rendered terrain, bounded ground projection and settled caching.
+   // Keep a steady native fallback until the overlay has a valid screen anchor.
+   try {
+    this.ground=this.host.createGroundMarker?.(presented=>{if(this.graphic===graphic)graphic.visible=!presented})||null;
+    this.showGroundTarget(view,image);
+   } catch {this.ground?.clear();this.ground=null;graphic.visible=true;}
+   return;
+  }
+  let growing=true,size=16;
+  this.timer=this.host.setInterval(()=>{
+   if(this.graphic!==graphic)return;
+   size+=growing ? .5 : -.5;if(size>=20)growing=false;if(size<=16)growing=true;
+   graphic.symbol=symbol(size);
+  },60);
+ }
+ private showGroundTarget(view: DirectionMarkerView<G>, image: {id: string; lon: number; lat: number; bearing?: number}): void {
+  this.ground?.showMarker(view,image.lon,image.lat,[255,193,7,1],image.id);
+  if(Number.isFinite(image.bearing)) this.ground?.show?.(view,image.lon,image.lat,((image.bearing!%360)+360)%360,6,50);
+  else this.ground?.hideCone?.();
+ }
+ clear(): void {
+  if(this.timer!==null)this.host.clearInterval(this.timer);this.timer=null;
+  this.ground?.clear();this.ground=null;
+  if(this.graphic)this.view?.graphics.remove(this.graphic);
+  if(this.minimapGraphic)this.minimap?.remove(this.minimapGraphic);
+  this.graphic=null;this.minimapGraphic=null;this.minimap=null;this.view=null;
+ }
 }

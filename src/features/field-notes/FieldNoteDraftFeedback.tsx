@@ -1,4 +1,5 @@
 /** @jsx jsx */
+import { OwnedMessage } from '../../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 import * as Icons from '../../components/Icons';
 import type { FieldNoteDraftNotice } from './FieldNoteDraft';
@@ -10,7 +11,7 @@ export function showFieldNoteDraftFeedback(showToast: (content: React.ReactNode,
     showToast(
           <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <Icons.Notes size={14} />
-            {isActive ? "Field notes enabled" : "Field notes disabled"}
+            {isActive ? <OwnedMessage source={"Field notes enabled"}/> : <OwnedMessage source={"Field notes disabled"}/>}
           </span>,
           2000,
         );
@@ -18,8 +19,7 @@ export function showFieldNoteDraftFeedback(showToast: (content: React.ReactNode,
   }
   showToast(
         <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <Icons.Check size={14} color="#37d582" /> Object saved as note
-        </span>,
+          <Icons.Check size={14} color="#37d582" />  <OwnedMessage source={"Object saved as note"}/> </span>,
         2000,
       );
 }

@@ -1,3 +1,4 @@
+import { Presentation, englishPresentation } from '../../i18n/PresentationText';
 import { PlacePopupFocus } from './PlacePopupFocus';
 import { groupOverlappingPlaces, placeCountSymbol, PlaceGroupMarker } from './overlappingPlaces';
 import { publishedPlacesExtent, outsidePublishedExtent } from './publishedPlacesExtent';
@@ -10,6 +11,7 @@ import { PlacesController, PlacesState, PlacesView } from './PlacesController';
 const FIELDS = ['gers_id', 'place_name', 'category', 'place_group', 'confidence', 'address', 'website', 'data_release'];
 /** The service FeatureLayer is query-only; only bounded local Graphics reach the map. */
 export class ArcGISPlaces {
+  private get l10n(): Presentation { return this.host.presentation || englishPresentation; }
   private service: any = null;
   private published: PlaceBbox | null = null;
   get stats() { return { ...this.controller.stats, loaded: this.records.size, rendered: this.graphics?.graphics?.length ?? 0, overlapGroups: this.groups.size, cachedSymbols: this.iconSymbols.size + this.countSymbols.size, selection: this.selection.stats }; }
@@ -35,6 +37,7 @@ export class ArcGISPlaces {
   readonly selection: SelectedPlace;
   readonly controller: PlacesController;
   constructor(private host: {
+    presentation?: Presentation;
     id: string; url: string; modules: any; view(): any; geographic(extent: any): any;
     list?(places: readonly Place[]): void; selected?(place: Place | null): void; busy(): boolean; pauseReason?(): string; status(state: PlacesState): void; explore(place: Place, radius: number, signal: AbortSignal): Promise<PlaceImagery[]>; openImagery(image: PlaceImagery): void;
   }) {
@@ -100,7 +103,7 @@ export class ArcGISPlaces {
       view.map.add(this.graphics, 0);
       this.attribution = document.createElement('div');
       this.attribution.className = 'esri-widget'; this.attribution.style.cssText = 'box-sizing:border-box;margin-right:clamp(34px,3vw,42px);max-width:min(180px,40vw);padding:3px 6px;font-size:10px;line-height:1.3;white-space:normal;overflow-wrap:break-word;text-align:right;border-radius:3px;background:#182b23dd;color:#e4e9de';
-      const link = document.createElement('a'); link.textContent = 'Places · Overture Maps'; link.href = 'https://docs.overturemaps.org/attribution/'; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.style.color = 'inherit';
+      const link = document.createElement('a'); this.l10n.bind(link,"textContent",()=>this.l10n.text("Places · Overture Maps")); link.href = 'https://docs.overturemaps.org/attribution/'; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.style.color = 'inherit';
       this.attribution.appendChild(link); view.ui.add(this.attribution, 'bottom-right');
     }
     this.setHover(null);
@@ -144,7 +147,7 @@ export class ArcGISPlaces {
   }
   hoverLabel(place: Place): string {
     const group = this.groups.get(place.id);
-    return group ? `${group.members.length} places here · Click to choose` : `${place.name} · ${place.category.replace(/_/g, ' ')}`;
+    return group ? this.l10n.text("{value0} places here · Click to choose",{value0:String(group.members.length)}) : `${place.name} · ${place.category.replace(/_/g, ' ')}`;
   }
   get hoverLayer(): any { return !this.host.busy() && this.graphics?.visible && this.records.size ? this.graphics : null; }
   hit(results: any[]): Place | null {
@@ -185,66 +188,66 @@ export class ArcGISPlaces {
     const origin = this.popupFocus.capture(view);
     this.setHover(null);
     this.selection.select(place);
-    const content = document.createElement('div'); content.className = 'mly-place-popup';
+    const content = document.createElement('div'); content.className = 'mly-place-popup'; this.l10n.bind(content,'dir',()=>this.l10n.locale==='ar'?'rtl':'ltr');
     const name = document.createElement('strong'); name.className = 'mly-place-name'; name.textContent = place.name; content.appendChild(name);
     for (const [index, text] of [place.category.replace(/_/g, ' '), place.address].entries()) if (text) { const line = document.createElement('p'); line.className = index === 0 ? 'mly-place-category' : 'mly-place-address'; line.textContent = text; content.appendChild(line); }
-    if (place.website) { const link = document.createElement('a'); link.className = 'mly-place-website'; link.textContent = 'Website'; link.href = place.website; link.target = '_blank'; link.rel = 'noopener noreferrer'; content.appendChild(link); }
+    if (place.website) { const link = document.createElement('a'); link.className = 'mly-place-website'; this.l10n.bind(link,"textContent",()=>this.l10n.text("Website")); link.href = place.website; link.target = '_blank'; link.rel = 'noopener noreferrer'; content.appendChild(link); }
     this.searchAbort?.abort(); this.searchAbort = null;
-    const button = document.createElement('button'); button.type = 'button'; button.textContent = 'Find imagery within 75 m'; button.className = 'mly-place-open mly-place-open-primary'; content.appendChild(button);
+    const button = document.createElement('button'); button.type = 'button'; this.l10n.bind(button,"textContent",()=>this.l10n.text("Find imagery within 75 m")); button.className = 'mly-place-open mly-place-open-primary'; content.appendChild(button);
     const status = document.createElement('p'); status.setAttribute('role', 'status'); status.className = 'mly-place-meta'; content.appendChild(status);
     const alternatives = document.createElement('div'); content.appendChild(alternatives);
-    const visibility = document.createElement('p'); visibility.className = 'mly-place-choice-note'; visibility.textContent = 'Direction is estimated. Visibility isn’t confirmed.'; visibility.hidden = true; content.appendChild(visibility);
+    const visibility = document.createElement('p'); visibility.className = 'mly-place-choice-note'; this.l10n.bind(visibility,"textContent",()=>this.l10n.text("Direction is estimated. Visibility isn’t confirmed.")); visibility.hidden = true; content.appendChild(visibility);
     let radius = 75, candidate: PlaceImagery | null = null;
     const active = () => this.popupContent === content && this.popupView === view && !view.destroyed && view.popup?.content === content;
     button.onclick = async () => {
       if (!active() || button.disabled) return;
       if (candidate) { this.host.openImagery(candidate); return; }
       const controller = new AbortController(); this.searchAbort?.abort(); this.searchAbort = controller;
-      button.disabled = true; status.textContent = `Looking within ${radius} m…`;
+      button.disabled = true; this.l10n.bind(status,"textContent",()=>this.l10n.text("Looking within {value0} m…",{value0:String(radius)}));
       try {
         const found = await this.host.explore(place, radius, controller.signal);
         if (controller.signal.aborted || !active()) return;
         if (found.length) {
-          candidate = found[0]; button.textContent = `Suggested view · ${placeImageryDirectionLabel(candidate)}`;
-          button.setAttribute('aria-label', `Open suggested view: ${placeImageryDirectionLabel(candidate)}. ${placeImageryChoiceMeta(candidate)}`);
-          status.textContent = placeImageryChoiceMeta(candidate); status.className = 'mly-place-meta mly-place-choice-meta'; visibility.hidden = false;
+          candidate = found[0]; this.l10n.bind(button,"textContent",()=>this.l10n.text("Suggested view · {value0}",{value0:String(placeImageryDirectionLabel(candidate, this.l10n))}));
+          this.l10n.bindAttribute(button,'aria-label',()=>this.l10n.text("Open suggested view: {value0}. {value1}",{value0:String(placeImageryDirectionLabel(candidate, this.l10n)),value1:String(placeImageryChoiceMeta(candidate, this.l10n))}));
+          this.l10n.bind(status,"textContent",()=>placeImageryChoiceMeta(candidate!, this.l10n)); status.className = 'mly-place-meta mly-place-choice-meta'; visibility.hidden = false;
           for (const image of found.slice(1, 3)) {
-            const option = document.createElement('button'); option.type = 'button'; option.textContent = `Open view · ${placeImageryDirectionLabel(image)}`;
-            option.setAttribute('aria-label', `Open view: ${placeImageryDirectionLabel(image)}. ${placeImageryChoiceMeta(image)}`);
+            const option = document.createElement('button'); option.type = 'button'; this.l10n.bind(option,"textContent",()=>this.l10n.text("Open view · {value0}",{value0:String(placeImageryDirectionLabel(image, this.l10n))}));
+            this.l10n.bindAttribute(option,'aria-label',()=>this.l10n.text("Open view: {value0}. {value1}",{value0:String(placeImageryDirectionLabel(image, this.l10n)),value1:String(placeImageryChoiceMeta(image, this.l10n))}));
             option.className = 'mly-place-open';
             option.onclick = () => { if (active()) this.host.openImagery(image); };
-            const detail = document.createElement('p'); detail.textContent = placeImageryChoiceMeta(image); detail.className = 'mly-place-meta mly-place-choice-meta';
+            const detail = document.createElement('p'); this.l10n.bind(detail,"textContent",()=>placeImageryChoiceMeta(image, this.l10n)); detail.className = 'mly-place-meta mly-place-choice-meta';
             alternatives.appendChild(option); alternatives.appendChild(detail);
           }
         } else if (radius === 75) {
-          radius = 250; button.textContent = 'Search within 250 m';
-          status.textContent = 'No nearby imagery found within 75 m. Search a wider area if you’d like.';
+          radius = 250; this.l10n.bind(button,"textContent",()=>this.l10n.text("Search within 250 m"));
+          this.l10n.bind(status,"textContent",()=>this.l10n.text("No nearby imagery found within 75 m. Search a wider area if you’d like."));
         } else {
-          button.textContent = 'Search again · within 250 m'; status.textContent = 'No suitable imagery found within 250 m. Try another place or search again later.';
+          this.l10n.bind(button,"textContent",()=>this.l10n.text("Search again · within 250 m")); this.l10n.bind(status,"textContent",()=>this.l10n.text("No suitable imagery found within 250 m. Try another place or search again later."));
         }
       } catch (error) {
-        if (!controller.signal.aborted && active()) { button.textContent = `Retry search · within ${radius} m`; status.textContent = 'Imagery search could not finish. Please try again.'; }
+        if (!controller.signal.aborted && active()) { this.l10n.bind(button,"textContent",()=>this.l10n.text("Retry search · within {value0} m",{value0:String(radius)})); this.l10n.bind(status,"textContent",()=>this.l10n.text("Imagery search could not finish. Please try again.")); }
       } finally {
         button.disabled = false;
         if (this.searchAbort === controller) this.searchAbort = null;
       }
     };
-    const source = document.createElement('p'); source.textContent = `Overture Maps${place.release ? ' · ' + place.release : ''}. Imagery may be near this place rather than at its entrance.`; source.className = 'mly-place-source'; content.appendChild(source);
+    const source = document.createElement('p'); this.l10n.bind(source,"textContent",()=>this.l10n.text("Overture Maps{value0}. Imagery may be near this place rather than at its entrance.",{value0:String(place.release ? ' · ' + place.release : '')})); source.className = 'mly-place-source'; content.appendChild(source);
     const style = document.createElement('style'); style.textContent = PLACE_POPUP_CSS; content.appendChild(style);
     this.popupContent = content; this.popupView = view;
-    this.popupFocus.open(view, { title: 'Nearby place', content, location: new this.host.modules.Point({ longitude: place.lon, latitude: place.lat, spatialReference: { wkid: 4326 } }) }, origin);
+    this.popupFocus.open(view, { title: this.l10n.text("Nearby place"), content, location: new this.host.modules.Point({ longitude: place.lon, latitude: place.lat, spatialReference: { wkid: 4326 } }) }, origin);
     return true;
   }
   private openGroup(group: PlaceGroupMarker, origin: HTMLElement | null): boolean {
     const view = this.host.view(); if (!view || view.destroyed || this.disposed) return false;
     this.closeDetails();
-    const content = document.createElement('div'); content.className = 'mly-place-popup';
-    const heading = document.createElement('strong'); heading.textContent = `${group.members.length} places here`; content.appendChild(heading);
-    const hint = document.createElement('p'); hint.textContent = 'Choose a place to see details.'; content.appendChild(hint);
+    const content = document.createElement('div'); content.className = 'mly-place-popup'; this.l10n.bind(content,'dir',()=>this.l10n.locale==='ar'?'rtl':'ltr');
+    const heading = document.createElement('strong'); this.l10n.bind(heading,"textContent",()=>this.l10n.text("{value0} places here",{value0:String(group.members.length)})); content.appendChild(heading);
+    const hint = document.createElement('p'); this.l10n.bind(hint,"textContent",()=>this.l10n.text("Choose a place to see details.")); content.appendChild(hint);
     const list = document.createElement('div'); content.appendChild(list);
     const controls = document.createElement('div'); controls.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-top:7px'; content.appendChild(controls);
     const previous = document.createElement('button'), next = document.createElement('button'), label = document.createElement('span');
-    previous.type = next.type = 'button'; previous.textContent = 'Previous'; next.textContent = 'Next'; controls.appendChild(previous); controls.appendChild(label); controls.appendChild(next);
+    previous.type = next.type = 'button'; this.l10n.bind(previous,"textContent",()=>this.l10n.text("Previous")); this.l10n.bind(next,"textContent",()=>this.l10n.text("Next")); controls.appendChild(previous); controls.appendChild(label); controls.appendChild(next);
     const members = [...group.members].sort((a, b) => a.name.localeCompare(b.name));
     const selectedIndex = members.findIndex(place => place.id === this.selection.place?.id);
     let page = selectedIndex < 0 ? 0 : Math.floor(selectedIndex / 4);
@@ -254,13 +257,13 @@ export class ArcGISPlaces {
       for (const place of members.slice(page * 4, page * 4 + 4)) {
         const selected = place.id === this.selection.place?.id, category = place.category.replace(/_/g, ' ');
         const button = document.createElement('button'); button.type = 'button'; button.className = 'mly-place-open mly-place-group-row'; button.title = place.name;
-        button.setAttribute('aria-label', `${place.name}, ${category}${selected ? ', selected' : ''}. Open place details`);
+        this.l10n.bindAttribute(button,'aria-label',()=>this.l10n.text("{value0}, {value1}{value2}. Open place details",{value0:String(place.name),value1:String(category),value2:String(selected ? ', selected' : '')}));
         if (selected) button.setAttribute('aria-current', 'true');
         const icon = document.createElement('img'); icon.src = placeCategoryIcon(place.group, selected); icon.alt = ''; icon.width = icon.height = 20; icon.setAttribute('aria-hidden', 'true'); button.appendChild(icon);
         const text = document.createElement('span'); text.className = 'mly-place-group-text';
         const name = document.createElement('span'); name.className = 'mly-place-group-name'; name.textContent = place.name; text.appendChild(name);
         const detail = document.createElement('span'); detail.className = 'mly-place-group-category'; detail.textContent = category; text.appendChild(detail);
-        if (selected) { const badge = document.createElement('span'); badge.className = 'mly-place-group-selected'; badge.textContent = 'Selected'; text.appendChild(badge); }
+        if (selected) { const badge = document.createElement('span'); badge.className = 'mly-place-group-selected'; this.l10n.bind(badge,"textContent",()=>this.l10n.text("Selected")); text.appendChild(badge); }
         button.appendChild(text);
         button.onclick = () => { if (active() && this.records.has(place.id)) this.open([], place.id); }; list.appendChild(button);
       }
@@ -268,14 +271,19 @@ export class ArcGISPlaces {
       if (moveFocus) list.querySelector?.('button')?.focus({ preventScroll: true });
     };
     previous.onclick = () => { if (active() && page > 0) { page--; render(true); } }; next.onclick = () => { if (active() && (page + 1) * 4 < members.length) { page++; render(true); } };
-    const source = document.createElement('p'); source.textContent = 'Loaded places · Overture Maps'; content.appendChild(source);
+    const source = document.createElement('p'); this.l10n.bind(source,"textContent",()=>this.l10n.text("Loaded places · Overture Maps")); content.appendChild(source);
     const style = document.createElement('style'); style.textContent = PLACE_POPUP_CSS; content.appendChild(style);
     this.popupContent = content; this.popupView = view; render();
-    this.popupFocus.open(view, { title: 'Nearby places', content, location: new this.host.modules.Point({ longitude: group.anchor.lon, latitude: group.anchor.lat, spatialReference: { wkid: 4326 } }) }, origin);
+    this.popupFocus.open(view, { title: this.l10n.text("Nearby places"), content, location: new this.host.modules.Point({ longitude: group.anchor.lon, latitude: group.anchor.lat, spatialReference: { wkid: 4326 } }) }, origin);
     return true;
+  }
+  refreshLocale(): void {
+    if(this.popupView?.popup?.content===this.popupContent && this.popupContent && !this.popupView.destroyed)
+      this.popupView.popup.title=this.l10n.text(this.popupView.popup.title || 'Nearby place');
   }
   clearSelection(): void { this.selection.clear(); this.closeDetails(); }
   private closeDetails(): void {
+    this.l10n.release(this.popupContent);
     this.popupFocus.cancel();
     this.searchAbort?.abort(); this.searchAbort = null;
     if (!this.popupView?.destroyed && this.popupContent && this.popupView?.popup?.content === this.popupContent) this.popupView.closePopup();

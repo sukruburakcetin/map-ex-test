@@ -1,0 +1,57 @@
+{
+  "installer": "korean-language-v6-112",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/i18n/core.ts",
+      "originalSha256": "a8db1d98a09b3b520e483ab01908e62d7166d9ef7e1986e6019cdd2e64af6d1d",
+      "resultSha256": "0bbe65c13badc0a7258f2fa5c7217c2aa40e8d146748bcaaf4eada3257f600a5"
+    },
+    {
+      "file": "src/i18n/WidgetLocale.tsx",
+      "originalSha256": "7ed21bdc81ff6910b45da2891c65a821d328c5e813e06f7d6ca1f02c4596f8d4",
+      "resultSha256": "75ad6089fe6f80d6320823803aa1783392f2cafa461a244f2a89a8717a6b27a0"
+    },
+    {
+      "file": "src/i18n/SettingsLocale.tsx",
+      "originalSha256": "76cc4cd8a89590063bbf2c369a07b6b28dce62c4e660a825c6c034fbe3e58488",
+      "resultSha256": "a5bd6403f071beade919086fa5a5cecd3ced4523e0b1359027e144961958dc46"
+    },
+    {
+      "file": "src/i18n/startupMessages.ts",
+      "originalSha256": "8f886e7d136d1e5ee9b531d308ca840bcafa3e8370dfae302409f527a35403f0",
+      "resultSha256": "6cb399b96c27d17b2aae0d38a05117f03ae76784b46896473e319bebc6ec0a81"
+    },
+    {
+      "file": "src/config.ts",
+      "originalSha256": "b01e7caeb442afb10ae76defc469617b54016c807d644ec1fe00a76db7b4f5c8",
+      "resultSha256": "75c9a7adae26f3706f21e899d605f9276bf31382344595d9532bf1d3bdfef926"
+    },
+    {
+      "file": "src/setting/setting.tsx",
+      "originalSha256": "99d73819d7cd29be028c85b77ebdb92d20890c2c136dd87b89eba7f9dbcd2189",
+      "resultSha256": "ec6a9c059ca750ad05804f301e0bc19057936388f179cde508266508e0b73ebe"
+    },
+    {
+      "file": "tests/localizationCatalog.test.cjs",
+      "originalSha256": "3a86806aae116355627e80757a152378278e765eb4e263c84337078e952b8ad9",
+      "resultSha256": "739037b3ce45b20bb48cef565fb4e0e7cf249a4c5c7c8cdbacad824c3dd550f8"
+    },
+    {
+      "file": "src/i18n/locales/ko.ts",
+      "originalSha256": null,
+      "resultSha256": "4c5ff361a971cb0b1da8a9f57d192d0f07c17dc4d319c282483331df8124b999"
+    },
+    {
+      "file": "src/i18n/locales/settings-ko.ts",
+      "originalSha256": null,
+      "resultSha256": "5f205f369a3ff2a36bfaf01a8a526d8af2afe8477d80cd799b616b70de5f1ea3"
+    },
+    {
+      "file": "docs/localization/KOREAN-v6.112.md",
+      "originalSha256": null,
+      "resultSha256": "c8d8a6c5a78264090bd23d0937b7258dd2037d83663dda355960d2222aaf8d7c"
+    }
+  ]
+}

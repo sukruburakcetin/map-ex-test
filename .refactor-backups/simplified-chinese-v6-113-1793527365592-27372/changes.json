@@ -1,0 +1,57 @@
+{
+  "installer": "simplified-chinese-v6-113",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/i18n/core.ts",
+      "originalSha256": "0bbe65c13badc0a7258f2fa5c7217c2aa40e8d146748bcaaf4eada3257f600a5",
+      "resultSha256": "ed45b0a82d5f7973000cb975544878143c09e29e734c479656906212d27f3a45"
+    },
+    {
+      "file": "src/i18n/WidgetLocale.tsx",
+      "originalSha256": "75ad6089fe6f80d6320823803aa1783392f2cafa461a244f2a89a8717a6b27a0",
+      "resultSha256": "a425b65838e3c2bcefe93968e79e1ce5e790f7c6c97cd7c15e3c38a22568b8f6"
+    },
+    {
+      "file": "src/i18n/SettingsLocale.tsx",
+      "originalSha256": "a5bd6403f071beade919086fa5a5cecd3ced4523e0b1359027e144961958dc46",
+      "resultSha256": "7bce48412fa51e010317fb2e8e00278b1452b57261f686cd6f4edf2aca801143"
+    },
+    {
+      "file": "src/i18n/startupMessages.ts",
+      "originalSha256": "6cb399b96c27d17b2aae0d38a05117f03ae76784b46896473e319bebc6ec0a81",
+      "resultSha256": "9fea815d6d77c48cd4a5e1ed3f332cd886de34b96a711357c93f47ef0a35dcd2"
+    },
+    {
+      "file": "src/config.ts",
+      "originalSha256": "75c9a7adae26f3706f21e899d605f9276bf31382344595d9532bf1d3bdfef926",
+      "resultSha256": "8dccd0c67a321b059e98d7b0cf5787c309b0599ebd7db0d2cadf47dcc6580404"
+    },
+    {
+      "file": "src/setting/setting.tsx",
+      "originalSha256": "ec6a9c059ca750ad05804f301e0bc19057936388f179cde508266508e0b73ebe",
+      "resultSha256": "7eca6bf05c02575c7da449c6f86b273847560a46ad0e30623ee068295c605383"
+    },
+    {
+      "file": "tests/localizationCatalog.test.cjs",
+      "originalSha256": "739037b3ce45b20bb48cef565fb4e0e7cf249a4c5c7c8cdbacad824c3dd550f8",
+      "resultSha256": "6bc5f87b78371a3e4295834b472c19f86f3cdf8a4ce6aa795aabef018cd44ea9"
+    },
+    {
+      "file": "src/i18n/locales/zh-cn.ts",
+      "originalSha256": null,
+      "resultSha256": "f43f66c7a40b56e97faa04f07716afdb839f4c248f18dc482e5ff1426893aa6c"
+    },
+    {
+      "file": "src/i18n/locales/settings-zh-cn.ts",
+      "originalSha256": null,
+      "resultSha256": "3f53747c1488bc963141faf419d4240f660b1b65c19f55710480215194ac245f"
+    },
+    {
+      "file": "docs/localization/SIMPLIFIED-CHINESE-v6.113.md",
+      "originalSha256": null,
+      "resultSha256": "0c6fe1bfc919979f6ef9b38cb44fa193c6b54e5032a8413a1e40c7f4257c99aa"
+    }
+  ]
+}

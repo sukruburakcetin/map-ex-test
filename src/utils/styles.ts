@@ -1379,8 +1379,6 @@ export const overrideStyles = `
 
     @media (max-width: 768px) {
         .widget-mapillary input[type="date"]::-webkit-datetime-edit { display: none !important; }
-        .show-panorama-only-filter::after { content: "Panoramas:"; font-size: 9px !important; }
-        .show-color-by-date-filter::after { content: "CBD:"; font-size: 9px !important; }
         .info-box { font-size: 8px !important; max-width: 110px !important; }
         .legend-container { display: none !important; }
         .esri-popup__main-container { width: 250px !important;}

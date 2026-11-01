@@ -1,0 +1,242 @@
+{
+  "installer": "runtime-turkish-continuation-v6-102",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/ControlBar.tsx",
+      "originalSha256": "a073279c3f2da364e717e0c7627b470a67b44b69b173daf137d64eba551b5323",
+      "resultSha256": "eac8944a8d984acfc24d50d9cbdae2eb9b154530e4e1f6a7b4b410134c92553f"
+    },
+    {
+      "file": "src/components/FieldNotesPanel.tsx",
+      "originalSha256": "4f4f9827627e96194a69b382aef8da45bb2ed87f208f1e8dce4abca6c89c067d",
+      "resultSha256": "e943ed47b3bc13c5acec6ff49f2d10ff9af5052d7241c32c35ba5e9b933b6845"
+    },
+    {
+      "file": "src/components/FullscreenControls.tsx",
+      "originalSha256": "bd9090a5e7d0fde65132d5b5b46ea59246449380db87f5c5b893de808e4a74f9",
+      "resultSha256": "4a0bd14adfe308809acc7b6edb99e484b4d31c9fe0db088697de65947413afbb"
+    },
+    {
+      "file": "src/components/GlassSelect.tsx",
+      "originalSha256": "067e3d75668a22efb5528f4445bec58fa29330ff72f1eb55205ff31b330646e3",
+      "resultSha256": "8f8bf6b24ec6dedcf10696035f2640d397fb60a06ad23295b307a85a2b5f478f"
+    },
+    {
+      "file": "src/components/ImageryLoading.tsx",
+      "originalSha256": "a385cb2a5bfd795395068556d6852edbc8c4facd72116f1d45195c99ce836649",
+      "resultSha256": "be163574957523423e4757bbc8fe5af0cff212e57051206eb6b1993f4dd5b3fb"
+    },
+    {
+      "file": "src/components/InfoBox.tsx",
+      "originalSha256": "5d9a742c68c9f33e1dbf0a31e57946e3d8efaa78a2988f3c0bbc0c0b356e08d3",
+      "resultSha256": "2e78eddf13755d2e1766c2a27c279fef55efa95c4fc10d20b0a3994161425a13"
+    },
+    {
+      "file": "src/components/Legend.tsx",
+      "originalSha256": "db575c4102ca43844a57e08a36ef7d593b47a85cfa5ec3f30a54dd183ff28cc5",
+      "resultSha256": "79a1c6cb2f8c7e1d7bbb0f2c8ff45f1e8532118879398198fa5ba555b67a9025"
+    },
+    {
+      "file": "src/components/LoadedPlacesList.tsx",
+      "originalSha256": "345e39adabe90cf5cd5735aa95c6a7cf7fbd721f2e4e71f03e993d8a42e1072b",
+      "resultSha256": "af4fdc5caa1ea5f2f6b60b4df575abb13bb235b4a49865ace80dfc67a317db4b"
+    },
+    {
+      "file": "src/components/NearbyCarousel.tsx",
+      "originalSha256": "2cb3e37d0b09e15671dd10a9ae1362cd533cdf7b261f1b7af9ea29af5b624e86",
+      "resultSha256": "1a8998e51fae338b5f4c8d8ee01f1df20354476041588ac4fe8ccb72f7e92a43"
+    },
+    {
+      "file": "src/components/PlacesPanel.tsx",
+      "originalSha256": "5319d6591673cb9bc1cee42efface3f7aec749dab4877276f83f72f80e335622",
+      "resultSha256": "0d47b87a44c16bdd567fb4e5bc41b55f80a601e596012b8c1f01f5aec20aee0e"
+    },
+    {
+      "file": "src/components/SelectedPlaceCard.tsx",
+      "originalSha256": "1aebd9d85cc23631d45097cdb6be87c49bc580c872d3cb801902934f09e32991",
+      "resultSha256": "3380e4d12133ac459f08f58a6a4f0a2a507cc2bb21cc6ae53e9befe18f813aa9"
+    },
+    {
+      "file": "src/components/SequencePicker.tsx",
+      "originalSha256": "2005b459b0649b8d373bfb5d4b44b670a0d08d59e64ff044b6e2f96bd370749b",
+      "resultSha256": "7844bcea9a3aa3a29da1d6865563ef810f7918caeff4b14d8a6c952710eb7869"
+    },
+    {
+      "file": "src/components/SplashScreen.tsx",
+      "originalSha256": "f797ffea744fc69768464a67dbfc9351879a04de64001ed7132e3c0044136c73",
+      "resultSha256": "affa70dcadaed0648a9abb97b2ae31bbbd9060a4bcc4b18483fc416e48a251cc"
+    },
+    {
+      "file": "src/components/info-box/ScrollDiscoveryFooter.tsx",
+      "originalSha256": "df1b267e5765352b5397a914d719a398824c2a74cd013c29c79b28a90574ac9d",
+      "resultSha256": "363dba9d82a7c65eea55afd890ea8b27f4749e8f3a383238c55424d83c7dc7e2"
+    },
+    {
+      "file": "src/components/info-box/StatusSummary.tsx",
+      "originalSha256": "5da2f8b42183cb3b070429a37a15f45506dcde874c1300e0520b01aefd5cddd9",
+      "resultSha256": "23e6af35820d217fd804d8e13f02a005a2b9b2de16f23ca1c8276875c78ff0a8"
+    },
+    {
+      "file": "src/features/coverage/CoverageAnalysisResults.tsx",
+      "originalSha256": "19f5e38c71f717d4ac82f36442f659bca533d38496acbe3aa35dadb28f6fdc82",
+      "resultSha256": "0f96ed34b56f0d24fbaf843abfa4daddf75b74c92c04ced988c2c643b4639f46"
+    },
+    {
+      "file": "src/features/coverage/CoverageAnalysisTrigger.tsx",
+      "originalSha256": "4720772513f4cd856bb35dce2c4a64e5238dcfe4dbc9c73ca71391a307f9f4a6",
+      "resultSha256": "98ab9c00db2f20b949e2bd221abbadee99fcc98e5008909a43af0cda37a79edf"
+    },
+    {
+      "file": "src/features/coverage/CoverageYearLegend.tsx",
+      "originalSha256": "762c9425e4bfae4d81bd80b768f0e62f61848d2f146958141c659589a24248ad",
+      "resultSha256": "1bac111916b02a77a8a44b11ff06be73df74c6a3ba8bb7859bcb482282e61f65"
+    },
+    {
+      "file": "src/features/coverage/QualityToolsSection.tsx",
+      "originalSha256": "53d1e6bb9f1b4e30702d27958bc181c8d7ebfbfe44f5ee4f35ec63218f0da3e2",
+      "resultSha256": "55773516b26630d4c5c17c030ae3447b62e051648d856dc4a5cdc7477434ccaa"
+    },
+    {
+      "file": "src/features/detections/DetectionToolsSection.tsx",
+      "originalSha256": "e4488a5cd112db965c452f032eb74596537e2ae5648ae4104abb436a1aa8cb2d",
+      "resultSha256": "4035e47ec0eaec4850b480bf28d2a892dfd7672d1564e18526260a8df5432e97"
+    },
+    {
+      "file": "src/features/elevation/ElevationToolsSection.tsx",
+      "originalSha256": "20819b362f380c99817e29e7221d9f8fcc8d71b32967dca9d51a159c73a088b4",
+      "resultSha256": "28261a8c55c79b5084f8597a5dca04045350c298b9407417bebfb7fc0aea5986"
+    },
+    {
+      "file": "src/features/field-notes/EnterpriseNotesList.tsx",
+      "originalSha256": "7af88edfd6bac63673d59b2f888cfeb717d21bb3dc19f5b3a20f980c70735819",
+      "resultSha256": "0deb17ddaffab963eb2bc26fbb3e708d8bcd070f638bffbb2c53c00f8f412297"
+    },
+    {
+      "file": "src/features/field-notes/LocalNotesList.tsx",
+      "originalSha256": "4c276c92533c214899cdd0fc297e3202737908a8ef863ecc82b171e65a0d36f6",
+      "resultSha256": "842c8b10866d8e23ed9700024d97b2e0c46b58ce62f0038627937767faed5a35"
+    },
+    {
+      "file": "src/features/field-notes/NoteAttachments.tsx",
+      "originalSha256": "5125a2eebe43803b590a66f5d04c5b34e3ca81a2d2708ee3e5c0dd7fd8102c93",
+      "resultSha256": "b3228f61aae30ab261c7ca5196a396c32e6bc866cbe6d69f4928cb8925dfbb95"
+    },
+    {
+      "file": "src/features/field-notes/NoteDraftForm.tsx",
+      "originalSha256": "b9016b7e032001adf81063c8cf8fa6f8b3031d07bc9959ff0bb11cb7563aa42d",
+      "resultSha256": "644f78d8b9ca17eaf03d35850f86eea795a7e42b5cffaeb7e3c507f79f2a69aa"
+    },
+    {
+      "file": "src/features/field-notes/NoteEditor.tsx",
+      "originalSha256": "c1fc4c23cffad77151a155face0e837656a9328b761d40e3ccee702f825eff93",
+      "resultSha256": "1c6b04828f11d383d2325260fbee84cc4376db2a8e51aa13159805f519fdad7c"
+    },
+    {
+      "file": "src/features/field-notes/NoteToolsSection.tsx",
+      "originalSha256": "8ab3e8543a4d3f95ff557778f750b8edfcd52729dadeea1989d1d54ce61c2217",
+      "resultSha256": "2e9b8ec71b5f08a91757f868766685c47273c8ee52d32bc798057c830eaff9e1"
+    },
+    {
+      "file": "src/features/imagery/NearbyToolsSection.tsx",
+      "originalSha256": "e37f61a8e34e7b94dfb24ba357fac6245c3841e9d33bedfbc1e048bf53e5ba98",
+      "resultSha256": "ae8c5aeeb16700e52dc4ec9ba460bfcbfd0d27528f9505044b187f9c6dfd9995"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudCalibrationControls.tsx",
+      "originalSha256": "184dc9ed31d1fe0255cc1b68dd348a6c5472861f749691587383844f036c5047",
+      "resultSha256": "b7f9f6a3949f49944db2b4bc245d9c00a62d934718a5058edf6f23714c7bbc8f"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudCorridorControls.tsx",
+      "originalSha256": "0e97d411abda1cb7ea0143d3dcaa80a8e859186de61f0e349025702997e11936",
+      "resultSha256": "b289bf335642ba6105ac73ebac277a2010840a3c2b1b8ca9bb787f6199c22e5d"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudElevationLegend.tsx",
+      "originalSha256": "e94151e784591637ac53e12ab347ddf1dc40d2ce0656c8f44f84556717500863",
+      "resultSha256": "51b595c1a0d2cef393ebca242207487b45e0ca5537bad75010578889eb99b306"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudExportControls.tsx",
+      "originalSha256": "6befcec3a9501fd0ffd5c42b8ca132c0ac292a7ccf02d77524766391461efafa",
+      "resultSha256": "04af447677718827a1082ba19736ff74acbb8ab6f2f9855fd7baa01cdfd90343"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudStatusSection.tsx",
+      "originalSha256": "b267cdbf8494c0cb5d5c44d48f8475dfda0812e29730c2114463ba36235af1df",
+      "resultSha256": "06920ec55e15ff7ee736cb7b9d3397acf5b4943d2e8bf3ffeeeeb84d527c93db"
+    },
+    {
+      "file": "src/features/point-cloud/PointCloudToolSections.tsx",
+      "originalSha256": "c102db58b496dc8187b952b1aea127bab7a092df64c242f7837c1a3bc0bcd415",
+      "resultSha256": "3b91d4c6f7eba9ee5885c60f789eb56d73a82a8baec36d590158efabfd7bf71e"
+    },
+    {
+      "file": "src/features/routing/RouteControls.tsx",
+      "originalSha256": "39f6cb3790953ffb8e446e5464563d3d86d45233a6645dccbc236d302f1b01d5",
+      "resultSha256": "869f5b378a33b036fd6873cdb0302f33ad52d65972e5de33d22eabe85aa8383c"
+    },
+    {
+      "file": "src/features/solar/SolarToolsSection.tsx",
+      "originalSha256": "5b6bba2c2261930fdc15f3fc16a3bc3224c49505e6320439382bfce15f825b8d",
+      "resultSha256": "31ee09cde6ec331234751737fa0f21b68591cb016430e27d67185f9885f582ae"
+    },
+    {
+      "file": "src/i18n/messages.ts",
+      "originalSha256": "7d31c32470e77f5aa4defdbb2748ea9083e7b6ba5a11e49ffcf0144b8d3a3fb8",
+      "resultSha256": "6cb283eaeb63fd38454e17139213379b0a1bf90a0fc780971efef90cb2ae1287"
+    },
+    {
+      "file": "src/i18n/locales/tr.ts",
+      "originalSha256": "7990b43bd5514e50428e31f3e8ef0718a44c5078cf9ed5390fddcd71e8f29d44",
+      "resultSha256": "41293916fb6ab66ba5385007110409a20709917fd845f90dfafde1936c53e3cb"
+    },
+    {
+      "file": "src/i18n/settingsMessages.ts",
+      "originalSha256": "c9a6378d5363abfd365b5b295425c26591a97e711551eec36555278de535a188",
+      "resultSha256": "c914180cb81aa75359c159ebfa90b9da7e7eb59413023e052e72c15e0cda431f"
+    },
+    {
+      "file": "src/i18n/locales/settings-tr.ts",
+      "originalSha256": "0afbcd2fa0f9c3ef9af39a7928ca38ef5bb070bc3d2494c87d95f5341dcebfe9",
+      "resultSha256": "11b97538e5df09a21ffa347a88821f358fafdafc61cc8f578bbdb05daebe9b8d"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "1e214c45048712eb5e70582206d79a57664f337d95130ce0440723df136994c0",
+      "resultSha256": "ed9d3b2abada9daa5b7c00fcf1f1099f0638746d4d3be4cf70453d276067c8f0"
+    },
+    {
+      "file": "src/i18n/WidgetLocale.tsx",
+      "originalSha256": "055507cdb8f135b101ef29110155de3fb6f0658b884266283081fc1de5b75e8a",
+      "resultSha256": "e47e0751353dc9e7bef4179712ce4a417c1184e4165f50c9796e1101cb366803"
+    },
+    {
+      "file": "tests/localizationCatalog.test.cjs",
+      "originalSha256": "74ad752f9455492338d381e1aff0c17cac5eb22f5ad7a9c47c83a58f414e9177",
+      "resultSha256": "ce4727c89de511026c5ea00a7fe65fcbcb722d370f3260595b09668e1825ae1e"
+    },
+    {
+      "file": "src/components/FilterBar.tsx",
+      "originalSha256": "dacb3b4ecae85451afb5a48d733cc309d6a91b574dce0bfbb4ea672cfa0a4978",
+      "resultSha256": "2fde43fd8808fcc8576eefbb9bfcfee273866b38f9d54bdcef6a8ada837a9f67"
+    },
+    {
+      "file": "src/i18n/runtimeMessages.ts",
+      "originalSha256": null,
+      "resultSha256": "b26129415b0ac86702eaf86ad5f9f00a1082990a4f7e7b44945f53b5073cec03"
+    },
+    {
+      "file": "src/i18n/locales/runtime-tr.ts",
+      "originalSha256": null,
+      "resultSha256": "39afa15329615ea9fc68bf028a8abd27e9db60ac643d238a88268cdf478bdb31"
+    },
+    {
+      "file": "docs/localization/RUNTIME-CONTINUATION.md",
+      "originalSha256": null,
+      "resultSha256": "ad7c3a06e21f89f04b2b7a9d218a4954f1feb5783c37f6cc7dd3929acf2dcc55"
+    }
+  ]
+}

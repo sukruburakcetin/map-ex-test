@@ -1,0 +1,32 @@
+{
+  "installer": "direction-hover-bearing-v6-95",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "d6cc567227a142f62e05b13ffb418d391ffef496fbfb9fe50a93f907857862a0",
+      "resultSha256": "f607900819d4fc8d52f7b41041ea36ad3f93baab4e4c9c274a2331c88d4e655a"
+    },
+    {
+      "file": "src/features/map-graphics/DirectionHoverMarker.ts",
+      "originalSha256": "586687c5a425e93276d0bfce3b65c3a3a0a1f4163b3188fe07081d9669fe4a09",
+      "resultSha256": "d53a7a74ba970ba2874688bbb2e85f0997353843a9db9e756db75363d644e52d"
+    },
+    {
+      "file": "tests/directionHoverStable.test.cjs",
+      "originalSha256": "14170d8bf3da8245a8ec26ea451b45235481936efaffbb0862f868ea50a22472",
+      "resultSha256": "e573b96df2a68df0e31d847dbc47c5294423ab73068ae9f29ef16c8b4e9b4aa1"
+    },
+    {
+      "file": "tests/directionHoverAnchor.test.cjs",
+      "originalSha256": "97bd7907c7625b3516e8b4fc7e9131bacd7cf2f2ce1d9a473ce3cd66d9b21eb5",
+      "resultSha256": "8ce4f0aebac50fe592115581721d05cd2ec4b1a170035c80e94860b8f982ec4f"
+    },
+    {
+      "file": "docs/DIRECTION-HOVER-BEARING.md",
+      "originalSha256": null,
+      "resultSha256": "4561d93299078fc0c511ce0e0de686d70c9d41292d55f245f56f1b7e524f05b7"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "installer": "builder-language-priority-v6-106",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/i18n/core.ts",
+      "originalSha256": "bab22273a950ff3fe446647765050e077949b95698f7d91ba9dae3feab0fa5c5",
+      "resultSha256": "9b01a92b850cf2c7dc751c66862b394e70a65994123a17b0c7831fdbc0c431b4"
+    },
+    {
+      "file": "src/i18n/WidgetLocale.tsx",
+      "originalSha256": "9418ccf94f1c37e7d449f8200e9ef7adef1a4be5ba8ece455c82550f831a0353",
+      "resultSha256": "4133da81e4908605f80a77b502ecfc20bf26ffd2becc5b0a2c24d20f9e7a7c2d"
+    },
+    {
+      "file": "tests/localizationCatalog.test.cjs",
+      "originalSha256": "815148765b05952184417f6c946e69d055791cca2be1adc16808aa5215ef04af",
+      "resultSha256": "205f54653489e3c0f392b36e824d96e9e6824f25e7c24aadac6c02ec1dfda03b"
+    },
+    {
+      "file": "docs/localization/BUILDER-PRIORITY-v6.106.md",
+      "originalSha256": null,
+      "resultSha256": "46ab97672a9d2cb612ad66c1aecfa108ff676e5438d4561ee23116e6e56fba02"
+    }
+  ]
+}

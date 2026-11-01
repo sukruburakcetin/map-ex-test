@@ -1,5 +1,6 @@
 /** Fetch bounded SfM neighborhoods. Completeness is relative to the requested search,
  * not a claim that the Mapillary website uses the same reconstruction selection. */
+import { Presentation, englishPresentation } from '../i18n/PresentationText';
 import pako from 'pako';
 import { GRAPH_API, POINT_CLOUD_FETCH_LENGTH } from './constants';
 import { distanceMeters } from './geoUtils';
@@ -815,9 +816,9 @@ export function diffPointCloudFeatures(previous: Map<number, PointCloudFeature>,
     return { addFeatures, updateFeatures, deleteFeatures };
 }
 
-export function summarizePointCloud(result: PointCloudResult, visible: number): string {
+export function summarizePointCloud(result: PointCloudResult, visible: number, l10n: Presentation = englishPresentation): string {
     const d = result.diagnostics;
-    return `${d?.loadedClusters ?? result.clusterCount}/${d?.requestedClusters ?? result.clusterCount} clusters · ${(d?.rawPoints ?? result.totalPoints).toLocaleString()} raw · ${result.points.length.toLocaleString()} retained · ${visible.toLocaleString()} visible${d?.cacheHits ? ` · ${d.cacheHits} cached clusters` : ""}${d?.uncachedClusters ? ` · ${d.uncachedClusters} oversized clusters not cached` : ""}${d?.partial ? ` · Partial: ${d.failedClusters} failed, ${d.discoveryFailures} search failures${d.budgetLimited ? ', data budget reached' : ''}` : ' · bounded search loaded'}`;
+    return l10n.text("{value0}/{value1} clusters · {value2} raw · {value3} retained · {value4} visible{value5}{value6}{value7}",{value0:String(d?.loadedClusters ?? result.clusterCount),value1:String(d?.requestedClusters ?? result.clusterCount),value2:String(l10n.number((d?.rawPoints ?? result.totalPoints))),value3:String(l10n.number(result.points.length)),value4:String(l10n.number(visible)),value5:String(d?.cacheHits ? l10n.text(" · {count} cached clusters",{count:l10n.number(d.cacheHits)}) : ""),value6:String(d?.uncachedClusters ? l10n.text(" · {count} oversized clusters not cached",{count:l10n.number(d.uncachedClusters)}) : ""),value7:String(d?.partial ? l10n.text(" · Partial: {failed} failed, {search} search failures{budget}",{failed:l10n.number(d.failedClusters),search:l10n.number(d.discoveryFailures),budget:d.budgetLimited ? l10n.text(", data budget reached") : ""}) : l10n.text(" · bounded search loaded"))});
 }
 
 /** Display-only filter. Original indices and stored geometry are never changed. */

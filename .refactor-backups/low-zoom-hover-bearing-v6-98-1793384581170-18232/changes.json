@@ -1,0 +1,17 @@
+{
+  "installer": "low-zoom-hover-bearing-v6-98",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "b9b0e1742df33ff460693f0729430b13d36341df853dff1ccda735d9e336967b",
+      "resultSha256": "f839e270750b6f6ee92250a45292ec0176a50334cf182064c66e05fc3caff256"
+    },
+    {
+      "file": "docs/LOW-ZOOM-HOVER-BEARING.md",
+      "originalSha256": null,
+      "resultSha256": "a604d4a7926af9a6384950b9dd1c4b19b3a41364f0cca27623621766d70ac689"
+    }
+  ]
+}

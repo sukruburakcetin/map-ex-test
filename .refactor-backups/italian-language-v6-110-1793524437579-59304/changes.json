@@ -1,0 +1,57 @@
+{
+  "installer": "italian-language-v6-110",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/i18n/core.ts",
+      "originalSha256": "3e3f3f4b059ed3fac467480d804b85389d54cd074c7873a73b4a810a055fe9e6",
+      "resultSha256": "7173debed5d630df31d56c9955de453c1717789dbdd2ff9e16ddbf9a7f485cd5"
+    },
+    {
+      "file": "src/i18n/WidgetLocale.tsx",
+      "originalSha256": "7a9926260a5253d3127f314420874b3a15c0f67ad646150189e1423c69c8376d",
+      "resultSha256": "179de564c9a1ed7b1bc141edefe6f65e518715f9075dc33eb6f0c86c33577a9a"
+    },
+    {
+      "file": "src/i18n/SettingsLocale.tsx",
+      "originalSha256": "d3c94cda8f69d69c300470ab6a8dab63e23ab33507f34c4047224bba25919f09",
+      "resultSha256": "d5908a841a2a1cc94232b8450461c6cef85388107f07c3d74b29f00b4c2633b6"
+    },
+    {
+      "file": "src/i18n/startupMessages.ts",
+      "originalSha256": "b27c23558b93a429d47215d742e67a3f4cc7b88188282303b6a2d2729c3227d7",
+      "resultSha256": "5147c2b508908944f5ddebdb5a3a96ed9440af26d10f0933a94461683b04ed0a"
+    },
+    {
+      "file": "src/config.ts",
+      "originalSha256": "fe1b5d565b40322397d15f77a574f7b26f480450c28f7d3799a80f96af1b6eda",
+      "resultSha256": "ce649d2753ef6da12335fedfd9871d26c2060ce5bac4cc2207ac873dfdbee36b"
+    },
+    {
+      "file": "src/setting/setting.tsx",
+      "originalSha256": "235e662b96f30d6bca4dfd59679ec00513e64a94a10144c42f0dd2b557a8aece",
+      "resultSha256": "ec97d8c1690068f3191e1e5db7fe66ae029530995b8ad23c60130d4d0a23ac61"
+    },
+    {
+      "file": "tests/localizationCatalog.test.cjs",
+      "originalSha256": "781faf25d0a9db7f6c0d91ccdcccc8742967ae821daf5ba6a2a0101ea786823c",
+      "resultSha256": "264fe64f603b0d4ab1bf8566ed4399c7ef9135e34e957980972989c262244272"
+    },
+    {
+      "file": "src/i18n/locales/it.ts",
+      "originalSha256": null,
+      "resultSha256": "1984d8ec572cf7165530af2949a525ddc15bb364c8621ecf38e06fedd1214697"
+    },
+    {
+      "file": "src/i18n/locales/settings-it.ts",
+      "originalSha256": null,
+      "resultSha256": "bf726b26d3d08f3d0bae122e25faf9a203eb47436277cce61c77f524cf5b4dce"
+    },
+    {
+      "file": "docs/localization/ITALIAN-v6.110.md",
+      "originalSha256": null,
+      "resultSha256": "f31b07692b97d61a5cb6fa8ca404d784fb6349b2c1f61c87dd40a3c295953a07"
+    }
+  ]
+}

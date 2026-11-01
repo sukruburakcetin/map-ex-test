@@ -1,0 +1,17 @@
+{
+  "installer": "cyan-hover-cone-v6-100",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/HoverBearingSector.ts",
+      "originalSha256": "0cae007a1d2d9bc4df2a6664eb8400cf05bec6d6fda2c35c7ac6b5fdecf660d7",
+      "resultSha256": "64d8a683da6f0f772ac0a42cd2c89287c72b7d8e9f58b0244a66d42fbd09f6ec"
+    },
+    {
+      "file": "docs/CYAN-HOVER-CONE.md",
+      "originalSha256": null,
+      "resultSha256": "e25019daade77fd84d61f1358e52b498807ad27abdbbca8a5aa5cb633ee9d168"
+    }
+  ]
+}

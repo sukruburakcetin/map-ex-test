@@ -1,0 +1,42 @@
+{
+  "installer": "hover-bearing-metadata-v6-99",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "f839e270750b6f6ee92250a45292ec0176a50334cf182064c66e05fc3caff256",
+      "resultSha256": "e9dd780c94366fe8b6f6c847b474da4caba465bafc15aa8d4c027c7b5794c06e"
+    },
+    {
+      "file": "src/features/map-graphics/HoverBearingSector.ts",
+      "originalSha256": "1efa36e7ea50e6bf20f69093585a35f4d1caa634b03ae9f1e5814a345a8febe9",
+      "resultSha256": "0cae007a1d2d9bc4df2a6664eb8400cf05bec6d6fda2c35c7ac6b5fdecf660d7"
+    },
+    {
+      "file": "tests/hoverBearingSector.test.cjs",
+      "originalSha256": "b4a695f024b63e27a0d38effb7a4c3653761a4635ec596fd2d1b0245180f256a",
+      "resultSha256": "9ff5b423d46bdfb84a7b8fd54cca73e7fd340bd75b42b0f2b60e403aa4d1513a"
+    },
+    {
+      "file": "docs/HOVER-BEARING-METADATA-FIX.md",
+      "originalSha256": null,
+      "resultSha256": "fd1ad798b9921593901d49472c9d98b31c9aeca5e5f50856a05a3862b3b09f3f"
+    },
+    {
+      "file": "src/features/imagery/hoverBearingMetadata.ts",
+      "originalSha256": null,
+      "resultSha256": "6de0123f99880acc3577fe1b00f66105ab21f3c39e687b58d94cd6bee1d15553"
+    },
+    {
+      "file": "tests/hoverBearingMetadata.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "94c7a45883e20108c75b1cbe0cff699a78d7c808a803e3964255bbe6503605e0"
+    },
+    {
+      "file": "tests/hoverBearingRuntime.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "c735d401b20196424c53aaa40fe9ffd3e5e6b412bc19de092b48cb3c74c3f81a"
+    }
+  ]
+}

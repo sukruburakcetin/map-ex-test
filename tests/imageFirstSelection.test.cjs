@@ -5,7 +5,7 @@ const body=['loadSequenceById','refreshLocalSequence'].map(name=>widget.members.
 const Harness=new Function(ts.transpileModule('class Harness{'+body+'}',{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText+';return Harness;')();
 const flush=()=>new Promise(r=>setImmediate(r));
 function setup(){
- const w=new Harness(),events=[],moves=new Map();w.state={sequenceImages:[],jimuMapView:{view:{}},isLoading:false,turboModeActive:true};w.sequenceCoordsCache={};w._selectionRequestId=0;
+ const w=new Harness(),events=[],moves=new Map();w._owned=source=>source;w.state={sequenceImages:[],jimuMapView:{view:{}},isLoading:false,turboModeActive:true};w.sequenceCoordsCache={};w._selectionRequestId=0;
  w._liveSequenceFrames={cancelPending(){},beginSelection(id){this.sequenceId=id;events.push('seed')},finish(){},remember(){},find(){},current:null};w._liveFrameDetails={clear(){}};w._nearbyDiscovery={cancel(){}};
  w.clearGreenPulse=w.clearConeGraphics=w.clearActiveSequenceLayer=()=>{};w.drawPulsingPoint=()=>({});w.drawCone=()=>{};w.coneLengths=[1];w.coneSpreads=[1];w.zoomStepIndex=0;w.checkForTimeTravel=()=>{};w.ensureImageViewer=()=>events.push('viewer');
  w.setState=(patch,callback)=>{const next=typeof patch==='function'?patch(w.state):patch;if(next)Object.assign(w.state,next);if(next?.isLoading===false)events.push('loading-cleared');callback?.()};

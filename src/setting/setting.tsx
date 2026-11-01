@@ -1,4 +1,9 @@
+import { directionOf, preferenceOf } from '../i18n/core';
+import { languageName } from '../i18n/startupMessages';
 /** @jsx jsx */
+import { OwnedMessage } from '../i18n/WidgetLocale';
+import { WidgetLocaleProvider } from '../i18n/WidgetLocale';
+import { SettingsCatalogProvider, SettingsLocaleContext } from '../i18n/SettingsLocale';
 import { React, jsx } from "jimu-core";
 import { AllWidgetSettingProps } from "jimu-for-builder";
 import { SettingSection, SettingRow } from "jimu-ui/advanced/setting-components";
@@ -9,7 +14,9 @@ import { IMConfig } from "../config";
 import { organizationFilterId } from "../utils/organizationFilter";
 import { FIELD_NOTE_CATEGORIES } from "../components/types";
 
-export default class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> {
+class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> {
+  static contextType = SettingsLocaleContext;
+  declare context: React.ContextType<typeof SettingsLocaleContext>;
   state = {
     newCategoryText: "",
   };
@@ -312,6 +319,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
   }
 
   render() {
+    const { t, locale } = this.context;
     const config = this.props.config;
     const routingEngine = config.routingEngine || "world";
 
@@ -324,18 +332,18 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
     const hasCustomOSRMUrl = !!config.osrmServerUrl?.trim();
 
     return (
-      <div className="widget-setting-mapillary jimu-widget-setting">
-        <SettingSection title="Source">
+      <div dir={directionOf(locale)} lang={locale==='en'?'en-US':locale} className="widget-setting-mapillary jimu-widget-setting">
+        <SettingSection title={t('source')}>
           <SettingRow>
             <div style={{ width: "100%" }}>
-              <div style={{ marginBottom: "8px", fontWeight: 500 }}>Select Map Widget</div>
+              <div style={{ marginBottom: "8px", fontWeight: 500 }}> {t('selectMapWidget')} </div>
               <MapWidgetSelector onSelect={this.onMapWidgetSelected} useMapWidgetIds={this.props.useMapWidgetIds} />
             </div>
           </SettingRow>
 
-          <SettingRow label="Lock Map to View" flow="wrap">
+          <SettingRow label={t('lockMapToView')} flow="wrap">
             <div className="d-flex justify-content-between w-100 align-items-center">
-              <span title="Syncs the map center to the current image location">Enable Sync</span>
+              <span title={t('syncsTheMapCenterToTheCurrentImageLocation')}> {t('enableSync')} </span>
               <Switch
                 checked={this.props.config.syncMapWithImage === true}
                 onChange={(evt) => {
@@ -350,58 +358,71 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
             {/* Extended Position Options */}
             {this.props.config.syncMapWithImage && (
               <div className="mt-2 w-100" style={{ paddingLeft: "0px" }}>
-                <div style={{ fontSize: "12px", fontWeight: 500, marginBottom: "4px" }}>Recenter position:</div>
+                <div style={{ fontSize: "12px", fontWeight: 500, marginBottom: "4px" }}> {t('recenterPosition')} </div>
                 <Select size="sm" value={config.syncMapPosition || "center"} onChange={this.onSyncPositionChange} style={{ width: "100%" }}>
-                  <Option value="center">Center (Default)</Option>
-                  <Option value="west">West (Focus Left)</Option>
-                  <Option value="east">East (Focus Right)</Option>
-                  <Option value="north">North (Focus Top)</Option>
-                  <Option value="south">South (Focus Bottom)</Option>
+                  <Option value="center"> {t('centerDefault')} </Option>
+                  <Option value="west"> {t('westFocusLeft')} </Option>
+                  <Option value="east"> {t('eastFocusRight')} </Option>
+                  <Option value="north"> {t('northFocusTop')} </Option>
+                  <Option value="south"> {t('southFocusBottom')} </Option>
                 </Select>
 
                 <div className="text mt-2" style={{ fontSize: "10px", fontStyle: "italic", lineHeight: "1.3", opacity: "0.3" }}>
-                  {config.syncMapPosition === "east" && "Best if your widget is docked on the Left."}
-                  {config.syncMapPosition === "west" && "Best if your widget is docked on the Right."}
-                  {config.syncMapPosition === "north" && "Best if your widget is docked on the Bottom."}
-                  {config.syncMapPosition === "south" && "Best if your widget is docked on the Top."}
-                  {(!config.syncMapPosition || config.syncMapPosition === "center") && "Recenters here when the image leaves view. Use Lock to image for continuous following."}
+                  {config.syncMapPosition === "east" && <OwnedMessage source={"Best if your widget is docked on the Left."}/>}
+                  {config.syncMapPosition === "west" && <OwnedMessage source={"Best if your widget is docked on the Right."}/>}
+                  {config.syncMapPosition === "north" && <OwnedMessage source={"Best if your widget is docked on the Bottom."}/>}
+                  {config.syncMapPosition === "south" && <OwnedMessage source={"Best if your widget is docked on the Top."}/>}
+                  {(!config.syncMapPosition || config.syncMapPosition === "center") && <OwnedMessage source={"Recenters here when the image leaves view. Use Lock to image for continuous following."}/>}
                 </div>
               </div>
             )}
           </SettingRow>
         </SettingSection>
-        <SettingSection title="General Settings">
+        <SettingSection title={t('languagePilot')}>
+          <SettingRow label={t('defaultWidgetLanguage')} flow="wrap">
+            <Select className="w-100" aria-label={t('defaultWidgetLanguage')} value={preferenceOf(config.widgetLanguage)}
+              onChange={event => this.props.onSettingChange({ id: this.props.id,
+                config: config.set("widgetLanguage", event.target.value === "ar" ? "ar" : event.target.value === "en-GB" ? "en-GB" : event.target.value === "zh-TW" ? "zh-TW" : event.target.value === "zh-CN" ? "zh-CN" : event.target.value === "ko" ? "ko" : event.target.value === "ja" ? "ja" : event.target.value === "it" ? "it" : event.target.value === "pt-BR" ? "pt-BR" : event.target.value === "de" ? "de" : event.target.value === "fr" ? "fr" : event.target.value === "es" ? "es" : event.target.value === "tr" ? "tr" : event.target.value === "en" ? "en" : "auto") })}>
+              <Option value="auto"> {t('appLanguage')} </Option><Option value="en">{languageName(this.context.locale,'en')}</Option><Option value="en-GB">{languageName(this.context.locale,'en-GB')}</Option><Option value="ar">{languageName(this.context.locale,'ar')}</Option><Option value="tr">{languageName(this.context.locale,'tr')}</Option><Option value="es">{languageName(this.context.locale,'es')}</Option><Option value="fr">{languageName(this.context.locale,'fr')}</Option><Option value="de">{languageName(this.context.locale,'de')}</Option><Option value="pt-BR">{languageName(this.context.locale,'pt-BR')}</Option><Option value="it">{languageName(this.context.locale,'it')}</Option><Option value="ja">{languageName(this.context.locale,'ja')}</Option><Option value="ko">{languageName(this.context.locale,'ko')}</Option><Option value="zh-CN">{languageName(this.context.locale,'zh-CN')}</Option><Option value="zh-TW">{languageName(this.context.locale,'zh-TW')}</Option>
+            </Select>
+          </SettingRow>
+          <SettingRow label={t('allowUsersToChangeLanguage')}>
+            <Switch aria-label={t('allowUsersToChangeLanguage')} checked={config.allowUserLanguageChoice !== false}
+              onChange={event => this.props.onSettingChange({id:this.props.id,config:config.set("allowUserLanguageChoice",event.target.checked)})}/>
+          </SettingRow>
+          <p style={{fontSize:12,margin:'8px 0'}}> {t('appliesToTranslatedImageActionsFiltersDatesAndTime')} </p>
+        </SettingSection>
+        <SettingSection title={t('generalSettings')}>
           {/*Default Creator Field */}
           <SettingRow flow="wrap">
             <div style={{ width: "100%" }}>
-              <div style={{ marginBottom: "5px", fontWeight: 500 }}>Default Creator</div>
-              <TextInput className="w-100" placeholder="e.g. mapillary_user" value={config.turboCreator || ""} onChange={this.onCreatorChange} />
+              <div style={{ marginBottom: "5px", fontWeight: 500 }}> {t('defaultCreator')} </div>
+              <TextInput className="w-100" placeholder={t('eGMapillaryUser')} value={config.turboCreator || ""} onChange={this.onCreatorChange} />
             </div>
           </SettingRow>
           <SettingRow flow="wrap">
             <div style={{ width: "100%" }}>
-              <div style={{ marginBottom: "5px", fontWeight: 500 }}>Organization ID</div>
-              <TextInput className="w-100" aria-label="Default Mapillary organization ID" placeholder="Numeric Mapillary organization ID"
+              <div style={{ marginBottom: "5px", fontWeight: 500 }}> {t('organizationId')} </div>
+              <TextInput className="w-100" aria-label={t('defaultMapillaryOrganizationId')} placeholder={t('numericMapillaryOrganizationId')}
                 value={config.turboOrganization || ""} onChange={this.onOrganizationChange}
                 aria-invalid={organizationFilterId(config.turboOrganization) === -1} />
               <div style={{ marginTop: 4, fontSize: 11 }}>
                 {organizationFilterId(config.turboOrganization) === -1
-                  ? "Enter a valid positive numeric Mapillary organization ID."
-                  : "Optional. Locks the organization filter at runtime and combines with Default Creator. Zoom closer for organization coverage."}
+                  ? t('enterAValidPositiveNumericMapillaryOrganizationId')
+                  : t('optionalLocksTheOrganizationFilterAtRuntimeAndCombines')}
               </div>
             </div>
           </SettingRow>
         {/* Coverage defaults are part of General Settings. */}
           <SettingRow>
             <span className="text" style={{ fontSize: "12px", fontStyle: "italic", opacity: "0.4" }}>
-              These values pre-populate the coverage filter panel when the widget loads. Users can still override them at runtime via the filter button (unless it is hidden).
-            </span>
+               {t('theseValuesPrePopulateTheCoverageFilterPanelWhen')} </span>
           </SettingRow>
 
           {/* Start Date */}
           <SettingRow flow="wrap">
             <div style={{ width: "100%" }}>
-              <div style={{ marginBottom: "5px", fontWeight: 500 }}>Default Start Date</div>
+              <div style={{ marginBottom: "5px", fontWeight: 500 }}> {t('defaultStartDate')} </div>
               <input
                 type="date"
                 value={config.turboDefaultStartDate || ""}
@@ -433,8 +454,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                     padding: "0",
                   }}
                 >
-                  ✕ Clear start date
-                </button>
+                   {t('clearStartDate')} </button>
               )}
             </div>
           </SettingRow>
@@ -442,7 +462,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
           {/* End Date */}
           <SettingRow flow="wrap">
             <div style={{ width: "100%" }}>
-              <div style={{ marginBottom: "5px", fontWeight: 500 }}>Default End Date</div>
+              <div style={{ marginBottom: "5px", fontWeight: 500 }}> {t('defaultEndDate')} </div>
               <input
                 type="date"
                 value={config.turboDefaultEndDate || ""}
@@ -474,8 +494,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                     padding: "0",
                   }}
                 >
-                  ✕ Clear end date
-                </button>
+                   {t('clearEndDate')} </button>
               )}
             </div>
           </SettingRow>
@@ -483,73 +502,71 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
           {/* Date range validation hint */}
           {config.turboDefaultStartDate && config.turboDefaultEndDate && config.turboDefaultStartDate > config.turboDefaultEndDate && (
             <SettingRow>
-              <span style={{ fontSize: "11px", color: "var(--danger-color, #c00)", fontWeight: 500 }}>⚠ Start date is after end date - no images will match this range.</span>
+              <span style={{ fontSize: "11px", color: "var(--danger-color, #c00)", fontWeight: 500 }}> {t('startDateIsAfterEndDateNoImagesWill')} </span>
             </SettingRow>
           )}
 
           {/* Is Pano Filter */}
           <SettingRow flow="wrap">
             <div style={{ width: "100%" }}>
-              <div style={{ marginBottom: "5px", fontWeight: 500 }}>Default Panorama Filter</div>
+              <div style={{ marginBottom: "5px", fontWeight: 500 }}> {t('defaultPanoramaFilter')} </div>
               <Select size="sm" value={this.isPanoSelectValue()} onChange={this.onTurboDefaultIsPanoChange} style={{ width: "100%" }}>
-                <Option value="">All images (no filter)</Option>
-                <Option value="true">Panoramas only</Option>
-                <Option value="false">Non-panoramas only</Option>
+                <Option value=""> {t('allImagesNoFilter')} </Option>
+                <Option value="true"> {t('panoramasOnly')} </Option>
+                <Option value="false"> {t('nonPanoramasOnly')} </Option>
               </Select>
-              <div style={{ fontSize: "11px", fontStyle: "italic", marginTop: "4px", opacity: "0.4" }}>Restricts coverage to panoramic or flat images only.</div>
+              <div style={{ fontSize: "11px", fontStyle: "italic", marginTop: "4px", opacity: "0.4" }}> {t('restrictsCoverageToPanoramicOrFlatImagesOnly')} </div>
             </div>
           </SettingRow>
 
           {/* Color by Date */}
-          <SettingRow label="Default Color by Capture Year">
+          <SettingRow label={t('defaultColorByCaptureYear')}>
             <Switch checked={config.turboDefaultColorByDate === true} onChange={this.onToggleTurboDefaultColorByDate} />
           </SettingRow>
           <SettingRow>
             <span className="text" style={{ fontSize: "11px", fontStyle: "italic", opacity: "0.4" }}>
-              When enabled, coverage points are coloured by their capture year on first load. The legend in the info box will reflect the year breakdown.
-            </span>
+               {t('whenEnabledCoveragePointsAreColouredByTheirCapture')} </span>
           </SettingRow>
         </SettingSection>
-        <SettingSection title="Appearance Settings">
+        <SettingSection title={t('appearanceSettings')}>
           <SettingRow>
             <span className="text" style={{ fontSize: "12px", marginTop: "5px", opacity: "0.3", fontStyle: "italic" }}>
-              Toggle UI elements and action tools to simplify the interface.
-            </span>
+               {t('toggleUiElementsAndActionToolsToSimplifyThe')} </span>
           </SettingRow>
 
           {/* UI Toggles */}
-          <SettingRow label="Hide Mapillary Map Legend">
+          <SettingRow label={t('hideMapillaryMapLegend')}>
             <Switch checked={config.hideLegend === true} onChange={this.onToggleHideLegend} />
           </SettingRow>
 
-          <SettingRow label="Hide Info Box">
+          <SettingRow label={t('hideInfoBox')}>
             <Switch checked={config.hideInfoBox === true} onChange={this.onToggleHideInfoBox} />
           </SettingRow>
 
-          <SettingRow label="Hide Coverage Filter Button">
+          <SettingRow label={t('hideCoverageFilterButton')}>
             <Switch checked={config.hideTurboFilter === true} onChange={this.onToggleHideTurboFilter} />
           </SettingRow>
 
-          <SettingRow label="Hide Analysis, StreetGap & Quality View">
+          <SettingRow label={t('hideAnalysisStreetgapQualityView')}>
             <Switch checked={config.hideCoverageAnalysis === true} onChange={this.onToggleHideCoverageAnalysis} />
           </SettingRow>
 
-          <SettingRow label="Hide Point Cloud (3D only)">
+          <SettingRow label={t('hidePointCloud3dOnly')}>
             <Switch checked={config.hidePointCloud === true} onChange={this.onToggleHidePointCloud} />
           </SettingRow>
 
-          <SettingRow label="Hide Image Download">
+          <SettingRow label={t('hideImageDownload')}>
             <Switch checked={config.hideImageDownload === true} onChange={this.onToggleHideImageDownload} />
           </SettingRow>
 
-          <SettingRow label="Hide Time Travel">
+          <SettingRow label={t('hideTimeTravel')}>
             <Switch checked={config.hideTimeTravel === true} onChange={this.onToggleHideTimeTravel} />
           </SettingRow>
 
-          <SettingRow label="Hide Share Button">
+          <SettingRow label={t('hideShareButton')}>
             <Switch checked={config.hideShareButton === true} onChange={this.onToggleHideShareButton} />
           </SettingRow>
-          <SettingRow label="Hide Lock Map Rotation Button (3D)">
+          <SettingRow label={t('hideLockMapRotationButton3d')}>
             <Switch
               checked={config.hideSyncHeadingButton === true}
               onChange={(evt) =>
@@ -561,7 +578,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
             />
           </SettingRow>
 
-          <SettingRow label="Hide Center Map Button">
+          <SettingRow label={t('hideCenterMapButton')}>
             <Switch
               checked={config.hideCenterMapButton === true}
               onChange={(evt) =>
@@ -574,43 +591,42 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
           </SettingRow>
         </SettingSection>
 
-        <SettingSection title="Nearby places · Overture pilot">
-          <SettingRow label="Offer Places layer"><Switch checked={config.enablePlaces === true} onChange={evt => this.props.onSettingChange({ id: this.props.id, config: config.set("enablePlaces", evt.target.checked) })}/></SettingRow>
-          <SettingRow flow="wrap" label="Places FeatureServer layer URL"><TextInput value={config.placesServiceUrl || ""} placeholder="https://…/FeatureServer/0" onChange={event => this.props.onSettingChange({ id: this.props.id, config: config.set("placesServiceUrl", event.target.value) })}/></SettingRow>
-          {!!config.placesServiceUrl && !placesServiceUrl(config.placesServiceUrl) && <p role="status">Use an HTTPS FeatureServer layer URL without query parameters or credentials.</p>}
-          <p style={{ fontSize: 12, opacity: .8 }}>Requires a published pilot layer prepared with tools/overture_places. Starts off for users; maximum 200 places per view. See docs/OVERTURE-PLACES.md.</p>
+        <SettingSection title={t('nearbyPlacesOverturePilot')}>
+          <SettingRow label={t('offerPlacesLayer')}><Switch checked={config.enablePlaces === true} onChange={evt => this.props.onSettingChange({ id: this.props.id, config: config.set("enablePlaces", evt.target.checked) })}/></SettingRow>
+          <SettingRow flow="wrap" label={t('placesFeatureserverLayerUrl')}><TextInput value={config.placesServiceUrl || ""} placeholder="https://…/FeatureServer/0" onChange={event => this.props.onSettingChange({ id: this.props.id, config: config.set("placesServiceUrl", event.target.value) })}/></SettingRow>
+          {!!config.placesServiceUrl && !placesServiceUrl(config.placesServiceUrl) && <p role="status"> {t('useAnHttpsFeatureserverLayerUrlWithoutQueryParameters')} </p>}
+          <p style={{ fontSize: 12, opacity: .8 }}> {t('requiresAPublishedPilotLayerPreparedWithToolsOverture')} </p>
         </SettingSection>
 
-        <SettingSection title="Feature Detection Layers">
-          <SettingRow label="Enable Traffic Signs">
+        <SettingSection title={t('featureDetectionLayers')}>
+          <SettingRow label={t('enableTrafficSigns')}>
             <Switch checked={config.enableTrafficSigns !== false} onChange={this.onToggleTrafficSigns} />
           </SettingRow>
 
-          <SettingRow label="Enable Mapillary Objects">
+          <SettingRow label={t('enableMapillaryObjects')}>
             <Switch checked={config.enableMapillaryObjects !== false} onChange={this.onToggleObjects} />
           </SettingRow>
 
           <SettingRow>
             <span className="text" style={{ fontSize: "12px", fontStyle: "italic", marginTop: "5px", opacity: "0.3" }}>
-              Disabling these will hide the sign and object layer toggle buttons in the widget interface.
-            </span>
+               {t('disablingTheseWillHideTheSignAndObjectLayer')} </span>
           </SettingRow>
         </SettingSection>
 
-        <SettingSection title="Advanced Settings">
-          <SettingRow label="Enable Solar Modeling">
+        <SettingSection title={t('advancedSettings')}>
+          <SettingRow label={t('enableSolarModeling')}>
             <Switch checked={config.enableSolar === true} onChange={evt => this.props.onSettingChange({ id: this.props.id, config: config.set("enableSolar", evt.target.checked) })} />
           </SettingRow>
-          <SettingRow label="Enable 3D terrain">
+          <SettingRow label={t('enable3dTerrain')}>
             <Switch checked={config.enable3DTerrain === true} onChange={evt => this.props.onSettingChange({ id: this.props.id, config: config.set("enable3DTerrain", evt.target.checked) })} />
           </SettingRow>
           <SettingRow>
-            <span style={{ fontSize: "12px", opacity: 0.7 }}>Uses existing map terrain, or adds World Elevation in 3D. Independent of the elevation profile.</span>
+            <span style={{ fontSize: "12px", opacity: 0.7 }}> {t('usesExistingMapTerrainOrAddsWorldElevationIn')} </span>
           </SettingRow>
-          <SettingRow label="Enable Elevation Profiler">
+          <SettingRow label={t('enableElevationProfiler')}>
             <Switch checked={config.enableElevationProfile === true} onChange={evt => this.props.onSettingChange({ id: this.props.id, config: config.set("enableElevationProfile", evt.target.checked) })} />
           </SettingRow>
-          <SettingRow label="Render Mode">
+          <SettingRow label={t('renderMode')}>
             <Select
               size="sm"
               // Fallback to '1' (Fill) if renderMode is undefined
@@ -623,36 +639,32 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
               }
               style={{ width: "130px" }}
             >
-              <Option value="1">Fill (Default)</Option>
-              <Option value="0">Letterbox</Option>
+              <Option value="1"> {t('fillDefault')} </Option>
+              <Option value="0"> {t('letterbox')} </Option>
             </Select>
           </SettingRow>
           <SettingRow>
             <span className="text" style={{ fontSize: "11px", fontStyle: "italic", marginTop: "-5px", opacity: "0.3" }}>
-              <b>Fill:</b> Fills the window.
-              <br />
-              <b>Letterbox:</b> Shows the full original image (may show black bars, recommended for wide widgets).
-            </span>
+              <b> {t('fill')} </b>  {t('fillsTheWindow')} <br />
+              <b> {t('letterboxExtra')} </b>  {t('showsTheFullOriginalImageMayShowBlackBars')} </span>
           </SettingRow>
 
-          <SettingRow label="Transition Mode">
+          <SettingRow label={t('transitionMode')}>
             <Select size="sm" value={String(config.transitionMode ?? 0)} onChange={this.onTransitionModeChange} style={{ width: "130px" }}>
-              <Option value="0">Smooth (Default)</Option>
-              <Option value="1">Instantaneous</Option>
+              <Option value="0"> {t('smoothDefault')} </Option>
+              <Option value="1"> {t('instantaneous')} </Option>
             </Select>
           </SettingRow>
           <SettingRow>
             <span className="text" style={{ fontSize: "11px", fontStyle: "italic", marginTop: "-5px", opacity: "0.3" }}>
-              <b>Default:</b> Uses motion blending between frames.
-              <br />
-              <b>Instantaneous:</b> Jumps immediately to the next frame (snappier).
-            </span>
+              <b> {t('default')} </b>  {t('usesMotionBlendingBetweenFrames')} <br />
+              <b> {t('instantaneousExtra')} </b>  {t('jumpsImmediatelyToTheNextFrameSnappier')} </span>
           </SettingRow>
           <SettingRow flow="wrap">
             <div className="w-100">
-              <div style={{ fontWeight: 500, marginBottom: "5px" }}>Default Camera Angle (Normalized 0-1)</div>
+              <div style={{ fontWeight: 500, marginBottom: "5px" }}> {t('defaultCameraAngleNormalized01')} </div>
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <span style={{ fontSize: "12px" }}>Horizontal (X)</span>
+                <span style={{ fontSize: "12px" }}> {t('horizontalX')} </span>
                 <NumericInput
                   size="sm"
                   style={{ width: "80px" }}
@@ -665,7 +677,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                 />
               </div>
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <span style={{ fontSize: "12px" }}>Vertical (Y)</span>
+                <span style={{ fontSize: "12px" }}> {t('verticalY')} </span>
                 <NumericInput
                   size="sm"
                   style={{ width: "80px" }}
@@ -678,45 +690,42 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                 />
               </div>
               <div className="text" style={{ fontSize: "11px", fontStyle: "italic", opacity: "0.3" }}>
-                Standard is 0.5 for both(refers to center). <br />
-                <b>X:</b> 0 = Left, 1 = Right. <br />
-                <b>Y:</b> 0 = Sky, 1 = Ground. (Try 0.55 for wide widgets)
-              </div>
+                 {t('standardIs05ForBothRefersToCenter')} <br />
+                <b> {t('x')} </b>  {t('horizontalAxisMeaning')} <br />
+                <b> {t('y')} </b>  {t('verticalAxisMeaning')} </div>
             </div>
           </SettingRow>
-          <SettingRow label="Load imagery in tiles">
+          <SettingRow label={t('loadImageryInTiles')}>
             <Switch checked={config.imageTiling === true} onChange={this.onToggleImageTiling} />
           </SettingRow>
           <SettingRow>
             <span className="text" style={{ fontSize: "12px" }}>
-              Compare loading on your images and connection. Reopen the viewer to apply.
-            </span>
+               {t('compareLoadingOnYourImagesAndConnectionReopenThe')} </span>
           </SettingRow>
-          <SettingRow label="Debug Mode">
+          <SettingRow label={t('debugMode')}>
             <Switch checked={config.debugMode === true} onChange={this.onToggleDebugMode} />
           </SettingRow>
           <SettingRow>
             <span className="text" style={{ fontSize: "12px", fontStyle: "italic", marginTop: "0px", opacity: "0.3" }}>
-              Enables developer logging in the browser console (F12).
-            </span>
+               {t('enablesDeveloperLoggingInTheBrowserConsoleF12')} </span>
           </SettingRow>
         </SettingSection>
 
-        <SettingSection title="Field Notes Settings">
-          <SettingRow label="Enterprise notes layer">
+        <SettingSection title={t('fieldNotesSettings')}>
+          <SettingRow label={t('enterpriseNotesLayer')}>
             <Switch checked={config.sharedFieldNotesEnabled === true} onChange={event => this.props.onSettingChange({ id: this.props.id, config: config.set("sharedFieldNotesEnabled", event.target.checked) })} />
           </SettingRow>
-          <SettingRow flow="wrap" label="Editable layer URL">
+          <SettingRow flow="wrap" label={t('editableLayerUrl')}>
             <TextInput className="w-100" placeholder="https://.../FeatureServer/0" value={config.sharedFieldNotesUrl || ""} onChange={event => this.props.onSettingChange({ id: this.props.id, config: config.set("sharedFieldNotesUrl", event.target.value.trim()) })} />
           </SettingRow>
-          <SettingRow flow="wrap" label="Read-only layer/view URL (optional)">
+          <SettingRow flow="wrap" label={t('readOnlyLayerViewUrlOptional')}>
             <TextInput className="w-100" placeholder="https://.../FeatureServer/0" value={config.sharedFieldNotesReadUrl || ""} onChange={event => this.props.onSettingChange({ id: this.props.id, config: config.set("sharedFieldNotesReadUrl", event.target.value.trim()) })} />
           </SettingRow>
-          <SettingRow><span style={{ fontSize: 11 }}>Local notes remain available. Publishing is explicit; users authenticate through the organization’s ArcGIS Enterprise portal. Use the schema and access rules in the shared-note setup guide.</span></SettingRow>
+          <SettingRow><span style={{ fontSize: 11 }}> {t('localNotesRemainAvailablePublishingIsExplicitUsersAuthenticate')} </span></SettingRow>
           <SettingRow flow="wrap">
             <div style={{ width: "100%" }}>
-              <div style={{ marginBottom: "6px", fontWeight: 500 }}>Field Note Categories</div>
-              <div style={{ fontSize: "11px", fontStyle: "italic", opacity: 0.5, marginBottom: "8px" }}>Customize the options shown when users add a field note.</div>
+              <div style={{ marginBottom: "6px", fontWeight: 500 }}> {t('fieldNoteCategories')} </div>
+              <div style={{ fontSize: "11px", fontStyle: "italic", opacity: 0.5, marginBottom: "8px" }}> {t('customizeTheOptionsShownWhenUsersAddAField')} </div>
 
               {/* Category Items List */}
               <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "8px" }}>
@@ -726,7 +735,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                     <button
                       type="button"
                       onClick={() => this.onRemoveCategory(idx)}
-                      title="Remove category"
+                      title={t('removeCategory')}
                       style={{
                         width: "24px",
                         height: "24px",
@@ -749,7 +758,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
               <div style={{ display: "flex", gap: "5px", marginBottom: "8px" }}>
                 <TextInput
                   size="sm"
-                  placeholder="New category..."
+                  placeholder={t('newCategory')}
                   value={this.state.newCategoryText}
                   onChange={(e) => this.setState({ newCategoryText: e.target.value })}
                   onKeyDown={(e) => {
@@ -774,8 +783,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                     cursor: "pointer",
                   }}
                 >
-                  + Add
-                </button>
+                   {t('add')} </button>
               </div>
 
               {/* Reset to Default Button */}
@@ -792,12 +800,11 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                   textDecoration: "underline",
                 }}
               >
-                Reset to default categories
-              </button>
+                 {t('resetToDefaultCategories')} </button>
             </div>
           </SettingRow>
         </SettingSection>
-        <SettingSection title="Routing">
+        <SettingSection title={t('routing')}>
           <SettingRow>
             <div
               style={{
@@ -807,8 +814,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                 opacity: 0.6,
               }}
             >
-              Configure the network routing engine used by Capture Route generation.
-            </div>
+               {t('configureTheNetworkRoutingEngineUsedByCaptureRoute')} </div>
           </SettingRow>
 
           {/* ROUTING ENGINE */}
@@ -820,17 +826,16 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                   fontWeight: 500,
                 }}
               >
-                Route Engine
-              </div>
+                 {t('routeEngine')} </div>
 
               <Select size="sm" value={routingEngine} onChange={this.onRoutingEngineChange} style={{ width: "100%" }}>
-                <Option value="world">Esri World Route</Option>
+                <Option value="world"> {t('esriWorldRoute')} </Option>
 
-                <Option value="osrm">OSRM (Open Source)</Option>
+                <Option value="osrm"> {t('osrmOpenSource')} </Option>
 
-                <Option value="portal">Organization / Portal Route</Option>
+                <Option value="portal"> {t('organizationPortalRoute')} </Option>
 
-                <Option value="custom">Custom ArcGIS Route Service</Option>
+                <Option value="custom"> {t('customArcgisRouteService')} </Option>
               </Select>
 
               <div
@@ -842,15 +847,15 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                   lineHeight: 1.35,
                 }}
               >
-                {routingEngine === "world" && <>Uses Esri World Route, the routing engine Mapillary Explorer Capture Route is designed and tested against.</>}
+                {routingEngine === "world" && <> {t('usesEsriWorldRouteTheRoutingEngineMapillaryExplorer')} </>}
 
-                {routingEngine === "osrm" && <>Uses the open-source OSRM routing engine with OpenStreetMap road data. No ArcGIS API key or ArcGIS sign-in is required.</>}
+                {routingEngine === "osrm" && <> {t('usesTheOpenSourceOsrmRoutingEngineWithOpenstreetmap')} </>}
 
                 {routingEngine === "portal" && (
-                  <>Uses the route service configured by the current ArcGIS Online or Enterprise portal. Compatibility depends on the organization's network configuration.</>
+                  <> {t('usesTheRouteServiceConfiguredByTheCurrentArcgis')} </>
                 )}
 
-                {routingEngine === "custom" && <>Uses a manually configured ArcGIS Network Analyst route service.</>}
+                {routingEngine === "custom" && <> {t('usesAManuallyConfiguredArcgisNetworkAnalystRouteService')} </>}
               </div>
             </div>
           </SettingRow>
@@ -865,15 +870,14 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                     fontWeight: 500,
                   }}
                 >
-                  World Route Access
-                </div>
+                   {t('worldRouteAccess')} </div>
 
                 <Select size="sm" value={routingAuthMode} onChange={this.onRoutingAuthModeChange} style={{ width: "100%" }}>
-                  <Option value="auto">Automatic (Recommended)</Option>
+                  <Option value="auto"> {t('automaticRecommended')} </Option>
 
-                  <Option value="api-key">API Key</Option>
+                  <Option value="api-key"> {t('apiKey')} </Option>
 
-                  <Option value="user">ArcGIS User Sign-In</Option>
+                  <Option value="user"> {t('arcgisUserSignIn')} </Option>
                 </Select>
 
                 <div
@@ -886,12 +890,12 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                   }}
                 >
                   {routingAuthMode === "auto" && (
-                    <>Uses the configured API key when available. Otherwise the user will be asked to sign in with ArcGIS when routing is requested.</>
+                    <> {t('usesTheConfiguredApiKeyWhenAvailableOtherwiseThe')} </>
                   )}
 
-                  {routingAuthMode === "api-key" && <>Requires an ArcGIS Location Services API key configured by the Experience author.</>}
+                  {routingAuthMode === "api-key" && <> {t('requiresAnArcgisLocationServicesApiKeyConfiguredBy')} </>}
 
-                  {routingAuthMode === "user" && <>Requires the user to authenticate with an ArcGIS account that has routing privileges.</>}
+                  {routingAuthMode === "user" && <> {t('requiresTheUserToAuthenticateWithAnArcgisAccount')} </>}
                 </div>
               </div>
             </SettingRow>
@@ -907,10 +911,9 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                     fontWeight: 500,
                   }}
                 >
-                  Routing API Key
-                </div>
+                   {t('routingApiKey')} </div>
 
-                <TextInput type="password" className="w-100" placeholder="ArcGIS routing API key" value={config.routingApiKey || ""} onChange={this.onRoutingApiKeyChange} />
+                <TextInput type="password" className="w-100" placeholder={t('arcgisRoutingApiKey')} value={config.routingApiKey || ""} onChange={this.onRoutingApiKeyChange} />
 
                 <div
                   style={{
@@ -921,8 +924,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                     lineHeight: 1.35,
                   }}
                 >
-                  Recommended for public Experiences. Restrict the key to routing privileges and your published application domains.
-                </div>
+                   {t('recommendedForPublicExperiencesRestrictTheKeyToRouting')} </div>
               </div>
             </SettingRow>
           )}
@@ -937,13 +939,12 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                     fontWeight: 500,
                   }}
                 >
-                  OSRM Server
-                </div>
+                   {t('osrmServer')} </div>
 
                 <Select size="sm" value={osrmServerMode} onChange={this.onOSRMServerModeChange} style={{ width: "100%" }}>
-                  <Option value="public">Public OSRM Demo</Option>
+                  <Option value="public"> {t('publicOsrmDemo')} </Option>
 
-                  <Option value="custom">Custom / Self-Hosted</Option>
+                  <Option value="custom"> {t('customSelfHosted')} </Option>
                 </Select>
 
                 <div
@@ -955,9 +956,9 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                     lineHeight: 1.35,
                   }}
                 >
-                  {osrmServerMode === "public" && <>Uses router.project-osrm.org. Suitable for testing and light community use. No API key is required.</>}
+                  {osrmServerMode === "public" && <> {t('usesRouterProjectOsrmOrgSuitableForTestingAnd')} </>}
 
-                  {osrmServerMode === "custom" && <>Uses your own OSRM-compatible server. Recommended when you need control over availability, capacity, or routing data.</>}
+                  {osrmServerMode === "custom" && <> {t('usesYourOwnOsrmCompatibleServerRecommendedWhenYou')} </>}
                 </div>
               </div>
             </SettingRow>
@@ -973,8 +974,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                     fontWeight: 500,
                   }}
                 >
-                  OSRM Server URL
-                </div>
+                   {t('osrmServerUrl')} </div>
 
                 <TextInput className="w-100" placeholder="https://routing.example.org" value={config.osrmServerUrl || ""} onChange={this.onOSRMServerUrlChange} />
 
@@ -987,23 +987,22 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                     lineHeight: 1.35,
                   }}
                 >
-                  Enter the OSRM base URL only. Do not include /route/v1/driving.
-                </div>
+                   {t('enterTheOsrmBaseUrlOnlyDoNotInclude')} </div>
               </div>
             </SettingRow>
           )}
 
           {routingEngine === "osrm" && (
             <>
-              <strong>OSRM · Open Source Routing</strong>
+              <strong> {t('osrmOpenSourceRouting')} </strong>
 
               <br />
 
               {osrmServerMode === "public"
-                ? "Public OSRM demo server selected. No authentication required."
+                ? t('publicOsrmDemoServerSelectedNoAuthenticationRequired')
                 : hasCustomOSRMUrl
-                  ? "Custom OSRM server configured. No ArcGIS authentication required."
-                  : "⚠ Custom OSRM server URL required."}
+                  ? t('customOsrmServerConfiguredNoArcgisAuthenticationRequired')
+                  : t('customOsrmServerUrlRequired')}
             </>
           )}
 
@@ -1024,13 +1023,11 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                   lineHeight: 1.4,
                 }}
               >
-                <strong>Organization Route</strong>
+                <strong> {t('organizationRoute')} </strong>
                 <br />
-                Mapillary Explorer will use the routing service advertised by the active portal.
+                 {t('mapillaryExplorerWillUseTheRoutingServiceAdvertisedBy')} <br />
                 <br />
-                <br />
-                Make sure this service supports the routing behavior required by Capture Route before publishing.
-              </div>
+                 {t('makeSureThisServiceSupportsTheRoutingBehaviorRequired')} </div>
             </SettingRow>
           )}
 
@@ -1044,8 +1041,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                     fontWeight: 500,
                   }}
                 >
-                  Route Service URL
-                </div>
+                   {t('routeServiceUrl')} </div>
 
                 <TextInput className="w-100" placeholder="https://.../NAServer/Route" value={config.routingServiceUrl || ""} onChange={this.onRoutingServiceUrlChange} />
 
@@ -1058,8 +1054,7 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
                     lineHeight: 1.35,
                   }}
                 >
-                  Enter the full ArcGIS Network Analyst Route service URL.
-                </div>
+                   {t('enterTheFullArcgisNetworkAnalystRouteServiceUrl')} </div>
               </div>
             </SettingRow>
           )}
@@ -1083,45 +1078,43 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
             >
               {routingEngine === "world" && routingAuthMode === "auto" && (
                 <>
-                  <strong>Esri World Route</strong>
+                  <strong> {t('esriWorldRoute')} </strong>
 
                   <br />
 
                   {hasRoutingApiKey
-                    ? "API key configured. Users can route without signing in."
-                    : "No API key configured. ArcGIS sign-in will be required when routing is requested."}
+                    ? t('apiKeyConfiguredUsersCanRouteWithoutSigningIn')
+                    : t('noApiKeyConfiguredArcgisSignInWillBe')}
                 </>
               )}
 
               {routingEngine === "world" && routingAuthMode === "api-key" && (
                 <>
-                  <strong>{hasRoutingApiKey ? "✓ API key configured" : "⚠ API key required"}</strong>
+                  <strong>{hasRoutingApiKey ? t('apiKeyConfigured') : t('apiKeyRequired')}</strong>
                 </>
               )}
 
               {routingEngine === "world" && routingAuthMode === "user" && (
                 <>
-                  <strong>ArcGIS user authentication</strong>
+                  <strong> {t('arcgisUserAuthentication')} </strong>
                   <br />
-                  Users will authenticate when they request Capture Route.
-                </>
+                   {t('usersWillAuthenticateWhenTheyRequestCaptureRoute')} </>
               )}
 
               {routingEngine === "portal" && (
                 <>
-                  <strong>Organization routing</strong>
+                  <strong> {t('organizationRouting')} </strong>
                   <br />
-                  The portal's configured route service will be discovered at runtime.
-                </>
+                   {t('thePortalSConfiguredRouteServiceWillBeDiscovered')} </>
               )}
 
               {routingEngine === "custom" && (
                 <>
-                  <strong>Custom routing service</strong>
+                  <strong> {t('customRoutingService')} </strong>
 
                   <br />
 
-                  {config.routingServiceUrl?.trim() ? "Route service URL configured." : "⚠ Route service URL required."}
+                  {config.routingServiceUrl?.trim() ? t('routeServiceUrlConfigured') : t('routeServiceUrlRequired')}
                 </>
               )}
             </div>
@@ -1131,3 +1124,12 @@ export default class Setting extends React.PureComponent<AllWidgetSettingProps<I
     );
   }
 }
+
+/** The editor follows builder policy, never a viewer's local language override. */
+const LocalizedSetting: React.FC<AllWidgetSettingProps<IMConfig>> = props => (
+ <WidgetLocaleProvider key={props.id} appLocale={props.intl?.locale} widgetId={props.id}
+   defaultLanguage={props.config.widgetLanguage || 'auto'} allowUserChoice={false}>
+  <SettingsCatalogProvider><Setting {...props}/></SettingsCatalogProvider>
+ </WidgetLocaleProvider>
+);
+export default LocalizedSetting;

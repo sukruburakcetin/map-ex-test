@@ -1,3 +1,4 @@
+import { Presentation, englishPresentation } from '../../i18n/PresentationText';
 import { imageryHoverCardStyles as styles } from '../../styles/imageryHoverCard';
 /** Small theme-colored vector icons; no font downloads or external assets. */
 function cardIcon(doc: Document, kind: 'creator' | 'calendar'): SVGSVGElement | HTMLSpanElement {
@@ -9,26 +10,26 @@ function cardIcon(doc: Document, kind: 'creator' | 'calendar'): SVGSVGElement | 
   svg.appendChild(path); svg.style.flexShrink = '0'; return svg;
 }
 /** Build a non-interactive preview with textContent, stable dimensions and no HTML interpolation. */
-export function renderImageryHoverCard(host: HTMLElement, data: any, fallbackDate?: unknown, loading = false): void {
+export function renderImageryHoverCard(host: HTMLElement, data: any, fallbackDate?: unknown, loading = false, l10n: Presentation = englishPresentation): void {
   Object.assign(host.style, styles.shell); if (!host.style.width || host.style.width === 'max-content') host.style.width = '240px'; host.style.display = 'block'; host.setAttribute('role', 'tooltip');
-  host.textContent = ''; const doc = host.ownerDocument;
+  l10n.release(host); l10n.bind(host,'dir',()=>l10n.locale==='ar'?'rtl':'ltr'); host.textContent = ''; const doc = host.ownerDocument;
   const portal = doc.fullscreenElement || doc.body;
   if (portal && host.parentNode !== portal) portal.appendChild(host);
   const user = doc.createElement('div'); Object.assign(user.style, styles.creator);
   const userIcon = cardIcon(doc, 'creator'); userIcon.setAttribute('aria-hidden', 'true'); userIcon.style.color = '#83c9a5';
-  const name = doc.createElement('b'); Object.assign(name.style, styles.name); name.textContent = loading ? 'Loading image details…' : data?.creator?.username || 'Creator unavailable';
+  const name = doc.createElement('b'); Object.assign(name.style, styles.name); l10n.bind(name,"textContent",()=>loading ? l10n.text("Loading image details…") : data?.creator?.username || l10n.text("Creator unavailable"));
   user.appendChild(userIcon); user.appendChild(name); host.appendChild(user);
   const date = doc.createElement('div'); Object.assign(date.style, styles.date);
   const icon = cardIcon(doc, 'calendar'); icon.setAttribute('aria-hidden', 'true');
   const label = doc.createElement('span'); const raw = data?.captured_at ?? fallbackDate;
   const captured = new Date(typeof raw === 'string' && /^\d+$/.test(raw) ? Number(raw) : raw as any);
-  label.textContent = raw && Number.isFinite(captured.getTime()) ? captured.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : loading ? 'Preparing preview' : 'Capture date unavailable';
+  l10n.bind(label,"textContent",()=>raw && Number.isFinite(captured.getTime()) ? l10n.date(captured,{ year: 'numeric', month: 'short', day: 'numeric' }) : loading ? l10n.text("Preparing preview") : l10n.text("Capture date unavailable"));
   date.appendChild(icon); date.appendChild(label); host.appendChild(date);
-  const preview = doc.createElement('div'); Object.assign(preview.style, styles.preview); preview.textContent = loading || data?.thumb_256_url ? 'Loading preview…' : 'Preview unavailable'; host.appendChild(preview);
+  const preview = doc.createElement('div'); Object.assign(preview.style, styles.preview); l10n.bind(preview,"textContent",()=>loading || data?.thumb_256_url ? l10n.text("Loading preview…") : l10n.text("Preview unavailable")); host.appendChild(preview);
   if (data?.thumb_256_url) {
-    const image = doc.createElement('img'); Object.assign(image.style, styles.image); image.alt = 'Street imagery preview'; image.decoding = 'async';
+    const image = doc.createElement('img'); Object.assign(image.style, styles.image); l10n.bind(image,"alt",()=>l10n.text("Street imagery preview")); image.decoding = 'async';
     image.onload = () => { if (preview.parentNode === host) { preview.textContent = ''; preview.appendChild(image); } };
-    image.onerror = () => { if (preview.parentNode === host) preview.textContent = 'Preview unavailable'; };
+    image.onerror = () => { if (preview.parentNode === host) l10n.bind(preview,"textContent",()=>l10n.text("Preview unavailable")); };
     image.src = data.thumb_256_url;
   }
 }

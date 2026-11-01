@@ -1,0 +1,32 @@
+{
+  "installer": "hover-readiness-v6-121",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "8ebbc72e6b60c19945baab5ae1adc41689f59e072d820623d84a8ac32eac3574",
+      "resultSha256": "6c7bcdb333d193487316476e0f11fbb96e62850c7dbed0c4529c5fc4afb7b651"
+    },
+    {
+      "file": "src/features/coverage/CoverageHoverResume.ts",
+      "originalSha256": null,
+      "resultSha256": "463aabf9947541483f795181b2802287bf7aca28a584a3eaae551b778f44c381"
+    },
+    {
+      "file": "tests/coverageHoverResume.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "bd356653891cd66968ad07d4977941fdef36af38423c09bd99c09f700dceb768"
+    },
+    {
+      "file": "tests/coverageHoverRuntime.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "10992f915fb9e083deff328192bcc8057e35ec5717375699ebc4bb21f6b1860a"
+    },
+    {
+      "file": "docs/HOVER-READINESS-v6.121.md",
+      "originalSha256": null,
+      "resultSha256": "1d998ee304f2fdeef3ad6980f0627f51a48177a6a858301f002cc2866ae959f4"
+    }
+  ]
+}

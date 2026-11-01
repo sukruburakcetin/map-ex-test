@@ -1,10 +1,12 @@
 /** @jsx jsx */
 /** New-note draft presentation; draft state, reset timing and submission remain parent-owned. */
+import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 import { noteDraftDialogStyle, noteDraftTitleStyle, noteDraftSelectStyle, noteDraftTextStyle, noteDraftShareStyle, noteDraftActionsStyle, noteDraftCancelStyle, noteDraftSaveStyle } from '../../styles/fieldNotes';
 
 export interface NoteDraftFormProps {
   categories: string[];
+  translateDefaultCategories?: boolean;
   category: string;
   noteText: string;
   share: boolean;
@@ -18,34 +20,36 @@ export interface NoteDraftFormProps {
 
 /** Forward controlled values and actions without owning effects, persistence or network work. */
 export const NoteDraftForm: React.FC<NoteDraftFormProps> = props => {
+ const { t, locale, owned } = useWidgetLocale();
+
   const { categories, category, noteText, share, setCategory, setNoteText, setShare, onSubmitNote, onCancelPending } = props;
   return (
 <div style={noteDraftDialogStyle}>
-                    <div style={noteDraftTitleStyle}>New Field Note</div>
+                    <div style={noteDraftTitleStyle}> {t('uiNewFieldNote')} </div>
                     <select
                         value={category}
                         onChange={(e) => setCategory((e.target as HTMLSelectElement).value)}
                         style={noteDraftSelectStyle}
                     >
-                        {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                        {categories.map(c => <option key={c} value={c}>{props.translateDefaultCategories ? owned(c) : c}</option>)}
                     </select>
-                    <textarea
+                    <textarea dir="auto"
                         value={noteText}
                         onChange={(e) => setNoteText((e.target as HTMLTextAreaElement).value)}
-                        placeholder="Description (optional)"
+                        placeholder={t('uiDescriptionOptional')}
                         rows={3}
                         style={noteDraftTextStyle}
                     />
-                    {props.sharingEnabled && <label style={noteDraftShareStyle}><input type="checkbox" checked={share} onChange={event => setShare(event.target.checked)} />Also share with your organization</label>}
+                    {props.sharingEnabled && <label style={noteDraftShareStyle}><input type="checkbox" checked={share} onChange={event => setShare(event.target.checked)} /> {t('uiAlsoShareWithYourOrganization')} </label>}
                     <div style={noteDraftActionsStyle}>
                         <button
                             onClick={onCancelPending}
                             style={noteDraftCancelStyle}
-                        >Cancel</button>
+                        > {t('uiCancel')} </button>
                         <button
                             onClick={() => onSubmitNote(category, noteText, props.sharingEnabled && share)}
                             style={noteDraftSaveStyle}
-                        >Save</button>
+                        > {t('uiSave')} </button>
                     </div>
                 </div>
   );

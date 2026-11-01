@@ -1,5 +1,6 @@
 /** @jsx jsx */
 /** Paged Enterprise records; mounted only for the open Enterprise tab. No automatic polling. */
+import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 import { FIELD_NOTE_STATUSES } from '../../components/types';
 import type { FieldNote } from '../../components/types';
@@ -21,6 +22,8 @@ export interface EnterpriseNotesListProps {
 
 /** Abort obsolete/unmounted requests and retain loaded rows when a subsequent page fails. */
 export const EnterpriseNotesList: React.FC<EnterpriseNotesListProps> = props => {
+ const { t, formatLocale:locale } = useWidgetLocale();
+
   const [notes, setNotes] = React.useState<FieldNote[]>([]);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState('');
@@ -38,7 +41,7 @@ export const EnterpriseNotesList: React.FC<EnterpriseNotesListProps> = props => 
       setNotes(previous => offset === 0 ? page.notes : Array.from(new Map([...previous, ...page.notes].map(note => [note.id, note])).values()));
       setNextOffset(page.nextOffset); setHasMore(page.hasMore);
     } catch (failure) {
-      if (!controller.signal.aborted && (failure as Error)?.name !== 'AbortError') { setFailedOffset(offset); setError('Enterprise notes could not load. Check access or retry.'); }
+      if (!controller.signal.aborted && (failure as Error)?.name !== 'AbortError') { setFailedOffset(offset); setError('load'); }
     } finally {
       if (!controller.signal.aborted && request.current === controller) setBusy(false);
     }
@@ -48,32 +51,32 @@ export const EnterpriseNotesList: React.FC<EnterpriseNotesListProps> = props => 
     void load(0);
     return () => { request.current?.abort(); };
   }, [load, props.context, props.layerUrl]);
-  return <div role="tabpanel" aria-label="Enterprise notes" style={notesLocalPanelStyle}>
-    <div style={enterpriseToolbarStyle}><span>{notes.length} Enterprise note{notes.length === 1 ? '' : 's'} loaded</span>
-      <div><button type="button" style={noteActionStyle} disabled={busy} onClick={() => void load(0)}>Refresh</button>{' '}
-      <button type="button" style={noteActionStyle} onClick={props.onClose} aria-label="Close notes list">Close</button></div>
+  return <div role="tabpanel" aria-label={t('uiEnterpriseNotes')} style={notesLocalPanelStyle}>
+    <div style={enterpriseToolbarStyle}><span>{t(notes.length===1?'uiEnterpriseCountOne':'uiEnterpriseCountMany',{count:new Intl.NumberFormat(locale).format(notes.length)})} </span>
+      <div><button type="button" style={noteActionStyle} disabled={busy} onClick={() => void load(0)}> {t('uiRefresh')} </button>{' '}
+      <button type="button" style={noteActionStyle} onClick={props.onClose} aria-label={t('uiCloseNotesList')}> {t('uiClose')} </button></div>
     </div>
-    <p style={notesSourceHintStyle}>Organization records · Refresh for latest. Clear local keeps these records.</p>
-    {busy && <div role="status" style={notesSourceHintStyle}>Loading Enterprise notes…</div>}
-    {error && <div role="alert" style={enterpriseErrorStyle}>{error} <button type="button" style={noteActionStyle} disabled={busy} onClick={() => void load(failedOffset)}>Retry</button></div>}
-    {!busy && !error && notes.length === 0 && <div style={notesSourceHintStyle}>No Enterprise notes are available in this layer.</div>}
+    <p style={notesSourceHintStyle}> {t('uiOrganizationRecordsRefreshForLatestClearLocalKeeps')} </p>
+    {busy && <div role="status" style={notesSourceHintStyle}> {t('uiLoadingEnterpriseNotes')} </div>}
+    {error && <div role="alert" style={enterpriseErrorStyle}>{t('uiEnterpriseLoadError')} <button type="button" style={noteActionStyle} disabled={busy} onClick={() => void load(failedOffset)}> {t('uiRetry')} </button></div>}
+    {!busy && !error && notes.length === 0 && <div style={notesSourceHintStyle}> {t('uiNoEnterpriseNotesAreAvailableInThisLayer')} </div>}
     <div style={enterpriseRowsStyle}>{notes.map(note => {
       const validPosition = Number.isFinite(note.lon) && Number.isFinite(note.lat);
       const canManage = !!note.sharedGlobalId && !!note.sharedLayerUrl;
       return <div key={note.id} style={enterpriseRowStyle}>
-        <div style={notesRowHeadingStyle}><strong>{note.category}</strong><span style={notesRowMetaStyle}>{Number.isFinite(note.createdAt) && new Date(note.createdAt).toLocaleString()}</span></div>
-        {note.note && <div>{note.note}</div>}{note.resolutionNote && <div>Resolution: {note.resolutionNote}</div>}
+        <div style={notesRowHeadingStyle}><strong>{note.category}</strong><span style={notesRowMetaStyle}>{Number.isFinite(note.createdAt) && new Date(note.createdAt).toLocaleString(locale)}</span></div>
+        {note.note && <div>{note.note}</div>}{note.resolutionNote && <div> {t('uiResolution')} {note.resolutionNote}</div>}
         <div style={enterpriseActionsStyle}>
-          <span style={getNoteStatusBadgeStyle(note.status)}>{FIELD_NOTE_STATUSES.find(status => status.value === note.status)?.label || 'Open'}</span>
+          <span style={getNoteStatusBadgeStyle(note.status)}>{t(note.status==='in_progress'?'uiStatusProgress':note.status==='completed'?'uiStatusCompleted':note.status==='dismissed'?'uiStatusDismissed':'uiStatusOpen')}</span>
           <div style={notesRowButtonsStyle}>
-          <button type="button" style={noteListActionStyle} disabled={!validPosition} onClick={() => props.onFocus(note)}>Show on map</button>
-          {canManage && props.onEdit && <button type="button" style={noteListActionStyle} disabled={props.editorBusy} onClick={() => props.onEdit?.(note)}>Update shared</button>}
-          {canManage && props.onAttachments && <button type="button" style={noteListActionStyle} disabled={props.attachmentsBusy} onClick={() => props.onAttachments?.(note)}>Attachments</button>}
+          <button type="button" style={noteListActionStyle} disabled={!validPosition} onClick={() => props.onFocus(note)}> {t('uiShowOnMap')} </button>
+          {canManage && props.onEdit && <button type="button" style={noteListActionStyle} disabled={props.editorBusy} onClick={() => props.onEdit?.(note)}> {t('uiUpdateShared')} </button>}
+          {canManage && props.onAttachments && <button type="button" style={noteListActionStyle} disabled={props.attachmentsBusy} onClick={() => props.onAttachments?.(note)}> {t('uiAttachments')} </button>}
           </div>
         </div>
-        {!canManage && <div style={notesSourceHintStyle}>Read-only record. Shared actions require a GlobalID and an editable layer.</div>}
+        {!canManage && <div style={notesSourceHintStyle}> {t('uiReadOnlyRecordSharedActionsRequireAGlobalid')} </div>}
       </div>;
     })}</div>
-    {hasMore && <button type="button" style={noteActionStyle} disabled={busy} onClick={() => void load(nextOffset)}>Load more</button>}
+    {hasMore && <button type="button" style={noteActionStyle} disabled={busy} onClick={() => void load(nextOffset)}> {t('uiLoadMore')} </button>}
   </div>;
 };

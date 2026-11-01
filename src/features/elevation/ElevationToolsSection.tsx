@@ -1,4 +1,5 @@
 /** @jsx jsx */
+import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 import type { InfoBoxProps } from '../../components/types';
 import { elevationPanelStyle, elevationToggleStyle, elevationHeadingStyle, elevationIconStyle, elevationTrackStyle, elevationThumbStyle } from '../../styles/elevationControls';
@@ -8,13 +9,13 @@ export type ElevationToolsSectionProps = Pick<InfoBoxProps, 'isElevationProfileA
 /** Display the elevation-profile switch and forward clicks without owning profile state.
  * InfoBox retains feature and sequence-length visibility guards. Rendering starts no sampling or requests.
  */
-export const ElevationToolsSection: React.FC<ElevationToolsSectionProps> = ({ isElevationProfileActive, onToggleElevationProfile }) => (
+export const ElevationToolsSection: React.FC<ElevationToolsSectionProps> = ({ isElevationProfileActive, onToggleElevationProfile }) => { const { t, locale } = useWidgetLocale(); return (
 <div
               style={elevationPanelStyle(isElevationProfileActive)}
             >
               <button
                 onClick={onToggleElevationProfile}
-                title="Toggle Elevation Profile along sequence"
+                title={t('uiToggleElevationProfileAlongSequence')}
                 style={elevationToggleStyle}
               >
                 <span
@@ -33,8 +34,7 @@ export const ElevationToolsSection: React.FC<ElevationToolsSectionProps> = ({ is
                   >
                     <path d="M3 20h18L14 7l-4 7-3-4-4 10z" />
                   </svg>
-                  PROFILE
-                </span>
+                   {t('uiProfile')} </span>
                 <div
                   style={elevationTrackStyle(isElevationProfileActive)}
                 >
@@ -44,4 +44,4 @@ export const ElevationToolsSection: React.FC<ElevationToolsSectionProps> = ({ is
                 </div>
               </button>
             </div>
-);
+); };

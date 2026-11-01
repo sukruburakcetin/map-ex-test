@@ -1,0 +1,27 @@
+{
+  "installer": "brown-hover-bearing-v6-96",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "f607900819d4fc8d52f7b41041ea36ad3f93baab4e4c9c274a2331c88d4e655a",
+      "resultSha256": "99b01bb76fabd94e564e87bf2ab04bc1e1d2b6baaf3279ed6155560767b8ad81"
+    },
+    {
+      "file": "docs/BROWN-HOVER-BEARING-TRIAL.md",
+      "originalSha256": null,
+      "resultSha256": "03744e3f724dd9b2df04459699b809a14544cc5542400e26a1dc344724b76d2c"
+    },
+    {
+      "file": "src/features/map-graphics/HoverBearingSector.ts",
+      "originalSha256": null,
+      "resultSha256": "1efa36e7ea50e6bf20f69093585a35f4d1caa634b03ae9f1e5814a345a8febe9"
+    },
+    {
+      "file": "tests/hoverBearingSector.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "b4a695f024b63e27a0d38effb7a4c3653761a4635ec596fd2d1b0245180f256a"
+    }
+  ]
+}

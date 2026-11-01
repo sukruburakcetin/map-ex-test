@@ -1,0 +1,57 @@
+{
+  "installer": "german-language-v6-108",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/i18n/core.ts",
+      "originalSha256": "e9afb0dbfe6d636eb12b8a6ae45fcb8c9a94f17173d8a6daad179c51ddad514a",
+      "resultSha256": "2c05eb8d93c8185f257fad886571ad2ea02dc0d695e7fc231ad8ac6d795250f5"
+    },
+    {
+      "file": "src/i18n/WidgetLocale.tsx",
+      "originalSha256": "9836fc40c469428366cc3b446cd5355cb42049e2cc32702c58c38996edaa94fc",
+      "resultSha256": "569d280f5ca0cd128eb44836d5adaddd36a02ebfad349631d0aa76a58286764a"
+    },
+    {
+      "file": "src/i18n/SettingsLocale.tsx",
+      "originalSha256": "9684e50d0f04694f1118d71034005c1fcb1c69691ea336bcd6e1cb9ca532ae36",
+      "resultSha256": "9143477b3eefe4b2643192cec5fe7927608677cc4e0b9ddc8380e2a2c194b32d"
+    },
+    {
+      "file": "src/i18n/startupMessages.ts",
+      "originalSha256": "3834c09b304366f380e865bd49761b793a0cad09e36b82adb830cf9866d74bb0",
+      "resultSha256": "ec3585065a5ccbd53031eee23bb1598642b3e38b9cdbefcb328eb5006a1c23f0"
+    },
+    {
+      "file": "src/config.ts",
+      "originalSha256": "4b02766b17a37b2c8990d35cb96a54bf5a2d621f4611aff85c56640c811105ff",
+      "resultSha256": "dabc4a0daeca3a48b7873664cbf2106d8bf398e7281291fffa525a1290200954"
+    },
+    {
+      "file": "src/setting/setting.tsx",
+      "originalSha256": "198da1b6fdadeb52540c9a4f313eb58c0e2031f5c33b6973da459206757f33e2",
+      "resultSha256": "7f01440b9116b3f3847c14d4497d7184f1116c8c86bdc8911cf01267cd56a2a1"
+    },
+    {
+      "file": "tests/localizationCatalog.test.cjs",
+      "originalSha256": "63867f078601e961f468848d51076a2ed77e563117fb3dfa42ceb3056b10580e",
+      "resultSha256": "4bce3fa0bad1b27e4868c4834899dededa0ba48f5c7349cb333ee2b4e8316de4"
+    },
+    {
+      "file": "src/i18n/locales/de.ts",
+      "originalSha256": null,
+      "resultSha256": "d9baac2ae6bb7253d9289a54248d5ce91b48ba6404b4d7dff23a40447621c1b7"
+    },
+    {
+      "file": "src/i18n/locales/settings-de.ts",
+      "originalSha256": null,
+      "resultSha256": "dea1a0d624b10bbb93c6296b79846f203248adf313ce6dd2bc26294284c668f2"
+    },
+    {
+      "file": "docs/localization/GERMAN-v6.108.md",
+      "originalSha256": null,
+      "resultSha256": "8601950b22ce6f67209c98014433aad05f76413cfe25e01b80f85b5a08966f8a"
+    }
+  ]
+}

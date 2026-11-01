@@ -1,4 +1,6 @@
 /** @jsx jsx */
+import { OwnedMessage } from '../i18n/WidgetLocale';
+import { WidgetLocaleContext } from '../i18n/WidgetLocale';
 import { React, jsx } from "jimu-core";
 import ReactDOM from "react-dom";
 import { base, controlStyle, menuStyle, optionStyle, chevron } from '../styles/glassSelect';
@@ -29,6 +31,9 @@ export class GlassSelect extends React.PureComponent<
     GlassSelectProps,
     { open: boolean; hoveredIdx: number; searchQuery: string }
 > {
+ static contextType = WidgetLocaleContext;
+ declare context: React.ContextType<typeof WidgetLocaleContext>;
+
     private menuRef = React.createRef<HTMLDivElement>();
     private closeFloatingMenu = (event?: Event) => {
         if (!this.props.floatingMenu || (event?.target instanceof Node && this.menuRef.current?.contains(event.target))) return;
@@ -138,7 +143,7 @@ export class GlassSelect extends React.PureComponent<
                             color: "#fff",
                             fontSize: "10px",
                         }}>
-                            {value?.label ?? "Select…"}
+                            {value?.label ?? <OwnedMessage source={"Select…"}/>}
                         </span>
                     </div>
                     <div style={chevron(open, accentColor)} />
@@ -155,7 +160,7 @@ export class GlassSelect extends React.PureComponent<
                                     type="text"
                                     value={searchQuery}
                                     onChange={e => this.setState({ searchQuery: e.target.value, hoveredIdx: -1 })}
-                                    placeholder="Search…"
+                                    placeholder={this.context.t('uiSearch')}
                                     onClick={e => e.stopPropagation()}
                                     style={{
                                         width: "100%",
@@ -175,8 +180,7 @@ export class GlassSelect extends React.PureComponent<
                         {/* Options */}
                         {filtered.length === 0 ? (
                             <div style={{ padding: "8px", color: "rgba(255,255,255,0.4)", fontSize: "9px", textAlign: "center" }}>
-                                No results
-                            </div>
+                                 {this.context.t('uiNoResults')} </div>
                         ) : (
                             filtered.map((opt, idx) => (
                                 <div

@@ -1,0 +1,62 @@
+{
+  "installer": "japanese-language-v6-111",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/i18n/core.ts",
+      "originalSha256": "7173debed5d630df31d56c9955de453c1717789dbdd2ff9e16ddbf9a7f485cd5",
+      "resultSha256": "a8db1d98a09b3b520e483ab01908e62d7166d9ef7e1986e6019cdd2e64af6d1d"
+    },
+    {
+      "file": "src/i18n/WidgetLocale.tsx",
+      "originalSha256": "179de564c9a1ed7b1bc141edefe6f65e518715f9075dc33eb6f0c86c33577a9a",
+      "resultSha256": "7ed21bdc81ff6910b45da2891c65a821d328c5e813e06f7d6ca1f02c4596f8d4"
+    },
+    {
+      "file": "src/i18n/SettingsLocale.tsx",
+      "originalSha256": "d5908a841a2a1cc94232b8450461c6cef85388107f07c3d74b29f00b4c2633b6",
+      "resultSha256": "76cc4cd8a89590063bbf2c369a07b6b28dce62c4e660a825c6c034fbe3e58488"
+    },
+    {
+      "file": "src/i18n/startupMessages.ts",
+      "originalSha256": "5147c2b508908944f5ddebdb5a3a96ed9440af26d10f0933a94461683b04ed0a",
+      "resultSha256": "8f886e7d136d1e5ee9b531d308ca840bcafa3e8370dfae302409f527a35403f0"
+    },
+    {
+      "file": "src/config.ts",
+      "originalSha256": "ce649d2753ef6da12335fedfd9871d26c2060ce5bac4cc2207ac873dfdbee36b",
+      "resultSha256": "b01e7caeb442afb10ae76defc469617b54016c807d644ec1fe00a76db7b4f5c8"
+    },
+    {
+      "file": "src/setting/setting.tsx",
+      "originalSha256": "ec97d8c1690068f3191e1e5db7fe66ae029530995b8ad23c60130d4d0a23ac61",
+      "resultSha256": "99d73819d7cd29be028c85b77ebdb92d20890c2c136dd87b89eba7f9dbcd2189"
+    },
+    {
+      "file": "tests/localizationCatalog.test.cjs",
+      "originalSha256": "264fe64f603b0d4ab1bf8566ed4399c7ef9135e34e957980972989c262244272",
+      "resultSha256": "3a86806aae116355627e80757a152378278e765eb4e263c84337078e952b8ad9"
+    },
+    {
+      "file": "src/i18n/PresentationText.ts",
+      "originalSha256": "9cd3cd31b629b1d51996d65eb23fe64f589314e975de70bc149707f5e1784eed",
+      "resultSha256": "a3d6c6d5b8f800edd61544b6e9ff516175347f116828e71c1474f185944ef5e8"
+    },
+    {
+      "file": "src/i18n/locales/ja.ts",
+      "originalSha256": null,
+      "resultSha256": "d02d79ae586def67f2f5b81f086110ea56249e72ffedd7b01a223835bc1ce741"
+    },
+    {
+      "file": "src/i18n/locales/settings-ja.ts",
+      "originalSha256": null,
+      "resultSha256": "cc45f9451e2492aaa908102b3ec7b2eccd822c784d2ccc1bec9eb3ba50009aa9"
+    },
+    {
+      "file": "docs/localization/JAPANESE-v6.111.md",
+      "originalSha256": null,
+      "resultSha256": "550123b3fe57db3777bae7d7212c06010ab48d52b7030943bbc8f57f70022829"
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+/** @jsx jsx */
+/** Quality toggle and band legend presentation only; coverage state and rebuilds remain parent-owned. */
+import { useWidgetLocale } from '../../i18n/WidgetLocale';
+import { React, jsx } from 'jimu-core';
+import * as Icons from '../../components/Icons';
+import type { InfoBoxProps } from '../../components/types';
+import { qualityToolsSectionStyle, qualityToolsButtonStyle, qualityToolsLegendStyle, qualityToolsRangeStyle, getQualityToolsLabelStyle, getQualityToolsTrackStyle, getQualityToolsKnobStyle, getQualityToolsBandStyle, getQualityToolsSwatchStyle, getQualityToolsBandLabelStyle } from '../../styles/qualityTools';
+
+export type QualityToolsSectionProps = Pick<InfoBoxProps, 'qualityViewActive' | 'onToggleQualityView' | 'selectedQualityBand' | 'onQualityLegendClick' | 'currentZoom' | 'jimuMapViewZoom' | 'qualityViewType'> & { hideToggle?: boolean };
+
+/** Presentation thresholds, adjustable independently for each view type. */
+export const QUALITY_HINT_ZOOM = { '2d': 6, '3d': 8 } as const;
+
+/** Keep legend colors/ranges, selected-band dimming and original callbacks; no effects or SDK work occur here. */
+export const QualityToolsSection: React.FC<QualityToolsSectionProps> = props => {
+ const { t, locale } = useWidgetLocale();
+
+  const { qualityViewActive, onToggleQualityView, selectedQualityBand, onQualityLegendClick, currentZoom, jimuMapViewZoom, qualityViewType } = props;
+  const zoom = Number.isFinite(jimuMapViewZoom) ? jimuMapViewZoom : currentZoom;
+  const threshold = qualityViewType ? QUALITY_HINT_ZOOM[qualityViewType] : undefined;
+  const showZoomNotice = qualityViewActive && (threshold === undefined || !Number.isFinite(zoom) || zoom! < threshold);
+  if (props.hideToggle && !qualityViewActive) return null;
+  return (
+    <div
+      style={props.hideToggle ? { marginTop: 3 } : qualityToolsSectionStyle}
+    >
+      {!props.hideToggle && <button
+        type="button" aria-label={t('uiColorCoverageByQuality')} aria-pressed={!!qualityViewActive}
+        onClick={onToggleQualityView}
+        title={qualityViewActive ? t('uiQualityViewOnLinesColouredByImageQuality') : t('uiQualityViewOffClickToColourCoverageLines')}
+        style={qualityToolsButtonStyle}
+      >
+        <span
+          style={getQualityToolsLabelStyle(qualityViewActive)}
+        >
+          <Icons.Star size={10} color={qualityViewActive ? "#F5A623" : "rgba(255,255,255,0.7)"} filled={qualityViewActive} />
+           {t('uiMapQuality')} </span>
+        <div
+          style={getQualityToolsTrackStyle(qualityViewActive)}
+        >
+          <div
+            style={getQualityToolsKnobStyle(qualityViewActive)}
+          />
+        </div>
+      </button>}
+
+      {showZoomNotice && (
+        <div role="status" style={{ marginTop: 4, padding: '3px 5px', borderLeft: '2px solid #F5A623', background: 'rgba(245,166,35,0.10)', color: '#fff0ce', fontSize: 9, lineHeight: 1.25, overflowWrap: 'anywhere' }}>
+           {t('uiZoomCloserForImageDetail')} </div>
+      )}
+
+      {qualityViewActive && (
+        <div style={qualityToolsLegendStyle}>
+          {(
+            [
+              ["#35AF6D", t('uiGood'), "≥0.70", "good"],
+              ["#F5A623", t('uiFair'), "0.45–0.70", "fair"],
+              ["#D0021B", t('uiPoor'), "0.10–0.45", "poor"],
+              ["#A855F7", t('uiUnscored'), "N/A", "unscored"],
+            ] as [string, string, string, "good" | "fair" | "poor" | "unscored"][]
+          ).map(([color, label, range, band]) => {
+            const isSelected = selectedQualityBand === band;
+            const isAnySelected = !!selectedQualityBand;
+            return (
+              <div
+                key={label}
+                onClick={() => onQualityLegendClick(band)}
+                title={(band === 'unscored' ? t('uiPurpleMeansScoreUnavailableNotPoorQuality') : '') + (isSelected ? t('uiClickToShowAllQualityBands') : `Show only ${label} captures`)}
+                style={getQualityToolsBandStyle(isSelected, isAnySelected)}
+              >
+                <div style={getQualityToolsSwatchStyle(color)} />
+                <span style={getQualityToolsBandLabelStyle(isSelected)}>{label}</span>
+                {range && <span style={qualityToolsRangeStyle}>{range}</span>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};

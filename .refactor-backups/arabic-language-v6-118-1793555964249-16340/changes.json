@@ -1,0 +1,162 @@
+{
+  "installer": "arabic-language-v6-118",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/config.ts",
+      "originalSha256": "3465b3c80f51a27b1ee47cec60dc4f957f0407ccd63c2c34910ff8c103bb787b",
+      "resultSha256": "fac557817e601359d93c8e9eebc21cea17a895894581860e981d717cce38424a"
+    },
+    {
+      "file": "src/components/FilterScrollRegion.tsx",
+      "originalSha256": "02b68aefd6633141347f524b95af8ba19f2d59d24c50e919f4664bed643a361d",
+      "resultSha256": "b44e2c96cdc97712605e3699482105209bb6728f5d821154a7404c12171fd7b8"
+    },
+    {
+      "file": "src/components/GlassDatePicker.tsx",
+      "originalSha256": "b15d376e387f10698cea0ba6a35d4ac30d23006548364f9255814cf0df6caa2f",
+      "resultSha256": "b092c6455d07d910d1d4ebacada86bb04aca7bdd0518475bde073bda61f200e6"
+    },
+    {
+      "file": "src/components/SplashScreen.tsx",
+      "originalSha256": "affa70dcadaed0648a9abb97b2ae31bbbd9060a4bcc4b18483fc416e48a251cc",
+      "resultSha256": "7246bf3d4f56d0c1b72950999a1b9524315771d1f1daad5efaf07fa40fcb3395"
+    },
+    {
+      "file": "src/components/TimeTravelPreview.tsx",
+      "originalSha256": "b216ccab255505ffe1aedf1fdb17f5edf09f8c536f3097d5f3c536f68b74d721",
+      "resultSha256": "55990a11fe0f8ed55641fd21e806b2cbe7c9a7fc559d3e0dd0e2ee08d903f0ed"
+    },
+    {
+      "file": "src/i18n/SettingsLocale.tsx",
+      "originalSha256": "627af46e19511c58ccd344a88aab7e9d0f908fb3cbb338240c7a9bc6c59c6fc3",
+      "resultSha256": "fa30956b757c1b1503dc5d3de8c3dd3bebfdeb8fd017738a823a5e87359fb2f9"
+    },
+    {
+      "file": "src/i18n/WidgetLocale.tsx",
+      "originalSha256": "6a4e9b5a9b63e3180e26043eff434ea0e269e635aa61d0ece0e0c6436d666f37",
+      "resultSha256": "7fe3ad01b87fdb0d4b87d4d73633637275b536c7e0cc94377f54d561687e9638"
+    },
+    {
+      "file": "src/i18n/core.ts",
+      "originalSha256": "208794a8d579af0de4787617b346f3234b434752f59c3a728b317c9bbfba83b9",
+      "resultSha256": "0d532da3058caf5882e7acf457c17ee5c2cc252ecf5b855fe872cbbd2ba22a44"
+    },
+    {
+      "file": "src/i18n/enterprisePopup.ts",
+      "originalSha256": "9bad13aa1b1129ea95653ba899cfe2ee582888db1dca4c8c7d24f243bc067274",
+      "resultSha256": "bef4eeb95ca2d86bc837495fff12c27cd4d6984385f9d3f572f5b37128c6cd61"
+    },
+    {
+      "file": "src/i18n/startupMessages.ts",
+      "originalSha256": "62c75c7e7855d4263604c575cee73b596eb5622400292723594bcf807806e141",
+      "resultSha256": "27ea0737a37677a6a2f54d6e703cdce1873a70ae6b29ef82b1b7187f62f70820"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "9b0a2eeb851ab04804e56b0d63bcb44526c58abc60a1b2dd6587004ae0b9985d",
+      "resultSha256": "f674f49df514228df18e0050eaedff895c43e3d6fa24c994e6a1fb7f2ba940e9"
+    },
+    {
+      "file": "src/setting/setting.tsx",
+      "originalSha256": "225778e91d32ed10cc3e073867e34f2bbc897edb02fd205efcc9462230ca8ab4",
+      "resultSha256": "4214f35c07ccbeec431ba82ecc2d82cbda7aa573b9cbb89d084560a3b8c42e3d"
+    },
+    {
+      "file": "src/features/field-notes/NoteDraftForm.tsx",
+      "originalSha256": "139a96a5f2a2a9aeb7f3e8f812a87426c49862c3dc7fae81984d595b0da075df",
+      "resultSha256": "a4be050855b2000d0a3633437a2df5d4db69b3aac12c730ff7a226bc3745e377"
+    },
+    {
+      "file": "src/features/field-notes/NoteEditor.tsx",
+      "originalSha256": "c8d21f14bf1b8a7cdd2c17af1be34f800d90e580c29eab75aa228f0567ae9c23",
+      "resultSha256": "f03cdb41baa17081572ce4870b11720deb9d18d21aecc0b70f13eca869e2394d"
+    },
+    {
+      "file": "src/features/imagery/hoverCard.ts",
+      "originalSha256": "d29822728cf15b4b8d1998c43870eb47cc1df8fc979f08abc8bb7a5b5e38abea",
+      "resultSha256": "32031fbc119c003b1b868d6a79a648979c010275560ecdc2fe9f71bb492bab97"
+    },
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "79a33560f12aead4678f414474db68051f953931d150e43e24f600954b26be7c",
+      "resultSha256": "1c60c5c0f61bdbe8d9bd14bb8845189802821fe1739bd6b520494603e62fc036"
+    },
+    {
+      "file": "src/features/places/nearbyPlaceImagery.ts",
+      "originalSha256": "c1299d12d353ac9b0a49975fbe3e96cfdef511daebeca54ae50ab874e0a3d701",
+      "resultSha256": "f8036bea6808b3585b3f78eaeb0afa3e7cdb78bb0884502958c564ff59ea7da2"
+    },
+    {
+      "file": "tools/check-localization-catalogs.cjs",
+      "originalSha256": "99c563714bd9947a030d0264ddf5b42e3f3db5b9d86fd8c742afcc7c5dfd2abd",
+      "resultSha256": "c27f04a704d3957b679596f5d02b474837a666700734aeea4627036e0e716d9e"
+    },
+    {
+      "file": "tools/translation-table.cjs",
+      "originalSha256": "e159b037750aa1bb7054a8c5ee68b8f7e11de8de065ad2e86bde9b930b95b7d7",
+      "resultSha256": "46366d472cc4cfb5e4dee90de2a1925d12fcfa82fa7903eb7fdc2e58fcefef91"
+    },
+    {
+      "file": "tests/localizationCatalog.test.cjs",
+      "originalSha256": "cf8425fc72a0c97a6dc9b8bbacfcc1033dea13a05da57a3ecb6a94e22699c0f0",
+      "resultSha256": "927bf73370da1b1b03408eacbc1f944fce1aafa666d5ee73814b68071e2faf40"
+    },
+    {
+      "file": "tests/localizationQuality.browser.cjs",
+      "originalSha256": "77b8823242574b90a486ae4ca1fb488e6654b7200e7f0875e268f1b3276efa14",
+      "resultSha256": "6d2c8a89f94a44229499d9b545f5fde3074a2b2a01659ee32ed2df2e4525c0f3"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "7e0e2e7c2c4e68c05edd35c27c4902e20eb6adfce6c6bc67c74ade5ff7f39349",
+      "resultSha256": "1d816a2c7e4828a01c22f7018e4840d8fdf66bfe72b42f99c245f60ef2e438d5"
+    },
+    {
+      "file": "tests/translationTable.test.cjs",
+      "originalSha256": "e875c1ea7e6c968a9d0236455e6e0c5a43b2b60eb116da51df7abefe1e790aa3",
+      "resultSha256": "d0b67cb4576868d9bdce4cc2f161f247c67031884565b70cd6dbceea2a226877"
+    },
+    {
+      "file": "tests/regionalLocales.test.cjs",
+      "originalSha256": "b0dbbd4cf89b1549a268d6dc250841e572a6491e901f3c3739a21363940e05ac",
+      "resultSha256": "b855915b5f00d6ad8e5e4e078997ea736983fe134be2a09e987bac5ca1ce3fbe"
+    },
+    {
+      "file": "docs/localization/CONTRIBUTING.md",
+      "originalSha256": "978dbc03c876029504f3073b6425d991e3f34160280806ce6689ef667a4937fc",
+      "resultSha256": "ee62acce0004a16839bbf61c2671e380b91bf98a3bd531d8645468b2c6f9198b"
+    },
+    {
+      "file": "docs/localization/translations.csv",
+      "originalSha256": "d211e4b96fbe68e92a4726eb7c005dea8693866f5bd161561223815892a624db",
+      "resultSha256": "32cd7c4f9593df1418e2a9f83a5ce79513235c682018d49b81cb77bf5df5fd0a"
+    },
+    {
+      "file": "src/i18n/locales/ar.ts",
+      "originalSha256": null,
+      "resultSha256": "42b02ad735cb1dd1d52f51d2c705a45e5c718597cc7549ab639b36843d6808c3"
+    },
+    {
+      "file": "src/i18n/locales/settings-ar.ts",
+      "originalSha256": null,
+      "resultSha256": "7846ce0494e89f5090c26361fe2530ef91f83f55c8d3d0ec720d35a7a4b65515"
+    },
+    {
+      "file": "src/i18n/arabicUiCss.ts",
+      "originalSha256": null,
+      "resultSha256": "00fde08094ffc6f91a4982d2d39c02d868d27b1c655fca325d2c5eeda7afdd70"
+    },
+    {
+      "file": "tests/arabicLocale.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "584f8ab58090d739d59ad609b736c65b663dba1bb1a564e423de32dc243b4bad"
+    },
+    {
+      "file": "docs/localization/ARABIC-v6.118.md",
+      "originalSha256": null,
+      "resultSha256": "1e1450854b9a53450f54cf5b511e1142b2ce50e9303f42cbc7a5bdc047c49dae"
+    }
+  ]
+}

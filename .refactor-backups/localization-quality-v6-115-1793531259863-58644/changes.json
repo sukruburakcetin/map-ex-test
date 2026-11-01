@@ -1,0 +1,47 @@
+{
+  "installer": "localization-quality-v6-115",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/i18n/WidgetLocale.tsx",
+      "originalSha256": "52b0b822eea63b0513c19e811203395395d8c95f4b9a9826673bc74f485f3758",
+      "resultSha256": "d8132a4749802c19c78a8bbbf237bdc48f18bbeb2b3e77b724ca166c4002ec87"
+    },
+    {
+      "file": "src/i18n/SettingsLocale.tsx",
+      "originalSha256": "08f0ab94a6c8d9bf6cbf0b350b82ec0f01739d4b09f9b447344c48ac0905454d",
+      "resultSha256": "4b8bb415950683f20356b10ce5d537ec4237253b5259c79539b4ff23e356f814"
+    },
+    {
+      "file": "tests/localizationCatalog.test.cjs",
+      "originalSha256": "60a113263e2a245a852d35794cb7abf7cbea02c4a54685aab1fe48ee9d0aa465",
+      "resultSha256": "24f686c805ab022cc3af9681a7021f27e6ccf6dbd3bb7bae1bb60f7af18bc103"
+    },
+    {
+      "file": "src/i18n/locales/zh-cn.ts",
+      "originalSha256": "f43f66c7a40b56e97faa04f07716afdb839f4c248f18dc482e5ff1426893aa6c",
+      "resultSha256": "bf3ac229f426290490aa80c41dcee86fe3ae554a475984b221810272ff52c4ee"
+    },
+    {
+      "file": "src/i18n/locales/zh-tw.ts",
+      "originalSha256": "e9726efd289929877b5372c3db9723d11a441692c5c7a0c10abd0e0895561873",
+      "resultSha256": "8a8bf0959fd32dce9d96ac2e088ca1694f2111e41ea9ec93bb1cf8e283bac03e"
+    },
+    {
+      "file": "tools/check-localization-catalogs.cjs",
+      "originalSha256": null,
+      "resultSha256": "6d24ed0831a9aacfaf197d1151a3a04ecc3a91862ca3bfaebf24661c1d6c3a32"
+    },
+    {
+      "file": "tests/localizationQuality.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "809b835ae5306a6686b8301a31910ad876c51561cead364b64125192a47dd932"
+    },
+    {
+      "file": "docs/localization/QUALITY-v6.115.md",
+      "originalSha256": null,
+      "resultSha256": "817365fbb26dc9a75c3f0609384c794a7d996b8d46cd03c9259c0c9438e4ec1b"
+    }
+  ]
+}

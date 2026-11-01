@@ -1,0 +1,52 @@
+{
+  "installer": "community-translations-v6-116",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/i18n/locales/tr.ts",
+      "originalSha256": "943785b61d057a42452c381ad2682c95402eca06a4100df6f517b0e779f2f7ca",
+      "resultSha256": "439ee138613c879edebf442ed16bf314fa0392bcc3be24f0fad10d7cf06c5fc7"
+    },
+    {
+      "file": "src/i18n/locales/runtime-tr.ts",
+      "originalSha256": "39afa15329615ea9fc68bf028a8abd27e9db60ac643d238a88268cdf478bdb31",
+      "resultSha256": null
+    },
+    {
+      "file": "src/i18n/locales/completion-tr.ts",
+      "originalSha256": "c12d640550f1276db32c0b623552ef13cbbafa0c1cfe81e25578dfa1d8ddf74b",
+      "resultSha256": null
+    },
+    {
+      "file": "README.md",
+      "originalSha256": "c906bfe8d8f0823e92d2781dec273c6541cc6a9525f4d83370e8a00060303d46",
+      "resultSha256": "43937628d6f12ae6e121b4ad329fc657a9fce0750b70d9c99e65a03ec19f6bc4"
+    },
+    {
+      "file": "tools/translation-table.cjs",
+      "originalSha256": null,
+      "resultSha256": "d2e4e780dcb239ad21729db711f73553be3a3f6556c7cf54d7d41df2f2f805e1"
+    },
+    {
+      "file": "tests/translationTable.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "f064fb2d59832e1d74850a3ca7231656c9e16701b3693f9133d354fa40314375"
+    },
+    {
+      "file": "docs/localization/translations.csv",
+      "originalSha256": null,
+      "resultSha256": "c135524bc644b948eae5409e5f7bba57335f4ffc2b9542376753ab038b495dac"
+    },
+    {
+      "file": "docs/localization/CONTRIBUTING.md",
+      "originalSha256": null,
+      "resultSha256": "f46118e534fb5e7b9772eae2498e19aecdbed83da4add04b4e066d4a5cf7d79d"
+    },
+    {
+      "file": "docs/localization/COMMUNITY-v6.116.md",
+      "originalSha256": null,
+      "resultSha256": "8675cf9a77671e6540c5c6492890d58b972ca447859162a620d8cc3eb7c0c408"
+    }
+  ]
+}

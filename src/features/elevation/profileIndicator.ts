@@ -1,3 +1,4 @@
+import { Presentation, englishPresentation } from '../../i18n/PresentationText';
 import { axisPixel, sampledElevation, sampledPath } from './profileTracking';
 import { useFlowProfile } from './ProfileFlowDock';
 import type { FrameDistanceIndex, FramePosition, ProfileSample } from './profileTracking';
@@ -109,7 +110,7 @@ export class ProfileFrameChart {
   private readonly right = 12;
   private root: HTMLElement | null = null;
   private readonly cameraLines: ProfileLine[];
-  constructor(private readonly widget: ElevationIndicatorWidget, private readonly index: FrameDistanceIndex, private readonly layout?: ProfileMobileLayout) {
+  constructor(private readonly widget: ElevationIndicatorWidget, private readonly index: FrameDistanceIndex, private readonly layout?: ProfileMobileLayout, private readonly l10n: Presentation = englishPresentation) {
     this.end = index.total;
     this.cameraLines = ([
       ['computedAltitude', 'Computed camera altitude', '#f39c12'],
@@ -159,7 +160,7 @@ export class ProfileFrameChart {
     const summary = doc.createElement('button'); this.summaryButton = summary;
     summary.type = 'button'; summary.className = 'mly-profile-summary';
     summary.style.fontSize = '11px'; summary.style.fontWeight = '600';
-    summary.setAttribute('aria-label', 'Expand or collapse elevation profile');
+    this.l10n.bindAttribute(summary,'aria-label',()=>this.l10n.text("Expand or collapse elevation profile"));
     const summaryText = doc.createElement('span'); this.mobileSummary = summaryText;
     summaryText.className = 'mly-profile-summary-label';
     const summaryValues = doc.createElement('span'); this.mobileReadout = summaryValues;
@@ -181,7 +182,7 @@ export class ProfileFrameChart {
     Object.assign(label.style, { fontSize: '11px', fontWeight: '600', minHeight: '30px', lineHeight: '1.35', marginBottom: '4px', overflowWrap: 'anywhere', color: 'inherit' });
     const loading = doc.createElement('div'); this.loadingLabel = loading; loading.className = 'mly-profile-loading';
     Object.assign(loading.style, { fontSize: '10px', lineHeight: '1.3', minHeight: '14px', opacity: '0.8' });
-    loading.textContent = this.widget.viewModel.progress < 1 ? 'Sampling elevations…' : '';
+    this.l10n.bind(loading,"textContent",()=>this.widget.viewModel.progress < 1 ? this.l10n.text("Sampling elevations…") : '');
     const controls = doc.createElement('div'); controls.className = 'mly-profile-desktop-controls';
     Object.assign(controls.style, { display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'flex-end', marginBottom: '4px' });
     for (const [text, title, action] of [
@@ -198,7 +199,7 @@ export class ProfileFrameChart {
     }
     const svg = doc.createElementNS(svgNS, 'svg'); this.svg = svg;
     svg.setAttribute('width', '100%'); svg.setAttribute('height', String(this.height));
-    svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', 'Sequence elevation in metres. Dashed blue line marks the confirmed current image.');
+    svg.setAttribute('role', 'img'); this.l10n.bindAttribute(svg,'aria-label',()=>this.l10n.text("Sequence elevation in metres. Dashed blue line marks the confirmed current image."));
     svg.setAttribute('preserveAspectRatio', 'none');
     Object.assign(svg.style, { display: 'block', width: '100%', height: `${this.height}px`, minHeight: `${this.height}px`, flex: `0 0 ${this.height}px`, overflow: 'hidden' });
     svg.addEventListener('pointermove', this.inspect);
@@ -208,7 +209,7 @@ export class ProfileFrameChart {
     svg.addEventListener('pointerleave', () => { if (!this.mobile) this.clearInspection(); });
     const inspect = doc.createElement('div'); this.inspectLabel = inspect; inspect.className = 'mly-profile-inspection';
     Object.assign(inspect.style, { fontSize: '10px', lineHeight: '1.35', minHeight: '26px', paddingTop: '4px', overflowWrap: 'anywhere', opacity: '0.85' });
-    inspect.textContent = 'Move over the chart to inspect sampled elevations.';
+    this.l10n.bind(inspect,"textContent",()=>this.l10n.text("Move over the chart to inspect sampled elevations."));
     const plot = doc.createElement('div'); plot.className = 'mly-profile-plot'; plot.append(svg, inspect);
     body.append(label, loading, controls, plot);
     const cameraLegend = doc.createElement('div');
@@ -216,28 +217,28 @@ export class ProfileFrameChart {
     for (const line of this.cameraLines) {
       const row = doc.createElement('label'); row.className = 'esri-elevation-profile-legend-item';
       Object.assign(row.style, { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', marginBottom: '3px', cursor: 'pointer', borderLeft: `3px solid ${line.color.toCss()}` });
-      row.title = 'Mapillary camera-height estimate. Missing values are gaps; this is not a surveyed bridge-deck elevation.';
+      this.l10n.bind(row,"title",()=>this.l10n.text("Mapillary camera-height estimate. Missing values are gaps; this is not a surveyed bridge-deck elevation."));
       const check = doc.createElement('input'); check.type = 'checkbox'; check.checked = line.visible;
-      check.setAttribute('aria-label', line.title || 'Camera altitude');
+      this.l10n.bindAttribute(check,'aria-label',()=>line.title || this.l10n.text("Camera altitude"));
       check.addEventListener('change', () => { line.visible = check.checked; this.refresh(); });
-      const name = doc.createElement('span'); name.textContent = line.title || 'Camera altitude';
+      const name = doc.createElement('span'); this.l10n.bind(name,"textContent",()=>line.title || this.l10n.text("Camera altitude"));
       Object.assign(name.style, { fontSize: '12px', lineHeight: '1.3' });
       row.append(check, name); cameraLegend.appendChild(row);
     }
     if (!this.cameraLines.length) {
-      const unavailable = doc.createElement('div'); unavailable.textContent = 'Camera altitude unavailable in this sequence.';
+      const unavailable = doc.createElement('div'); this.l10n.bind(unavailable,"textContent",()=>this.l10n.text("Camera altitude unavailable in this sequence."));
       Object.assign(unavailable.style, { fontSize: '10px', lineHeight: '1.35', padding: '4px 0' }); cameraLegend.appendChild(unavailable);
     }
     body.appendChild(cameraLegend);
-    const layers = doc.createElement('div'); layers.className = 'mly-profile-mobile-layers'; layers.hidden = true; layers.id = `${body.id}-layers`; layers.setAttribute('role', 'region'); layers.setAttribute('aria-label', 'Profile layers');
+    const layers = doc.createElement('div'); layers.className = 'mly-profile-mobile-layers'; layers.hidden = true; layers.id = `${body.id}-layers`; layers.setAttribute('role', 'region'); this.l10n.bindAttribute(layers,'aria-label',()=>this.l10n.text("Profile layers"));
     layers.appendChild(altitudes);
     this.layerChecks.clear();
     for (const line of [...this.widget.profiles.toArray(), ...this.cameraLines]) {
       const row = doc.createElement('label'); row.style.borderLeft = `3px solid ${line.color.toCss()}`;
       const check = doc.createElement('input'); check.type = 'checkbox'; check.checked = line.visible;
-      check.setAttribute('aria-label', line.title || 'Elevation layer');
+      this.l10n.bindAttribute(check,'aria-label',()=>line.title || this.l10n.text("Elevation layer"));
       check.addEventListener('change', () => { line.visible = check.checked; this.refresh(); });
-      const name = doc.createElement('span'); name.textContent = line.title || 'Elevation layer';
+      const name = doc.createElement('span'); this.l10n.bind(name,"textContent",()=>line.title || this.l10n.text("Elevation layer"));
       row.append(check, name); layers.appendChild(row); this.layerChecks.set(line, check);
     }
     const toolbar = doc.createElement('div'); toolbar.className = 'mly-profile-mobile-toolbar';
@@ -250,7 +251,7 @@ export class ProfileFrameChart {
       button.addEventListener('click', action); toolbar.appendChild(button);
     }
     const layerButton = doc.createElement('button'); layerButton.type = 'button';
-    layerButton.title = 'Layers'; layerButton.setAttribute('aria-label', 'Layers');
+    this.l10n.bind(layerButton,"title",()=>this.l10n.text("Layers")); this.l10n.bindAttribute(layerButton,'aria-label',()=>this.l10n.text("Layers"));
     const layerIcon = doc.createElementNS(svgNS, 'svg'); layerIcon.setAttribute('viewBox', '0 0 24 24');
     layerIcon.setAttribute('aria-hidden', 'true'); layerIcon.setAttribute('focusable', 'false');
     const layerPath = doc.createElementNS(svgNS, 'path');
@@ -309,7 +310,7 @@ export class ProfileFrameChart {
     this.width = measured; this.svg.setAttribute('viewBox', `0 0 ${this.width} ${this.height}`);
     const plotWidth = this.width - this.left - this.right, plotHeight = this.height - this.top - this.bottom;
     const lines = this.lines(); let min = Infinity, max = -Infinity;
-    if (this.loadingLabel) this.loadingLabel.textContent = this.widget.viewModel.progress < 1 ? 'Sampling elevations…' : '';
+    if (this.loadingLabel) this.l10n.bind(this.loadingLabel,"textContent",()=>this.widget.viewModel.progress < 1 ? this.l10n.text("Sampling elevations…") : '');
     for (const line of lines) for (const sample of line.samples || []) {
       if (typeof sample.elevation === 'number' && Number.isFinite(sample.elevation)) { min = Math.min(min, sample.elevation); max = Math.max(max, sample.elevation); }
     }
@@ -345,12 +346,12 @@ export class ProfileFrameChart {
   }
   private updateFrame(): void {
     const frame = this.frame;
-    if (this.mobileSummary) this.mobileSummary.textContent = frame
-      ? `${this.mobileExpanded ? 'Frame ' + frame.ordinal.toLocaleString() : 'Profile · Frame ' + frame.ordinal.toLocaleString() + '/' + this.index.images.length.toLocaleString()} · ${frame.distance >= 1000 ? (frame.distance / 1000).toFixed(2) + ' km' : Math.round(frame.distance) + ' m'}`
-      : 'Profile · Waiting for current image';
+    if (this.mobileSummary) this.l10n.bind(this.mobileSummary,"textContent",()=>frame
+      ? `${this.mobileExpanded ? 'Frame ' + this.l10n.number(frame.ordinal) : 'Profile · Frame ' + this.l10n.number(frame.ordinal) + '/' + this.l10n.number(this.index.images.length)} · ${frame.distance >= 1000 ? (frame.distance / 1000).toFixed(2) + ' km' : Math.round(frame.distance) + ' m'}`
+      : this.l10n.text("Profile · Waiting for current image"));
     if (this.mobileReadout && this.mobile && !this.mobileExpanded) {
       if (!frame) {
-        this.mobileReadout.textContent = 'Waiting for current image';
+        this.l10n.bind(this.mobileReadout,"textContent",()=>this.l10n.text("Waiting for current image"));
         this.mobileReadout.removeAttribute('title');
       } else {
         const terrain = this.widget.profiles.toArray().find(line => line.title === 'Terrain Surface');
@@ -359,9 +360,9 @@ export class ProfileFrameChart {
         const camera = frame.computedAltitude ?? frame.reportedAltitude;
         const cameraSource = frame.computedAltitude !== undefined ? 'Calc. camera' : 'Reported camera';
         this.mobileReadout.textContent = `${terrainText} · ${camera === undefined ? 'Camera: no data' : cameraSource + ' ' + camera.toFixed(1) + ' m'}`;
-        this.mobileReadout.title = `Current image ${frame.id}. Terrain is interpolated at this frame's route distance. ` +
-          `Computed camera altitude: ${frame.computedAltitude === undefined ? 'no data' : frame.computedAltitude.toFixed(1) + ' m'}. ` +
-          `Reported camera altitude: ${frame.reportedAltitude === undefined ? 'no data' : frame.reportedAltitude.toFixed(1) + ' m'}.`;
+        this.l10n.bind(this.mobileReadout,"title",()=>this.l10n.text("Current image {value0}. Terrain is interpolated at this frame's route distance. ",{value0:String(frame.id)}) +
+          this.l10n.text("Computed camera altitude: {value0}. ",{value0:String(frame.computedAltitude === undefined ? 'no data' : frame.computedAltitude.toFixed(1) + ' m')}) +
+          this.l10n.text("Reported camera altitude: {value0}.",{value0:String(frame.reportedAltitude === undefined ? 'no data' : frame.reportedAltitude.toFixed(1) + ' m')}));
       }
     }
     if (this.mobileAltitudes && this.mobile && this.mobileExpanded) {
@@ -375,13 +376,13 @@ export class ProfileFrameChart {
         chip.textContent = `${name}: ${value.toFixed(1)} m`; chip.title = fullName; chips.push(chip);
       }
       this.mobileAltitudes.replaceChildren(...chips);
-      if (!chips.length) this.mobileAltitudes.textContent = 'Camera altitude unavailable';
+      if (!chips.length) this.l10n.bind(this.mobileAltitudes,"textContent",()=>this.l10n.text("Camera altitude unavailable"));
     }
     if (this.frameLabel) {
-      this.frameLabel.textContent = frame
-        ? `Current image · Frame ${frame.ordinal.toLocaleString()}/${this.index.images.length.toLocaleString()} · ${Math.round(frame.distance).toLocaleString()} m${frame.computedAltitude !== undefined ? ` · Computed camera altitude ${frame.computedAltitude.toFixed(1)} m` : ''}${frame.reportedAltitude !== undefined ? ` · Reported camera altitude ${frame.reportedAltitude.toFixed(1)} m` : ''}${frame.computedAltitude === undefined && frame.reportedAltitude === undefined ? ' · Camera altitude unavailable' : ''}`
-        : 'Waiting for a confirmed image in this profile…';
-      this.frameLabel.title = frame ? `Current Mapillary image ID: ${frame.id}` : '';
+      this.l10n.bind(this.frameLabel,"textContent",()=>frame
+        ? this.l10n.text("Current image · Frame {value0}/{value1} · {value2} m{value3}{value4}{value5}",{value0:String(this.l10n.number(frame.ordinal)),value1:String(this.l10n.number(this.index.images.length)),value2:String(this.l10n.number(Math.round(frame.distance))),value3:String(frame.computedAltitude !== undefined ? ` · Computed camera altitude ${frame.computedAltitude.toFixed(1)} m` : ''),value4:String(frame.reportedAltitude !== undefined ? ` · Reported camera altitude ${frame.reportedAltitude.toFixed(1)} m` : ''),value5:String(frame.computedAltitude === undefined && frame.reportedAltitude === undefined ? ' · Camera altitude unavailable' : '')})
+        : this.l10n.text("Waiting for a confirmed image in this profile…"));
+      this.l10n.bind(this.frameLabel,"title",()=>frame ? this.l10n.text("Current Mapillary image ID: {value0}",{value0:String(frame.id)}) : '');
     }
     if (this.host) { if (frame) this.host.dataset.imageId = frame.id; else delete this.host.dataset.imageId; }
     if (!this.frameLine) return;
@@ -397,14 +398,14 @@ export class ProfileFrameChart {
     if (x < this.left || x > this.width - this.right) { this.clearInspection(); return; }
     const distance = this.start + (x - this.left) / (this.width - this.left - this.right) * (this.end - this.start);
     this.inspectionLine.setAttribute('x1', String(x)); this.inspectionLine.setAttribute('x2', String(x)); this.inspectionLine.setAttribute('visibility', 'visible');
-    this.inspectLabel.textContent = `Inspecting profile · ${Math.round(distance).toLocaleString()} m · ` + this.lines().map(line => {
+    this.l10n.bind(this.inspectLabel,"textContent",()=>this.l10n.text("Inspecting profile · {value0} m · ",{value0:String(this.l10n.number(Math.round(distance)))}) + this.lines().map(line => {
       const elevation = sampledElevation(line.samples || [], distance);
       return `${line.title || 'Elevation'}: ${elevation === null ? 'no data' : elevation.toFixed(1) + ' m'}`;
-    }).join(' · ');
+    }).join(' · '));
   };
   private clearInspection = (): void => {
     this.inspectionLine?.setAttribute('visibility', 'hidden');
-    if (this.inspectLabel) this.inspectLabel.textContent = this.mobile ? '' : 'Move over the chart to inspect sampled elevations.';
+    if (this.inspectLabel) this.l10n.bind(this.inspectLabel,"textContent",()=>this.mobile ? '' : this.l10n.text("Move over the chart to inspect sampled elevations."));
   };
   private zoom(factor: number): void {
     const span = Math.min(this.index.total, Math.max(Math.min(10, this.index.total), (this.end - this.start) * factor));
@@ -456,6 +457,7 @@ export class ProfileFrameChart {
     this.main = null;
   }
   dispose(): void {
+    this.l10n.release(this.host);
     this.disposed = true; this.observer?.disconnect(); this.resize?.disconnect(); this.mobileResize?.disconnect(); this.dockResize?.disconnect();
     this.root?.ownerDocument.defaultView?.removeEventListener('resize', this.updateResponsive);
     this.layerChecks.clear();

@@ -1,0 +1,57 @@
+{
+  "installer": "traditional-chinese-taiwan-v6-114",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/i18n/core.ts",
+      "originalSha256": "ed45b0a82d5f7973000cb975544878143c09e29e734c479656906212d27f3a45",
+      "resultSha256": "e06821c72832ddaf8159ada59bcf6ba9251f46d13cf187d8ad7c99f4ad2dcef1"
+    },
+    {
+      "file": "src/i18n/WidgetLocale.tsx",
+      "originalSha256": "a425b65838e3c2bcefe93968e79e1ce5e790f7c6c97cd7c15e3c38a22568b8f6",
+      "resultSha256": "52b0b822eea63b0513c19e811203395395d8c95f4b9a9826673bc74f485f3758"
+    },
+    {
+      "file": "src/i18n/SettingsLocale.tsx",
+      "originalSha256": "7bce48412fa51e010317fb2e8e00278b1452b57261f686cd6f4edf2aca801143",
+      "resultSha256": "08f0ab94a6c8d9bf6cbf0b350b82ec0f01739d4b09f9b447344c48ac0905454d"
+    },
+    {
+      "file": "src/i18n/startupMessages.ts",
+      "originalSha256": "9fea815d6d77c48cd4a5e1ed3f332cd886de34b96a711357c93f47ef0a35dcd2",
+      "resultSha256": "218f919ff3b9936f272d624e0659b7186975599b544462fe47fb65e051d270c0"
+    },
+    {
+      "file": "src/config.ts",
+      "originalSha256": "8dccd0c67a321b059e98d7b0cf5787c309b0599ebd7db0d2cadf47dcc6580404",
+      "resultSha256": "54655b88f8a5da41bb20b0c7d535b2a5366c5216ef739f84f09a5bcca2d5d646"
+    },
+    {
+      "file": "src/setting/setting.tsx",
+      "originalSha256": "7eca6bf05c02575c7da449c6f86b273847560a46ad0e30623ee068295c605383",
+      "resultSha256": "7f66f252ffbd00a0570d78dc79ab73aedd362a9f1441989121af127520ba7106"
+    },
+    {
+      "file": "tests/localizationCatalog.test.cjs",
+      "originalSha256": "6bc5f87b78371a3e4295834b472c19f86f3cdf8a4ce6aa795aabef018cd44ea9",
+      "resultSha256": "60a113263e2a245a852d35794cb7abf7cbea02c4a54685aab1fe48ee9d0aa465"
+    },
+    {
+      "file": "src/i18n/locales/zh-tw.ts",
+      "originalSha256": null,
+      "resultSha256": "e9726efd289929877b5372c3db9723d11a441692c5c7a0c10abd0e0895561873"
+    },
+    {
+      "file": "src/i18n/locales/settings-zh-tw.ts",
+      "originalSha256": null,
+      "resultSha256": "ee97c5a33352d495d227704932ea745ea2c90369ffa46df81b39606495457699"
+    },
+    {
+      "file": "docs/localization/TRADITIONAL-CHINESE-TAIWAN-v6.114.md",
+      "originalSha256": null,
+      "resultSha256": "25f6575fbf69c72677a5b0a566485bf19c81c91976513f337589717e2ee07315"
+    }
+  ]
+}

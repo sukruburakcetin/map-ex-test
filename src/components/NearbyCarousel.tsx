@@ -1,3 +1,4 @@
+import { useWidgetLocale } from '../i18n/WidgetLocale';
 // NearbyCarousel.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import type { NearbyImage } from '../components/types';
@@ -13,6 +14,8 @@ interface Props {
 export const NearbyCarousel: React.FC<Props> = ({
   images, loading, currentImageId, onSelectImage, onHoverImage
 }) => {
+ const { t, formatLocale:locale } = useWidgetLocale();
+
   const [open, setOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const pickedFromCarouselRef = useRef(false);
@@ -36,7 +39,7 @@ export const NearbyCarousel: React.FC<Props> = ({
       {/* Badge button */}
       <button
         onClick={() => setOpen(o => !o)}
-        title="Captures nearby"
+        title={t('uiCapturesNearby')}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -67,7 +70,7 @@ export const NearbyCarousel: React.FC<Props> = ({
           images.length
         )}
 
-        <span style={{ fontWeight: 400, opacity: 0.8 }}>nearby</span>
+        <span style={{ fontWeight: 400, opacity: 0.8 }}> {t('uiNearby2')} </span>
         <svg
           width="10" height="10" viewBox="0 0 10 10" fill="currentColor"
           style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
@@ -97,8 +100,7 @@ export const NearbyCarousel: React.FC<Props> = ({
             borderBottom: '1px solid rgba(255,255,255,0.08)',
             marginBottom: 6,
           }}>
-            {images.length} captures within 50 m
-          </div>
+            {images.length}  {t('uiCapturesWithin50M')} </div>
           <div
             ref={scrollRef}
             style={{
@@ -139,7 +141,8 @@ const NearbyThumb: React.FC<{
   onSelect: () => void;
   onHover?: (img: NearbyImage | null) => void;
 }> = ({ img, isCurrent, onSelect, onHover }) => {
-  const date = new Date(img.captured_at).toLocaleDateString(undefined, {
+ const {formatLocale:locale}=useWidgetLocale();
+  const date = new Date(img.captured_at).toLocaleDateString(locale, {
     year: 'numeric', month: 'short',
   });
 

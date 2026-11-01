@@ -1,4 +1,6 @@
 /** @jsx jsx */
+import { OwnedMessage } from '../../i18n/WidgetLocale';
+import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 import type { InfoBoxProps } from '../../components/types';
 import { cloudCorridorButtonStyle, cloudCorridorDividerStyle, cloudCorridorPanelStyle, cloudCorridorHeadingStyle, cloudCorridorAxisStyle, cloudCorridorStepRowStyle, cloudCorridorLengthValueStyle, cloudCorridorLengthIncreaseStyle, cloudCorridorSliderTrackStyle, cloudCorridorLengthMarkerStyle, cloudCorridorSliderStyle, cloudCorridorScaleStyle, cloudCorridorScaleMaximumStyle, cloudCorridorWidthDecreaseStyle, cloudCorridorWidthValueStyle, cloudCorridorWidthIncreaseStyle, cloudCorridorWidthMarkerStyle } from '../../styles/pointCloudControls';
@@ -14,6 +16,8 @@ export type PointCloudCorridorControlsProps = Pick<InfoBoxProps, 'pointCloudLeng
  * InfoBox owns draft lifetime and the runtime owns corridor filtering. Zero means FULL.
  */
 export const PointCloudCorridorControls: React.FC<PointCloudCorridorControlsProps> = props => {
+ const { t, locale } = useWidgetLocale();
+
 const { pointCloudLength, pointCloudMaxLength, pointCloudActualLength, onLengthChange, pointCloudWidth, pointCloudMaxWidth, pointCloudActualWidth, onWidthChange } =
                 props;
 
@@ -69,11 +73,11 @@ const { pointCloudLength, pointCloudMaxLength, pointCloudActualLength, onLengthC
                 >
                   {/* LENGTH sub-section */}
                   <div style={cloudCorridorHeadingStyle}>
-                    LENGTH <span style={cloudCorridorAxisStyle}>N↔S</span>
+                     {t('uiLength')} <span style={cloudCorridorAxisStyle}> {t('uiNS')} </span>
                   </div>
                   <div style={cloudCorridorStepRowStyle}>
                     <button
-                      title="Decrease length by 5m"
+                      title={t('uiDecreaseLengthBy5m')}
                       onClick={handleLengthDec}
                       style={btnBase}
                       onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
@@ -84,14 +88,14 @@ const { pointCloudLength, pointCloudMaxLength, pointCloudActualLength, onLengthC
                     <div style={cloudCorridorLengthValueStyle(isLengthFull)}>
                       {props.sliderDragValue !== null
                         ? props.sliderDragValue >= lengthSliderMax
-                          ? `FULL (~${pointCloudActualLength}m)`
+                          ? <OwnedMessage source={"FULL (~{value0}m)"} values={{value0:String(pointCloudActualLength)}}/>
                           : `${props.sliderDragValue}m`
                         : isLengthFull
-                          ? `FULL (~${pointCloudActualLength}m)`
+                          ? <OwnedMessage source={"FULL (~{value0}m)"} values={{value0:String(pointCloudActualLength)}}/>
                           : `${pointCloudLength}m`}
                     </div>
                     <button
-                      title={isLengthFull ? "Already at full length" : "Increase length by 5m"}
+                      title={isLengthFull ? t('uiAlreadyAtFullLength') : t('uiIncreaseLengthBy5m')}
                       onClick={handleLengthInc}
                       style={cloudCorridorLengthIncreaseStyle(isLengthFull, btnBase)}
                       onMouseEnter={(e) => {
@@ -128,9 +132,9 @@ const { pointCloudLength, pointCloudMaxLength, pointCloudActualLength, onLengthC
                     />
                   </div>
                   <div style={cloudCorridorScaleStyle}>
-                    <span>10m</span>
-                    <span style={cloudCorridorScaleMaximumStyle}>{pointCloudMaxLength}m</span>
-                    <span>FULL</span>
+                    <span> {t('ui10m2')} </span>
+                    <span style={cloudCorridorScaleMaximumStyle}>{pointCloudMaxLength} {t('uiM')} </span>
+                    <span> {t('uiFull')} </span>
                   </div>
 
                   {/* WIDTH sub-section */}
@@ -138,11 +142,11 @@ const { pointCloudLength, pointCloudMaxLength, pointCloudActualLength, onLengthC
                     <React.Fragment>
                       {divider}
                       <div style={cloudCorridorHeadingStyle}>
-                        WIDTH <span style={cloudCorridorAxisStyle}>E↔W</span>
+                         {t('uiWidth')} <span style={cloudCorridorAxisStyle}> {t('uiEW')} </span>
                       </div>
                       <div style={cloudCorridorStepRowStyle}>
                         <button
-                          title="Decrease width by 5m"
+                          title={t('uiDecreaseWidthBy5m')}
                           onClick={handleWidthDec}
                           style={cloudCorridorWidthDecreaseStyle(widthValue, minWidth, btnBase)}
                           onMouseEnter={(e) => {
@@ -155,14 +159,14 @@ const { pointCloudLength, pointCloudMaxLength, pointCloudActualLength, onLengthC
                         <div style={cloudCorridorWidthValueStyle(isWidthFull)}>
                           {props.sliderDragWidthValue !== null
                             ? props.sliderDragWidthValue >= widthSliderMax
-                              ? `FULL (~${pointCloudActualWidth}m)`
+                              ? <OwnedMessage source={"FULL (~{value0}m)"} values={{value0:String(pointCloudActualWidth)}}/>
                               : `${props.sliderDragWidthValue}m`
                             : isWidthFull
-                              ? `FULL (~${pointCloudActualWidth}m)`
+                              ? <OwnedMessage source={"FULL (~{value0}m)"} values={{value0:String(pointCloudActualWidth)}}/>
                               : `${widthValue}m`}
                         </div>
                         <button
-                          title={isWidthFull ? "Already at full width" : "Increase width by 5m"}
+                          title={isWidthFull ? t('uiAlreadyAtFullWidth') : t('uiIncreaseWidthBy5m')}
                           onClick={handleWidthInc}
                           style={cloudCorridorWidthIncreaseStyle(isWidthFull, btnBase)}
                           onMouseEnter={(e) => {
@@ -199,9 +203,9 @@ const { pointCloudLength, pointCloudMaxLength, pointCloudActualLength, onLengthC
                         />
                       </div>
                       <div style={cloudCorridorScaleStyle}>
-                        <span>{minWidth}m</span>
-                        <span style={cloudCorridorScaleMaximumStyle}>{maxWidth}m</span>
-                        <span>FULL</span>
+                        <span>{minWidth} {t('uiM')} </span>
+                        <span style={cloudCorridorScaleMaximumStyle}>{maxWidth} {t('uiM')} </span>
+                        <span> {t('uiFull')} </span>
                       </div>
                     </React.Fragment>
                   )}

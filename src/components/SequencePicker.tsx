@@ -1,5 +1,6 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
+import { useWidgetLocale } from '../i18n/WidgetLocale';
 import { React, jsx } from "jimu-core";
 import { glassStyles } from "../utils/styles";
 import { distanceMeters, pickSequenceColor } from "../utils/geoUtils";
@@ -29,6 +30,8 @@ const SequencePicker: React.FC<SequencePickerProps> = ({
     clearGreenPulse,
     accessToken,
 }) => {
+ const { t, formatLocale:locale } = useWidgetLocale();
+
     const SLOTS = 3;
     const total = sequences?.length ?? 0;
     const showArrows = total > SLOTS;
@@ -96,15 +99,15 @@ const SequencePicker: React.FC<SequencePickerProps> = ({
                 const colorArr = seq._color || pickSequenceColor(seqIndex);
                 const cssColor = `rgba(${colorArr[0]}, ${colorArr[1]}, ${colorArr[2]}, ${colorArr[3] ?? 1})`;
                 const date = seq.capturedAt
-                    ? new Date(seq.capturedAt).toLocaleDateString("en-US", { month: "short", year: "2-digit" })
-                    : "N/A";
+                    ? new Date(seq.capturedAt).toLocaleDateString(locale, { month: "short", year: "2-digit" })
+                    : t('uiNA');
                 const isActive = activeSequenceId === seq.sequenceId;
 
                 return (
                     <div
                         key={seq.sequenceId}
                         style={glassStyles.sequenceSlot(isActive)}
-                        title={`Sequence ${seqIndex + 1} (${date})`}
+                        title={t('uiSequenceTitle',{number:seqIndex+1,date})}
                         onClick={() => handleSelect(seq)}
                         onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.35)"}
                         onMouseLeave={e => e.currentTarget.style.background = isActive ? "rgba(255,255,255,0.25)" : "transparent"}

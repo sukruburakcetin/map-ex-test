@@ -1,0 +1,162 @@
+{
+  "installer": "regional-english-v6-117",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/config.ts",
+      "originalSha256": "54655b88f8a5da41bb20b0c7d535b2a5366c5216ef739f84f09a5bcca2d5d646",
+      "resultSha256": "3465b3c80f51a27b1ee47cec60dc4f957f0407ccd63c2c34910ff8c103bb787b"
+    },
+    {
+      "file": "src/components/GlassDatePicker.tsx",
+      "originalSha256": "d8ddce13a70610d02338e8c0cb7888dce0c0a8aeb8710c55175c8f355d3c495b",
+      "resultSha256": "b15d376e387f10698cea0ba6a35d4ac30d23006548364f9255814cf0df6caa2f"
+    },
+    {
+      "file": "src/components/NearbyCarousel.tsx",
+      "originalSha256": "1a8998e51fae338b5f4c8d8ee01f1df20354476041588ac4fe8ccb72f7e92a43",
+      "resultSha256": "6b78633f0793746b48ecd1b2a7f5c1fb4868eccba1104229e106bd50e3794ad1"
+    },
+    {
+      "file": "src/components/PlacesPanel.tsx",
+      "originalSha256": "0d47b87a44c16bdd567fb4e5bc41b55f80a601e596012b8c1f01f5aec20aee0e",
+      "resultSha256": "812a053cbbbc307f135b1304d78ffc94bb9ba0a093a04a8a9c6f6de37cd96e60"
+    },
+    {
+      "file": "src/components/SequencePicker.tsx",
+      "originalSha256": "7844bcea9a3aa3a29da1d6865563ef810f7918caeff4b14d8a6c952710eb7869",
+      "resultSha256": "e0cf41568f86e565bb155268eee4aad0175038907ec2f76ed0e051a1406b8703"
+    },
+    {
+      "file": "src/components/TimeTravelPreview.tsx",
+      "originalSha256": "0a999d3666ef62b66adb9c13e60650f5ef2ce1f10828778d4b62c4ec3edcc927",
+      "resultSha256": "b216ccab255505ffe1aedf1fdb17f5edf09f8c536f3097d5f3c536f68b74d721"
+    },
+    {
+      "file": "src/i18n/PresentationText.ts",
+      "originalSha256": "a3d6c6d5b8f800edd61544b6e9ff516175347f116828e71c1474f185944ef5e8",
+      "resultSha256": "2d8e80df63dd2c3b66712ce9d751fb25510d79fc1ffad8c85af82c1e08df71e5"
+    },
+    {
+      "file": "src/i18n/SettingsLocale.tsx",
+      "originalSha256": "4b8bb415950683f20356b10ce5d537ec4237253b5259c79539b4ff23e356f814",
+      "resultSha256": "627af46e19511c58ccd344a88aab7e9d0f908fb3cbb338240c7a9bc6c59c6fc3"
+    },
+    {
+      "file": "src/i18n/WidgetLocale.tsx",
+      "originalSha256": "d8132a4749802c19c78a8bbbf237bdc48f18bbeb2b3e77b724ca166c4002ec87",
+      "resultSha256": "6a4e9b5a9b63e3180e26043eff434ea0e269e635aa61d0ece0e0c6436d666f37"
+    },
+    {
+      "file": "src/i18n/completionMessages.ts",
+      "originalSha256": "da75f0f15011728c480b5c8f1a2eb8c2e2bbf814f3b81ec119088529e92d7159",
+      "resultSha256": "20db899ac969626f59c49a182ad3faa6adc8e8e7462c28468df675bd77c0329b"
+    },
+    {
+      "file": "src/i18n/core.ts",
+      "originalSha256": "e06821c72832ddaf8159ada59bcf6ba9251f46d13cf187d8ad7c99f4ad2dcef1",
+      "resultSha256": "208794a8d579af0de4787617b346f3234b434752f59c3a728b317c9bbfba83b9"
+    },
+    {
+      "file": "src/i18n/runtimeMessages.ts",
+      "originalSha256": "b26129415b0ac86702eaf86ad5f9f00a1082990a4f7e7b44945f53b5073cec03",
+      "resultSha256": "0f4df63a1f0e670770e1f6f1c52b4b0b88aa5267ca665af69d9d189658b51ebe"
+    },
+    {
+      "file": "src/i18n/settingsMessages.ts",
+      "originalSha256": "981022addc4594dc2e35315ace42f22165e1ebf7a686773958498d3f7da17605",
+      "resultSha256": "731f25448fc976f3bcb3efb432ecc11700459628a54d14f8d7a92a4a54ea2747"
+    },
+    {
+      "file": "src/i18n/startupMessages.ts",
+      "originalSha256": "218f919ff3b9936f272d624e0659b7186975599b544462fe47fb65e051d270c0",
+      "resultSha256": "62c75c7e7855d4263604c575cee73b596eb5622400292723594bcf807806e141"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "89fb3c9a32916f8d08bf67149ea407dd3c4948aaa2f1869e2e4ae5e6b8c78c1e",
+      "resultSha256": "9b0a2eeb851ab04804e56b0d63bcb44526c58abc60a1b2dd6587004ae0b9985d"
+    },
+    {
+      "file": "src/setting/setting.tsx",
+      "originalSha256": "7f66f252ffbd00a0570d78dc79ab73aedd362a9f1441989121af127520ba7106",
+      "resultSha256": "225778e91d32ed10cc3e073867e34f2bbc897edb02fd205efcc9462230ca8ab4"
+    },
+    {
+      "file": "src/features/field-notes/EnterpriseNotesList.tsx",
+      "originalSha256": "0deb17ddaffab963eb2bc26fbb3e708d8bcd070f638bffbb2c53c00f8f412297",
+      "resultSha256": "ba2cfe3af2a446807c4d0318c60d3e02873a7bb6e7b9c943708267d61db8ae89"
+    },
+    {
+      "file": "src/features/field-notes/LocalNotesList.tsx",
+      "originalSha256": "4c3d571bd0ad5a8b42996213a3b15f58ca8ab5012f9fad67962855f4e874ade7",
+      "resultSha256": "3cc24f070d896ff425f918d340409765383958ffb645bd82aa206c6801ec2859"
+    },
+    {
+      "file": "tools/check-localization-catalogs.cjs",
+      "originalSha256": "6d24ed0831a9aacfaf197d1151a3a04ecc3a91862ca3bfaebf24661c1d6c3a32",
+      "resultSha256": "99c563714bd9947a030d0264ddf5b42e3f3db5b9d86fd8c742afcc7c5dfd2abd"
+    },
+    {
+      "file": "tools/translation-table.cjs",
+      "originalSha256": "d2e4e780dcb239ad21729db711f73553be3a3f6556c7cf54d7d41df2f2f805e1",
+      "resultSha256": "e159b037750aa1bb7054a8c5ee68b8f7e11de8de065ad2e86bde9b930b95b7d7"
+    },
+    {
+      "file": "tests/localizationCatalog.test.cjs",
+      "originalSha256": "24f686c805ab022cc3af9681a7021f27e6ccf6dbd3bb7bae1bb60f7af18bc103",
+      "resultSha256": "cf8425fc72a0c97a6dc9b8bbacfcc1033dea13a05da57a3ecb6a94e22699c0f0"
+    },
+    {
+      "file": "tests/localizationQuality.browser.cjs",
+      "originalSha256": "809b835ae5306a6686b8301a31910ad876c51561cead364b64125192a47dd932",
+      "resultSha256": "77b8823242574b90a486ae4ca1fb488e6654b7200e7f0875e268f1b3276efa14"
+    },
+    {
+      "file": "tests/translationTable.test.cjs",
+      "originalSha256": "f064fb2d59832e1d74850a3ca7231656c9e16701b3693f9133d354fa40314375",
+      "resultSha256": "e875c1ea7e6c968a9d0236455e6e0c5a43b2b60eb116da51df7abefe1e790aa3"
+    },
+    {
+      "file": "docs/localization/CONTRIBUTING.md",
+      "originalSha256": "f46118e534fb5e7b9772eae2498e19aecdbed83da4add04b4e066d4a5cf7d79d",
+      "resultSha256": "978dbc03c876029504f3073b6425d991e3f34160280806ce6689ef667a4937fc"
+    },
+    {
+      "file": "docs/localization/translations.csv",
+      "originalSha256": "c135524bc644b948eae5409e5f7bba57335f4ffc2b9542376753ab038b495dac",
+      "resultSha256": "d211e4b96fbe68e92a4726eb7c005dea8693866f5bd161561223815892a624db"
+    },
+    {
+      "file": "README.md",
+      "originalSha256": "43937628d6f12ae6e121b4ad329fc657a9fce0750b70d9c99e65a03ec19f6bc4",
+      "resultSha256": "bf1498006c0809ac9500feebd670939f3f510757b1af2e72488c650d756acb81"
+    },
+    {
+      "file": "src/i18n/locales/en-gb.ts",
+      "originalSha256": null,
+      "resultSha256": "53ec79a81ea388a1650d6594118499a64ff04322779c1e0c977a28f9cdb9f091"
+    },
+    {
+      "file": "src/i18n/locales/settings-en-gb.ts",
+      "originalSha256": null,
+      "resultSha256": "0ba5bcc6aaf6ab5b07dbc074b940cf42fb501a0cf160471348fd81849ea6dc9f"
+    },
+    {
+      "file": "src/i18n/legacyEnglish.ts",
+      "originalSha256": null,
+      "resultSha256": "d2fedc87356f96921b126293ae067a2e51048c8cc2d4aaedd2fed0b4cd239b56"
+    },
+    {
+      "file": "tests/regionalLocales.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "b0dbbd4cf89b1549a268d6dc250841e572a6491e901f3c3739a21363940e05ac"
+    },
+    {
+      "file": "docs/localization/REGIONAL-ENGLISH-v6.117.md",
+      "originalSha256": null,
+      "resultSha256": "d5e06ce532d11fd3ac713abfef00c76c2a69400afbf24fc0ba18f2e9461acb12"
+    }
+  ]
+}

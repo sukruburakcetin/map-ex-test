@@ -1,0 +1,15 @@
+# Hover resumes after coverage readiness v6.121
+
+Requires v6.120. A successful current coverage refresh queues one recheck at the last observed map-pointer position. The recheck calls the widget's existing pointer-hover handler directly; it does not emit a synthetic event to the host map or introduce another picker.
+
+This covers two cases: a pointer reaches a green line while the map is still moving, and the delayed zoom-end refresh clears a hover that appeared just before it began. Once the native coverage refresh completes, a stationary pointer can resume hover without a mouse nudge. Cold local tile data may still need loading through the existing picker. The map's moving-state guard, coverage debounce and data-readiness requirements remain intact.
+
+The owner stores only primitive pointer coordinates, coalesces one queued callback per successful refresh revision and yields to newer real pointer input. Mouse leave and click forget the position. View replacement, handler cleanup and widget teardown dispose queued work. Failed, stale or detached refreshes do not trigger replay. Checks suppress replay for moving/interacting views, closed or disabled widgets, hidden documents, detached containers, changed revisions, out-of-bounds points, overlaid forms/popups and a shifted container. No polling loop, interval or additional native pointer listener is added.
+
+Picking, click resolution, nearby-frame choice, cached-preview enrichment and brown-pulse/cone algorithms are unchanged. The existing click and pointer callbacks gain only last-pointer bookkeeping; successful coverage completion gains the one-shot notification. Metadata preview behavior from v6.120 remains in place.
+
+Validation: 172 targeted checks passed, including controlled 2D and 3D traces using the real coverage-refresh method and hover callback. They verify movement-blocked hover resumes on readiness, refresh-cleared hover is restored, repeated readiness does not duplicate picks, newer input supersedes replay, clicking/leaving/disposal cancels it, failed loads do not poll, and view/revision/UI/DOM guards prevent stale hover. Existing coverage startup, cached preview, correct bearing, native selection, point identity, direction-hover anchor/pulse, image-first loading and Overture place-priority tests also pass. The Experience Builder development build passed with local SDK 5.0.4.
+
+These are source-method/controller tests with controlled data, not a live rendering or network-latency benchmark. The user's localhost previewer was not opened from this environment. Verify by zooming out, moving onto a green line during the transition and holding the pointer still until coverage is ready. The brown hover should appear without a nudge when the pointer remains over selectable map content. Loading delays can still occur; the fix removes the need for another pointer event after readiness.
+
+Install from widget root: node apply-hover-readiness-v6-121.cjs. Undo: node apply-hover-readiness-v6-121.cjs --uninstall. Guarded dry-run, install, repeated install, byte-exact rollback and edited-target refusal are checked. Preserve later source edits before rollback.

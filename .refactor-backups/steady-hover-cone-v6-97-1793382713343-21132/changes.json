@@ -1,0 +1,17 @@
+{
+  "installer": "steady-hover-cone-v6-97",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "99b01bb76fabd94e564e87bf2ab04bc1e1d2b6baaf3279ed6155560767b8ad81",
+      "resultSha256": "b9b0e1742df33ff460693f0729430b13d36341df853dff1ccda735d9e336967b"
+    },
+    {
+      "file": "docs/STEADY-HOVER-CONE.md",
+      "originalSha256": null,
+      "resultSha256": "2a5aca235efcd79977bdf4e7ca6ec00eaf7f2a947d5877865a63552409222c7b"
+    }
+  ]
+}

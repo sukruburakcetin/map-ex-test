@@ -1,5 +1,6 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
+import { WidgetLocaleContext } from '../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 
 import type { InfoBoxProps } from './types';
@@ -44,6 +45,9 @@ interface InfoBoxState {
  * child sections display supplied state and runtime callbacks own SDK operations.
  */
 export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
+ static contextType = WidgetLocaleContext;
+ declare context: React.ContextType<typeof WidgetLocaleContext>;
+
   private panelToggleRef = React.createRef<HTMLButtonElement>();
   private scrollResizeObserver: ResizeObserver | null = null;
   private scrollContainerRef = React.createRef<HTMLDivElement>();
@@ -197,14 +201,14 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
         <style>{infoPanelResponsiveCss}{infoDetailsCss}</style>
         <div className="mly-info-header">
         <button ref={this.panelToggleRef} type="button" className="mly-info-toggle"
-          aria-expanded={this.state.detailsOpen} aria-label={this.state.detailsOpen ? "Close image details and tools" : "Open image details and tools"}
+          aria-expanded={this.state.detailsOpen} aria-label={this.state.detailsOpen ? this.context.t('uiCloseImageDetailsAndTools') : this.context.t('uiOpenImageDetailsAndTools')}
           onClick={() => this.setState(previous => ({ detailsOpen: !previous.detailsOpen }))}>
-          <span className="mly-info-location" title={!hideInfoBox && address ? address : "Image tools"}>{!hideInfoBox && address ? address : "Image tools"}</span>
+          <span className="mly-info-location" title={!hideInfoBox && address ? address : this.context.t('uiImageTools')}>{!hideInfoBox && address ? address : this.context.t('uiImageTools')}</span>
           <span aria-hidden="true">{this.state.detailsOpen ? "−" : "+"}</span>
         </button>
         <button type="button" className="mly-info-width-toggle" hidden={!this.state.detailsOpen}
-          aria-label={this.state.wide ? "Use compact panel width" : "Widen details panel"}
-          title={this.state.wide ? "Compact width" : "Wider view"} aria-pressed={this.state.wide}
+          aria-label={this.state.wide ? this.context.t('uiUseCompactPanelWidth') : this.context.t('uiWidenDetailsPanel')}
+          title={this.state.wide ? this.context.t('uiCompactWidth') : this.context.t('uiWiderView')} aria-pressed={this.state.wide}
           onClick={() => this.setState(previous => ({ wide: !previous.wide }))}>
           <svg aria-hidden="true" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
             <path d={this.state.wide ? "M1 8h5m-2-2 2 2-2 2m11-2h-5m2-2-2 2 2 2" : "M6 8H1m2-2L1 8l2 2m7-2h5m-2-2 2 2-2 2"}/>
@@ -224,11 +228,11 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
               className="info-box"
               style={infoStatusCardStyle}
             >
-              <div className="mly-info-quick" role="group" aria-label="Image actions">
-                {!hideCoverageAnalysis && <button type="button" aria-label="Color coverage by quality" aria-pressed={!!qualityViewActive} title="Color coverage by quality" onClick={onToggleQualityView}>Quality<span className="mly-quick-state" aria-hidden="true"/></button>}
-                {imageId && <button type="button" aria-label="Nearby images" aria-expanded={!!nearbyStripOpen} onClick={onToggleNearbyStrip}>Nearby<span className="mly-quick-count">{nearbyLoading ? "…" : nearbyCount || ""}</span></button>}
-                <button type="button" aria-label={isAnnotationMode ? "Stop adding notes" : "Add note"} aria-pressed={!!isAnnotationMode} onClick={onToggleAnnotationMode}>{isAnnotationMode ? "Finish note" : "+ Note"}</button>
-                <button type="button" aria-label="View notes" aria-expanded={!!fieldNotesListOpen} onClick={onToggleFieldNotesList}>Notes<span className="mly-quick-count">{fieldNotesCount || ""}</span></button>
+              <div className="mly-info-quick" role="group" aria-label={this.context.t('uiImageActions')}>
+                {!hideCoverageAnalysis && <button type="button" aria-label={this.context.t('uiColorCoverageByQuality')} aria-pressed={!!qualityViewActive} title={this.context.t('uiColorCoverageByQuality')} onClick={onToggleQualityView}> {this.context.t('uiQuality')} <span className="mly-quick-state" aria-hidden="true"/></button>}
+                {imageId && <button type="button" aria-label={this.context.t('uiNearbyImages')} aria-expanded={!!nearbyStripOpen} onClick={onToggleNearbyStrip}> {this.context.t('uiNearby')} <span className="mly-quick-count">{nearbyLoading ? "…" : nearbyCount || ""}</span></button>}
+                <button type="button" aria-label={isAnnotationMode ? this.context.t('uiStopAddingNotes') : this.context.t('uiAddNote')} aria-pressed={!!isAnnotationMode} onClick={onToggleAnnotationMode}>{isAnnotationMode ? this.context.t('uiFinishNote') : this.context.t('uiNote')}</button>
+                <button type="button" aria-label={this.context.t('uiViewNotes')} aria-expanded={!!fieldNotesListOpen} onClick={onToggleFieldNotesList}> {this.context.t('uiNotes')} <span className="mly-quick-count">{fieldNotesCount || ""}</span></button>
               </div>
 
               {/* Turbo year legend */}
@@ -238,7 +242,7 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
             </div>
           )}
 
-          <details className="mly-info-more"><summary>Tools & details</summary>
+          <details className="mly-info-more"><summary> {this.context.t('uiToolsDetails')} </summary>
               {!hideInfoBox && <div className="info-box"><StatusSummary currentImg={currentImg} currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} address={null} turboCreator={turboCreator} turboOrganization={turboOrganization} turboOrganizationName={turboOrganizationName} onCopyCoordinates={this.props.onCopyCoordinates} />{!hideCoverageAnalysis && <QualityToolsSection hideToggle qualityViewType={this.props.qualityViewType} currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} qualityViewActive={qualityViewActive} onToggleQualityView={onToggleQualityView} selectedQualityBand={selectedQualityBand} onQualityLegendClick={onQualityLegendClick} />}</div>}
               {!hideInfoBox && turboModeActive && !hideCoverageAnalysis && <CoverageAnalysisTrigger currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} turboPointsAvailable={turboPointsAvailable} coverageAnalysisLoading={coverageAnalysisLoading} coverageResult={coverageResult} onRunCoverageAnalysis={onRunCoverageAnalysis} turboMinZoom={turboMinZoom} />}
 

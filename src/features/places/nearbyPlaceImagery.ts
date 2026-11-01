@@ -1,3 +1,4 @@
+import { Presentation, englishPresentation } from '../../i18n/PresentationText';
 import { panoramaPlaceCenter } from './panoramaPlaceCenter';
 import { calculateBearing, distanceMeters } from '../../utils/geoUtils';
 import { Place } from './placesModel';
@@ -65,18 +66,18 @@ export function rankPlaceImagery(place: Pick<Place, 'lon' | 'lat'>, rows: any[],
 export function choosePlaceImagery(place: Pick<Place, 'lon' | 'lat'>, rows: any[], radius: number, distance: (a: number, b: number, c: number, d: number) => number): PlaceImagery | null {
   return rankPlaceImagery(place, rows, radius, distance)[0] || null;
 }
-export function placeImageryCaptureLabel(image: PlaceImagery): string {
-  if (!image.capturedAt || !Number.isFinite(image.capturedAt) || !Number.isFinite(new Date(image.capturedAt).getTime())) return 'Capture date unknown';
-  return 'Captured ' + new Date(image.capturedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+export function placeImageryCaptureLabel(image: PlaceImagery, l10n: Presentation = englishPresentation): string {
+  if (!image.capturedAt || !Number.isFinite(image.capturedAt) || !Number.isFinite(new Date(image.capturedAt).getTime())) return l10n.text("Capture date unknown");
+  return l10n.text("Captured") + " " + l10n.date(new Date(image.capturedAt),{ year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
-export function placeImageryDirectionLabel(image: PlaceImagery): string {
-  return image.direction === 'facing' ? 'Facing the place' : image.direction === 'panorama' ? 'Panorama' : image.direction === 'sideways' ? 'Side view' : image.direction === 'away' ? 'Facing away' : 'Direction unknown';
+export function placeImageryDirectionLabel(image: PlaceImagery, l10n: Presentation = englishPresentation): string {
+  return image.direction === 'facing' ? l10n.text("Facing the place") : image.direction === 'panorama' ? l10n.text("Panorama") : image.direction === 'sideways' ? l10n.text("Side view") : image.direction === 'away' ? l10n.text("Facing away") : l10n.text("Direction unknown");
 }
 /** Straight-line distance and UTC capture day from the existing candidate only. */
-export function placeImageryChoiceMeta(image: PlaceImagery): string {
-  const distance = Number.isFinite(image.distance) && image.distance >= 0 ? `About ${Math.ceil(image.distance)} m away` : 'Distance unknown';
-  return `${placeImageryCaptureLabel(image)} · ${distance}`;
+export function placeImageryChoiceMeta(image: PlaceImagery, l10n: Presentation = englishPresentation): string {
+  const distance = Number.isFinite(image.distance) && image.distance >= 0 ? l10n.text("About {value0} m away",{value0:String(Math.ceil(image.distance))}) : l10n.text("Distance unknown");
+  return `${placeImageryCaptureLabel(image, l10n)} · ${distance}`;
 }
 /** One local viewer read; the loaded SDK cameraType is authoritative, not Graph's is_pano flag. */
 export async function facePlaceInPanorama(viewer: any, image: PlaceImagery, current: () => boolean): Promise<number | null> {

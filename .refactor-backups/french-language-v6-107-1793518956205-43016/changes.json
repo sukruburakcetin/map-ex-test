@@ -1,0 +1,57 @@
+{
+  "installer": "french-language-v6-107",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/i18n/core.ts",
+      "originalSha256": "9b01a92b850cf2c7dc751c66862b394e70a65994123a17b0c7831fdbc0c431b4",
+      "resultSha256": "e9afb0dbfe6d636eb12b8a6ae45fcb8c9a94f17173d8a6daad179c51ddad514a"
+    },
+    {
+      "file": "src/i18n/WidgetLocale.tsx",
+      "originalSha256": "4133da81e4908605f80a77b502ecfc20bf26ffd2becc5b0a2c24d20f9e7a7c2d",
+      "resultSha256": "9836fc40c469428366cc3b446cd5355cb42049e2cc32702c58c38996edaa94fc"
+    },
+    {
+      "file": "src/i18n/SettingsLocale.tsx",
+      "originalSha256": "c7deda14aab42b301f6c7eda376cd8d2e1072d9ab6fd522cdf8aeb5becbbef17",
+      "resultSha256": "9684e50d0f04694f1118d71034005c1fcb1c69691ea336bcd6e1cb9ca532ae36"
+    },
+    {
+      "file": "src/i18n/startupMessages.ts",
+      "originalSha256": "e7d07c4eee7a290978f3b431f62351c03c11fd4218c84b0a51f18c94e5b22f6b",
+      "resultSha256": "3834c09b304366f380e865bd49761b793a0cad09e36b82adb830cf9866d74bb0"
+    },
+    {
+      "file": "src/config.ts",
+      "originalSha256": "f951ff4b434ce9faf49aabfe3d9b653563ec72e00cb35310bf9efa596b7d36b0",
+      "resultSha256": "4b02766b17a37b2c8990d35cb96a54bf5a2d621f4611aff85c56640c811105ff"
+    },
+    {
+      "file": "src/setting/setting.tsx",
+      "originalSha256": "d483874d00dddd3502a79fc9b4eedc6549c905eeb38b6c92aabfe812ac5ccdc1",
+      "resultSha256": "198da1b6fdadeb52540c9a4f313eb58c0e2031f5c33b6973da459206757f33e2"
+    },
+    {
+      "file": "tests/localizationCatalog.test.cjs",
+      "originalSha256": "205f54653489e3c0f392b36e824d96e9e6824f25e7c24aadac6c02ec1dfda03b",
+      "resultSha256": "63867f078601e961f468848d51076a2ed77e563117fb3dfa42ceb3056b10580e"
+    },
+    {
+      "file": "src/i18n/locales/fr.ts",
+      "originalSha256": null,
+      "resultSha256": "142e6af978d8fa46ad388ff6afe4f519850bc737826b5d1e59d88bc131ae3d86"
+    },
+    {
+      "file": "src/i18n/locales/settings-fr.ts",
+      "originalSha256": null,
+      "resultSha256": "be52136e89ee0d1ef3ef85ee90cd764c515a008a09b8209bdf9052e6208693ad"
+    },
+    {
+      "file": "docs/localization/FRENCH-v6.107.md",
+      "originalSha256": null,
+      "resultSha256": "5ff533e1b4f9e2acb15b93c57bae25924d970087e9bf63f51fbe7e18b15027c4"
+    }
+  ]
+}

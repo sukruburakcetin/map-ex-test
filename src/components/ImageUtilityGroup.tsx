@@ -1,5 +1,6 @@
 /** @jsx jsx */
 import { React, jsx } from "jimu-core";
+import { useWidgetLocale, LanguageChoice } from '../i18n/WidgetLocale';
 import ReactDOM from "react-dom";
 import { TimeTravelPreview } from "./TimeTravelPreview";
 import { utilityDockCss } from '../styles/controlPanels';
@@ -8,6 +9,7 @@ import { ImageUtilityGroupProps } from "./types";
 
 /** Compact viewer actions. SDK work remains in the supplied runtime callbacks. */
 export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
+    const {t,locale,allowSwitch} = useWidgetLocale();
     const [travelOpen, setTravelOpen] = React.useState(false);
     const travelTrigger = React.useRef<HTMLButtonElement>(null);
     const closeTravel = React.useCallback(() => { setTravelOpen(false); travelTrigger.current?.focus(); }, []);
@@ -25,7 +27,7 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
     const cloudOn = !!(props.pointCloudVisible || props.pointCloudActive);
     const cloudBlocked = props.pointCloudAvailable === false && !props.pointCloudLoading && !cloudOn;
     const cloudMode = props.is3D && !props.hidePointCloud;
-    const hasMore = !props.hideShareButton || !props.hideImageDownload;
+    const hasMore = allowSwitch || !props.hideShareButton || !props.hideImageDownload;
     const close = (focus = false) => { setOpen(null); if (focus) trigger.current?.focus(); };
     const hasNavigation = !!props.mapFollowEnabled || !props.hideCenterMapButton || (!props.hideTimeTravel && props.hasTimeTravel);
     const hasSceneTools = props.is3D && (!props.hideSyncHeadingButton || !props.hidePointCloud);
@@ -63,7 +65,7 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
         setPosition({ width, maxHeight, left: Math.max(left, Math.min(anchor.right - width, right - width)),
             top: Math.max(top, Math.min(above ? dockBounds.top - height - 6 : dockBounds.bottom + 6, bottom - height)) });
         menu.current.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
-    }, [open, props.isDownloading, cloudMode]);
+    }, [open, props.isDownloading, cloudMode, locale]);
     React.useEffect(() => {
         if (!open) return;
         const outside = (event: Event) => {
@@ -93,35 +95,35 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
         };
     }, [open]);
 
-    const cloudLabel = props.pointCloudLoading ? 'Cancel point-cloud loading' : cloudOn ? 'Close point cloud' : cloudBlocked ? 'No point cloud available for this image' : 'Load point cloud';
+    const cloudLabel = props.pointCloudLoading ? t('cancelCloud') : cloudOn ? t('closeCloud') : cloudBlocked ? t('noCloud') : t('loadCloud');
     if (!hasNavigation && !hasSceneTools && !hasMore) return null;
-    return <div ref={dock} className={`glass-image-utility-panel mly-utility-dock${mobile && collapsed ? ' is-collapsed' : ''}`} data-mobile={mobile ? 'true' : undefined} role="group" aria-label="Image actions">
+    return <div lang={locale} ref={dock} className={`glass-image-utility-panel mly-utility-dock${mobile && collapsed ? ' is-collapsed' : ''}`} data-mobile={mobile ? 'true' : undefined} role="group" aria-label={t('imageActions')}>
         <style>{utilityDockCss}</style>
-        {!props.hideCenterMapButton && <button type="button" className="utility-button" title="Center map on this image" aria-label="Center map on this image" onClick={props.onCenterMap}><Icons.Crosshair size={16}/></button>}
-        {props.mapFollowEnabled && <button type="button" className="utility-button" aria-label="Lock to image" aria-pressed={!!props.lockToImage}
-            title={props.lockToImage ? 'Lock to image on · Click to follow only outside the map' : 'Keep image in view · Click to lock to image'}
+        {!props.hideCenterMapButton && <button type="button" className="utility-button" title={t('centerMap')} aria-label={t('centerMap')} onClick={props.onCenterMap}><Icons.Crosshair size={16}/></button>}
+        {props.mapFollowEnabled && <button type="button" className="utility-button" aria-label={t('lockImage')} aria-pressed={!!props.lockToImage}
+            title={props.lockToImage ? t('lockOn') : t('lockOff')}
             onClick={props.onToggleImageLock}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d={props.lockToImage ? 'M8 10V6a4 4 0 0 1 8 0v4' : 'M8 10V6a4 4 0 0 1 8 0'}/></svg></button>}
-        {!props.hideTimeTravel && props.hasTimeTravel && <button ref={travelTrigger} type="button" className="utility-button" aria-haspopup="dialog" aria-expanded={travelOpen} title="Explore images from other dates" aria-label="Time travel" disabled={!currentImage}
+        {!props.hideTimeTravel && props.hasTimeTravel && <button ref={travelTrigger} type="button" className="utility-button" aria-haspopup="dialog" aria-expanded={travelOpen} title={t('otherDates')} aria-label={t('timeTravel')} disabled={!currentImage}
             onClick={() => { if (currentImage && props.imageId) { if (props.loadTimeTravelPreview) { setOpen(null); setTravelOpen(true); } else props.onTimeTravel(currentImage.lat, currentImage.lon, props.imageId); } }}><Icons.TimeTravel size={16}/></button>}
         {hasNavigation && hasSceneTools && <span className="mly-dock-divider" aria-hidden="true"/>}
-        {props.is3D && !props.hideSyncHeadingButton && <button type="button" className="utility-button" aria-label="Follow camera heading" aria-pressed={props.syncHeading}
-            title={props.syncHeading ? 'Follow camera heading · Click to keep north fixed' : 'Follow camera heading'} onClick={props.onToggleSyncHeading}>{props.syncHeading ? <Icons.CompassLocked/> : <Icons.CompassUnlocked/>}</button>}
-        {props.is3D && !props.hidePointCloud && <div className="mly-dock-cloud-group" role="group" aria-label="Point cloud controls"><button type="button" className={`utility-button mly-dock-cloud${props.pointCloudLoading ? ' is-loading' : ''}`}
-            aria-label={cloudLabel} title={props.pointCloudLoading ? cloudLabel : cloudOn ? `Point cloud: ${props.pointCloudAutoPaused ? 'paused' : props.pointCloudFollowImages ? 'auto-follow' : 'current image'} · Click to close` : cloudLabel}
+        {props.is3D && !props.hideSyncHeadingButton && <button type="button" className="utility-button" aria-label={t('followHeading')} aria-pressed={props.syncHeading}
+            title={props.syncHeading ? t('keepNorth') : t('followHeading')} onClick={props.onToggleSyncHeading}>{props.syncHeading ? <Icons.CompassLocked/> : <Icons.CompassUnlocked/>}</button>}
+        {props.is3D && !props.hidePointCloud && <div className="mly-dock-cloud-group" role="group" aria-label={t('cloudControls')}><button type="button" className={`utility-button mly-dock-cloud${props.pointCloudLoading ? ' is-loading' : ''}`}
+            aria-label={cloudLabel} title={props.pointCloudLoading ? cloudLabel : cloudOn ? t('cloudTitle',{mode:props.pointCloudAutoPaused ? t('paused') : props.pointCloudFollowImages ? t('followImages') : t('currentImage')}) : cloudLabel}
             aria-pressed={cloudOn || !!props.pointCloudLoading} disabled={cloudBlocked} onClick={props.onTogglePointCloud}>
-            {props.pointCloudLoading ? <React.Fragment><span className="mly-dock-spinner" aria-hidden="true"/><span>Cancel</span></React.Fragment>
-                : <React.Fragment><Icons.PointCloud size={16}/><span className="mly-dock-mode" aria-hidden="true">{props.pointCloudAutoPaused ? 'Paused' : props.pointCloudFollowImages ? 'Auto' : 'Image'}</span></React.Fragment>}
+            {props.pointCloudLoading ? <React.Fragment><span className="mly-dock-spinner" aria-hidden="true"/><span>{t('cancel')} </span></React.Fragment>
+                : <React.Fragment><Icons.PointCloud size={16}/><span className="mly-dock-mode" aria-hidden="true">{props.pointCloudAutoPaused ? t('paused') : props.pointCloudFollowImages ? t('auto') : t('image')}</span></React.Fragment>}
         </button>
-        <button type="button" className="utility-button mly-dock-mode-trigger" aria-label="Choose point-cloud mode"
-            title={`Point-cloud mode: ${props.pointCloudFollowImages ? 'Follow images' : 'Current image'}`}
+        <button type="button" className="utility-button mly-dock-mode-trigger" aria-label={t('chooseCloudMode')}
+            title={t('cloudModeTitle',{mode:props.pointCloudFollowImages ? t('followImages') : t('currentImage')})}
             aria-haspopup="dialog" aria-expanded={open === 'cloud'} aria-controls={open === 'cloud' ? menuId : undefined}
             onClick={event => { trigger.current = event.currentTarget; setOpen(value => value === 'cloud' ? null : 'cloud'); }}>
             <svg aria-hidden="true" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="m3 4 3 3 3-3"/></svg>
         </button></div>}
-        {hasMore && <button type="button" className="utility-button" title="More image actions" aria-label="More image actions" aria-haspopup="dialog" aria-expanded={open === "more"} aria-controls={open === "more" ? menuId : undefined}
+        {hasMore && <button type="button" className="utility-button" title={t('moreActions')} aria-label={t('moreActions')} aria-haspopup="dialog" aria-expanded={open === "more"} aria-controls={open === "more" ? menuId : undefined}
             onClick={event => { trigger.current = event.currentTarget; setOpen(value => value === "more" ? null : "more"); }}><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><circle cx="4" cy="9" r="1.3"/><circle cx="9" cy="9" r="1.3"/><circle cx="14" cy="9" r="1.3"/></svg>{props.isDownloading && <span className="mly-dock-download-dot" aria-hidden="true"/>}</button>}
-        {mobile && <button type="button" className="utility-button mly-dock-collapse" aria-label={collapsed ? (toolsActive ? 'Show image tools (tools active)' : 'Show image tools') : 'Hide image tools'}
-            title={collapsed ? 'Show image tools' : 'Hide image tools'} aria-expanded={!collapsed}
+        {mobile && <button type="button" className="utility-button mly-dock-collapse" aria-label={collapsed ? (toolsActive ? t('showToolsActive') : t('showTools')) : t('hideTools')}
+            title={collapsed ? t('showTools') : t('hideTools')} aria-expanded={!collapsed}
             onClick={() => { const next = !collapsed; setOpen(null); setCollapsed(next); try { sessionStorage.setItem('mly-utility-collapsed-v1', next ? '1' : '0'); } catch { /* Storage may be unavailable in embedded browsers. */ } }}>
             <svg aria-hidden="true" width="18" height="16" viewBox="0 0 24 18" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
                 {collapsed ? <React.Fragment><path d="M2 4h12M2 9h12M2 14h12M5 2v4M11 7v4M6 12v4"/><path d="m21 5-4 4 4 4"/></React.Fragment> : <path d="M7 9h10"/>}
@@ -130,11 +132,12 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
         </button>}
         {travelOpen && props.imageId && props.loadTimeTravelPreview && <TimeTravelPreview key={props.imageId} imageId={props.imageId} load={props.loadTimeTravelPreview} onClose={closeTravel}
             onExternal={() => { if (currentImage && props.imageId) props.onTimeTravel(currentImage.lat, currentImage.lon, props.imageId); }}/>}
-        {open && ((open === "more" && hasMore) || (open === "cloud" && cloudMode)) && ReactDOM.createPortal(<div ref={menu} id={menuId} role="dialog" aria-label={open === "cloud" ? "Point-cloud mode" : "More image actions"} className="mly-utility-popover" style={{ ...position, position: 'fixed', zIndex: 2147483000 }}>
-            {open === "more" && !props.hideShareButton && <button type="button" onClick={() => { close(true); props.onShare(); }}><Icons.Share size={15}/><span>Share view</span></button>}
-            {open === "more" && !props.hideImageDownload && <button type="button" disabled={props.isDownloading} onClick={() => { close(true); props.onDownload(); }}><Icons.Download size={15}/><span>{props.isDownloading ? 'Downloading image…' : 'Download image'}</span></button>}
-            {open === "cloud" && <div role="group" aria-label="Point-cloud mode options"><span className="mly-dock-menu-label">Point-cloud mode</span>
-                {[{ label: 'Current image', detail: 'Selected image only', follow: false }, { label: 'Follow images', detail: 'Update as you browse', follow: true }].map(mode => <button key={mode.label} type="button" aria-label={mode.label} aria-describedby={`${menuId}-${mode.follow ? "follow" : "current"}`} aria-pressed={!!props.pointCloudFollowImages === mode.follow}
+        {open && ((open === "more" && hasMore) || (open === "cloud" && cloudMode)) && ReactDOM.createPortal(<div lang={locale} ref={menu} id={menuId} role="dialog" aria-label={open === "cloud" ? t('cloudMode') : t('moreActions')} className="mly-utility-popover" style={{ ...position, position: 'fixed', zIndex: 2147483000 }}>
+            {open === "more" && !props.hideShareButton && <button type="button" onClick={() => { close(true); props.onShare(); }}><Icons.Share size={15}/><span>{t('shareView')} </span></button>}
+            {open === "more" && !props.hideImageDownload && <button type="button" disabled={props.isDownloading} onClick={() => { close(true); props.onDownload(); }}><Icons.Download size={15}/><span>{props.isDownloading ? t('downloading') : t('downloadImage')}</span></button>}
+            {open === "more" && <LanguageChoice/>}
+            {open === "cloud" && <div role="group" aria-label={t('cloudOptions')}><span className="mly-dock-menu-label">{t('cloudMode')} </span>
+                {[{ label: t('currentImage'), detail: t('currentOnly'), follow: false }, { label: t('followImages'), detail: t('followDetail'), follow: true }].map(mode => <button key={mode.label} type="button" aria-label={mode.label} aria-describedby={`${menuId}-${mode.follow ? "follow" : "current"}`} aria-pressed={!!props.pointCloudFollowImages === mode.follow}
                     onClick={() => { close(true); if (!!props.pointCloudFollowImages !== mode.follow) props.onPointCloudFollowImagesChange?.(mode.follow); }}><span className="mly-dock-choice" aria-hidden="true">{!!props.pointCloudFollowImages === mode.follow ? '✓' : ''}</span><span className="mly-dock-option-copy"><span>{mode.label}</span><small id={`${menuId}-${mode.follow ? "follow" : "current"}`}>{mode.detail}</small></span></button>)}
             </div>}
         </div>, document.fullscreenElement || document.body)}

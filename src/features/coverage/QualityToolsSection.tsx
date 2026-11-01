@@ -1,5 +1,6 @@
 /** @jsx jsx */
 /** Quality toggle and band legend presentation only; coverage state and rebuilds remain parent-owned. */
+import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 import * as Icons from '../../components/Icons';
 import type { InfoBoxProps } from '../../components/types';
@@ -12,6 +13,8 @@ export const QUALITY_HINT_ZOOM = { '2d': 6, '3d': 8 } as const;
 
 /** Keep legend colors/ranges, selected-band dimming and original callbacks; no effects or SDK work occur here. */
 export const QualityToolsSection: React.FC<QualityToolsSectionProps> = props => {
+ const { t, locale , owned} = useWidgetLocale();
+
   const { qualityViewActive, onToggleQualityView, selectedQualityBand, onQualityLegendClick, currentZoom, jimuMapViewZoom, qualityViewType } = props;
   const zoom = Number.isFinite(jimuMapViewZoom) ? jimuMapViewZoom : currentZoom;
   const threshold = qualityViewType ? QUALITY_HINT_ZOOM[qualityViewType] : undefined;
@@ -22,17 +25,16 @@ export const QualityToolsSection: React.FC<QualityToolsSectionProps> = props => 
       style={props.hideToggle ? { marginTop: 3 } : qualityToolsSectionStyle}
     >
       {!props.hideToggle && <button
-        type="button" aria-label="Color coverage by quality" aria-pressed={!!qualityViewActive}
+        type="button" aria-label={t('uiColorCoverageByQuality')} aria-pressed={!!qualityViewActive}
         onClick={onToggleQualityView}
-        title={qualityViewActive ? "Quality View ON: lines coloured by image quality score" : "Quality View OFF: click to colour coverage lines by quality score"}
+        title={qualityViewActive ? t('uiQualityViewOnLinesColouredByImageQuality') : t('uiQualityViewOffClickToColourCoverageLines')}
         style={qualityToolsButtonStyle}
       >
         <span
           style={getQualityToolsLabelStyle(qualityViewActive)}
         >
           <Icons.Star size={10} color={qualityViewActive ? "#F5A623" : "rgba(255,255,255,0.7)"} filled={qualityViewActive} />
-          Map quality
-        </span>
+           {t('uiMapQuality')} </span>
         <div
           style={getQualityToolsTrackStyle(qualityViewActive)}
         >
@@ -44,18 +46,17 @@ export const QualityToolsSection: React.FC<QualityToolsSectionProps> = props => 
 
       {showZoomNotice && (
         <div role="status" style={{ marginTop: 4, padding: '3px 5px', borderLeft: '2px solid #F5A623', background: 'rgba(245,166,35,0.10)', color: '#fff0ce', fontSize: 9, lineHeight: 1.25, overflowWrap: 'anywhere' }}>
-          Zoom closer for image detail.
-        </div>
+           {t('uiZoomCloserForImageDetail')} </div>
       )}
 
       {qualityViewActive && (
         <div style={qualityToolsLegendStyle}>
           {(
             [
-              ["#35AF6D", "Good", "≥0.70", "good"],
-              ["#F5A623", "Fair", "0.45–0.70", "fair"],
-              ["#D0021B", "Poor", "0.10–0.45", "poor"],
-              ["#A855F7", "Unscored", "N/A", "unscored"],
+              ["#35AF6D", t('uiGood'), "≥0.70", "good"],
+              ["#F5A623", t('uiFair'), "0.45–0.70", "fair"],
+              ["#D0021B", t('uiPoor'), "0.10–0.45", "poor"],
+              ["#A855F7", t('uiUnscored'), "N/A", "unscored"],
             ] as [string, string, string, "good" | "fair" | "poor" | "unscored"][]
           ).map(([color, label, range, band]) => {
             const isSelected = selectedQualityBand === band;
@@ -64,7 +65,7 @@ export const QualityToolsSection: React.FC<QualityToolsSectionProps> = props => 
               <div
                 key={label}
                 onClick={() => onQualityLegendClick(band)}
-                title={(band === 'unscored' ? 'Purple means score unavailable, not poor quality. ' : '') + (isSelected ? "Click to show all quality bands" : `Show only ${label} captures`)}
+                title={(band === 'unscored' ? t('uiPurpleMeansScoreUnavailableNotPoorQuality') : '') + (isSelected ? t('uiClickToShowAllQualityBands') : owned("Show only {value0} captures",{value0:String(label)}))}
                 style={getQualityToolsBandStyle(isSelected, isAnySelected)}
               >
                 <div style={getQualityToolsSwatchStyle(color)} />

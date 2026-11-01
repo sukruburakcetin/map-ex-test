@@ -1,4 +1,5 @@
 /** @jsx jsx */
+import { OwnedMessage } from '../../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 import * as Icons from '../../components/Icons';
 
@@ -6,7 +7,7 @@ import * as Icons from '../../components/Icons';
 export function showLocalNotesClearedFeedback(showToast: (content: React.ReactNode, duration?: number) => void, sharingEnabled?: boolean): void {
   showToast(
         <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <Icons.Check size={14} color="#37d582" /> {sharingEnabled ? "Local notes cleared. Enterprise notes remain." : "Local notes cleared."}
+          <Icons.Check size={14} color="#37d582" /> {sharingEnabled ? <OwnedMessage source={"Local notes cleared. Enterprise notes remain."}/> : <OwnedMessage source={"Local notes cleared."}/>}
         </span>,
         2000,
       );

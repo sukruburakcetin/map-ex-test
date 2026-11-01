@@ -1,4 +1,5 @@
 /** @jsx jsx */
+import { useWidgetLocale } from '../i18n/WidgetLocale';
 import { React, jsx } from "jimu-core";
 import { legendCircleStyle, legendRowStyle, legendTextStyle, compactButtonStyle } from "../utils/styles";
 import { LegendProps } from "./types";
@@ -10,6 +11,8 @@ import { LegendProps } from "./types";
     * (clicked point, active frame, sequence colour, field notes).
 */
 export const Legend: React.FC<LegendProps> = ({ turboModeActive, onClearCache, hasFieldNotes }) => {
+ const { t, locale } = useWidgetLocale();
+
     // Diamond (elmas) marker stili
     const diamondMarker = (
         <span style={{
@@ -53,39 +56,39 @@ export const Legend: React.FC<LegendProps> = ({ turboModeActive, onClearCache, h
                 letterSpacing: "1px",
                 borderBottom: "1px solid rgba(255,255,255,0.1)",
                 paddingBottom: "3px"
-            }}>Legend</div>
+            }}> {t('uiLegend')} </div>
 
             <div style={{ display: "flex", flexDirection: "column" }}>
-                <div style={legendRowStyle}><span aria-hidden="true" style={{ width: 12, borderTop: "2px solid blue", flexShrink: 0 }} /><span style={legendTextStyle}>Selected Sequence</span></div>
+                <div style={legendRowStyle}><span aria-hidden="true" style={{ width: 12, borderTop: "2px solid blue", flexShrink: 0 }} /><span style={legendTextStyle}> {t('uiSelectedSequence')} </span></div>
                 {turboModeActive ? (
                     <React.Fragment>
-                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("#00ff00"), border: "1px solid white" }}></span> <span style={legendTextStyle}>Active Frame</span></div>
-                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("blue"), border: "1px solid #e3da30" }}></span> <span style={legendTextStyle}>Nearby Frames</span></div>
-                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("#a52a2a"), border: "1px solid white" }}></span> <span style={legendTextStyle}>Coverage</span></div>
-                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("transparent"), border: "1.5px solid cyan" }}></span> <span style={legendTextStyle}>First Selected</span></div>
-                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("yellow"), border: "2px solid orange" }}></span> <span style={legendTextStyle}>Next Frame</span></div>
+                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("#00ff00"), border: "1px solid white" }}></span> <span style={legendTextStyle}> {t('uiActiveFrame')} </span></div>
+                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("blue"), border: "1px solid #e3da30" }}></span> <span style={legendTextStyle}> {t('uiNearbyFrames')} </span></div>
+                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("#a52a2a"), border: "1px solid white" }}></span> <span style={legendTextStyle}> {t('uiCoverage')} </span></div>
+                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("transparent"), border: "1.5px solid cyan" }}></span> <span style={legendTextStyle}> {t('uiFirstSelected')} </span></div>
+                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("yellow"), border: "2px solid orange" }}></span> <span style={legendTextStyle}> {t('uiNextFrame')} </span></div>
                         
                         {/* Haritada saha notu varsa göster */}
                         {hasFieldNotes && (
                             <div style={legendRowStyle}>
-                                {diamondMarker} <span style={legendTextStyle}>Field Note</span>
+                                {diamondMarker} <span style={legendTextStyle}> {t('uiFieldNote')} </span>
                             </div>
                         )}
                     </React.Fragment>
                 ) : (
                     <React.Fragment>
-                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("black"), border: "1px solid white" }}></span> <span style={legendTextStyle}>Clicked Point</span></div>
-                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("#00ff00"), border: "1px solid white" }}></span> <span style={legendTextStyle}>Active Frame</span></div>
-                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("blue"), border: "1px solid white" }}></span> <span style={legendTextStyle}>Nearby Frames</span></div>
-                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("yellow"), border: "2px solid orange" }}></span> <span style={legendTextStyle}>Next Frame</span></div>
+                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("black"), border: "1px solid white" }}></span> <span style={legendTextStyle}> {t('uiClickedPoint')} </span></div>
+                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("#00ff00"), border: "1px solid white" }}></span> <span style={legendTextStyle}> {t('uiActiveFrame')} </span></div>
+                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("blue"), border: "1px solid white" }}></span> <span style={legendTextStyle}> {t('uiNearbyFrames')} </span></div>
+                        <div style={legendRowStyle}><span style={{ ...legendCircleStyle("yellow"), border: "2px solid orange" }}></span> <span style={legendTextStyle}> {t('uiNextFrame')} </span></div>
                         
                         {/* Haritada saha notu varsa göster */}
                         {hasFieldNotes && (
                             <div style={legendRowStyle}>
-                                {diamondMarker} <span style={legendTextStyle}>Field Note</span>
+                                {diamondMarker} <span style={legendTextStyle}> {t('uiFieldNote')} </span>
                             </div>
                         )}
-                        <button onClick={onClearCache} style={compactButtonStyle}>CLEAR CACHE</button>
+                        <button onClick={onClearCache} style={compactButtonStyle}> {t('uiClearCache')} </button>
                     </React.Fragment>
                 )}
             </div>

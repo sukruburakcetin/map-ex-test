@@ -1,5 +1,7 @@
 /** @jsx jsx */
 /** Local note-list presentation. Persistence, server actions and clear-confirmation lifetime remain parent-owned. */
+import { OwnedMessage } from '../../i18n/WidgetLocale';
+import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 import { FIELD_NOTE_STATUSES } from '../../components/types';
 import type { FieldNote } from '../../components/types';
@@ -29,19 +31,20 @@ export interface LocalNotesListProps {
 
 /** Render newest-first local copies and forward actions; clearing never deletes Enterprise records. */
 export const LocalNotesList: React.FC<LocalNotesListProps> = props => {
+ const { t, formatLocale:locale } = useWidgetLocale();
+
   const { notes, fileInputRef, isConfirmingClear, setIsConfirmingClear, onDeleteNote, onClearAll, onExport, onImportFile, onFocusNote, onCloseList } = props;
   return (
-<div role="tabpanel" aria-label="Local notes" style={notesLocalPanelStyle}>
+<div role="tabpanel" aria-label={t('uiLocalNotes')} style={notesLocalPanelStyle}>
                     {/* Fixed Header: Actions remain visible at all times */}
                     <div style={noteListToolbarStyle}>
-                        <span>{notes.length > 0 ? `${notes.length} local note${notes.length > 1 ? 's' : ''}` : 'No local notes'}</span>
+                        <span>{notes.length > 0 ? <OwnedMessage source={notes.length === 1 ? "{count} local note" : "{count} local notes"} values={{count:notes.length}}/> : t('uiNoLocalNotes')}</span>
                         <div style={noteListToolbarActionsStyle}>
                             {/* Import Button */}
                             <button
                                 onClick={() => fileInputRef.current?.click()}
                                 style={noteListImportStyle}
-                                    >Import
-                                </button>
+                                    > {t('uiImport')} </button>
                             <input
                                 ref={fileInputRef}
                                 type="file"
@@ -58,8 +61,7 @@ export const LocalNotesList: React.FC<LocalNotesListProps> = props => {
                             <button
                                 onClick={onExport}
                                 style={noteListExportStyle}
-                                >Export
-                            </button>
+                                > {t('uiExport')} </button>
                             {notes.length > 0 && (
                                 <button
                                     onClick={() => {
@@ -74,7 +76,7 @@ export const LocalNotesList: React.FC<LocalNotesListProps> = props => {
                                         }
                                     }}
                                     disabled={notes.some(note => note.sharedStatus === "saving")}
-                                    title={isConfirmingClear ? "Click again to confirm removal of local copies" : "Clear local notes; shared notes remain in the enterprise layer"}
+                                    title={isConfirmingClear ? t('uiClickAgainToConfirmRemovalOfLocalCopies') : t('uiClearLocalNotesSharedNotesRemainInThe')}
                                     style={{
                                         fontSize: "10px",
                                         padding: "3px 8px",
@@ -87,7 +89,7 @@ export const LocalNotesList: React.FC<LocalNotesListProps> = props => {
                                         transition: "all 0.2s ease"
                                     }}
                                 >
-                                    {isConfirmingClear ? "Confirm clear local" : "Clear local"}
+                                    {isConfirmingClear ? t('uiConfirmClearLocal') : t('uiClearLocal')}
                                 </button>
                             )}
                             {/* Close Button */}
@@ -98,12 +100,11 @@ export const LocalNotesList: React.FC<LocalNotesListProps> = props => {
                         </div>
                     </div>
 
-                    {isConfirmingClear && <div role="status" style={notesSourceHintStyle}>Local records will be removed. Enterprise notes will remain.</div>}
+                    {isConfirmingClear && <div role="status" style={notesSourceHintStyle}> {t('uiLocalRecordsWillBeRemovedEnterpriseNotesWill')} </div>}
                     <div style={enterpriseRowsStyle}>
                         {notes.length === 0 && (
                             <div style={noteListEmptyStyle}>
-                                You can get started by importing a GeoJSON file.
-                            </div>
+                                 {t('uiYouCanGetStartedByImportingAGeojson')} </div>
                         )}
                         {notes.slice().reverse().map(n => (
                             <div
@@ -116,28 +117,28 @@ export const LocalNotesList: React.FC<LocalNotesListProps> = props => {
                                 }}
                             >
                                 <div style={notesRowHeadingStyle}>
-                                    <span style={noteListCategoryStyle}>{n.category} <span style={notesRowMetaStyle}>{new Date(n.createdAt).toLocaleString()}</span></span>
-                                    <span role="button" tabIndex={0} aria-label={n.sharedStatus === "shared" ? "Remove local copy; enterprise note remains" : "Delete local note"}
+                                    <span style={noteListCategoryStyle}>{n.category} <span style={notesRowMetaStyle}>{new Date(n.createdAt).toLocaleString(locale)}</span></span>
+                                    <span role="button" tabIndex={0} aria-label={n.sharedStatus === "shared" ? t('uiRemoveLocalCopyEnterpriseNoteRemains') : t('uiDeleteLocalNote')}
                                         onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); event.stopPropagation(); onDeleteNote(n.id); } }}
                                         onClick={(e) => { e.stopPropagation(); onDeleteNote(n.id); }}
                                         style={noteListDeleteStyle}
                                     >✕</span>
                                 </div>
-                                <div style={{ fontSize: 10, marginTop: 3, color: n.sharedStatus === "failed" ? "#ffb8a6" : "#9ed9df" }}>{n.sharedStatus === "saving" ? "Saving to organization…" : n.sharedStatus === "shared" ? "Shared · local copy" : n.sharedStatus === "failed" ? "Share failed · local draft preserved" : "Local draft"}
-                                  {props.sharingEnabled && n.sharedStatus !== "shared" && <button type="button" disabled={n.sharedStatus === "saving"} onClick={event => { event.stopPropagation(); props.onShareNote?.(n.id); }} title={n.sharedStatus === "failed" ? "Retry saving this local draft to your organization’s field-notes layer. The local copy is kept." : "Save this local note to your organization’s field-notes layer so others with access can view it. The local copy is kept."} style={noteListShareStyle}>{n.sharedStatus === "failed" ? "Retry sharing" : "Share"}</button>}
+                                <div style={{ fontSize: 10, marginTop: 3, color: n.sharedStatus === "failed" ? "#ffb8a6" : "#9ed9df" }}>{n.sharedStatus === "saving" ? t('uiSavingToOrganization') : n.sharedStatus === "shared" ? t('uiSharedLocalCopy') : n.sharedStatus === "failed" ? t('uiShareFailedLocalDraftPreserved') : t('uiLocalDraft')}
+                                  {props.sharingEnabled && n.sharedStatus !== "shared" && <button type="button" disabled={n.sharedStatus === "saving"} onClick={event => { event.stopPropagation(); props.onShareNote?.(n.id); }} title={n.sharedStatus === "failed" ? t('uiRetrySavingThisLocalDraftToYourOrganization') : t('uiSaveThisLocalNoteToYourOrganizationS')} style={noteListShareStyle}>{n.sharedStatus === "failed" ? t('uiRetrySharing') : t('uiShare')}</button>}
                                 </div>
                                 <div style={enterpriseActionsStyle}>
-                                  <span style={getNoteStatusBadgeStyle(n.status)}>{FIELD_NOTE_STATUSES.find(item => item.value === (n.status || "open"))?.label || "Open"}</span>
+                                  <span style={getNoteStatusBadgeStyle(n.status)}>{t(n.status==='in_progress'?'uiStatusProgress':n.status==='completed'?'uiStatusCompleted':n.status==='dismissed'?'uiStatusDismissed':'uiStatusOpen')}</span>
                                   <div style={notesRowButtonsStyle}>
-                                  <button type="button" style={noteListActionStyle} disabled={!Number.isFinite(n.lon) || !Number.isFinite(n.lat)} onClick={() => onFocusNote(n)}>Show on map</button>
-                                  <button type="button" disabled={n.sharedStatus === "saving" || !!props.editorBusy} onClick={event => { event.stopPropagation(); props.onEditNote?.(n.id); }} style={{ ...noteListActionStyle, opacity: n.sharedStatus === "saving" || props.editorBusy ? 0.45 : 1 }}>Edit local</button>
-                                  {props.sharingEnabled && n.sharedStatus === "shared" && <button type="button" disabled={!!props.editorBusy} onClick={event => { event.stopPropagation(); props.onEditSharedNote?.(n); }} style={{ ...noteListActionStyle, opacity: props.editorBusy ? 0.45 : 1 }}>Update shared</button>}
-                                  {props.sharingEnabled && n.sharedStatus === "shared" && <button type="button" disabled={!!props.attachmentsBusy} style={{ ...noteListActionStyle, opacity: props.attachmentsBusy ? 0.45 : 1 }} onClick={event => { event.stopPropagation(); props.onAttachments?.(n); }}>Attachments</button>}
+                                  <button type="button" style={noteListActionStyle} disabled={!Number.isFinite(n.lon) || !Number.isFinite(n.lat)} onClick={() => onFocusNote(n)}> {t('uiShowOnMap')} </button>
+                                  <button type="button" disabled={n.sharedStatus === "saving" || !!props.editorBusy} onClick={event => { event.stopPropagation(); props.onEditNote?.(n.id); }} style={{ ...noteListActionStyle, opacity: n.sharedStatus === "saving" || props.editorBusy ? 0.45 : 1 }}> {t('uiEditLocal')} </button>
+                                  {props.sharingEnabled && n.sharedStatus === "shared" && <button type="button" disabled={!!props.editorBusy} onClick={event => { event.stopPropagation(); props.onEditSharedNote?.(n); }} style={{ ...noteListActionStyle, opacity: props.editorBusy ? 0.45 : 1 }}> {t('uiUpdateShared')} </button>}
+                                  {props.sharingEnabled && n.sharedStatus === "shared" && <button type="button" disabled={!!props.attachmentsBusy} style={{ ...noteListActionStyle, opacity: props.attachmentsBusy ? 0.45 : 1 }} onClick={event => { event.stopPropagation(); props.onAttachments?.(n); }}> {t('uiAttachments')} </button>}
                                   </div>
                                 </div>
-                                {n.sharedStatus !== "shared" && props.sharingEnabled && <div style={notesAttachmentHintStyle}>Share first to attach files.</div>}
-                                {n.resolutionNote && <div style={noteListResolutionStyle}>Resolution: {n.resolutionNote}</div>}
-                                {n.sharedError && <div style={noteListErrorStyle}>{n.sharedError}</div>}
+                                {n.sharedStatus !== "shared" && props.sharingEnabled && <div style={notesAttachmentHintStyle}> {t('uiShareFirstToAttachFiles')} </div>}
+                                {n.resolutionNote && <div style={noteListResolutionStyle}> {t('uiResolution')} {n.resolutionNote}</div>}
+                                {n.sharedError && <div style={noteListErrorStyle}>{<OwnedMessage source={String(n.sharedError ?? "")}/>}</div>}
                                 {n.note && <div style={noteListTextStyle}>{n.note}</div>}
 
                             </div>

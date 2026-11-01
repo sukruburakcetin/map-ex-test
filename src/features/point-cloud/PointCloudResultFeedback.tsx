@@ -1,4 +1,5 @@
 /** @jsx jsx */
+import { OwnedMessage, OwnedNumber } from '../../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 import * as Icons from '../../components/Icons';
 import type { PointCloudResult } from '../../utils/pointCloudUtils';
@@ -15,16 +16,15 @@ export function showPointCloudLoadedFeedback(showToast: Toast, result: PointClou
       <span style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
         <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <Icons.Check size={14} color="#37d582" />
-          <b>Point cloud loaded:</b> {result.clusterCount} cluster{result.clusterCount !== 1 ? "s" : ""}
+          <b> <OwnedMessage source={"Point cloud loaded:"}/> </b> {result.clusterCount}  <OwnedMessage source={"cluster"}/> {result.clusterCount !== 1 ? "s" : ""}
         </span>
         <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.75)", paddingLeft: "20px" }}>
-          {totalPoints.toLocaleString()} pts total
-          {dupes > 0 ? ` · ${dupes.toLocaleString()} dupes removed` : ""}
+          {<OwnedNumber value={totalPoints}/>}  <OwnedMessage source={"pts total"}/> {dupes > 0 ? <OwnedMessage source={" · {value0} dupes removed"} values={{value0:dupes}}/> : ""}
         </span>
         <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", paddingLeft: "20px" }}>
-          {visiblePoints.toLocaleString()} pts visible at {length}m × {width}m
+          {<OwnedNumber value={visiblePoints}/>}  <OwnedMessage source={"pts visible at"}/> {length}m × {width}m
         </span>
-        <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)", paddingLeft: "20px" }}>Use T, F, G, H, R, V to align or use calibration panel.</span>
+        <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)", paddingLeft: "20px" }}> <OwnedMessage source={"Use T, F, G, H, R, V to align or use calibration panel."}/> </span>
       </span>,
       6000,
     );

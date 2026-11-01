@@ -1,6 +1,7 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 /** Controlled coverage progress/results card; analysis, routing state and SDK resources remain parent-owned. */
+import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 import type { InfoBoxProps } from '../../components/types';
 import { coverageResultsPanelStyle, coverageResultsHeaderStyle, coverageResultsDismissStyle, coverageResultsProgressStyle, coverageResultsDotsStyle, coverageResultsCancelStyle, coverageResultsTierRowStyle, coverageResultsTierLineStyle, coverageResultsTierLabelGroupStyle, getCoverageResultsTierDotStyle, coverageResultsTierLabelStyle, coverageResultsTierAgeStyle, coverageResultsTierPercentStyle, coverageResultsTierDistanceStyle, coverageResultsBarStyle, getCoverageResultsBarPartStyle, coverageResultsTotalsStyle, coverageResultsCoveredStyle, coverageResultsSegmentsStyle, getCoverageResultsMapToggleStyle } from '../../styles/coverageAnalysis';
@@ -12,6 +13,8 @@ export type CoverageAnalysisResultsProps = Pick<InfoBoxProps, 'coverageAnalysisL
 
 /** Preserve progress/status text, rounded percentages, tier order and callbacks without owning state or effects. */
 export const CoverageAnalysisResults: React.FC<CoverageAnalysisResultsProps> = props => {
+ const { t, locale } = useWidgetLocale();
+
   const { coverageAnalysisLoading, coverageAnalysisProgress, onCancelCoverageAnalysis, coverageResult, coverageSegmentsVisible, onToggleCoverageSegments, onDismissCoverageResult, renderRoutingControls } = props;
   return (
 <div
@@ -22,8 +25,8 @@ export const CoverageAnalysisResults: React.FC<CoverageAnalysisResultsProps> = p
               <div
                 style={coverageResultsHeaderStyle}
               >
-                <span>{coverageAnalysisLoading ? "Street coverage" : "STREET COVERAGE"}</span>
-                {!coverageAnalysisLoading && <button type="button" aria-label="Dismiss street coverage results"
+                <span>{coverageAnalysisLoading ? t('uiStreetCoverage') : t('uiStreetCoverage2')}</span>
+                {!coverageAnalysisLoading && <button type="button" aria-label={t('uiDismissStreetCoverageResults')}
                   onClick={onDismissCoverageResult}
                   style={coverageResultsDismissStyle}
                 >
@@ -47,7 +50,7 @@ export const CoverageAnalysisResults: React.FC<CoverageAnalysisResultsProps> = p
                     {(coverageAnalysisProgress || "Analysing coverage").replace(/(?:…|\.{3})+\s*$/, "")}
                   </div>
                   <div className="mly-coverage-scan" aria-hidden="true"><span/></div>
-                  <button type="button" onClick={onCancelCoverageAnalysis} style={coverageResultsCancelStyle}>Cancel</button>
+                  <button type="button" onClick={onCancelCoverageAnalysis} style={coverageResultsCancelStyle}> {t('uiCancel')} </button>
                 </>
               )}
 
@@ -71,7 +74,7 @@ export const CoverageAnalysisResults: React.FC<CoverageAnalysisResultsProps> = p
                         </div>
                         <span className="mly-coverage-tier-percent" style={coverageResultsTierPercentStyle}>{pct}%</span>
                       </div>
-                      <div style={coverageResultsTierDistanceStyle}>{km} km</div>
+                      <div style={coverageResultsTierDistanceStyle}>{km}  {t('uiKm')} </div>
                     </div>
                   );
 
@@ -89,10 +92,9 @@ export const CoverageAnalysisResults: React.FC<CoverageAnalysisResultsProps> = p
 
                       {/* Totals */}
                       <div style={coverageResultsTotalsStyle}>
-                        <div style={coverageResultsCoveredStyle}>{r.percentCovered}% covered</div>
+                        <div style={coverageResultsCoveredStyle}>{r.percentCovered} {t('uiCovered')} </div>
                         <div style={coverageResultsSegmentsStyle}>
-                          {r.coveredCount} / {r.totalCount} segments
-                        </div>
+                          {r.coveredCount} / {r.totalCount}  {t('uiSegments')} </div>
                       </div>
 
                       {/* Data Rows */}
@@ -106,7 +108,7 @@ export const CoverageAnalysisResults: React.FC<CoverageAnalysisResultsProps> = p
                         onClick={onToggleCoverageSegments}
                         style={getCoverageResultsMapToggleStyle(coverageSegmentsVisible)}
                       >
-                        {coverageSegmentsVisible ? "HIDE MAP" : "SHOW MAP"}
+                        {coverageSegmentsVisible ? t('uiHideMap') : t('uiShowMap')}
                       </button>
 
                       {renderRoutingControls()}

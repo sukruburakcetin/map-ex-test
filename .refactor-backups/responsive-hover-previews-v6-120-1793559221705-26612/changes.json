@@ -1,0 +1,37 @@
+{
+  "installer": "responsive-hover-previews-v6-120",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "30379393a4a99f6e301de9002764aec127337ead7e63f6086b12c0f94d294581",
+      "resultSha256": "8ebbc72e6b60c19945baab5ae1adc41689f59e072d820623d84a8ac32eac3574"
+    },
+    {
+      "file": "src/features/coverage/CoverageFrameLookup.ts",
+      "originalSha256": "d8dc60cb87ef298acdb57324cc01d8a4251904bc9d9b6dd020c14aa1b9a1a17c",
+      "resultSha256": "7147a0f327293e8baee5651dd32c46e8bfde01cd86a8cda2b5e52e346ed6c725"
+    },
+    {
+      "file": "tests/hoverBearingRuntime.test.cjs",
+      "originalSha256": "cc1e95e83761ea5eb1802251a3c534722e2f820a0998176a54bbbd038535d736",
+      "resultSha256": "a151f6ced175d7c61eae6baca872034d34483a800515faadce0077032ab2893e"
+    },
+    {
+      "file": "src/features/imagery/hoverBearingTarget.ts",
+      "originalSha256": "7eed946a5f9e13df7bdad4afbbeca14fda6dec5d92e8d2289da9405101cc6dc0",
+      "resultSha256": "2b5c99f78d2a93c40232f9e712a609f3ece684fc7e5a462571c5994870c210ed"
+    },
+    {
+      "file": "tests/hoverPreviewCache.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "e0fa7487322f468896a244e529acab5d95617d9f1877ad738495deaffbdd715c"
+    },
+    {
+      "file": "docs/RESPONSIVE-HOVER-PREVIEWS-v6.120.md",
+      "originalSha256": null,
+      "resultSha256": "392586a1ee45889bf18185825a9a973edcfc6b0737049db29d2892b53f04d24b"
+    }
+  ]
+}

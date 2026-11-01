@@ -1,0 +1,47 @@
+{
+  "installer": "regional-hover-bearing-v6-119",
+  "uninstall": true,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "30379393a4a99f6e301de9002764aec127337ead7e63f6086b12c0f94d294581",
+      "resultSha256": "f674f49df514228df18e0050eaedff895c43e3d6fa24c994e6a1fb7f2ba940e9"
+    },
+    {
+      "file": "src/features/imagery/hoverBearingMetadata.ts",
+      "originalSha256": "ac136c058f841043dd45b143b447a9dfd9b02b9371baad16a1d6e47d6fc3521f",
+      "resultSha256": "6de0123f99880acc3577fe1b00f66105ab21f3c39e687b58d94cd6bee1d15553"
+    },
+    {
+      "file": "tests/hoverBearingMetadata.test.cjs",
+      "originalSha256": "25f90f5798f457a2e8652f790cefaf6db7e6b6453385e51a96583acdb8461451",
+      "resultSha256": "94c7a45883e20108c75b1cbe0cff699a78d7c808a803e3964255bbe6503605e0"
+    },
+    {
+      "file": "tests/hoverBearingRuntime.test.cjs",
+      "originalSha256": "cc1e95e83761ea5eb1802251a3c534722e2f820a0998176a54bbbd038535d736",
+      "resultSha256": "c735d401b20196424c53aaa40fe9ffd3e5e6b412bc19de092b48cb3c74c3f81a"
+    },
+    {
+      "file": "tests/imageFirstSelection.test.cjs",
+      "originalSha256": "550eabf00e0943d21814315ca643bf7bfabfff5464cbedb35a986c81b77fb7f4",
+      "resultSha256": "b5efa7933d8132a01ff7179aca320c9ca39d1a75c605d51926b728ef7ecbe026"
+    },
+    {
+      "file": "src/features/imagery/hoverBearingTarget.ts",
+      "originalSha256": "7eed946a5f9e13df7bdad4afbbeca14fda6dec5d92e8d2289da9405101cc6dc0",
+      "resultSha256": null
+    },
+    {
+      "file": "tests/hoverBearingTarget.test.cjs",
+      "originalSha256": "4bf4392f1265d099655a12409db5ce328191548fb6e43fe431cbd179d2a3ed9c",
+      "resultSha256": null
+    },
+    {
+      "file": "docs/LOW-ZOOM-HOVER-BEARING-v6.119.md",
+      "originalSha256": "5ba7e80827ccb2039bb7653d0e0543ecef370384c87f40962255c564b139dcfc",
+      "resultSha256": null
+    }
+  ]
+}

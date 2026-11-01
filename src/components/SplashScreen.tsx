@@ -1,4 +1,5 @@
 /** @jsx jsx */
+import { useWidgetLocale } from '../i18n/WidgetLocale';
 import { React, jsx } from "jimu-core";
 import { SplashScreenProps } from "./types";
 import { MAPILLARY_IMAGE } from "../utils/mapillary-image-base64";
@@ -6,6 +7,8 @@ import { getSplashOverlayStyle, splashAnimationCss } from '../styles/splashScree
 
 /** Static panoramic viewfinder; preparation and dismissal stay independent of the artwork. */
 export const SplashScreen: React.FC<SplashScreenProps> = ({ showIntro, filtersLoaded, onDismiss }) => {
+ const { t, locale, direction } = useWidgetLocale();
+
     const sceneId = React.useId().replace(/:/g, '');
     React.useEffect(() => {
         if (!showIntro || filtersLoaded || !onDismiss) return;
@@ -13,7 +16,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ showIntro, filtersLo
         return () => clearTimeout(timer);
     }, [showIntro, filtersLoaded, onDismiss]);
     if (!showIntro) return null;
-    return <div className="mly-intro" style={getSplashOverlayStyle(filtersLoaded)}>
+    return <div dir={direction} className="mly-intro" style={getSplashOverlayStyle(filtersLoaded)}>
       <style>{splashAnimationCss}</style>
       <svg className="mly-intro-atlas" aria-hidden="true" focusable="false" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" fill="none">
         <g stroke="#82b297" strokeWidth="1" opacity=".17">
@@ -49,15 +52,15 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ showIntro, filtersLo
             <g fill="#a3baa5"><ellipse cx="280" cy="100" rx="5" ry="2"/><ellipse cx="378" cy="106" rx="4" ry="2"/></g>
             <path d="M0 266H640V280H0Z" fill="#203b35" opacity=".35"/>
           </svg>
-          <div className="mly-intro-brand"><img src={MAPILLARY_IMAGE} alt="" width={22} height={22}/><span>Mapillary Explorer</span></div>
+          <div className="mly-intro-brand"><img src={MAPILLARY_IMAGE} alt="" width={22} height={22}/><span> {t('uiMapillaryExplorer')} </span></div>
           <div className="mly-viewfinder-frame" aria-hidden="true"><i/><i/><i/><i/></div>
-          <span className="mly-intro-caption" aria-hidden="true">A wider world. One street at a time.</span>
+          <span className="mly-intro-caption" aria-hidden="true"> {t('uiAWiderWorldOneStreetAtATime')} </span>
         </div>
         <div className="mly-intro-copy">
-          <div className="mly-intro-heading"><h2>Find your point of view.</h2><p>Street imagery, connected by the map.</p></div>
+          <div className="mly-intro-heading"><h2> {t('uiFindYourPointOfView')} </h2><p> {t('uiStreetImageryConnectedByTheMap')} </p></div>
           <div className="mly-intro-bottom">
-            {onDismiss && <button type="button" onClick={onDismiss} disabled={filtersLoaded}>Start exploring <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M2 6h8M6 2l4 4-4 4"/></svg></button>}
-            <span className="mly-intro-status" role="status">{!filtersLoaded && <span className="mly-intro-loading" aria-hidden="true"/>}{filtersLoaded ? "Ready to explore" : "Preparing your tools"}</span>
+            {onDismiss && <button type="button" onClick={onDismiss} disabled={filtersLoaded}> {t('uiStartExploring')} <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M2 6h8M6 2l4 4-4 4"/></svg></button>}
+            <span className="mly-intro-status" role="status">{!filtersLoaded && <span className="mly-intro-loading" aria-hidden="true"/>}{filtersLoaded ? t('uiReadyToExplore') : t('uiPreparingYourTools')}</span>
           </div>
         </div>
       </div>

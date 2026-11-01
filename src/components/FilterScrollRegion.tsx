@@ -1,21 +1,25 @@
 /** @jsx jsx */
+import { useWidgetLocale } from '../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 
 const filterPanelCss = `
-.mly-filter-panel { display:flex; align-items:center; gap:3px; width:100%; max-width:100%; min-width:0; height:42px; flex:0 0 42px; box-sizing:border-box; padding:2px 3px; background:linear-gradient(135deg,#142d26,#10231e); color:#e1f2e8; pointer-events:auto; z-index:10001; }
-.mly-filter-scroll-wrap { position:relative; flex:1 1 0; min-width:0; height:36px; }
+.mly-filter-panel { display:flex; align-items:center; gap:3px; width:100%; max-width:100%; min-width:0; height:30px; flex:0 0 30px; box-sizing:border-box; padding:1px 3px; background:linear-gradient(135deg,#142d26,#10231e); color:#e1f2e8; pointer-events:auto; z-index:10001; }
+.mly-filter-panel.has-overflow { height:36px; flex-basis:36px; }
+.mly-filter-scroll-wrap { position:relative; flex:1 1 0; min-width:0; height:28px; }
+.mly-filter-panel.has-overflow .mly-filter-scroll-wrap { height:34px; }
 .mly-filter-panel .mly-filter-scroll { width:100%; min-width:0; height:28px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none !important; -ms-overflow-style:none; overscroll-behavior-x:contain; touch-action:pan-x pan-y; }
 .mly-filter-panel .mly-filter-scroll::-webkit-scrollbar { display:none !important; width:0 !important; height:0 !important; }
 .mly-filter-panel .mly-filter-scroll::-webkit-scrollbar-button { display:none !important; width:0 !important; height:0 !important; }
-.mly-filter-progress { position:absolute; left:0; right:0; bottom:0; height:8px; cursor:pointer; touch-action:none; border-radius:2px; outline-offset:0; }
-.mly-filter-progress::before { content:""; position:absolute; left:0; right:0; top:3px; height:2px; background:rgba(106,167,133,.18); border-radius:1px; }
-.mly-filter-progress > span { display:block; position:absolute; top:3px; height:2px; border-radius:1px; background:#548b70; cursor:grab; }
+.mly-filter-progress { position:absolute; left:0; right:0; bottom:0; height:6px; cursor:pointer; touch-action:none; border-radius:2px; outline-offset:0; }
+.mly-filter-progress::before { content:""; position:absolute; left:0; right:0; top:2px; height:2px; background:rgba(106,167,133,.18); border-radius:1px; }
+.mly-filter-progress > span { display:block; position:absolute; top:2px; height:2px; border-radius:1px; background:#548b70; cursor:grab; }
 .mly-filter-progress:active > span { cursor:grabbing; }
 .mly-filter-progress:focus-visible { outline:1px solid #76dba5; }
 
 .mly-filter-scroll:focus-visible, .mly-filter-panel button:focus-visible, .mly-filter-panel input:focus-visible, .mly-filter-panel select:focus-visible { outline:2px solid #76dba5 !important; outline-offset:-2px; }
 .mly-filter-row { display:flex; align-items:center; justify-content:center; gap:5px; width:max-content; min-width:100%; height:28px; box-sizing:border-box; }
 .mly-filter-group { display:flex; align-items:center; gap:6px; flex:0 0 auto; height:28px; padding:0 4px; box-sizing:border-box; border:1px solid #416756; border-radius:6px; background:#1b392d; }
+.mly-filter-panel[lang="ar"] .mly-filter-group { direction:rtl; text-align:start; }
 .mly-filter-group label { margin:0 !important; min-height:0; line-height:1; }
 .mly-filter-group input[type="text"] { height:24px !important; min-height:24px !important; padding-top:0 !important; padding-bottom:0 !important; box-sizing:border-box; border-radius:5px !important; border-color:#456b58 !important; background:#122c22 !important; }
 .mly-filter-group select { display:block; height:24px !important; min-height:24px !important; max-height:24px !important; box-sizing:border-box; margin:0; border:1px solid #507d64 !important; border-radius:5px; padding:0 4px !important; font-size:10px !important; line-height:normal; background:#173d2b !important; color:#edf7f0; color-scheme:dark; }
@@ -37,6 +41,7 @@ let nextFilterScrollId = 0;
 
 /** Own only the filter row's scrolling; never register map/viewer handlers. */
 export const FilterScrollRegion: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const {t,locale} = useWidgetLocale();
   const viewport = React.useRef<HTMLDivElement>(null);
   const row = React.useRef<HTMLDivElement>(null);
   const progressThumb = React.useRef<HTMLSpanElement>(null);
@@ -73,7 +78,7 @@ export const FilterScrollRegion: React.FC<{ children: React.ReactNode }> = ({ ch
       event.preventDefault(); event.stopPropagation(); el.scrollLeft = next;
     };
     // Pointer capture keeps thumb dragging active outside the thin visual track.
-    // The 8px hit area sits below controls; only the painted bar remains 2px tall.
+    // The 6px hit area sits below controls; only the painted bar remains 2px tall.
     const track = progressTrack.current;
     let drag: { id: number; x: number; scroll: number; ratio: number } | null = null;
     const down = (event: PointerEvent) => {
@@ -136,18 +141,18 @@ export const FilterScrollRegion: React.FC<{ children: React.ReactNode }> = ({ ch
     const el = viewport.current;
     if (el) el.scrollBy({ left: direction * Math.max(120, el.clientWidth * .75), behavior: 'smooth' });
   };
-  return <div className="mly-filter-panel">
+  return <div dir="ltr" lang={locale} className={`mly-filter-panel${edges.overflow ? ' has-overflow' : ''}`}>
     <style>{filterPanelCss}</style>
-    {edges.overflow && <button type="button" className="mly-filter-nav" aria-label="Scroll filters left" aria-controls={id} disabled={!edges.left} onClick={() => move(-1)}>‹</button>}
+    {edges.overflow && <button type="button" className="mly-filter-nav" aria-label={t('scrollLeft')} aria-controls={id} disabled={!edges.left} onClick={() => move(-1)}>‹</button>}
     <div className="mly-filter-scroll-wrap">
-    <div ref={viewport} id={id} className="mly-filter-scroll" role="region" aria-label="Mapillary filters" tabIndex={0} onKeyDown={event => {
+    <div ref={viewport} id={id} className="mly-filter-scroll" role="region" aria-label={t('filters')} tabIndex={0} onKeyDown={event => {
       if (event.target !== event.currentTarget || event.altKey || event.ctrlKey || event.metaKey) return;
       const el = event.currentTarget;
       if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); move(event.key === 'ArrowLeft' ? -1 : 1); }
       else if (event.key === 'Home' || event.key === 'End') { event.preventDefault(); el.scrollTo({ left: event.key === 'Home' ? 0 : el.scrollWidth, behavior: 'smooth' }); }
     }}><div ref={row} className="mly-filter-row">{children}</div></div>
-    <div ref={progressTrack} className="mly-filter-progress" role="scrollbar" aria-label="Scroll filters horizontally" aria-orientation="horizontal" aria-controls={id} aria-valuemin={0} tabIndex={0} style={{ display: edges.overflow ? 'block' : 'none' }}><span ref={progressThumb} /></div>
+    <div ref={progressTrack} className="mly-filter-progress" role="scrollbar" aria-label={t('scrollFilters')} aria-orientation="horizontal" aria-controls={id} aria-valuemin={0} tabIndex={0} style={{ display: edges.overflow ? 'block' : 'none' }}><span ref={progressThumb} /></div>
     </div>
-    {edges.overflow && <button type="button" className="mly-filter-nav" aria-label="Scroll filters right" aria-controls={id} disabled={!edges.right} onClick={() => move(1)}>›</button>}
+    {edges.overflow && <button type="button" className="mly-filter-nav" aria-label={t('scrollRight')} aria-controls={id} disabled={!edges.right} onClick={() => move(1)}>›</button>}
   </div>;
 };

@@ -1,9 +1,13 @@
 /** @jsx jsx */
+import { OwnedMessage } from '../i18n/WidgetLocale';
+import { useWidgetLocale } from '../i18n/WidgetLocale';
 import { React, jsx } from "jimu-core";
 import { getImageryLoadingOverlayStyle, imageryLoadingAnimationCss, imageryLoadingCardStyle, imagerySpinnerStyle, imageryLoadingTextStyle } from '../styles/imageryLoading';
 
 export const ImageryLoading: React.FC<{ loading: boolean; hasImage: boolean; representative?: boolean 
   resolving?: boolean; progress?: string; onCancel?: () => void}> = ({ loading, hasImage, representative, resolving, progress, onCancel}) => {
+ const { t, locale } = useWidgetLocale();
+
     const [slow, setSlow] = React.useState(false);
     React.useEffect(() => {
         setSlow(false);
@@ -16,8 +20,8 @@ export const ImageryLoading: React.FC<{ loading: boolean; hasImage: boolean; rep
       <style>{imageryLoadingAnimationCss}</style>
       <div role="status" aria-live="polite" style={imageryLoadingCardStyle}>
         <span aria-hidden="true" className="mly-imagery-spinner" style={imagerySpinnerStyle} />
-        <span title={representative ? "Opening representative street imagery. Zoom closer to choose a specific image." : "Opening street imagery"} style={imageryLoadingTextStyle}>{resolving ? `Finding nearest frame${progress ? ` · ${progress}` : "…"}` : slow ? "Opening imagery · Taking longer than usual" : representative ? "Opening representative imagery · Zoom closer to choose a frame" : "Opening street imagery"}</span>
-        {resolving && onCancel && <button type="button" onClick={onCancel} className="mly-imagery-cancel">Cancel</button>}
+        <span title={representative ? t('uiOpeningRepresentativeStreetImageryZoomCloserToChoose') : t('uiOpeningStreetImagery')} style={imageryLoadingTextStyle}>{resolving ? <OwnedMessage source={"Finding nearest frame{value0}"} values={{value0:String(progress ? ` · ${progress}` : "…")}}/> : slow ? t('uiOpeningImageryTakingLongerThanUsual') : representative ? t('uiOpeningRepresentativeImageryZoomCloserToChooseA') : t('uiOpeningStreetImagery')}</span>
+        {resolving && onCancel && <button type="button" onClick={onCancel} className="mly-imagery-cancel"> {t('uiCancel')} </button>}
       </div>
     </div>;
 };

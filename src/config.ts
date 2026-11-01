@@ -7,6 +7,9 @@ export type OSRMServerMode = "public" | "custom";
 export type RoutingAuthMode = "auto" | "api-key" | "user";
 
 export interface Config {
+  /** Translation pilot: app locale by default; viewer preference can be disabled. */
+  widgetLanguage?: 'auto' | 'en' | 'en-GB' | 'ar' | 'tr' | 'es' | 'fr' | 'de' | 'pt-BR' | 'it' | 'ja' | 'ko' | 'zh-CN' | 'zh-TW';
+  allowUserLanguageChoice?: boolean;
   /** Optional externally published Overture Places pilot; no requests until users enable it. */
   enablePlaces?: boolean;
   placesServiceUrl?: string;

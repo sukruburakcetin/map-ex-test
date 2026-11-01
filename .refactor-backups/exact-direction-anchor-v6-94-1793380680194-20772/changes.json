@@ -1,0 +1,22 @@
+{
+  "installer": "exact-direction-anchor-v6-94",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "17b53a2ae8d38b3f9a011b8ff8fba6484db62b7fe37649eaa81b04343ed83f75",
+      "resultSha256": "d6cc567227a142f62e05b13ffb418d391ffef496fbfb9fe50a93f907857862a0"
+    },
+    {
+      "file": "docs/EXACT-DIRECTION-HOVER-ANCHOR.md",
+      "originalSha256": null,
+      "resultSha256": "f824be7c607cb2a865b9246841d5aeb0056254d954a8fa209da223a7322a6969"
+    },
+    {
+      "file": "tests/directionHoverAnchor.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "97bd7907c7625b3516e8b4fc7e9131bacd7cf2f2ce1d9a473ce3cd66d9b21eb5"
+    }
+  ]
+}

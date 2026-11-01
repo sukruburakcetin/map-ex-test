@@ -1,4 +1,6 @@
 /** @jsx jsx */
+import { OwnedMessage } from '../i18n/WidgetLocale';
+import { useWidgetLocale } from '../i18n/WidgetLocale';
 import { React, jsx } from "jimu-core";
 import { noteMapMessageStyle, noteMapRefreshStyle } from '../styles/fieldNotes';
 import { LocalNotesList } from '../features/field-notes/LocalNotesList';
@@ -50,6 +52,8 @@ interface Props {
 // Shared note actions are styled in styles/fieldNotes.ts.
 
 export const FieldNotesPanel: React.FC<Props> = (props) => {
+ const { t, locale } = useWidgetLocale();
+
     const {
         pendingNote, notes, listOpen, categories: propCategories,
         onSubmitNote, onCancelPending,
@@ -81,25 +85,25 @@ export const FieldNotesPanel: React.FC<Props> = (props) => {
     return (
         <React.Fragment>
             {props.attachments && <NoteAttachments attachments={props.attachments} currentImageAvailable={props.currentImageAvailable} onUploadAttachment={props.onUploadAttachment} onDownloadAttachment={props.onDownloadAttachment} onCloseAttachments={props.onCloseAttachments} />}
-            {props.editor && props.onSaveEdit && props.onCancelEdit && <NoteEditor key={props.editor.key} editor={props.editor} categories={categories} onSave={props.onSaveEdit} onCancel={props.onCancelEdit} />}
+            {props.editor && props.onSaveEdit && props.onCancelEdit && <NoteEditor key={props.editor.key} editor={props.editor} categories={categories} translateDefaultCategories={!propCategories?.length} onSave={props.onSaveEdit} onCancel={props.onCancelEdit} />}
             {/* Note entry form: centered modal, avoids all fixed chrome */}
             {pendingNote && (
-                <NoteDraftForm categories={categories} category={category} noteText={noteText} share={share} sharingEnabled={props.sharingEnabled} setCategory={setCategory} setNoteText={setNoteText} setShare={setShare} onSubmitNote={onSubmitNote} onCancelPending={onCancelPending} />
+                <NoteDraftForm categories={categories} translateDefaultCategories={!propCategories?.length} category={category} noteText={noteText} share={share} sharingEnabled={props.sharingEnabled} setCategory={setCategory} setNoteText={setNoteText} setShare={setShare} onSubmitNote={onSubmitNote} onCancelPending={onCancelPending} />
             )}
 
             {/* Notes list: bottom-sheet with fixed header and scrollable notes */}
             {listOpen && (
                 <div style={notesSheetStyle}>
-                    {props.sharedMessage && <div role="status" style={noteMapMessageStyle}>{props.sharedMessage} <button type="button" onClick={props.onRetrySharedDisplay} style={noteMapRefreshStyle}>Refresh</button></div>}
-                    {props.enterpriseEnabled && props.onLoadEnterpriseNotes && <div role="tablist" aria-label="Note source" style={notesTabsStyle} onKeyDown={event => {
+                    {props.sharedMessage && <div role="status" style={noteMapMessageStyle}>{<OwnedMessage source={String(props.sharedMessage ?? "")}/>} <button type="button" onClick={props.onRetrySharedDisplay} style={noteMapRefreshStyle}> {t('uiRefresh')} </button></div>}
+                    {props.enterpriseEnabled && props.onLoadEnterpriseNotes && <div role="tablist" aria-label={t('uiNoteSource')} style={notesTabsStyle} onKeyDown={event => {
                       if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
                       event.preventDefault();
                       const nextSource = event.key === "Home" ? "local" : event.key === "End" ? "enterprise" : activeSource === "local" ? "enterprise" : "local";
                       setNoteSource(nextSource); setIsConfirmingClear(false);
                       (event.currentTarget.querySelector('[data-source="' + nextSource + '"]') as HTMLButtonElement | null)?.focus();
                     }}>
-                      <button type="button" role="tab" data-source="local" aria-selected={activeSource === "local"} tabIndex={activeSource === "local" ? 0 : -1} style={getNotesTabStyle(activeSource === "local")} onClick={() => { setNoteSource("local"); setIsConfirmingClear(false); }}>Local ({notes.length})</button>
-                      <button type="button" role="tab" data-source="enterprise" aria-selected={activeSource === "enterprise"} tabIndex={activeSource === "enterprise" ? 0 : -1} style={getNotesTabStyle(activeSource === "enterprise")} onClick={() => { setNoteSource("enterprise"); setIsConfirmingClear(false); }}>Enterprise</button>
+                      <button type="button" role="tab" data-source="local" aria-selected={activeSource === "local"} tabIndex={activeSource === "local" ? 0 : -1} style={getNotesTabStyle(activeSource === "local")} onClick={() => { setNoteSource("local"); setIsConfirmingClear(false); }}> {t('uiLocal')} {notes.length})</button>
+                      <button type="button" role="tab" data-source="enterprise" aria-selected={activeSource === "enterprise"} tabIndex={activeSource === "enterprise" ? 0 : -1} style={getNotesTabStyle(activeSource === "enterprise")} onClick={() => { setNoteSource("enterprise"); setIsConfirmingClear(false); }}> {t('uiEnterprise')} </button>
                     </div>}
                     {activeSource === "enterprise" && props.onLoadEnterpriseNotes ? <EnterpriseNotesList loadPage={props.onLoadEnterpriseNotes} context={props.enterpriseContext} layerUrl={props.enterpriseLayerUrl} onFocus={onFocusNote} onEdit={props.sharingEnabled ? props.onEditSharedNote : undefined} onAttachments={props.onAttachments} editorBusy={!!props.editor?.saving} attachmentsBusy={!!props.attachments?.busy} onClose={onCloseList} /> : <LocalNotesList notes={notes} fileInputRef={fileInputRef} isConfirmingClear={isConfirmingClear} setIsConfirmingClear={setIsConfirmingClear}
                       sharingEnabled={props.sharingEnabled} editorBusy={props.editor?.saving} attachmentsBusy={props.attachments?.busy}
