@@ -1,6 +1,13 @@
 import type { Messages } from '../messages';
 /** French presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const fr: Messages = {
+  "notesSearch": "Rechercher des notes",
+  "notesSearchPlaceholder": "Texte, catégorie, résolution ou statut",
+  "notesClearSearch": "Effacer la recherche de notes",
+  "notesSearchCount": "{shown} sur {total} notes",
+  "notesSearchEmpty": "Aucune note ne correspond à votre recherche.",
+  "notesSearchLoadedScope": "La recherche porte sur les enregistrements chargés. Chargez-en davantage pour inclure d’autres notes.",
+
   "complete001": "Sélectionner…",
   "complete002": "Recherche de l’image la plus proche{value0}",
   "complete003": "{value0} · ID de l’organisation : {value1}",

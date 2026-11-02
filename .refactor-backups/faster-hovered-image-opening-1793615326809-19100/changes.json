@@ -1,0 +1,47 @@
+{
+  "installer": "faster-hovered-image-opening",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "1d24b01583435425a4e70b2928c0859be311e59bf6b2367318d8adec3ee88ce3",
+      "resultSha256": "4f17ab197a65ae6e352fd87049e9ae9361fd5d8ea2a3230d6b222edf407c3bc9"
+    },
+    {
+      "file": "src/features/imagery/SequencePerformance.ts",
+      "originalSha256": "6c5719673a9b3c29ba15e56d1cc82f2ff0f7e692c35a4bc18422d571cb5ac0f2",
+      "resultSha256": "652207a53b5651aad1b679877549c445990e04d630fda25585830ad40aab443a"
+    },
+    {
+      "file": "tests/imageFirstSelection.test.cjs",
+      "originalSha256": "550eabf00e0943d21814315ca643bf7bfabfff5464cbedb35a986c81b77fb7f4",
+      "resultSha256": "d75bd75d223c8df264498d9ea6335db96d5238923a52ead9c8f3c33245366970"
+    },
+    {
+      "file": "tests/sequencePerformanceRuntime.test.cjs",
+      "originalSha256": "713c14377e9de42925459527245f5fcd2ea85b2d85d6ff0447b7516cf612a87c",
+      "resultSha256": "3a07ed28704133ae6bea4737ec9c22fef66150beb2cb2f249de5fbefad49bdf3"
+    },
+    {
+      "file": "src/features/coverage/coverageClickDispatch.ts",
+      "originalSha256": null,
+      "resultSha256": "58d8ee66ddb54d157663fe4c9a39a9a28cb1583fd2ea8181824a3dce93a965fa"
+    },
+    {
+      "file": "tests/coverageClickDispatch.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "d418f6b42189151e0b0495c84bb94fd79b58d1de49638989e647464c47022120"
+    },
+    {
+      "file": "tests/sequenceFeedbackScheduling.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "27df174e41f6a883aec040bbc213da76bd2ee5ec5c09adde42baa95c47652482"
+    },
+    {
+      "file": "docs/FASTER-HOVERED-IMAGE-OPENING.md",
+      "originalSha256": null,
+      "resultSha256": "8697de943c3138be06b242b886cbf2cbbc981b90490117b3b11652f8c392eb6f"
+    }
+  ]
+}

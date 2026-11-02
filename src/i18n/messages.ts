@@ -2,6 +2,13 @@ import { completionEn } from './completionMessages';
 import { runtimeEn } from './runtimeMessages';
 /** English fallback catalog. Message keys stay stable when wording changes. */
 export const en = {
+  "notesSearch": "Search notes",
+  "notesSearchPlaceholder": "Text, category, resolution or status",
+  "notesClearSearch": "Clear note search",
+  "notesSearchCount": "{shown} of {total} notes",
+  "notesSearchEmpty": "No notes match your search.",
+  "notesSearchLoadedScope": "Search covers loaded records. Load more to include additional notes.",
+
  ...completionEn,
  ...runtimeEn,
  date:'Date', today:'Today', previousYear:'Previous year', nextYear:'Next year', previousMonth:'Previous month', nextMonth:'Next month',

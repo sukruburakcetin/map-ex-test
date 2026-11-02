@@ -1,0 +1,37 @@
+{
+  "installer": "note-status-clarity",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/field-notes/LocalNotesList.tsx",
+      "originalSha256": "d9e9d83fbb1a1816ff793858866013017570bc95f0edf71e58d7ce86c6907490",
+      "resultSha256": "36e71b14e3203b9e8a750deb2faf672276567c8b98dc8a94915d58bdfccc134e"
+    },
+    {
+      "file": "src/features/field-notes/EnterpriseNotesList.tsx",
+      "originalSha256": "8e8ef5498c6906fd3c9ba88e5bd77b01e0565816e8bfecef49e00582be71b57e",
+      "resultSha256": "407d411f648e4e87fb02f8fa58e5bd050692659b52c4438f8f5f95d951cac4fb"
+    },
+    {
+      "file": "src/styles/fieldNotes.ts",
+      "originalSha256": "18216479288df326961fffbd06e8f0d64b2aed4b64c67459fcc1d04a6a59544c",
+      "resultSha256": "390a3d37fd819fa18de3700a96f1771ee53642bb62429e653463500312b97349"
+    },
+    {
+      "file": "src/styles/enterpriseNotes.ts",
+      "originalSha256": "22a2b9896ad590d3f3a3f6a9d409031a6180b8ce68622225e89aab6f349d5426",
+      "resultSha256": "0be4a367168fba0ed062e18086378fe956915d6b37f6c5b9b96da0cd255eddf0"
+    },
+    {
+      "file": "tests/noteSearch.browser.cjs",
+      "originalSha256": "6d288ed5297e08e234e57fd8ead1936f00bac7b7915e970c3af5646349051484",
+      "resultSha256": "fb2876ea80c51423d2fc3b1dbcd95cedde41a2d3a9c485871703bcc55bc0be7c"
+    },
+    {
+      "file": "docs/NOTES-SEARCH.md",
+      "originalSha256": "f0aa9136a4bc4a91eac64da3c858741de2fb5847f95a81ac32126ada7d9a2e04",
+      "resultSha256": "080c6b8b3f6db1401acc26c6e7a19eea3502369caa9dc36b405fb2766ebe5360"
+    }
+  ]
+}

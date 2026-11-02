@@ -1,0 +1,22 @@
+{
+  "installer": "hover-cache-contract-fix",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "6c7bcdb333d193487316476e0f11fbb96e62850c7dbed0c4529c5fc4afb7b651",
+      "resultSha256": "1d24b01583435425a4e70b2928c0859be311e59bf6b2367318d8adec3ee88ce3"
+    },
+    {
+      "file": "tests/hoverBearingRuntime.test.cjs",
+      "originalSha256": "8b4506c1e2f1174b9f09a193ad769acdc4a7b4a4e9c0a73a960ae210971f5c84",
+      "resultSha256": "3d4ef7944a1e6320656faa793bca6cf04f8e3442dd0d675e7582af3cb00b764f"
+    },
+    {
+      "file": "docs/HOVER-CACHE-CONTRACT-FIX.md",
+      "originalSha256": null,
+      "resultSha256": "e90f2f46516404b1951a109884d6be22cb8beaf15baad5f2b7b6c9ddc660cb3f"
+    }
+  ]
+}

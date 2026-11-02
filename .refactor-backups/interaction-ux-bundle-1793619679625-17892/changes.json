@@ -1,0 +1,22 @@
+{
+  "installer": "interaction-ux-bundle",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "originalSha256": "f53aac6bf35360e7466af7d4e6a0eb864082df3d36118c0e26ebc2bf88ce28e8",
+      "resultSha256": "035cd5416d86f87443f60e822332736638dbfb548cc0efe19aaff697c4cc225c"
+    },
+    {
+      "file": "tools/test-interaction-ux.cjs",
+      "originalSha256": null,
+      "resultSha256": "57c1efc179a38112b02513534fb3cc318557eedc9eab6504d92cdac182b385f5"
+    },
+    {
+      "file": "docs/INTERACTION-UX-MAINTENANCE.md",
+      "originalSha256": null,
+      "resultSha256": "5d6e1724a9f542496dc836a3612a2cf575a0f4a4959eea4a2132a28a3024f348"
+    }
+  ]
+}

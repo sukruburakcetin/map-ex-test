@@ -2,6 +2,14 @@
 
 This supplements REFACTORING-PLAN.md with the remaining delivery order. It is a structural refactor of the existing ArcGIS Experience Builder/React widget, not a feature rewrite. Release configuration and CI remain a separate later task.
 
+## Notes panel search
+
+Add feature-owned, localized search controls and pure matching for Local/Enterprise note lists. Search filters display rows only; source data, map/viewer markers, import/export/clear operations and authenticated Enterprise paging remain unchanged. Enterprise scope is explicitly limited to loaded records, with Load more retained. Text, category, resolution and raw/localized status support literal locale-aware matching. New function comments and `features/field-notes/README.md` document ownership. Browser coverage checks real controls, actions, paging and narrow/RTL layout. Runtime orchestration is untouched.
+
+## Teacher-owned collaboration foundation
+
+Add an optional Workspace source directly in the runtime notes panel, lazy-loaded without new runtime/widget.tsx or Builder settings. Connection/auth/publication remain feature-owned and session-only. No default backend, global directory or developer/Mapillary-operated note service is introduced. Ship an operator-owned Supabase schema with membership RLS, trusted teacher creation rights, bounded invitations, separate risk/workflow fields and explicit local-note publication. Permission tests execute the SQL in PostgreSQL; browser tests exercise teacher/student flows against controlled responses. Deployment, account provisioning, moderation, billing, backups and retention remain explicit teacher/organization tasks. See `tools/community-notes/README.md` for setup and first-version limits; validate a real operator project before classroom use.
+
 ## Current position
 
 Coverage algorithms, imagery requests/discovery, transport helpers, exports, style families and much of field-note presentation/validation now have feature modules. Field-note viewer rendering and the pending marker have explicit resource owners. These extractions are useful, but they do not finish the architecture: the runtime remains large, while InfoBox now composes controlled feature sections with centralized status, footer and shell styles. Runtime resource ownership remains the next focus; line counts are not completion criteria or performance measurements.
@@ -534,3 +542,9 @@ Analysis, routing, point-cloud and detection controls now inherit the infobox co
 ## Compact panel spacing, expansion and filter scrollbar
 
 Point-cloud tool headings now keep an explicit 5px icon/text gap, with text in its own shrinkable span. Remove the compact block-display override that collapsed icon spacing. Keep the existing width toggle available for narrow Widget Controller hosts and touch devices; the wide card remains constrained by its parent. Filter scrolling now exposes the existing two-pixel visual line as an accessible scrollbar with an eight-pixel hit area below the fields. Pointer capture supports mouse/touch dragging beyond the track, track clicks jump position, and keyboard commands update scroll position/ARIA values. Preserve wheel, navigation arrows and native form input behavior. Native listeners/capture are released on teardown. `tests/panelControls.browser.cjs` mounts the actual React components in Chromium to verify these interactions alongside the existing responsive-layout checks.
+
+## Interaction UX checkpoint: hover and image-first click reliability
+
+Completed the focused hover/click improvements while retaining native coverage identity, selected faint overview and ordinary lazy sequence loading. Correct the production metadata-cache contract, skip unnecessary SDK/detection picking for unopposed exact hovered points, start cached sequence preview independently of persistent storage, separate dispatch/SDK timings, enforce latest-click ownership through late responses, yield during long loaded-route scans, retain same-image thumbnails and isolate optional detection-hover failures. Functions and their invariants are documented at the helper owners.
+
+Contributor map and consolidated delivery: `docs/INTERACTION-UX-MAINTENANCE.md`. Focused verification: `node tools/test-interaction-ux.cjs` (133 tests), optionally `--browser` (seven real Chromium thumbnail checks). These results do not replace the Experience Builder build or live-host scene checks. After host validation, resume behavior-preserving orchestration extraction from runtime using these regression boundaries; do not combine that extraction with new UX changes. Existing refactoring checkpoints remain valid.

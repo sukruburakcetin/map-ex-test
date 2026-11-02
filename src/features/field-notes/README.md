@@ -1,5 +1,9 @@
 # Field-note contributor entry points
 
+## Teacher-owned workspace source
+
+The Workspace tab is composed by FieldNotesPanel independently of Enterprise configuration and lazily loads `../community-notes/CommunityWorkspacePanel.tsx`. That feature owns its own transient connection, sign-in and shared records. Existing Local/Enterprise note data, renderer/persistence paths and builder configuration are unchanged. Local drafts are passed as read-only inputs for deliberate single-note publication; shared map targets reuse the existing focus callback without merging records into local storage. See the community feature README and `tools/community-notes/README.md` for operator-owned setup and boundaries.
+
 | Concern | Entry point |
 | --- | --- |
 | Note group/local graphics lifecycle, visibility and drawing | `FieldNoteMap.ts` |
@@ -78,3 +82,13 @@ No local note store, storage schema, quota logic, Enterprise publication or rend
 - Read-only `group`, `layer` and `visible` accessors support existing Enterprise grouping and pending-marker visibility. Do not create a second authority in runtime. The old post-clear local-layer cleanup block was unreachable because clear unconditionally nulls that reference; it has been removed.
 
 The owner adds no cloud/note cache, viewer update, timer, query, SDK-load sharing policy or draw cancellation/version rule. Function comments document borrowed resources, live/captured data and lifecycle boundaries. `tests/fieldNoteMap.test.cjs` compares actual adapters with frozen original methods and real descriptors across 2D/3D, concurrent loads, clear/replacement, visibility, suppression and failures. Host checks: local/shared grouping, group visibility, 2D/3D switches, pending marker visibility, repeated clear/reopen and local/shared graphic display.
+
+## Notes panel search
+
+`NotesSearchControls.tsx` owns only the controlled search field, clear/Escape behavior, live result count and loaded-record scope label. `noteSearch.ts` owns literal locale-aware, accent-insensitive matching across text, category, resolution and raw/localized status. All whitespace-separated terms must match, including across fields. The original records and their ordering remain unchanged; LocalNotesList retains newest-first rendering.
+
+Both list components own transient query state and memoize their visible rows. Search never writes storage, changes map/viewer markers or starts a service request. Local search includes the complete local array. Enterprise search includes only pages loaded in that tab; its scope is explicit, paging remains available while filtering, and new pages participate automatically. Refresh, retry and context cancellation stay with the existing Enterprise list owner. Switching/unmounting a list resets its query.
+
+Edit/delete/focus/attachments still receive the original note ID/object. Import/export and confirmed Clear Local still operate on the complete local collection, not a filtered subset. Do not reuse the filtered rows as authoritative data. Search controls stop map-click propagation without preventing input focus or normal text editing. Strings use the shared translation catalogs and community CSV.
+
+Verification: `tests/noteSearch.test.cjs` checks matching and identity; `tests/noteSearch.browser.cjs` mounts the actual Local/Enterprise lists in Chromium with React to cover interactions, paging, compact layout and Arabic direction. No full Experience Builder host is needed for these focused tests. See `docs/NOTES-SEARCH.md` for dependency paths and limits.

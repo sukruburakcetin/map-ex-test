@@ -1,6 +1,13 @@
 import type { Messages } from '../messages';
 /** Korean presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const ko: Messages = {
+  "notesSearch": "메모 검색",
+  "notesSearchPlaceholder": "내용, 범주, 해결 내용 또는 상태",
+  "notesClearSearch": "메모 검색 지우기",
+  "notesSearchCount": "메모 {total}개 중 {shown}개",
+  "notesSearchEmpty": "검색과 일치하는 메모가 없습니다.",
+  "notesSearchLoadedScope": "불러온 기록만 검색합니다. 메모를 더 포함하려면 추가로 불러오세요.",
+
   "complete001": "선택…",
   "complete002": "가장 가까운 프레임 검색 중{value0}",
   "complete003": "{value0} · 조직 ID: {value1}",

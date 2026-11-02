@@ -1,6 +1,13 @@
 import type { Messages } from '../messages';
 /** Simplified Chinese presentation catalog; stored values and protocol identifiers remain unchanged. */
 const zhCN: Messages = {
+  "notesSearch": "搜索备注",
+  "notesSearchPlaceholder": "文本、类别、解决说明或状态",
+  "notesClearSearch": "清除备注搜索",
+  "notesSearchCount": "共 {total} 条，显示 {shown} 条",
+  "notesSearchEmpty": "没有与搜索匹配的备注。",
+  "notesSearchLoadedScope": "仅搜索已加载的记录。加载更多以包含其他备注。",
+
   "complete001": "选择…",
   "complete002": "正在查找最近的帧{value0}",
   "complete003": "{value0} · 组织 ID：{value1}",

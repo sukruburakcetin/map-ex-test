@@ -1,13 +1,19 @@
 const fs=require('fs'),test=require('node:test'),assert=require('node:assert/strict'),ts=require(process.env.MAPILLARY_TYPESCRIPT||'typescript');const compile=s=>ts.transpileModule(s,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText;const helpers={exports:{}};new Function('module','exports',compile(fs.readFileSync(__dirname+'/../src/features/imagery/hoverBearingMetadata.ts','utf8')))(helpers,helpers.exports);const targetModule={exports:{}};new Function('module','exports',compile(fs.readFileSync(__dirname+'/../src/features/imagery/hoverBearingTarget.ts','utf8')))(targetModule,targetModule.exports);const src=fs.readFileSync(__dirname+'/../src/runtime/widget.tsx','utf8'),sf=ts.createSourceFile('widget.tsx',src,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX),cls=sf.statements.find(n=>ts.isClassDeclaration(n)&&n.name.text==='Widget'),method=cls.members.find(n=>n.name?.getText(sf)==='updateTurboHover').getText(sf);
+// Exercise the production cache contract; Map.has masked the v6.120 runtime crash.
+const cacheSource=ts.createSourceFile('turboCoverageUtils.ts',fs.readFileSync(__dirname+'/../src/utils/turboCoverageUtils.ts','utf8'),ts.ScriptTarget.Latest,true);
+const cacheClass=cacheSource.statements.find(n=>ts.isClassDeclaration(n)&&n.name?.text==='TurboMetadataCache');
+const cacheModule={exports:{}};new Function('module','exports',compile(cacheClass.getText(cacheSource)))(cacheModule,cacheModule.exports);
+const {TurboMetadataCache}=cacheModule.exports;
 function setup(cached){
- const timers=[],shows=[],cards=[],urls=[],cache=new Map(cached?[['A',cached]]:[]);let calls=0,time=1000,nextTimer=0,pulses=0,respond=async()=>({id:'A',computed_compass_angle:45,is_pano:false});
+ const timers=[],shows=[],cards=[],urls=[];let calls=0,time=1000,nextTimer=0,pulses=0,respond=async()=>({id:'A',computed_compass_angle:45,is_pano:false});
+ const cache=new TurboMetadataCache(32,300000,()=>time);if(cached)cache.set('A',cached);
  const schedule=(fn,delay)=>{const id=++nextTimer;timers.push({id,fn,delay});return id;};
  const cancel=id=>{const timer=timers.find(t=>t.id===id);if(timer)timer.cancelled=true;};
  const Runtime=new Function('performance','clearTimeout','hoverBearingImageId','distanceMeters','needsHoverBearingMetadata','mergeHoverBearingMetadata','hoverPreviewBearing','HoverBearingSector','setTimeout','fetch','renderImageryHoverCard','positionImageryHoverCard','GRAPH_API','TURBO_LIMITS',compile('class Runtime{'+method+'}')+';return Runtime')({now:()=>time},cancel,targetModule.exports.hoverBearingImageId,()=>0,...Object.values(helpers.exports),class{show(...args){shows.push(args)}clear(){}},schedule,async url=>{urls.push(url);calls++;return{ok:true,json:()=>respond()}},(...args)=>cards.push(args),()=>{},{BASE:'https://example.com'},{hoverDetailsDelayMs:1});
  const w=new Runtime();w.state={turboModeActive:true,jimuMapView:{view:{container:{getBoundingClientRect:()=>({})}}}};w.accessToken='test';w._liveSequenceFrames={complete:null};w._hoverBearingHints=new targetModule.exports.HoverBearingHintCache();w.getTurboOrganizationId=()=>undefined;w.runSequenceBackground=(fn,signal)=>fn(signal);w.tooltipDiv={};w._turboMetadataCache=cache;w._turboHoverAnchor={};w._lastBearing=287;
- w.clearTurboHoverDetails=()=>{w._turboHoverInfoAbort?.abort();cancel(w._hoverTimeout);w._coverageFrameHoverTarget=null};w.showTurboHover=()=>pulses++;w.highlightSequenceOnVTL=()=>{};w.prepareCoverageFrameHover=()=>{};
+ w.clearTurboHoverDetails=()=>{w._turboHoverInfoAbort?.abort();cancel(w._hoverTimeout);w._coverageFrameHoverTarget=null};w.showTurboHover=()=>pulses++;w.highlightSequenceOnVTL=()=>{};w.prepareCoverageFrameHover=()=>{};w._coverageSelectionTargets={hover(){}};w.coverageSelectionContext=()=>({});
  const graphic={attributes:{image_id:'A',turbo_representative:true},geometry:{}};
- return{w,graphic,shows,cards,cache,urls,timers,pulses:()=>pulses,calls:()=>calls,run:async()=>{await Promise.resolve();await Promise.resolve();let timer;while(timers.length){timer=timers.shift();if(!timer.cancelled)break;timer=undefined;}if(timer){time+=timer.delay;await timer.fn();}},response:fn=>respond=fn};
+ return{w,graphic,shows,cards,cache,urls,timers,pulses:()=>pulses,calls:()=>calls,run:async()=>{await Promise.resolve();await Promise.resolve();let timer;while(timers.length){timer=timers.shift();if(!timer.cancelled)break;timer=undefined;}if(timer){time+=timer.delay;await timer.fn();}},response:fn=>respond=fn,advance:ms=>time+=ms};
 }
 
 test('existing card without bearing is enriched once and cone reuses cached result',async()=>{const x=setup({id:'A',thumb_256_url:'thumb'});x.w.updateTurboHover(x.graphic,0,0);await x.run();assert.equal(x.calls(),1);assert.equal(x.shows[0][1],45);assert.equal(x.cache.get('A').thumb_256_url,'thumb');x.w._currentHoveredFeatureId=null;x.w.updateTurboHover(x.graphic,0,0);await x.run();assert.equal(x.calls(),1)});
@@ -23,3 +29,23 @@ test('partial cached card is immediate but only missing metadata waits for dwell
 test('cold regional targets keep the immediate pulse and one dwell before resolving',async()=>{const x=setup({id:'A',compass_angle:10});regional(x);let lookups=0;x.w.ensureCoverageFrameLookup=()=>({resolve:async()=>{lookups++;return 'B'}});x.response(async()=>({id:'B',compass_angle:170}));x.w.updateTurboHover(x.graphic,0,0);assert.equal(x.pulses(),1);assert.equal(x.calls(),0);assert.equal(lookups,0);assert.equal(x.shows.length,0);assert.equal(x.timers[0].delay,150);await x.run();assert.equal(lookups,1);assert.equal(x.calls(),1);assert.equal(x.timers.length,0);assert.equal(x.shows[0][1],170)});
 test('leaving during partial enrichment cancels its timer without a request',async()=>{const x=setup();regional(x);x.cache.set('B',{id:'B',thumb_256_url:'thumb-B'});x.w._coverageFrameLookup={peek:()=> 'B'};x.w.updateTurboHover(x.graphic,0,0);x.w.clearTurboHoverDetails();await x.run();assert.equal(x.calls(),0);assert.equal(x.shows.length,0)});
 test('local-route cached hints bypass scans but unrelated tile hints cannot replace their policy',()=>{const x=setup();regional(x);const frames=[{id:'B',lon:1,lat:2}];x.w.state.sequenceId='sequence';x.w.state.sequenceImages=frames;x.w._liveSequenceFrames.complete=frames;x.cache.set('B',{id:'B',compass_angle:170});x.w._coverageFrameLookup={peek(){throw Error('tile hint must not replace active route policy')}};x.w._hoverBearingHints.remember(x.w.state.jimuMapView.view,frames,JSON.stringify(['sequence',1,2]),'B');x.w.updateTurboHover(x.graphic,0,0);assert.equal(x.shows[0][1],170);assert.equal(x.timers.length,0);assert.equal(x.calls(),0)});
+
+// An individual point must reach preview scheduling at every interactive zoom,
+// even when no metadata exists yet. Warm revisits must not introduce another dwell.
+for(const type of ['2d','3d'])for(const zoom of [16.2,19.9])test(`${type} zoom ${zoom}: real metadata cache permits cold hover and immediate warm revisit`,async()=>{
+ const x=setup();x.w.state.jimuMapView.view.type=type;x.w.state.jimuMapView.view.zoom=zoom;
+ x.graphic.attributes.turbo_representative=false;
+ assert.equal(typeof x.cache.has,'undefined');
+ assert.doesNotThrow(()=>x.w.updateTurboHover(x.graphic,100,100));
+ assert.equal(x.pulses(),1);assert.equal(x.calls(),0);assert.equal(x.timers.length,1);
+ await x.run();assert.equal(x.calls(),1);assert.equal(x.shows[0][1],45);
+ x.w._currentHoveredFeatureId=null;
+ x.w.updateTurboHover(x.graphic,100,100);
+ assert.equal(x.timers.length,0);assert.equal(x.shows.length,2);assert.equal(x.calls(),1);
+});
+test('expired production metadata is refreshed instead of treated as a warm hover',async()=>{
+ const x=setup({id:'A',compass_angle:10});x.graphic.attributes.turbo_representative=false;
+ x.advance(300001);x.w.updateTurboHover(x.graphic,0,0);
+ assert.equal(x.shows.length,0);assert.equal(x.timers.length,1);
+ await x.run();assert.equal(x.calls(),1);assert.equal(x.shows[0][1],45);
+});

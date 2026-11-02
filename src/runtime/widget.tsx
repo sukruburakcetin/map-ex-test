@@ -1,3 +1,5 @@
+import { nearestLoadedFrame } from '../features/coverage/nearestLoadedFrame';
+import { coverageClickHitTest } from '../features/coverage/coverageClickDispatch';
 import { CoverageHoverResume } from '../features/coverage/CoverageHoverResume';
 import { hoverBearingImageId, HoverBearingHintCache } from '../features/imagery/hoverBearingTarget';
 /** @jsx jsx */
@@ -870,6 +872,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _coverageHoverHandler: ((event: any) => void) | null = null;
   private _turboMapLeaveCleanup: (() => void) | null = null;
   private _turboClickPickAbort: AbortController | null = null;
+  private _mapClickRevision = 0;
 
 
   // Point Cloud Variables
@@ -1969,6 +1972,7 @@ private syncMapLegendLayer() {
     if (this.state.isElevationProfileActive && !reuseLoadedRoute) this.clearElevationProfile();
 
     let imageOpened = false;
+    let viewerTiming: ReturnType<SequencePerformance['begin']> | undefined;
     try {
       // Fetch only the selected image first; full route loading must not block opening imagery.
       // Lines need coordinate resolution; exact image points keep their fast opening path.
@@ -2002,8 +2006,12 @@ private syncMapLegendLayer() {
       this.ensureImageViewer(startImageId);
       const viewer = this.mapillaryViewer;
       if (!viewer) throw new Error("Image viewer is not ready");
+      // Separate widget dispatch latency from the SDK's image-opening promise.
+      if (clickStartedAt !== undefined) this._sequencePerformance?.begin('click-dispatch', clickStartedAt).finish();
+      viewerTiming = this._sequencePerformance?.begin('viewer-open');
       const openedImage = previous?.imageId === startImageId ? await viewer.getImage() : await viewer.moveTo(startImageId);
       if (!current() || this.mapillaryViewer !== viewer) return;
+      viewerTiming?.finish();
       imageOpened = true;
       // Give the confirmed image a visible browser frame before optional cache/metadata work.
       this.setState({ isLoading: false, imageryRepresentative: false });
@@ -2077,6 +2085,7 @@ private syncMapLegendLayer() {
       const unavailable = status === 401 || status === 403 || status === 404;
       this.setState({ selectionError: unavailable ? this._owned("This image is unavailable. Choose another point.") : this._owned("Image could not load. Check your connection, retry, or choose another point."), selectionCanRetry: !unavailable });
     } finally {
+      viewerTiming?.cancel();
       imageTiming?.cancel();
       if (this._imageSequenceTiming === imageTiming) this._imageSequenceTiming = undefined;
       if (requestId === this._selectionRequestId) {
@@ -2107,6 +2116,11 @@ private syncMapLegendLayer() {
   private async prepareDemandSequence(sequenceId: string, requestId: number, controller: AbortController, view: __esri.MapView | __esri.SceneView) {
     const current = () => !controller.signal.aborted && requestId === this._selectionRequestId && this.state.sequenceId === sequenceId && this.state.jimuMapView?.view === view;
     try {
+      if (!current()) return;
+      // Cached tile feedback is independent of optional persistent route storage.
+      // Local discovery still waits for cache adoption to avoid duplicate requests.
+      if (!this._liveSequenceFrames.complete)
+        void this.showCachedSequencePreview(sequenceId, requestId, controller.signal);
       const cached = await readCachedSequenceCoordinates(this.sequenceCoordsCache, sequenceId, controller.signal);
       if (!current()) return;
       if (this._localSequenceDeferredRequest === requestId) this._localSequenceDeferredRequest = null;
@@ -2119,7 +2133,6 @@ private syncMapLegendLayer() {
         });
         await this.renderLiveSequenceLine(cached, sequenceId, requestId, controller, view);
       } else if (!cached) {
-        void this.showCachedSequencePreview(sequenceId, requestId, controller.signal);
         void this.refreshLocalSequence();
         void this.refreshSequenceMarkerWindow();
       }
@@ -2790,6 +2803,7 @@ private syncMapLegendLayer() {
     }
 
     if (fullRemove) {
+      ++this._mapClickRevision; // Pending SDK results cannot survive close/reopen.
       this._turboMapLeaveCleanup?.();
       this._turboMapLeaveCleanup = null;
       this.disableTurboCoverageLayer();
@@ -6365,7 +6379,8 @@ private syncMapLegendLayer() {
         if (isCurrent()) renderImageryHoverCard(this.tooltipDiv, null, undefined, undefined, this._presentation);
       }
     };
-    if (cachedPreviewId && this._turboMetadataCache.has(cachedPreviewId)) void resolvePreview();
+    // Use the TTL-aware cache contract; TurboMetadataCache is not a Map.
+    if (cachedPreviewId && this._turboMetadataCache.get(cachedPreviewId) !== undefined) void resolvePreview();
     else this._hoverTimeout = setTimeout(resolvePreview, dwell);
   }
 
@@ -11441,6 +11456,7 @@ private stopSafePlayback = () => {
 
     this._coverageHoverResume?.dispose(); this._coverageHoverResume = null; this._coverageHoverHandler = null;
     // Remove click / hover handlers from the previous active view
+    ++this._mapClickRevision;
     if (this.mapClickHandle) {
       try {
         this.mapClickHandle.remove();
@@ -11847,11 +11863,19 @@ private stopSafePlayback = () => {
     this.mapClickHandle = view.on("click", async (evt) => {
       if (this.props.state === "CLOSED") return;
       this._coverageHoverResume?.leave();
+      // Claim the click before any await. SDK hit tests cannot be aborted, so
+      // late results must lose ownership before they can open imagery or tools.
+      const clickRevision = this._mapClickRevision = (this._mapClickRevision ?? 0) + 1;
+      const clickCurrent = () => this._mapClickRevision === clickRevision &&
+        this.state.jimuMapView?.view === view && !view.destroyed && this.props.state !== "CLOSED";
+      this._turboClickPickAbort?.abort();
+      this._mapFeatureClickAbort?.abort();
+      if (this.state.coverageFrameResolving) this.setState({ coverageFrameResolving: false });
       this._placesExploreAbort?.abort(); this._placesExploreAbort = null;
       const clickStartedAt = performance.now();
       // Freeze the individual preview identity before hit tests or pointer movement.
       const coverageRevisionAtClick = this._turboRequestCount;
-      const coverageClickCurrent = () => this.state.jimuMapView?.view === view && !view.destroyed &&
+      const coverageClickCurrent = () => clickCurrent() &&
         this.state.turboModeActive && !!this.turboCoverageLayer &&
         this._turboRequestCount === coverageRevisionAtClick;
       const hoveredPoint = this._coverageSelectionTargets.snapshot(this.coverageSelectionContext(), evt,
@@ -11891,7 +11915,13 @@ private stopSafePlayback = () => {
       this.setState({ clickLon: point.longitude, clickLat: point.latitude });
 
       try {
-        const response = await view.hitTest(evt);
+        const response = await coverageClickHitTest(!!pointPreviewAtClick, {
+          sharedNotes: !!this._sharedNotesLayer,
+          pointCloud: !!this._pointCloudMapLayer?.layer,
+          places: !!this.state.placesActive,
+          detectionFeatures: !!this.mapillaryObjectsFeatureLayer || !!this.mapillaryTrafficSignsFeatureLayer,
+        }, () => view.hitTest(evt));
+        if (!clickCurrent()) return;
         const enterpriseNoteHit = response.results.find((result: any) => (result.layer || result.graphic?.layer) === this._sharedNotesLayer);
         if (enterpriseNoteHit && (enterpriseNoteHit as any).graphic) {
           view.openPopup({ features: [(enterpriseNoteHit as any).graphic], location: (enterpriseNoteHit as any).graphic.geometry });
@@ -11927,19 +11957,20 @@ private stopSafePlayback = () => {
           let imageId = attrs.image_id ? String(attrs.image_id) : undefined;
           if (!imageId) {
             const images = this.sequenceCoordsCache[seqId];
-            let closest = Infinity;
-            for (const image of images || []) {
-              const distance = distanceMeters(image.lat, image.lon, point.latitude, point.longitude);
-              if (distance < closest) { closest = distance; imageId = String(image.id); }
+            if (images?.length) {
+              const routeCurrent = () => clickCurrent() && this.sequenceCoordsCache[seqId] === images;
+              imageId = await nearestLoadedFrame(images, { lon: point.longitude, lat: point.latitude }, distanceMeters, routeCurrent);
+              if (!routeCurrent()) return;
             }
           }
           if (!imageId) {
             const request = this._selectionRequestId;
             try { imageId = await this.nearestCoverageImage(seqId, { lon: point.longitude, lat: point.latitude }, this._selectionAbort?.signal || new AbortController().signal); }
             catch { return; }
-            if (request !== this._selectionRequestId || !coverageClickCurrent()) return;
+            if (!clickCurrent() || request !== this._selectionRequestId || !coverageClickCurrent()) return;
           }
           if (imageId) {
+            if (!clickCurrent()) return;
             await this.loadSequenceById(seqId, imageId, { lon: point.longitude, lat: point.latitude }, false, false, clickStartedAt);
             return;
           }
@@ -11953,8 +11984,10 @@ private stopSafePlayback = () => {
 
         this._mapFeatureClickAbort?.abort();
         const featureController = new AbortController(); this._mapFeatureClickAbort = featureController;
-        const selectedFeature = featureHit || await this.pickMapFeature({ x: evt.x, y: evt.y }, view, featureController.signal);
-        if (featureController.signal.aborted) return;
+        // Native detection tiles need a local pick only while a detection mode is active.
+        const selectedFeature = featureHit || (this.state.objectsActive || this.state.trafficSignsActive
+          ? await this.pickMapFeature({ x: evt.x, y: evt.y }, view, featureController.signal) : null);
+        if (!clickCurrent() || featureController.signal.aborted) return;
         if (selectedFeature && (selectedFeature as any).graphic) {
           this._selectedMapFeature = selectedFeature;
           const attrs = (selectedFeature as any).graphic.attributes;
@@ -11987,7 +12020,7 @@ private stopSafePlayback = () => {
           const pickController = new AbortController();
           this._turboClickPickAbort = pickController;
           const picked = coveragePreviewAtClick || await this.pickTurboGraphic({ x: evt.x, y: evt.y }, view, pickController.signal) || await this.pickTurboRepresentative({ x: evt.x, y: evt.y }, view, pickController.signal);
-          if (pickController.signal.aborted) return;
+          if (!coverageClickCurrent() || pickController.signal.aborted) return;
           turboHits = picked ? [{ graphic: picked, layer: this.turboCoverageLayer } as any] : [];
           if (turboHits.length > 0) {
             // 1. Mathematically find the ABSOLUTE closest overlapping point
@@ -12034,6 +12067,7 @@ private stopSafePlayback = () => {
                     });
                     if (resp.ok) {
                       const data = await resp.json();
+                      if (!coverageClickCurrent() || pickController.signal.aborted) return;
                       seqId = data.sequence;
                       safeGraphic.attributes.sequence_id = seqId;
                     }
@@ -12041,16 +12075,17 @@ private stopSafePlayback = () => {
                     return;
                   }
                 }
-                if (pickController.signal.aborted) return;
+                if (!coverageClickCurrent() || pickController.signal.aborted) return;
                 if (seqId) {
                   // Coverage hit tests can miss the thin active route at regional zooms.
                   // For that same loaded sequence, resolve the click entirely in memory.
                   if (attrs.turbo_representative && this.getTurboOrganizationId() === undefined && this.state.sequenceId === seqId && !!this._liveSequenceFrames.complete) {
-                    let closest = Infinity;
-                    for (const image of this.state.sequenceImages) {
-                      const distance = distanceMeters(image.lat, image.lon, point.latitude, point.longitude);
-                      if (distance < closest) { closest = distance; imageId = String(image.id); }
-                    }
+                    const images = this.state.sequenceImages;
+                    const routeCurrent = () => coverageClickCurrent() && !pickController.signal.aborted &&
+                      this.state.sequenceId === seqId && this.state.sequenceImages === images && !!this._liveSequenceFrames.complete;
+                    const nearest = await nearestLoadedFrame(images, { lon: point.longitude, lat: point.latitude }, distanceMeters, routeCurrent);
+                    if (!routeCurrent()) return;
+                    if (nearest) imageId = nearest;
                   }
                   const regionalLine = !!attrs.turbo_representative && view.zoom >= 6 && view.zoom < 14;
                   // A sequence tile's image_id represents the whole line, not its clicked location.
@@ -12067,14 +12102,14 @@ private stopSafePlayback = () => {
                     this.setState({ coverageFrameResolving: true });
                     try {
                       const nearby = await this.ensureCoverageFrameLookup().resolve(view, String(seqId), location, pickController.signal);
-                      if (pickController.signal.aborted || this._turboClickPickAbort !== pickController || this.state.jimuMapView?.view !== view) return;
+                      if (!coverageClickCurrent() || pickController.signal.aborted || this._turboClickPickAbort !== pickController) return;
                       if (!nearby) {
                         this.updateTurboPickWarning(this._t('appNoNearbyFrameWasFoundHereZoomCloserTo'), "zoom");
                         return;
                       }
                       imageId = nearby;
                     } catch (error) {
-                      if (pickController.signal.aborted || this._turboClickPickAbort !== pickController || this.state.jimuMapView?.view !== view) return;
+                      if (!coverageClickCurrent() || pickController.signal.aborted || this._turboClickPickAbort !== pickController) return;
                       this.updateTurboPickWarning((error as any)?.name === "TimeoutError"
                         ? this._owned("Nearby imagery is taking longer to respond. Try again; downloaded tiles will be reused.")
                         : this._owned("Nearby imagery could not load. Check your connection and try again."), "zoom");
@@ -12109,6 +12144,7 @@ private stopSafePlayback = () => {
         // Imagery exploration uses Turbo; unrelated map tools remain available.
         this.showToast(this._t('appEnableTurboCoverageToSelectStreetImagery'), 3000);
       } catch (error) {
+        if (!clickCurrent()) return;
         console.error("Click error", error);
         if (this.state.turboModeActive && (error as any)?.name !== "AbortError") this.updateTurboPickWarning(this._t('appImageLookupCouldNotLoadCheckYourConnectionAnd'), "retry");
 
@@ -12188,7 +12224,13 @@ private stopSafePlayback = () => {
             return l && (l.id === LAYER_IDS.OBJECTS_FL || l.id === LAYER_IDS.TRAFFIC_SIGNS_FL);
           });
 
-          const mapFeature = obj || await this.pickMapFeature(screenPoint, view, hoverController.signal);
+          // Optional detection failures must not dismiss independently successful
+          // imagery hover. A successful feature still owns the tooltip below.
+          const mapFeature = obj || await this.pickMapFeature(screenPoint, view, hoverController.signal).catch(() => {
+            if (!hoverController.signal.aborted && this.state.jimuMapView?.view === view)
+              this.log("[Hover] Optional feature lookup failed; imagery hover remains available.");
+            return null;
+          });
           if (hoverController.signal.aborted || this.state.jimuMapView?.view !== view) return;
           if (mapFeature && (mapFeature as any).graphic) {
             this._places?.setHover(null);

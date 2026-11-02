@@ -1,6 +1,13 @@
 import type { Messages } from '../messages';
 /** Italian presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const it: Messages = {
+  "notesSearch": "Cerca nelle note",
+  "notesSearchPlaceholder": "Testo, categoria, risoluzione o stato",
+  "notesClearSearch": "Cancella ricerca nelle note",
+  "notesSearchCount": "{shown} di {total} note",
+  "notesSearchEmpty": "Nessuna nota corrisponde alla ricerca.",
+  "notesSearchLoadedScope": "La ricerca include i record caricati. Caricane altri per includere ulteriori note.",
+
   "complete001": "Seleziona…",
   "complete002": "Ricerca del fotogramma più vicino{value0}",
   "complete003": "{value0} · ID organizzazione: {value1}",

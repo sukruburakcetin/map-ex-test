@@ -1,0 +1,32 @@
+{
+  "installer": "responsive-loaded-route-clicks",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "c6990229259b79adab1014abdb6b72798f18b50bcf3ceb9dbda6ca9d418cc6c2",
+      "resultSha256": "e0064120c22380d4c5513e6be9810574977fcd423caebfacc2f56df0f21377f0"
+    },
+    {
+      "file": "tests/coverageClickDispatch.test.cjs",
+      "originalSha256": "908b0b861f0f277e2bb00fa90789cb8947ccf5a1df943591309b99446bb3ef6a",
+      "resultSha256": "7622f744564591bf6f99ba14108b63bc60893a2b2c9068087be2788ca510448f"
+    },
+    {
+      "file": "src/features/coverage/nearestLoadedFrame.ts",
+      "originalSha256": null,
+      "resultSha256": "ca1faafc2fcf0adccaa6b34b77d8f8969d5474e3549b065c44f26e654ca343fe"
+    },
+    {
+      "file": "tests/nearestLoadedFrame.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "16a55e08dd0a75129f7cba807a09743276efc660397e9cbe0adc9df559b29b12"
+    },
+    {
+      "file": "docs/RESPONSIVE-LOADED-ROUTE-CLICKS.md",
+      "originalSha256": null,
+      "resultSha256": "17e1dd9a08b6464131820dabaf3a9a930d269245c7807d5d3a74f00d3c966483"
+    }
+  ]
+}

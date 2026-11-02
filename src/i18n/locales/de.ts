@@ -1,6 +1,13 @@
 import type { Messages } from '../messages';
 /** German presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const de: Messages = {
+  "notesSearch": "Notizen durchsuchen",
+  "notesSearchPlaceholder": "Text, Kategorie, Lösung oder Status",
+  "notesClearSearch": "Notizensuche löschen",
+  "notesSearchCount": "{shown} von {total} Notizen",
+  "notesSearchEmpty": "Keine Notizen entsprechen Ihrer Suche.",
+  "notesSearchLoadedScope": "Die Suche umfasst geladene Datensätze. Laden Sie weitere Notizen, um sie einzubeziehen.",
+
   "complete001": "Auswählen…",
   "complete002": "Nächstgelegenes Bild wird gesucht{value0}",
   "complete003": "{value0} · Organisations-ID: {value1}",

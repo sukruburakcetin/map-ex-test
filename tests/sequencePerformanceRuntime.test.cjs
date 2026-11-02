@@ -21,6 +21,7 @@ const { TimeTravelAvailability } = load('features/imagery/timeTravel');
 const { CachedSequencePreview } = load('features/imagery/CachedSequencePreview');
 const { GRAPH_API, LAYER_IDS } = load('utils/constants');
 const { TURBO_LIMITS } = load('utils/turboCoverageUtils');
+const { coverageClickHitTest } = load('features/coverage/coverageClickDispatch');
 const { distanceMeters } = load('utils/geoUtils');
 const source = fs.readFileSync(path.join(root, 'src/runtime/widget.tsx'), 'utf8');
 const syntax = ts.createSourceFile('widget.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
@@ -80,7 +81,7 @@ for (const preview of [false, true]) test((preview ? 'hovered point snapshot' : 
     updateTurboPickWarning: message => { throw new Error(message); },
   };
   const click = bindCallback(callback('view.on', 'click'), w, {
-    view, GRAPH_API, LAYER_IDS, TURBO_LIMITS, distanceMeters,
+    view, coverageClickHitTest, GRAPH_API, LAYER_IDS, TURBO_LIMITS, distanceMeters,
     webMercatorUtils: { webMercatorToGeographic: point => point },
   });
   await click({ x: 10, y: 20 });

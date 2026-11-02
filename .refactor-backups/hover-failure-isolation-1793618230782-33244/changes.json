@@ -1,0 +1,22 @@
+{
+  "installer": "hover-failure-isolation",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "e0064120c22380d4c5513e6be9810574977fcd423caebfacc2f56df0f21377f0",
+      "resultSha256": "f2fa3fb78c9ec6bc41b11848533baa68f90190fa724c482486c9e11ecc8fb212"
+    },
+    {
+      "file": "tests/hoverFailureIsolation.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "f9bbc74b5ac5262c22fa5170b7ae7c68a7d027b6595381fcce715b20259a1f8b"
+    },
+    {
+      "file": "docs/HOVER-FAILURE-ISOLATION.md",
+      "originalSha256": null,
+      "resultSha256": "c577d9e9d8e44d6c6d853e09372b63f7597b752d1a5f3e1371b5b1cf83f704a5"
+    }
+  ]
+}

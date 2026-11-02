@@ -1,6 +1,13 @@
 import type { Messages } from '../messages';
 /** Turkish presentation catalog. Community edits: docs/localization/CONTRIBUTING.md. */
 const tr: Messages = {
+  "notesSearch": "Notlarda ara",
+  "notesSearchPlaceholder": "Metin, kategori, çözüm veya durum",
+  "notesClearSearch": "Not aramasını temizle",
+  "notesSearchCount": "{total} nottan {shown} tanesi",
+  "notesSearchEmpty": "Aramanızla eşleşen not bulunamadı.",
+  "notesSearchLoadedScope": "Arama yüklenen kayıtları kapsar. Diğer notları dahil etmek için daha fazla yükleyin.",
+
   "complete001": "Seçin…",
   "complete002": "En yakın kare bulunuyor{value0}",
   "complete003": "{value0} · Kuruluş kimliği: {value1}",

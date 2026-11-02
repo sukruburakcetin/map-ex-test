@@ -3,11 +3,13 @@
 import { OwnedMessage } from '../../i18n/WidgetLocale';
 import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
+import { NotesSearchControls } from './NotesSearchControls';
+import { filterNotes } from './noteSearch';
 import { FIELD_NOTE_STATUSES } from '../../components/types';
 import type { FieldNote } from '../../components/types';
 import { noteListToolbarStyle, noteListToolbarActionsStyle, noteListImportStyle, noteListFileInputStyle, noteListExportStyle, noteListCloseStyle, noteListEmptyStyle, noteListCategoryStyle, noteListDeleteStyle, noteListShareStyle, getNoteStatusBadgeStyle, noteListResolutionStyle, noteListErrorStyle, noteListTextStyle } from '../../styles/fieldNotes';
 import { noteListActionStyle } from '../../styles/fieldNotes';
-import { notesSourceHintStyle, notesLocalPanelStyle, enterpriseRowsStyle, enterpriseActionsStyle, notesRowHeadingStyle, notesRowMetaStyle, notesRowButtonsStyle, notesAttachmentHintStyle } from '../../styles/enterpriseNotes';
+import { notesSourceHintStyle, notesLocalPanelStyle, enterpriseRowsStyle, enterpriseActionsStyle, notesRowHeadingStyle, notesWorkflowStatusStyle, notesRowMetaStyle, notesRowButtonsStyle, notesAttachmentHintStyle } from '../../styles/enterpriseNotes';
 
 export interface LocalNotesListProps {
   notes: FieldNote[];
@@ -34,6 +36,10 @@ export const LocalNotesList: React.FC<LocalNotesListProps> = props => {
  const { t, formatLocale:locale } = useWidgetLocale();
 
   const { notes, fileInputRef, isConfirmingClear, setIsConfirmingClear, onDeleteNote, onClearAll, onExport, onImportFile, onFocusNote, onCloseList } = props;
+  const [query, setQuery] = React.useState('');
+  const visibleNotes = React.useMemo(() => filterNotes(notes, query, locale, {
+    open: t('uiStatusOpen'), in_progress: t('uiStatusProgress'), completed: t('uiStatusCompleted'), dismissed: t('uiStatusDismissed'),
+  }), [notes, query, locale, t]);
   return (
 <div role="tabpanel" aria-label={t('uiLocalNotes')} style={notesLocalPanelStyle}>
                     {/* Fixed Header: Actions remain visible at all times */}
@@ -100,13 +106,15 @@ export const LocalNotesList: React.FC<LocalNotesListProps> = props => {
                         </div>
                     </div>
 
+                    <NotesSearchControls query={query} onChange={setQuery} shown={visibleNotes.length} total={notes.length} />
+                    {query.trim() && notes.length > 0 && visibleNotes.length === 0 && <div style={noteListEmptyStyle}>{t('notesSearchEmpty')}</div>}
                     {isConfirmingClear && <div role="status" style={notesSourceHintStyle}> {t('uiLocalRecordsWillBeRemovedEnterpriseNotesWill')} </div>}
                     <div style={enterpriseRowsStyle}>
                         {notes.length === 0 && (
                             <div style={noteListEmptyStyle}>
                                  {t('uiYouCanGetStartedByImportingAGeojson')} </div>
                         )}
-                        {notes.slice().reverse().map(n => (
+                        {visibleNotes.slice().reverse().map(n => (
                             <div
                                 key={n.id}
                                 style={{
@@ -128,7 +136,7 @@ export const LocalNotesList: React.FC<LocalNotesListProps> = props => {
                                   {props.sharingEnabled && n.sharedStatus !== "shared" && <button type="button" disabled={n.sharedStatus === "saving"} onClick={event => { event.stopPropagation(); props.onShareNote?.(n.id); }} title={n.sharedStatus === "failed" ? t('uiRetrySavingThisLocalDraftToYourOrganization') : t('uiSaveThisLocalNoteToYourOrganizationS')} style={noteListShareStyle}>{n.sharedStatus === "failed" ? t('uiRetrySharing') : t('uiShare')}</button>}
                                 </div>
                                 <div style={enterpriseActionsStyle}>
-                                  <span style={getNoteStatusBadgeStyle(n.status)}>{t(n.status==='in_progress'?'uiStatusProgress':n.status==='completed'?'uiStatusCompleted':n.status==='dismissed'?'uiStatusDismissed':'uiStatusOpen')}</span>
+                                  <div style={notesWorkflowStatusStyle}><span>{t('uiStatus')}:</span><span style={getNoteStatusBadgeStyle(n.status)}>{t(n.status==='in_progress'?'uiStatusProgress':n.status==='completed'?'uiStatusCompleted':n.status==='dismissed'?'uiStatusDismissed':'uiStatusOpen')}</span></div>
                                   <div style={notesRowButtonsStyle}>
                                   <button type="button" style={noteListActionStyle} disabled={!Number.isFinite(n.lon) || !Number.isFinite(n.lat)} onClick={() => onFocusNote(n)}> {t('uiShowOnMap')} </button>
                                   <button type="button" disabled={n.sharedStatus === "saving" || !!props.editorBusy} onClick={event => { event.stopPropagation(); props.onEditNote?.(n.id); }} style={{ ...noteListActionStyle, opacity: n.sharedStatus === "saving" || props.editorBusy ? 0.45 : 1 }}> {t('uiEditLocal')} </button>

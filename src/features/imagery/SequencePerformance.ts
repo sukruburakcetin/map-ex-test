@@ -1,5 +1,5 @@
 export const SEQUENCE_PERFORMANCE_KINDS = [
-  'click-image', 'hover-highlight', 'context-ready', 'tile-load', 'sequence-index',
+  'click-dispatch', 'viewer-open', 'click-image', 'hover-highlight', 'context-ready', 'tile-load', 'sequence-index',
 ] as const;
 export type SequencePerformanceKind = typeof SEQUENCE_PERFORMANCE_KINDS[number];
 export const SEQUENCE_PERFORMANCE_COUNTERS = [

@@ -1,6 +1,13 @@
 import type { Messages } from '../messages';
 /** Japanese presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const ja: Messages = {
+  "notesSearch": "メモを検索",
+  "notesSearchPlaceholder": "本文、カテゴリ、対応内容、ステータス",
+  "notesClearSearch": "メモの検索をクリア",
+  "notesSearchCount": "{total} 件中 {shown} 件",
+  "notesSearchEmpty": "検索に一致するメモはありません。",
+  "notesSearchLoadedScope": "読み込み済みのメモを検索します。追加のメモを含めるには、さらに読み込んでください。",
+
   "complete001": "選択…",
   "complete002": "最も近いフレームを検索中{value0}",
   "complete003": "{value0} · 組織ID: {value1}",

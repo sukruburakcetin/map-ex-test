@@ -1,6 +1,13 @@
 import type { Messages } from '../messages';
 /** Traditional Chinese (Taiwan) presentation catalog; stored values and protocol identifiers remain unchanged. */
 const zhTW: Messages = {
+  "notesSearch": "搜尋備註",
+  "notesSearchPlaceholder": "文字、類別、解決說明或狀態",
+  "notesClearSearch": "清除備註搜尋",
+  "notesSearchCount": "共 {total} 筆，顯示 {shown} 筆",
+  "notesSearchEmpty": "沒有符合搜尋的備註。",
+  "notesSearchLoadedScope": "僅搜尋已載入的記錄。載入更多以包含其他備註。",
+
   "complete001": "選取…",
   "complete002": "正在尋找最近的影格{value0}",
   "complete003": "{value0} · 組織 ID：{value1}",

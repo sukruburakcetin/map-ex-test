@@ -1,0 +1,77 @@
+{
+  "installer": "teacher-owned-workspaces",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/FieldNotesPanel.tsx",
+      "originalSha256": "1cd7dbf5714901aea1dd8a2f7dc77b834ba9f1fa8435362a5e1de94db8740cb2",
+      "resultSha256": "10b080a83f041b03abab39839e55dd3b0c30aefa82f119025d39813f9b13e745"
+    },
+    {
+      "file": "src/features/field-notes/README.md",
+      "originalSha256": "980fb862f6e4053a13c73a588f412ff80aa0bdd61b0de2a4208e37d9d580b5fd",
+      "resultSha256": "510a0e1ed7443671ac8509dd26f0fd9cf8e59234d13926d3ba0ce1d6d86980ee"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "originalSha256": "053f3d38c1408c5b3a1a93238f421e2cd15695fc420fd705d0547ca15f4c9c78",
+      "resultSha256": "3c8973c7cd5d0367ea002b02233ae1f31af50659f4ff95eb94d199f6d1ad0895"
+    },
+    {
+      "file": "src/features/community-notes/communityWorkspace.ts",
+      "originalSha256": null,
+      "resultSha256": "04172c312397b82555b7e45a170acac836fdc5b7b54881486da14af6ada45fe9"
+    },
+    {
+      "file": "src/features/community-notes/CommunityWorkspacePanel.tsx",
+      "originalSha256": null,
+      "resultSha256": "7577ba6ae883d885b8eed69fc6a643ffcd7da28707725fb602613d68809a7f03"
+    },
+    {
+      "file": "src/features/community-notes/README.md",
+      "originalSha256": null,
+      "resultSha256": "f83313c81446f48b35ef3fac46cbfdec9b61fd69fbef34f9ecd410647fe329f2"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceBoundary.tsx",
+      "originalSha256": null,
+      "resultSha256": "228ec0124bedca23e1eb3fdd2d5a4995763fe190cfd9ce3692318ea8919653b5"
+    },
+    {
+      "file": "src/styles/communityWorkspace.ts",
+      "originalSha256": null,
+      "resultSha256": "db664343f19228f68be7791d457b22da2e478389f0bde8ba23518f940a60307a"
+    },
+    {
+      "file": "tools/community-notes/schema.sql",
+      "originalSha256": null,
+      "resultSha256": "fb78ba87dc9d9af6bfc5d1f56200bc40a2ec4179eb8b932547dd4e01688aa106"
+    },
+    {
+      "file": "tools/community-notes/README.md",
+      "originalSha256": null,
+      "resultSha256": "c160e9111b7540a369434834e567a7c5a6dea119d61bee8eed95ecb093175c54"
+    },
+    {
+      "file": "tests/communityWorkspaceClient.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "805fad66b0e32898ef1f3663525086c651c662d06c87c0b16c10455de6ad5904"
+    },
+    {
+      "file": "tests/communityWorkspaceDatabase.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "bfe3c4ee131e02027614ff7f24d7f84a8b1007d2a458c0634623c97ce4d63f49"
+    },
+    {
+      "file": "tests/communityWorkspace.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "25784bd59d5e20c338d0f428f321e8d83a7b79be583920c525d0b6aa32faef29"
+    },
+    {
+      "file": "docs/TEACHER-OWNED-WORKSPACES.md",
+      "originalSha256": null,
+      "resultSha256": "fe610c77387350d0dd331417cf3cfe8fca7877e62242b45137e8e92ff1fa1cd3"
+    }
+  ]
+}

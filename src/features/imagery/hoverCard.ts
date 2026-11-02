@@ -9,8 +9,22 @@ function cardIcon(doc: Document, kind: 'creator' | 'calendar'): SVGSVGElement | 
   path.setAttribute('d', kind === 'creator' ? 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 21v-2a8 8 0 0 1 16 0v2' : 'M4 5h16v16H4ZM8 2v6M16 2v6M4 10h16');
   svg.appendChild(path); svg.style.flexShrink = '0'; return svg;
 }
-/** Build a non-interactive preview with textContent, stable dimensions and no HTML interpolation. */
+interface RetainedHoverImage { id: string; url: string; image: HTMLImageElement; preview: HTMLElement }
+// One current thumbnail per tooltip host. Detached/changed cards cannot reuse it.
+const retainedHoverImages = new WeakMap<HTMLElement, RetainedHoverImage>();
+
+/** Build a non-interactive preview with textContent and stable dimensions.
+ * Same-image enrichment keeps the existing loading/decoded image; target changes
+ * never borrow its pixels. Weak ownership introduces no thumbnail history cache.
+ */
 export function renderImageryHoverCard(host: HTMLElement, data: any, fallbackDate?: unknown, loading = false, l10n: Presentation = englishPresentation): void {
+  const id = data?.id == null ? '' : String(data.id);
+  const url = typeof data?.thumb_256_url === 'string' ? data.thumb_256_url : '';
+  const previous = retainedHoverImages.get(host);
+  const reuse = !!id && !!url && previous?.id === id && previous.url === url &&
+    previous.preview.parentNode === host && host.style.display !== 'none' &&
+    (!previous.image.complete || previous.image.naturalWidth > 0);
+  retainedHoverImages.delete(host);
   Object.assign(host.style, styles.shell); if (!host.style.width || host.style.width === 'max-content') host.style.width = '240px'; host.style.display = 'block'; host.setAttribute('role', 'tooltip');
   l10n.release(host); l10n.bind(host,'dir',()=>l10n.locale==='ar'?'rtl':'ltr'); host.textContent = ''; const doc = host.ownerDocument;
   const portal = doc.fullscreenElement || doc.body;
@@ -27,10 +41,15 @@ export function renderImageryHoverCard(host: HTMLElement, data: any, fallbackDat
   date.appendChild(icon); date.appendChild(label); host.appendChild(date);
   const preview = doc.createElement('div'); Object.assign(preview.style, styles.preview); l10n.bind(preview,"textContent",()=>loading || data?.thumb_256_url ? l10n.text("Loading preview…") : l10n.text("Preview unavailable")); host.appendChild(preview);
   if (data?.thumb_256_url) {
-    const image = doc.createElement('img'); Object.assign(image.style, styles.image); l10n.bind(image,"alt",()=>l10n.text("Street imagery preview")); image.decoding = 'async';
-    image.onload = () => { if (preview.parentNode === host) { preview.textContent = ''; preview.appendChild(image); } };
-    image.onerror = () => { if (preview.parentNode === host) l10n.bind(preview,"textContent",()=>l10n.text("Preview unavailable")); };
-    image.src = data.thumb_256_url;
+    const image = reuse ? previous!.image : doc.createElement('img');
+    Object.assign(image.style, styles.image); l10n.bind(image,"alt",()=>l10n.text("Street imagery preview")); image.decoding = 'async';
+    const retained = { id, url, image, preview }; retainedHoverImages.set(host, retained);
+    const current = () => retainedHoverImages.get(host) === retained && preview.parentNode === host;
+    const show = () => { if (current()) { preview.textContent = ''; preview.appendChild(image); } };
+    image.onload = show;
+    image.onerror = () => { if (current()) l10n.bind(preview,"textContent",()=>l10n.text("Preview unavailable")); };
+    if (reuse) { if (image.complete && image.naturalWidth > 0) show(); }
+    else image.src = data.thumb_256_url;
   }
 }
 /** Anchor once beside the hover target, clamped to the widget/viewport and its available width. */

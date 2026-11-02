@@ -1,0 +1,137 @@
+{
+  "installer": "notes-search",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/field-notes/LocalNotesList.tsx",
+      "originalSha256": "75853b9278088345c5e7a059f3b53d0cc446a1c85ff97e6b2400a3cbadf9595c",
+      "resultSha256": "7196a55ca6c8182ff4d2de382a6286e9e3be9a4a437fb3064fd4d31f15d43b8b"
+    },
+    {
+      "file": "src/features/field-notes/EnterpriseNotesList.tsx",
+      "originalSha256": "93d8b4e7392dfc334be4f696d6db2b5e60f7894e79830459398cd98eeae4e167",
+      "resultSha256": "9f857ce4e039a832043b36da50b45237077adc2dc90760f536058f4ebe3d8fc5"
+    },
+    {
+      "file": "src/i18n/messages.ts",
+      "originalSha256": "bc693171c999797aa04cbd899ea67536c57d589bdcf83cb2207c1e1627c5d705",
+      "resultSha256": "1f0cae9526e87c38c9966f2c351268403d5b1216bd45986cf6a5db9e6aeda402"
+    },
+    {
+      "file": "src/features/field-notes/README.md",
+      "originalSha256": "fd0aece7fcd0866e987af699000259300aeea5ba0571fb725d63f548f42aa246",
+      "resultSha256": "4cdfb68c258bd899ed4a037aed968ad35a9141671f297254414ef77a9f505a1b"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "originalSha256": "035cd5416d86f87443f60e822332736638dbfb548cc0efe19aaff697c4cc225c",
+      "resultSha256": "053f3d38c1408c5b3a1a93238f421e2cd15695fc420fd705d0547ca15f4c9c78"
+    },
+    {
+      "file": "src/i18n/locales/tr.ts",
+      "originalSha256": "297b974dfe886a130040b9a80f9c12f8581ecef2220759ba9d946fce8bfef56b",
+      "resultSha256": "4cb147fa8e20b06ea39a402c987cf72b643c946364a83f35cf8b953df1acfe0f"
+    },
+    {
+      "file": "src/i18n/locales/ar.ts",
+      "originalSha256": "35e72c7d62477a68affe8ebe2044b6a6aaf9553692579d80b5889e502d51350d",
+      "resultSha256": "43ca60a89e9e5c779eec505457245ebe6309a55a03b0d4f058758a59d22bbc36"
+    },
+    {
+      "file": "src/i18n/locales/it.ts",
+      "originalSha256": "6ad88e7c40385d0664e081773e14c4ead99f996195b7c0890091310342fe32ba",
+      "resultSha256": "f615effd29303273f1c273baf7dde9b2d64e7b0cd585e5c8106af2db8c83df69"
+    },
+    {
+      "file": "src/i18n/locales/ja.ts",
+      "originalSha256": "0b9fc5c724bbaf13816207d85494a82d6b6c6695c38f7f402590bcd58c86ac93",
+      "resultSha256": "0da576a9749b35373e0017e24b7b5de15bf9249b9617b4769bd94734577fbd16"
+    },
+    {
+      "file": "src/i18n/locales/pt-br.ts",
+      "originalSha256": "f9cd66ffa1b02caa945676bf07a5d26d5ce3dd940b69c8303b26b16c6dc842ba",
+      "resultSha256": "b15167dfb4af0565f248e7e22e577af666f14c17fcafb29adfaa66ea20b535a4"
+    },
+    {
+      "file": "src/i18n/locales/zh-cn.ts",
+      "originalSha256": "a1856d86ee73ca09001fa2875b6a99cb128330746043a884fafbb753e9ec6132",
+      "resultSha256": "85b7daec27ba43681db7bf0e215364382eec5b0debd8b041ee5c1668c6c64f18"
+    },
+    {
+      "file": "src/i18n/locales/fr.ts",
+      "originalSha256": "527ec451c72f89df89a9a8dd73afdb333b7d1db8caa6d0eec8cdac574a507b50",
+      "resultSha256": "49e462b55fc463d0954d5d1bd746cf2fba74bbe5b31514b527cbbd311f5a9961"
+    },
+    {
+      "file": "src/i18n/locales/zh-tw.ts",
+      "originalSha256": "68fb674c9080739e85f5ec1cfbc38cf18447f6ef40ee1ce386c62755a372fcf8",
+      "resultSha256": "9e03944d7cac47808358cd80d569282c0fae1a31e4519921fb408f36e5598019"
+    },
+    {
+      "file": "src/i18n/locales/es.ts",
+      "originalSha256": "e33ae9d14af8d04e4b5b47b5066fbd60bf9d7b83a0ea093d71b834091c905586",
+      "resultSha256": "c967552371205104184d10fd4d18a1e0d5d22455b2b93bbc00c7ea25bac8f0dd"
+    },
+    {
+      "file": "src/i18n/locales/ko.ts",
+      "originalSha256": "b77b61053ce8e02c3f59122ce21a295ebb995ff7b2f9a134ec5e291ca9a79b00",
+      "resultSha256": "311d332b22877bb50da6f192829fa9c6dd1488cfe7b8141187c42c7487b47556"
+    },
+    {
+      "file": "src/i18n/locales/de.ts",
+      "originalSha256": "d0d14c5555196e3f20ece0f69d4304ec85fcf446beebc0e5548e1a13cfc6289d",
+      "resultSha256": "41e978612d4736978f798f94bb49bb061f320f4996aa2156feb5e6e6bee99efe"
+    },
+    {
+      "file": "tests/localizationCatalog.test.cjs",
+      "originalSha256": "7872873528fa7f770af808e8a442db5e44323c8b91113f9bb509c3014c6c1fb8",
+      "resultSha256": "8d02394d08842c438847c27bf90bf892e8621cfac2a27313f150b9358a812515"
+    },
+    {
+      "file": "tests/arabicLocale.test.cjs",
+      "originalSha256": "cca030f3029d46f00ec59c8546d735f7e863b66baabedaa111b2a70865982a5e",
+      "resultSha256": "75bdfd061747a386073c2db5ddf9adff4c21a7828c02d9ff904ad4ddc4d140ac"
+    },
+    {
+      "file": "docs/localization/translations.csv",
+      "originalSha256": "32cd7c4f9593df1418e2a9f83a5ce79513235c682018d49b81cb77bf5df5fd0a",
+      "resultSha256": "d94e252f04c3306d0895aaf6c5ceda647c9f161484d1f95bd4f92275ad565298"
+    },
+    {
+      "file": "tests/translationTable.test.cjs",
+      "originalSha256": "1d40bf4cfd1faa3d1dabf64a2b8066694983d7f406ee7cd86c3ac3d77996fb1c",
+      "resultSha256": "13aed61e0069c5905356e02bb860d490f5df96bc65ec8b317f6bb1984c4bb051"
+    },
+    {
+      "file": "src/features/field-notes/noteSearch.ts",
+      "originalSha256": null,
+      "resultSha256": "86000097b8df7822c135e85d5bc4e7e3d62ea9df5944549e358c640b60db8bc5"
+    },
+    {
+      "file": "src/features/field-notes/NoteSearch.tsx",
+      "originalSha256": null,
+      "resultSha256": "52379b210228f68d9b0805cc866bf83ccb6dc9b2ae2ed12a2b9efb1e0edb9ebb"
+    },
+    {
+      "file": "src/styles/noteSearch.ts",
+      "originalSha256": null,
+      "resultSha256": "621f7547469fa6b5cff0df83edd3aefd8644515edb321de4907dc4c0a75fc59a"
+    },
+    {
+      "file": "tests/noteSearch.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "64d0a70e05cd71f6b5936f245a98019353f66502dcb9f4253de6ed2333b6a8fe"
+    },
+    {
+      "file": "tests/noteSearch.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "65ac6a47fbdeff339a44424f22da8378645305454dd48fe009c683daa46ab168"
+    },
+    {
+      "file": "docs/NOTES-SEARCH.md",
+      "originalSha256": null,
+      "resultSha256": "00bf55d8bbe5527b8f60206b00915085c74e7b19f180e7102735070231b7dabd"
+    }
+  ]
+}

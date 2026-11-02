@@ -1,6 +1,13 @@
 import type { Messages } from '../messages';
 /** Modern Standard Arabic. Assisted draft; community native review is welcome. */
 const ar: Messages = {
+  "notesSearch": "البحث في الملاحظات",
+  "notesSearchPlaceholder": "النص أو الفئة أو الحل أو الحالة",
+  "notesClearSearch": "مسح البحث في الملاحظات",
+  "notesSearchCount": "{shown} من {total} ملاحظة",
+  "notesSearchEmpty": "لا توجد ملاحظات تطابق بحثك.",
+  "notesSearchLoadedScope": "يشمل البحث السجلات المحمّلة. حمّل المزيد لتضمين ملاحظات إضافية.",
+
   "complete001": "حدد...",
   "complete002": "العثور على أقرب إطار{value0}",
   "complete003": "{value0} · معرف المنظمة: {value1}",

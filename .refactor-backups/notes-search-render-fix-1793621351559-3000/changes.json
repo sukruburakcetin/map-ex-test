@@ -1,0 +1,47 @@
+{
+  "installer": "notes-search-render-fix",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/field-notes/LocalNotesList.tsx",
+      "originalSha256": "7196a55ca6c8182ff4d2de382a6286e9e3be9a4a437fb3064fd4d31f15d43b8b",
+      "resultSha256": "d9e9d83fbb1a1816ff793858866013017570bc95f0edf71e58d7ce86c6907490"
+    },
+    {
+      "file": "src/features/field-notes/EnterpriseNotesList.tsx",
+      "originalSha256": "9f857ce4e039a832043b36da50b45237077adc2dc90760f536058f4ebe3d8fc5",
+      "resultSha256": "8e8ef5498c6906fd3c9ba88e5bd77b01e0565816e8bfecef49e00582be71b57e"
+    },
+    {
+      "file": "src/features/field-notes/README.md",
+      "originalSha256": "4cdfb68c258bd899ed4a037aed968ad35a9141671f297254414ef77a9f505a1b",
+      "resultSha256": "980fb862f6e4053a13c73a588f412ff80aa0bdd61b0de2a4208e37d9d580b5fd"
+    },
+    {
+      "file": "docs/NOTES-SEARCH.md",
+      "originalSha256": "00bf55d8bbe5527b8f60206b00915085c74e7b19f180e7102735070231b7dabd",
+      "resultSha256": "f0aa9136a4bc4a91eac64da3c858741de2fb5847f95a81ac32126ada7d9a2e04"
+    },
+    {
+      "file": "tests/noteSearch.browser.cjs",
+      "originalSha256": "65ac6a47fbdeff339a44424f22da8378645305454dd48fe009c683daa46ab168",
+      "resultSha256": "6d288ed5297e08e234e57fd8ead1936f00bac7b7915e970c3af5646349051484"
+    },
+    {
+      "file": "src/features/field-notes/NoteSearch.tsx",
+      "originalSha256": "52379b210228f68d9b0805cc866bf83ccb6dc9b2ae2ed12a2b9efb1e0edb9ebb",
+      "resultSha256": null
+    },
+    {
+      "file": "src/features/field-notes/NotesSearchControls.tsx",
+      "originalSha256": null,
+      "resultSha256": "60756ddc15d15526608977e20b58a346f61bd930f9a2b0db2da06678777e8d04"
+    },
+    {
+      "file": "tests/noteSearchModuleResolution.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "fd3c966237e1c34e526b8e53c0abcdd998728f3804bc697130624efbdc326ceb"
+    }
+  ]
+}

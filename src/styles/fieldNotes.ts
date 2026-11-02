@@ -64,10 +64,10 @@ export const noteListEmptyStyle: React.CSSProperties = { fontSize: "10px", color
 export const noteListCategoryStyle: React.CSSProperties = { fontSize: "11px", fontWeight: 600, color: "#fff" };
 export const noteListDeleteStyle: React.CSSProperties = { fontSize: "11px", color: "rgba(255,255,255,0.4)" };
 export const noteListShareStyle: React.CSSProperties = { marginLeft: 6, background: "transparent", border: "1px solid #436052", borderRadius: 4, color: "#b5edcf", cursor: "pointer" };
-/** Fixed status column shared by Local and Enterprise records; labels never shift action buttons. */
-export const noteListStatusStyle: React.CSSProperties = { width: 76, minWidth: 76, minHeight: 26, boxSizing: "border-box",
-  display: "inline-flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "3px 4px",
-  fontSize: 10, lineHeight: "16px", borderRadius: 5, border: "1px solid", whiteSpace: "nowrap" };
+/** Compact non-interactive workflow pill; its explicit status label distinguishes it from actions. */
+export const noteListStatusStyle: React.CSSProperties = { maxWidth: "100%", minWidth: 0, minHeight: 18, boxSizing: "border-box",
+  display: "inline-flex", alignItems: "center", textAlign: "start", padding: "1px 7px",
+  fontSize: 10, lineHeight: "16px", borderRadius: 9, border: "none", whiteSpace: "normal", overflowWrap: "anywhere", cursor: "default" };
 
 // Match the Enterprise layer's workflow legend; cache styles so rows reuse the same objects.
 const noteStatusColors = { open: "#35b7c4", in_progress: "#f5a623", completed: "#05a056", dismissed: "#888888" };

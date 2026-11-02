@@ -1,6 +1,13 @@
 import type { Messages } from '../messages';
 /** Brazilian Portuguese presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const ptBR: Messages = {
+  "notesSearch": "Pesquisar notas",
+  "notesSearchPlaceholder": "Texto, categoria, resolução ou status",
+  "notesClearSearch": "Limpar pesquisa de notas",
+  "notesSearchCount": "{shown} de {total} notas",
+  "notesSearchEmpty": "Nenhuma nota corresponde à pesquisa.",
+  "notesSearchLoadedScope": "A pesquisa abrange os registros carregados. Carregue mais para incluir outras notas.",
+
   "complete001": "Selecionar…",
   "complete002": "Buscando o quadro mais próximo{value0}",
   "complete003": "{value0} · ID da organização: {value1}",

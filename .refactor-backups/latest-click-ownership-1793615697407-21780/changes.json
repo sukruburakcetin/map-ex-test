@@ -1,0 +1,22 @@
+{
+  "installer": "latest-click-ownership",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "4f17ab197a65ae6e352fd87049e9ae9361fd5d8ea2a3230d6b222edf407c3bc9",
+      "resultSha256": "c6990229259b79adab1014abdb6b72798f18b50bcf3ceb9dbda6ca9d418cc6c2"
+    },
+    {
+      "file": "tests/coverageClickDispatch.test.cjs",
+      "originalSha256": "d418f6b42189151e0b0495c84bb94fd79b58d1de49638989e647464c47022120",
+      "resultSha256": "908b0b861f0f277e2bb00fa90789cb8947ccf5a1df943591309b99446bb3ef6a"
+    },
+    {
+      "file": "docs/LATEST-CLICK-OWNERSHIP.md",
+      "originalSha256": null,
+      "resultSha256": "dced953a2a7dbf02800d35a5b5d8775acde36d513b24a4eee8f5bb86ffb4cf92"
+    }
+  ]
+}

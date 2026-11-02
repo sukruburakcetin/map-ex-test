@@ -1,6 +1,13 @@
 import type { Messages } from '../messages';
 /** Spanish presentation catalog. Persisted values and protocol identifiers are unchanged. */
 const es: Messages = {
+  "notesSearch": "Buscar notas",
+  "notesSearchPlaceholder": "Texto, categoría, resolución o estado",
+  "notesClearSearch": "Borrar búsqueda de notas",
+  "notesSearchCount": "{shown} de {total} notas",
+  "notesSearchEmpty": "Ninguna nota coincide con la búsqueda.",
+  "notesSearchLoadedScope": "La búsqueda abarca los registros cargados. Cargue más para incluir otras notas.",
+
   "complete001": "Seleccionar…",
   "complete002": "Buscando el fotograma más cercano{value0}",
   "complete003": "{value0} · ID de organización: {value1}",

@@ -1,0 +1,22 @@
+{
+  "installer": "hover-thumbnail-retention",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/imagery/hoverCard.ts",
+      "originalSha256": "32031fbc119c003b1b868d6a79a648979c010275560ecdc2fe9f71bb492bab97",
+      "resultSha256": "23e4118b52533ef74d1b71733d737f40a6a85f7d1ced5b3f9e2d42bb4ecd9adc"
+    },
+    {
+      "file": "tests/hoverThumbnailRetention.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "73963b6bb7df385752005392e3633b734d9240cedf23b11f83765f18bbbe626a"
+    },
+    {
+      "file": "docs/HOVER-THUMBNAIL-RETENTION.md",
+      "originalSha256": null,
+      "resultSha256": "decb32a5fbb103881bf72f57ad822796499d44decfcd6457269b853e9a2d2db9"
+    }
+  ]
+}

@@ -56,3 +56,26 @@ test('viewer events during opening cannot start local enumeration before cached 
  w.state.isLoading=false;await w.refreshLocalSequence();assert.equal(windows,0);
  moves.get('1').resolve({id:'1',originalLngLat:{lng:1,lat:2}});await work;await w.refreshLocalSequence();assert.equal(windows,0);assert.equal(w._liveSequenceFrames.complete,cached);
 });
+
+// Real bounded metrics distinguish widget dispatch from the SDK opening promise.
+const performanceModule={exports:{}};
+new Function('module','exports',ts.transpileModule(fs.readFileSync(path.join(__dirname,'../src/features/imagery/SequencePerformance.ts'),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText)(performanceModule,performanceModule.exports);
+test('click timing separates dispatch, SDK opening and total image readiness',async()=>{
+ const {w,moves}=setup();let now=0;w._sequencePerformance=new performanceModule.exports.SequencePerformance(()=>now);
+ const work=w.loadSequenceById('A','1',undefined,false,false,0);
+ now=20;await flush();assert(moves.has('1'));
+ now=80;moves.get('1').resolve({id:'1',originalLngLat:{lng:1,lat:2}});await work;
+ const timings=w._sequencePerformance.snapshot().timings;
+ assert.equal(timings['click-dispatch'].lastMs,20);
+ assert.equal(timings['viewer-open'].lastMs,60);
+ assert.equal(timings['click-image'].lastMs,80);
+});
+test('a superseded SDK opening does not record successful viewer latency',async()=>{
+ const {w,moves}=setup();let now=0;w._sequencePerformance=new performanceModule.exports.SequencePerformance(()=>now);
+ const first=w.loadSequenceById('A','1',undefined,false,false,0);await flush();
+ now=10;const second=w.loadSequenceById('A','2',undefined,false,false,10);await flush();
+ now=30;moves.get('1').resolve({id:'1',originalLngLat:{lng:1,lat:2}});await first;
+ assert.equal(w._sequencePerformance.snapshot().timings['viewer-open'].count,0);
+ now=50;moves.get('2').resolve({id:'2',originalLngLat:{lng:1,lat:2}});await second;
+ assert.equal(w._sequencePerformance.snapshot().timings['viewer-open'].count,1);
+});
