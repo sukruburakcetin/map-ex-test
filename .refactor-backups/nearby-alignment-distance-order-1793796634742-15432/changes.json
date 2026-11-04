@@ -1,0 +1,57 @@
+{
+  "installer": "nearby-alignment-distance-order",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "ace4a0be8404489558ce07d3f88bccfddf7bf5143ebe9de627bce6f713340863",
+      "resultSha256": "c96cb1b0a2ade37f710f52939b5918b1fcdceb67f394ee0579d877452e6faec8"
+    },
+    {
+      "file": "src/features/imagery/nearbyHighlight.ts",
+      "originalSha256": "460e6c2244f39e0d5dde332ee87abe601029e9b57fc4eb36d25f62070264e547",
+      "resultSha256": "3413d41d176beb5c2d6ade413e722ead0ed27413df2331a7520a90cfc96b241e"
+    },
+    {
+      "file": "src/features/imagery/nearbyDiscovery.ts",
+      "originalSha256": "2a68515cb5ba8317e4c7ae95dcad77883577d5543b7c1604e31046ebed9cc2c9",
+      "resultSha256": "fdbda0637bd67b48a78350270068589895312c3822200276a72739b8cc6e8317"
+    },
+    {
+      "file": "src/i18n/runtimeMessages.ts",
+      "originalSha256": "6214623154353ff49bdccffb24e111e8c3d05d4287d81c3465cf348ba348c3b9",
+      "resultSha256": "7fac87a1cd148a42a368920803db0e3e3e6b6862cbc0f4ceaac482351d1d1b17"
+    },
+    {
+      "file": "docs/localization/translations.csv",
+      "originalSha256": "af586d7be0161b5ba806910901c0a75ea3dfa155607fd9276837d28019f8ba0f",
+      "resultSha256": "6bb1b15f220489bfcc82fe1479f38ee1c077db53b892b616a101b0a846d2ac5f"
+    },
+    {
+      "file": "tests/objectNearbyLifecycle.test.cjs",
+      "originalSha256": "d5c5bbcaa8bde9bedce0eeba846fe8cb2075bf5eae1e38e77b58d7398501eb92",
+      "resultSha256": "779f4338b514fd9c111feb6e373264a20b7d69d40d66c3be7ccf9ca55c2d6ba2"
+    },
+    {
+      "file": "tests/panelControls.browser.cjs",
+      "originalSha256": "543f83f3e3de146ce38c6228d133a33dfd725a8cce587da4484ef57838bbf8a9",
+      "resultSha256": "c6ad8f7d171140713f682863abc2848e15eac65a605e6a5e188f4e7c332ea1a0"
+    },
+    {
+      "file": "tests/nearbyDiscovery.test.cjs",
+      "originalSha256": "30f1f4fca0623bb91c16818d0ccafb628d329441a58de96218fa248bf6d4dcbe",
+      "resultSha256": "7bc9df39f6472814fd37b3a7fa185d6578beabf330f77819a3a3e5369df7c43f"
+    },
+    {
+      "file": "tests/sequencePerformanceRuntime.test.cjs",
+      "originalSha256": "f460fdfb483b9285bde8bd11e5c6e0ad8564c702d1f7acd86185dadee520d78d",
+      "resultSha256": "a17ddd6b41dde908634d017f457d70d37a4ced6330778f08dc77d31ebb427553"
+    },
+    {
+      "file": "tests/nearbyCoverageAnchor.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "4f4606cb848af2aed71b1a52ccb27eb52df2bf53b3f49eb98031bfe5becd4040"
+    }
+  ]
+}

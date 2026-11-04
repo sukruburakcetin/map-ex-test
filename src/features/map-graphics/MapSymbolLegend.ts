@@ -10,6 +10,8 @@ export interface SymbolLegendView<L> {
  */
 export class MapSymbolLegend<L extends SymbolLegendLayer, V extends SymbolLegendView<L>> {
   layer: L | null = null;
+  private communityCategories: readonly {name:string;color:string}[] = [];
+  private workspaceName = '';
   private map: NonNullable<SymbolLegendView<L>["map"]> | null = null;
   private readonly createLayer: (properties: any) => L;
   constructor(createLayer: (properties: any) => L, private readonly l10n: Presentation = englishPresentation) { this.createLayer = createLayer; }
@@ -47,6 +49,19 @@ export class MapSymbolLegend<L extends SymbolLegendLayer, V extends SymbolLegend
     }
   }
 
+  /** Add category-matched workspace keys without copying contribution geometry.
+   * User category names remain literal; built-in role labels retain localization.
+   */
+  setCommunityCategories(categories: readonly {name:string;color:string}[], workspaceName: string): void {
+    this.communityCategories=categories;this.workspaceName=workspaceName;
+    const layer=this.layer as any;if(!layer)return;
+    const renderer=layer.renderer?.clone?.()||layer.renderer;if(!renderer?.uniqueValueInfos)return;
+    renderer.uniqueValueInfos=[...renderer.uniqueValueInfos.filter((entry:any)=>!String(entry.value).startsWith('community:')),
+      ...categories.map(category=>({value:'community:'+category.name,label:`${this.l10n.text('Workspace contributions')} · ${workspaceName} · ${category.name}`,
+        symbol:{type:'simple-marker',style:'diamond',color:category.color,size:9,outline:{color:'white',width:1.5}}}))];
+    layer.renderer=renderer;
+  }
+
   /** Remove the legend from the original owning view, then destroy its layer.
    * Callers keep the existing clear order on view changes, hideLegend and widget teardown.
    */
@@ -59,6 +74,7 @@ export class MapSymbolLegend<L extends SymbolLegendLayer, V extends SymbolLegend
     const labels: Record<string,string> = {active:'Active Image',sequence:'Nearby Frames',hover:'Hovered Image',first:'First Selected Image',next:'Next Frame',note:'Field Note'};
     renderer.uniqueValueInfos = renderer.uniqueValueInfos.map((entry:any)=>({...entry,label:this.l10n.text(labels[entry.value] || entry.label)}));
     layer.renderer = renderer;
+    this.setCommunityCategories(this.communityCategories,this.workspaceName);
   }
   clear(): void {
     const layer = this.layer, map = this.map;

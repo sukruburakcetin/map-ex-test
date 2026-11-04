@@ -3,7 +3,7 @@ import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 import * as Icons from '../../components/Icons';
 import type { InfoBoxProps } from '../../components/types';
-import { detectionExportButtonStyle, detectionExportLabelStyle, detectionOverlayButtonStyle, detectionOverlayLabelStyle, detectionLabelsButtonStyle } from '../../styles/detectionControls';
+import { detectionControlsCss, detectionExportButtonStyle, detectionExportLabelStyle, detectionOverlayButtonStyle, detectionOverlayLabelStyle, detectionLabelsButtonStyle } from '../../styles/detectionControls';
 
 export type DetectionToolsSectionProps = Pick<InfoBoxProps, 'trafficSignsActive' | 'objectsActive' | 'imageId' | 'detectionsActive' | 'showAiTags' | 'mapFeatureExportLoading' | 'onDownloadFeatures' | 'onToggleDetections' | 'onToggleAiTags'>;
 
@@ -13,16 +13,16 @@ export type DetectionToolsSectionProps = Pick<InfoBoxProps, 'trafficSignsActive'
  */
 export const DetectionToolsSection: React.FC<DetectionToolsSectionProps> = ({ trafficSignsActive, objectsActive, imageId, detectionsActive, showAiTags, mapFeatureExportLoading, onDownloadFeatures, onToggleDetections, onToggleAiTags }) => { const { t, locale } = useWidgetLocale(); return (
 <React.Fragment>
+          <style>{detectionControlsCss}</style>
           {/* EXPORT BUTTON */}
           {(trafficSignsActive || objectsActive) && (
             <button
+              type="button" className="mly-detection-button mly-detection-export"
               onClick={onDownloadFeatures}
               title={t('uiExportActiveSignsAndObjectsWithinTheMap')}
               disabled={mapFeatureExportLoading}
               aria-busy={mapFeatureExportLoading}
               style={detectionExportButtonStyle}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(55, 213, 130, 0.95)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = detectionsActive ? "rgba(55, 213, 130, 0.8)" : "rgba(55, 213, 130, 0.3)")}
             >
               <Icons.Download size={12} color="#ffffff" />
               <span style={detectionExportLabelStyle}>{mapFeatureExportLoading ? t('uiExporting') : t('uiExportArea')}</span>
@@ -32,13 +32,12 @@ export const DetectionToolsSection: React.FC<DetectionToolsSectionProps> = ({ tr
           {/* AI OVERLAY BUTTON */}
           {(trafficSignsActive || objectsActive) && imageId && (
             <button
+              type="button" className="mly-detection-button"
               onClick={onToggleDetections}
               title={t('uiShowOrHideDetectionOutlines')}
               aria-label={t('uiDetectionOutlines')}
               aria-pressed={detectionsActive}
               style={detectionOverlayButtonStyle(detectionsActive)}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(55, 213, 130, 0.95)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = detectionsActive ? "rgba(55, 213, 130, 0.8)" : "rgba(55, 213, 130, 0.3)")}
             >
               <Icons.Detection size={11} />
               <span style={detectionOverlayLabelStyle}> {t('uiAiOverlay')} </span>
@@ -48,13 +47,14 @@ export const DetectionToolsSection: React.FC<DetectionToolsSectionProps> = ({ tr
           {/* AI TAG VISIBILITY TOGGLE */}
           {detectionsActive && imageId && (trafficSignsActive || objectsActive) && (
             <button
+              type="button" className="mly-detection-button"
               onClick={onToggleAiTags}
-              title={showAiTags ? t('uiHideDetectionLabelsKeepOutlinesVisible') : t('uiShowLabelsForHoveredOrSelectedDetections')}
+              title={showAiTags ? t('uiHideDetectionLabelsKeepOutlinesVisible') : t('uiDetectionLabels')}
               aria-label={t('uiDetectionLabels')}
               aria-pressed={showAiTags}
               style={detectionLabelsButtonStyle(showAiTags)}
             >
-              {showAiTags ? <Icons.LabelsOn size={14} /> : <Icons.LabelsOff size={14} />}
+              {showAiTags ? <Icons.LabelsOn size={12} /> : <Icons.LabelsOff size={12} />}
               <span> {t('uiLabels')} </span>
             </button>
           )}

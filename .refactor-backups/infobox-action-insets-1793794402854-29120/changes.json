@@ -1,0 +1,17 @@
+{
+  "installer": "infobox-action-insets",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/styles/coverageAnalysis.ts",
+      "originalSha256": "741ea26b81848c7aa666da76a4153677bde65572dd2e813f89d0d943ca50022d",
+      "resultSha256": "78eb99f98b8f0fdb6a01703cb2e5381bc0e2698fad0195450d30bcb6e16c83fd"
+    },
+    {
+      "file": "src/components/InfoBox.tsx",
+      "originalSha256": "25321ccf8ba10de43a426bad7df35bedd452737718a9cfa233bbc0e7b5789f1a",
+      "resultSha256": "d71d1d9e385dbf0a69692b0eccdcbbb60454d3fe1c2109a2c7ddb80a5c6127fc"
+    }
+  ]
+}

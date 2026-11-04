@@ -1,0 +1,127 @@
+{
+  "installer": "workspace-contributions",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/community-notes/CommunityWorkspacePanel.tsx",
+      "originalSha256": "9890e41f730a729e5fd0ba896ae38a13fd004e9cc5525e1f41e091769dfb1225",
+      "resultSha256": "9496982b191f106d3a457324cb531ea69e40f6691f9c176d8c65c2eafda30d39"
+    },
+    {
+      "file": "src/features/community-notes/communityWorkspace.ts",
+      "originalSha256": "cf590437ce8519ed024acfd6d54fdeaeeb35f9a4bc2266156a3348599faa19e2",
+      "resultSha256": "a242e13a94f997f1876782d073b5e28a3090ba2ea7960f7908a46f9482e7d085"
+    },
+    {
+      "file": "src/features/community-notes/README.md",
+      "originalSha256": "026aabcd995114aa6601c40410a4f6c754c5e927c40514bafdc503967c4e68c6",
+      "resultSha256": "358ebf7c61fde05c8dbb85b15f470b1d67cf5dc3e99e53965dde245a8507cdd6"
+    },
+    {
+      "file": "src/features/field-notes/FieldNoteMap.ts",
+      "originalSha256": "edcd22601cd0c3ff8d9250bb68ad2a273492724d05059bd6641a7e3669911e69",
+      "resultSha256": "48b717f3e1158e633ca63545ad65bd08924e30aa6ced3f8007a13c13a4f3a823"
+    },
+    {
+      "file": "src/features/field-notes/mapGraphic.ts",
+      "originalSha256": "7e9f723b05cb35dd46314cc0c1553be78e4bf3fe0a297964ff8fb881b960cd66",
+      "resultSha256": "ba5a05f379aa66488a4ce452815d45ab92a523267b473a31a713818ac9b17163"
+    },
+    {
+      "file": "src/features/map-graphics/MapSymbolLegend.ts",
+      "originalSha256": "8eb6217a31cbbd20693889d8080250babe8acfaa4a57c429e4196127ca2e6e71",
+      "resultSha256": "2480e40a0874f38588f0437bb39ce7dac68a0614e7798d2ebd65668d2ce1b658"
+    },
+    {
+      "file": "src/components/FieldNotesPanel.tsx",
+      "originalSha256": "76432b9eab4ca4f92d8875b34162834ff6f5549ee609b422e0c065b9ebb985c1",
+      "resultSha256": "e01889affc5eaeabf9a3d220762563a8c045ccd6b7b00cf39c8eb453ceed1874"
+    },
+    {
+      "file": "src/components/types.ts",
+      "originalSha256": "b6a53c5dd5774141467c460debfab234b77e3fd90fc11a2c38f4648d5152a113",
+      "resultSha256": "334a4e7c4c3a4db0c68cdc50e4117ab8eae597a887783840ca71b7a95aac6466"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "58fada0b0a24a9d4c58446cea13888c14bbbabd6af74648a4016adf2a4516152",
+      "resultSha256": "126f85cad96a3bccbe87e74dc380777ad7749aee580cc6b67a8458212907dfad"
+    },
+    {
+      "file": "tools/community-notes/schema.sql",
+      "originalSha256": "8ab139a2187a832ace8848effae17227c421d5c671a1e999ebf45850a1124202",
+      "resultSha256": "f010cf1e2eae620078d72f315cd1aeb0c9fbaefd575de74a5317325875fde236"
+    },
+    {
+      "file": "tools/community-notes/README.md",
+      "originalSha256": "e4acd9a8ca7a5e43739f3a32926c6e0c88c14d515deff890e59ded0f19339a6f",
+      "resultSha256": "8124ca8cf6b4451b5e48c39c06845d58c5d620c798946992626b8c3f30613911"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "originalSha256": "bd51492d277373e081ee09b704c58b9db61763fbaafc80b2bcadfd08c41f1ade",
+      "resultSha256": "7fd882909b87f49d87559012b4c102e31501473089e553da9b2ba0580a914cf1"
+    },
+    {
+      "file": "tests/communityWorkspaceClient.test.cjs",
+      "originalSha256": "1ed9380eac9a48ae17150b697896bab6de68fcfe738fdf9bd757bf51d772052c",
+      "resultSha256": "208e519078ff4a97f70db3c41f86446e157458e5723e7c03b9c0d64b813f25cd"
+    },
+    {
+      "file": "tests/communityWorkspace.browser.cjs",
+      "originalSha256": "9fe5c887725cbda815b04f2c9239aa2bab7feec00985e5d57b0c32581ba23563",
+      "resultSha256": "00ef01d5fda98af50d3920a19c92c4b16373cdb7a13109b82897cca5e5bd7eff"
+    },
+    {
+      "file": "tests/communityWorkspaceDatabase.test.cjs",
+      "originalSha256": "f684e88fdd457761625aba91a795eec8d82861c89bf7c1320f5f18aa72006471",
+      "resultSha256": "dcde40d62fc005aa06948690de708d1a3faf0a4425062793797f74069f09ccaf"
+    },
+    {
+      "file": "tests/fieldNoteMap.test.cjs",
+      "originalSha256": "efaea434f93be75f5ca8dc53f4d089dff44a45b283071250ff4449e18d1d7540",
+      "resultSha256": "9fd86cfc6ef155f0bbddca36b4bf959a5fee552d21330ed1b7aa1685820542de"
+    },
+    {
+      "file": "src/features/community-notes/useWorkspaceContributions.ts",
+      "originalSha256": null,
+      "resultSha256": "1feb29fb88d25ed0bd611de2b2f5bf718796845a32e2350117904bcb45ef8938"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceCategoryEditor.tsx",
+      "originalSha256": null,
+      "resultSha256": "6e736eb845c1208174be2a22f55c1480c922de52d698d6d27ff4c4e96a309e1d"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceContributionTools.tsx",
+      "originalSha256": null,
+      "resultSha256": "38a0780632537b7beea63f719d0383f3261e4c8db50f8382bf03a1612ef2f352"
+    },
+    {
+      "file": "tools/community-notes/migrations/003-workspace-contributions.sql",
+      "originalSha256": null,
+      "resultSha256": "9a936456b538c300b610a8d7170567585899da249a545d76970697094294b642"
+    },
+    {
+      "file": "docs/WORKSPACE-CONTRIBUTIONS.md",
+      "originalSha256": null,
+      "resultSha256": "bd0ee975c0e2dcf78659bfc39ef62587c64fccbee31c8d81fbe4995712d1ea7d"
+    },
+    {
+      "file": "tests/fixtures/communityWorkspaceBefore003.sql",
+      "originalSha256": null,
+      "resultSha256": "8ab139a2187a832ace8848effae17227c421d5c671a1e999ebf45850a1124202"
+    },
+    {
+      "file": "tests/workspaceContributionsDatabase.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "d1ab9c8fd29a7e760a0bac8330393a7d1764a4b2c09eb8e78e96e08818b64334"
+    },
+    {
+      "file": "tests/workspaceLegend.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "d60b1bfe43f026d1b51d3a17ccbb17c1d79889a6b85ac947aae3dda291123ae5"
+    }
+  ]
+}

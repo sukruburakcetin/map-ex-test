@@ -48,6 +48,15 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
  static contextType = WidgetLocaleContext;
  declare context: React.ContextType<typeof WidgetLocaleContext>;
 
+  private toolsDetailsRef=React.createRef<HTMLDetailsElement>();
+  private detectionControlsRef=React.createRef<HTMLDivElement>();
+  private revealDetectionTools=()=>{
+    this.setState({detailsOpen:true},()=>{
+      if(this.toolsDetailsRef.current)this.toolsDetailsRef.current.open=true;
+      this.detectionControlsRef.current?.scrollIntoView({block:'nearest',inline:'nearest'});
+      this.checkOverflow();
+    });
+  };
   private panelToggleRef = React.createRef<HTMLButtonElement>();
   private scrollResizeObserver: ResizeObserver | null = null;
   private scrollContainerRef = React.createRef<HTMLDivElement>();
@@ -68,12 +77,14 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
   /** Observe viewport resizing after its ref is available; use the same callback for scroll and resize. */
   componentDidMount() {
     this.checkOverflow();
+    if(this.props.detectionToolsRequest)this.revealDetectionTools();
     window.addEventListener("resize", this.checkOverflow);
     if (typeof ResizeObserver !== "undefined" && this.scrollContainerRef.current) { this.scrollResizeObserver = new ResizeObserver(this.checkOverflow); this.scrollResizeObserver.observe(this.scrollContainerRef.current); }
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(previous:InfoBoxProps) {
     this.checkOverflow();
+    if(this.props.detectionToolsRequest&&previous.detectionToolsRequest!==this.props.detectionToolsRequest)this.revealDetectionTools();
   }
 
   /** Release every resize subscription owned by this panel before its viewport is discarded. */
@@ -242,7 +253,7 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
             </div>
           )}
 
-          <details className="mly-info-more"><summary> {this.context.t('uiToolsDetails')} </summary>
+          <details ref={this.toolsDetailsRef} className="mly-info-more"><summary> {this.context.t('uiToolsDetails')} </summary>
               {!hideInfoBox && <div className="info-box"><StatusSummary currentImg={currentImg} currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} address={null} turboCreator={turboCreator} turboOrganization={turboOrganization} turboOrganizationName={turboOrganizationName} onCopyCoordinates={this.props.onCopyCoordinates} />{!hideCoverageAnalysis && <QualityToolsSection hideToggle qualityViewType={this.props.qualityViewType} currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} qualityViewActive={qualityViewActive} onToggleQualityView={onToggleQualityView} selectedQualityBand={selectedQualityBand} onQualityLegendClick={onQualityLegendClick} />}</div>}
               {!hideInfoBox && turboModeActive && !hideCoverageAnalysis && <CoverageAnalysisTrigger currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} turboPointsAvailable={turboPointsAvailable} coverageAnalysisLoading={coverageAnalysisLoading} coverageResult={coverageResult} onRunCoverageAnalysis={onRunCoverageAnalysis} turboMinZoom={turboMinZoom} />}
 
@@ -324,6 +335,7 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
             <ElevationToolsSection isElevationProfileActive={this.props.isElevationProfileActive} onToggleElevationProfile={this.props.onToggleElevationProfile} />
           )}
 
+          <div ref={this.detectionControlsRef} style={{display:"grid",gap:4,minWidth:0,paddingInline:4,paddingBottom:4,boxSizing:"border-box"}}>
           <DetectionToolsSection
             trafficSignsActive={trafficSignsActive}
             objectsActive={objectsActive}
@@ -335,6 +347,7 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
             onToggleDetections={onToggleDetections}
             onToggleAiTags={onToggleAiTags}
           />
+          </div>
 
           </details>
 

@@ -1,0 +1,82 @@
+{
+  "installer": "workspace-readability",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/field-notes/mapGraphic.ts",
+      "originalSha256": "ba5a05f379aa66488a4ce452815d45ab92a523267b473a31a713818ac9b17163",
+      "resultSha256": "3d09f24d8d6dfa1290f2447ac518c4f580c0ee1913c6cb1c54420355931ab56f"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "126f85cad96a3bccbe87e74dc380777ad7749aee580cc6b67a8458212907dfad",
+      "resultSha256": "adeb9c00ee98f1698579108ea3a5dbb2ece37e322d1f0aa79a8300e726bdd53a"
+    },
+    {
+      "file": "src/features/community-notes/useWorkspaceContributions.ts",
+      "originalSha256": "1feb29fb88d25ed0bd611de2b2f5bf718796845a32e2350117904bcb45ef8938",
+      "resultSha256": "51db7f0e8742b7dc1aae0bfb00f96927a2ebbef1d0f7b1ca2a708dcc0ff4af73"
+    },
+    {
+      "file": "src/features/community-notes/CommunityWorkspacePanel.tsx",
+      "originalSha256": "9496982b191f106d3a457324cb531ea69e40f6691f9c176d8c65c2eafda30d39",
+      "resultSha256": "de41fbe5c592599cd4aca908d69995918513b770112794d7cf691c0bf97fcb4f"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceCategoryEditor.tsx",
+      "originalSha256": "6e736eb845c1208174be2a22f55c1480c922de52d698d6d27ff4c4e96a309e1d",
+      "resultSha256": "cc81a02934410934a48131eab11853c2da55c335f9cfb361d1f0efd150809931"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceContributionTools.tsx",
+      "originalSha256": "38a0780632537b7beea63f719d0383f3261e4c8db50f8382bf03a1612ef2f352",
+      "resultSha256": "e27de7448f082ef11ab3eef4ccd3e9fac46256ab25afa75f57ef2679538007e3"
+    },
+    {
+      "file": "src/styles/communityWorkspace.ts",
+      "originalSha256": "db664343f19228f68be7791d457b22da2e478389f0bde8ba23518f940a60307a",
+      "resultSha256": "6a81318eb2b2312de8fb81506e518601082d1acc14b3cf8721df3f26ef10a982"
+    },
+    {
+      "file": "tests/fieldNoteMap.test.cjs",
+      "originalSha256": "9fd86cfc6ef155f0bbddca36b4bf959a5fee552d21330ed1b7aa1685820542de",
+      "resultSha256": "0b20eb4898abe41dc0fc8d662dc5966c76f6f85fe79c4f9e92e1ccab8985484c"
+    },
+    {
+      "file": "tests/communityWorkspace.browser.cjs",
+      "originalSha256": "00ef01d5fda98af50d3920a19c92c4b16373cdb7a13109b82897cca5e5bd7eff",
+      "resultSha256": "778aa3fefc4d085cf7591b52e4d7e3d22b1fa503171ec5052ae9f64364dc0462"
+    },
+    {
+      "file": "docs/WORKSPACE-CONTRIBUTIONS.md",
+      "originalSha256": "bd0ee975c0e2dcf78659bfc39ef62587c64fccbee31c8d81fbe4995712d1ea7d",
+      "resultSha256": "f6963edd19e97ee2fa22813f81433a8702fa8aa7e1c21ad9161dc8a32ec561db"
+    },
+    {
+      "file": "src/features/community-notes/README.md",
+      "originalSha256": "358ebf7c61fde05c8dbb85b15f470b1d67cf5dc3e99e53965dde245a8507cdd6",
+      "resultSha256": "4b0e68a42e30b4be86463daf912645042ec693e2c226bac7e9013c55f6a652d0"
+    },
+    {
+      "file": "src/features/field-notes/FieldNoteMap.ts",
+      "originalSha256": "48b717f3e1158e633ca63545ad65bd08924e30aa6ced3f8007a13c13a4f3a823",
+      "resultSha256": "5910f0a670ac0b3db2a6de38f8ad0705796774ed90ef09f2308e0cb95db35aaa"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceCategoryBadge.tsx",
+      "originalSha256": null,
+      "resultSha256": "d3627fcafa745074a676cc79b6cf40910d4b2719d8bcdfe462414ae54c3032bb"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceContributionCard.tsx",
+      "originalSha256": null,
+      "resultSha256": "2491ad2ee9912939731213422769e2c6b70b2803b3c492c649efe33af2db649c"
+    },
+    {
+      "file": "docs/WORKSPACE-READABILITY.md",
+      "originalSha256": null,
+      "resultSha256": "7db948ca921bd951f6819b34b644abab87a31dce3fe2f5682159753a8a9237cd"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "installer": "selection-layout-cleanup",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/NativeCurrentImageMarker.ts",
+      "originalSha256": "aad9c32e9385e481671f64a6d71afe618bf41a82effc37b598d37b963321cdb0",
+      "resultSha256": "e29f4bac35be721eeda0165839162b252a8ada138db4e30bd1e5725602397b1b"
+    },
+    {
+      "file": "src/features/map-graphics/ScreenDirectionCone.ts",
+      "originalSha256": "45af958e3b7f843979eef7d34ccb9f8390eaf4a95a0f152f950c590729e7f9ed",
+      "resultSha256": "81e4aad7d6f0b976357e7470c3d5ffef00294e78d60759f9adb535bdea8d3885"
+    },
+    {
+      "file": "tests/nativeCurrentImageMarker.test.cjs",
+      "originalSha256": "43b89bf81d7855e2a95b9e2afeae710e72a5583600b54f694b91f57344699f65",
+      "resultSha256": "1a87858788ef36fe6256587ebd296a55d1228caa72baaaf6750fb179bb5fe820"
+    },
+    {
+      "file": "tests/screenDirectionCone.test.cjs",
+      "originalSha256": "e6cc7c46df2096c3afbc5c321c156fc2c60e1cd2f0ba9b589e2704985e52c07c",
+      "resultSha256": "e4cc414ef61d02de51994b9b43112e337397c882dcbdaf6fe8c90bab7f3f6b20"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "4582831fc347730779400d4ebad6be246db442d12bfbe3d132a1187272501495",
+      "resultSha256": "d85aeb44fb31016e97288c7b00dac43dcfc0e7f79b40a1bf74e53745e20246e8"
+    },
+    {
+      "file": "tests/currentImageLayoutCleanup.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "7028f7370592dd443a997a19289f99d9430a6eca6265a3ef21d97dd87c46ef0b"
+    }
+  ]
+}

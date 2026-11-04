@@ -17,10 +17,15 @@ export const enterpriseErrorStyle: React.CSSProperties = { color: '#ffb8a6', fon
 
 export const notesLocalPanelStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 6, minHeight: 0, flex: '1 1 0', overflow: 'hidden' };
 
-/** Fixed source-independent sheet height; only records scroll as tabs/loading state change. */
+/** Default source-independent sheet height; only records scroll as tabs/loading state change. */
 export const notesSheetStyle: React.CSSProperties = { position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 999999990,
   height: 'min(300px, 65%)', boxSizing: 'border-box', background: 'rgba(12,12,12,0.92)', backdropFilter: 'blur(10px)',
   borderTop: '1px solid rgba(255,255,255,0.1)', padding: '6px 8px 8px', display: 'flex', flexDirection: 'column', gap: 6,
-  overflowY: 'auto', animation: 'nearbySlideUp 0.2s ease-out' };
+  minHeight: 0, maxHeight: '100%', overflow: 'hidden', animation: 'nearbySlideUp 0.2s ease-out' };
 export const notesRowHeadingStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between', flexWrap: 'wrap' };
 export const notesRowMetaStyle: React.CSSProperties = { fontSize: 9, color: '#a0ada5' };
+
+/** Wide touch/keyboard target with a familiar sheet grip; records retain their own scrolling. */
+export const notesSheetHandleStyle: React.CSSProperties = { display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0,
+  width: '100%', minHeight: 28, padding: 4, border: 0, borderRadius: 5, background: 'transparent', color: '#d3e2d9', cursor: 'pointer', touchAction: 'manipulation' };
+export const notesSheetGripStyle: React.CSSProperties = { display: 'block', width: 44, height: 5, borderRadius: 4, background: 'currentColor' };

@@ -1,0 +1,22 @@
+{
+  "installer": "analysis-button-spacing",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/styles/coverageAnalysis.ts",
+      "originalSha256": "c432eebe584899f2b745bf2d159a699fb718cf9bb499256b5e18dda8fe8274c5",
+      "resultSha256": "741ea26b81848c7aa666da76a4153677bde65572dd2e813f89d0d943ca50022d"
+    },
+    {
+      "file": "src/features/coverage/CoverageAnalysisTrigger.tsx",
+      "originalSha256": "98ab9c00db2f20b949e2bd221abbadee99fcc98e5008909a43af0cda37a79edf",
+      "resultSha256": "4ec2566361dd4c55ac0c827259bb08d9750411a3e5a57e27dff5434c6d4fde3d"
+    },
+    {
+      "file": "tests/panelControls.browser.cjs",
+      "originalSha256": "ffbc72e7dab4bc0a4807c409ee5e399ac7102e1a7272df61a0d4d119e953d8e6",
+      "resultSha256": "bf3227d10612a05492860779a71366f70509ee15ae00f4fe2755fa857fe40f6a"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+/** Real intent owner plus actual runtime click/request adapters, with recording map objects. */
+const fs=require('node:fs'),path=require('node:path'),test=require('node:test'),assert=require('node:assert/strict'),ts=require(process.env.MAPILLARY_TYPESCRIPT||'typescript'),root=path.resolve(__dirname,'..');
+const compile=source=>ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText,m={exports:{}};
+new Function('module','exports',compile(fs.readFileSync(root+'/src/features/community-notes/WorkspaceLocationPicker.ts','utf8')))(m,m.exports);const {WorkspaceLocationPicker}=m.exports;
+test('one valid map click fulfills intent once; invalid clicks never open ordinary tools',()=>{const picker=new WorkspaceLocationPicker(),view={},points=[];picker.begin(view,p=>points.push(p),()=>{});assert.equal(picker.consume(view,null),true);assert.equal(picker.active,true);assert.equal(picker.consume(view,{lon:500,lat:2}),true);assert.equal(points.length,0);assert.equal(picker.consume(view,{lon:1,lat:2}),true);assert.deepEqual(points,[{lon:1,lat:2}]);assert.equal(picker.consume(view,{lon:3,lat:4}),false)});
+test('replacement, cancellation and view retirement cannot publish stale coordinates',()=>{const picker=new WorkspaceLocationPicker(),view={},events=[];const cancel=picker.begin(view,()=>events.push('old pick'),()=>events.push('old cancel'));picker.begin(view,()=>events.push('new pick'),()=>events.push('new cancel'));cancel();assert.deepEqual(events,['old cancel']);assert.equal(picker.consume({}, {lon:1,lat:2}),false);assert.deepEqual(events,['old cancel','new cancel']);assert.equal(picker.active,false)});
+const source=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8'),sf=ts.createSourceFile('widget.tsx',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX),cl=sf.statements.find(node=>ts.isClassDeclaration(node)&&node.name.text==='Widget');
+const adapters=['_workspaceNoteLocation','requestWorkspaceNoteLocation','clearFieldNotesGroup'].map(name=>cl.members.find(node=>node.name?.getText(sf)===name).getText(sf)).join('\n');
+test('runtime adapter restores cursor and cancels pick when the note/map owner clears',()=>{
+ const Harness=new Function('WorkspaceLocationPicker',compile('class Harness{'+adapters+'};return Harness;'))(WorkspaceLocationPicker),w=new Harness(),events=[],view={map:{},container:{style:{cursor:'grab'}}};
+ w.state={jimuMapView:{view}};w._fieldNoteMap={clearHighlight(){},clear(){events.push('clear')}};w.clearTurboHover=()=>{};w.drawClickRipple=(lon,lat)=>events.push([lon,lat]);w._owned=x=>x;w.showToast=()=>{};
+ w.requestWorkspaceNoteLocation(point=>events.push(point),()=>events.push('cancel'));assert.equal(view.container.style.cursor,'crosshair');w.clearFieldNotesGroup();assert.equal(view.container.style.cursor,'grab');assert.deepEqual(events,['cancel','clear']);
+ w.requestWorkspaceNoteLocation(point=>events.push(point),()=>{});w._workspaceNoteLocation.consume(view,{lon:1,lat:2});assert.equal(view.container.style.cursor,'grab');assert.deepEqual(events.at(-1),{lon:1,lat:2});
+});
+test('actual click handler consumes only the chosen map point before coverage or local annotation',async()=>{
+ let handler;function visit(node){if(ts.isBinaryExpression(node)&&node.left.getText(sf)==='this.mapClickHandle'&&ts.isCallExpression(node.right))handler=node.right.arguments[1].getText(sf);ts.forEachChild(node,visit);}visit(cl);assert(handler);
+ let stopped=0;const view={toMap:()=>({longitude:1,latitude:2})},Harness=new Function('view',compile('class Harness{handler='+handler+'};return Harness;'))(view),w=new Harness(),points=[];w.props={state:'OPENED'};w._workspaceNoteLocation=new WorkspaceLocationPicker();w._workspaceNoteLocation.begin(view,point=>points.push(point),()=>{});
+ await w.handler({stopPropagation(){stopped++;}});assert.equal(stopped,1);assert.deepEqual(points,[{lon:1,lat:2}]);
+});

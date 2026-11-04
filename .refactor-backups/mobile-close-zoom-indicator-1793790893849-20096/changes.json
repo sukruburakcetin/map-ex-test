@@ -1,0 +1,27 @@
+{
+  "installer": "mobile-close-zoom-indicator",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/NativeCurrentImageMarker.ts",
+      "originalSha256": "e29f4bac35be721eeda0165839162b252a8ada138db4e30bd1e5725602397b1b",
+      "resultSha256": "34a580be3a49fbb8f2de53ee2661951e02e87311fe56e7d54d4fd4da78b1d756"
+    },
+    {
+      "file": "src/features/map-graphics/ScreenDirectionCone.ts",
+      "originalSha256": "81e4aad7d6f0b976357e7470c3d5ffef00294e78d60759f9adb535bdea8d3885",
+      "resultSha256": "fc468c1e476bcac5aa2b0e4f868afda86872d83347d07bff72c8ea4ca4fd7a65"
+    },
+    {
+      "file": "tests/nativeCurrentImageMarker.test.cjs",
+      "originalSha256": "1a87858788ef36fe6256587ebd296a55d1228caa72baaaf6750fb179bb5fe820",
+      "resultSha256": "0f5647dc316a768e38b597bb1fcbd762202d3650806c6088373f2000f2728bd4"
+    },
+    {
+      "file": "tests/screenDirectionCone.test.cjs",
+      "originalSha256": "e4cc414ef61d02de51994b9b43112e337397c882dcbdaf6fe8c90bab7f3f6b20",
+      "resultSha256": "dac891caa128edfe29216afe1335f6781d179a9bfd1a48ebcfc14bf35d190e82"
+    }
+  ]
+}

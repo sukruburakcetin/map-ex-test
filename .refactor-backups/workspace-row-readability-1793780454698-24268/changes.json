@@ -1,0 +1,37 @@
+{
+  "installer": "workspace-row-readability",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/styles/communityWorkspace.ts",
+      "originalSha256": "3358c2093935c9cf0f9f338ea712b9a4135009c63ceacc94fb75d0f7018c3bf5",
+      "resultSha256": "0efcbddfd0be3e40466fe5e92702e4614d72a8d7b17b91a07bfa5d849e3a66f4"
+    },
+    {
+      "file": "src/features/community-notes/CommunityWorkspacePanel.tsx",
+      "originalSha256": "cb7bf57d1f698202471d0743a69d9d534546d03e34d8d7fabad0d651bffc2da8",
+      "resultSha256": "85ede148317c2e128bc8ded0092ee5418f9fde8e96335743c0fae7e32653acf8"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceCategoryEditor.tsx",
+      "originalSha256": "15ec49c84d1ed9b4db6d6b3b13b186b36723174230fcc7c4f56a9adceb2b1122",
+      "resultSha256": "d1918bf0f3a081f42e3caf24be73a1ec5d01ee5c014977dbeb7bb6f02e4b1aa9"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceContributionDraft.tsx",
+      "originalSha256": "1f4faad075fcd9aa886a4e7f8a903638647cf369c2240c3f301ec851e1df955c",
+      "resultSha256": "47a7c14c1cca94fa4157fce4d7155218e07a9ff5ada2233beabe2b25a3996caa"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceContributionTools.tsx",
+      "originalSha256": "8acac8819e5676a730cf54543be154fddeb621554ea775a8e5c9d06ebaba37da",
+      "resultSha256": "e0a42a61e40d3b5083e067a0dd4fdae841aa352756b3749de83c7ffe07eebcbc"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceDisplayNameEditor.tsx",
+      "originalSha256": "d474a6ae3c5a66f284f4c484a5a354d3f02cdbec22e4475d86108cb1a230328b",
+      "resultSha256": "a38941c56f5502c31fad87ae769be33a72c01c27f56ccdb7f2df07336c4ccd8a"
+    }
+  ]
+}

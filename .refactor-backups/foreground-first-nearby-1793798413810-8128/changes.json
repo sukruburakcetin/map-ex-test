@@ -1,0 +1,32 @@
+{
+  "installer": "foreground-first-nearby",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "c96cb1b0a2ade37f710f52939b5918b1fcdceb67f394ee0579d877452e6faec8",
+      "resultSha256": "7a0d5cb53de045ac87988360fdf07d03341976d9ae5545c3086b9cf066cd7ed1"
+    },
+    {
+      "file": "src/features/imagery/nearbyDiscovery.ts",
+      "originalSha256": "fdbda0637bd67b48a78350270068589895312c3822200276a72739b8cc6e8317",
+      "resultSha256": "2bbe21b5db56620068b4454565bbfaad47e383f69f8c47c9d030d5fe6c23f85d"
+    },
+    {
+      "file": "tests/nearbyDiscovery.test.cjs",
+      "originalSha256": "7bc9df39f6472814fd37b3a7fa185d6578beabf330f77819a3a3e5369df7c43f",
+      "resultSha256": "b4b2afb1f47f0384cc3079b43db65e1861325afcd15a9e52f49d22202870986a"
+    },
+    {
+      "file": "tests/nearbyForegroundRuntime.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "472cbf4402e0689ac54f46cf1208e3ac348d1d1b23d5bc1aad8c0ab4938351e7"
+    },
+    {
+      "file": "tests/nearbyDemand.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "d9675e75454c5511b8aecd56ba8bb745b78ee6baa5d7c3c7e7ac2d1dc571bd33"
+    }
+  ]
+}

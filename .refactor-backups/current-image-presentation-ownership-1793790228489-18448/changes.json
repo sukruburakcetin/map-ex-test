@@ -1,0 +1,22 @@
+{
+  "installer": "current-image-presentation-ownership",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "d85aeb44fb31016e97288c7b00dac43dcfc0e7f79b40a1bf74e53745e20246e8",
+      "resultSha256": "270bd7b83da407dd542925e3cbd86d2efe41191cbfb55802eb840476193a5f47"
+    },
+    {
+      "file": "src/features/map-graphics/CurrentImagePresentationOwner.ts",
+      "originalSha256": null,
+      "resultSha256": "0fd7c2abf89c68eeb9757f5e682cc3f187976369c5403c3430af06321293ddb8"
+    },
+    {
+      "file": "tests/currentImagePresentationOwner.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "7a1c067295d0ea5e3ec00311246d51b50b1f2c7a92692266fccf6390f631810e"
+    }
+  ]
+}

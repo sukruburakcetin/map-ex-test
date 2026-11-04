@@ -1,4 +1,4 @@
-import { ScreenDirectionCone } from './ScreenDirectionCone';
+import { ScreenDirectionCone, mobileCloseZoomIndicator } from './ScreenDirectionCone';
 import { renderedGroundPoint } from './SelectionPulse';
 import { nativeCurrentImageMesh } from './nativeCurrentImageMesh';
 
@@ -14,7 +14,13 @@ export class NativeCurrentImageMarker {
  }
  private useView(view:any):void{if(this.view!==view){this.clear();this.view=view;}}
  showMarker(view:any,lon:number,lat:number,color:any,id:string):void{
-  this.useView(view);if(this.model?.id!==String(id))this.fan=false;
+  this.useView(view);if(this.model?.id!==String(id)){
+   // Retire the previous selection synchronously; the replacement is projected
+   // on the next frame and must not coexist with a stale mesh/SVG meanwhile.
+   this.fan=false;this.nativeActive=false;this.key='';this.settled=null;
+   if(this.layer)this.layer.visible=false;
+   this.fallback.clear();this.presented(false,view);
+  }
   this.marker=true;this.model={...this.model,lon,lat,color:Array.isArray(color)?color:[0,255,0,1],id:String(id)};this.start();
  }
  show(view:any,lon:number,lat:number,heading:number,metres:number,spread:number):void{
@@ -43,12 +49,16 @@ export class NativeCurrentImageMarker {
  private update():void{
   const view=this.view,m=this.model;if(!view||!m)return;
   const cached=this.settled;
-  if(this.nativeActive&&view.stationary===true&&view.updating===false&&cached?.model===m&&cached.marker===this.marker&&cached.fan===this.fan&&cached.camera===view.camera&&cached.zoom===view.zoom&&cached.sampler===view.groundView?.elevationSampler)return;
+  if(this.nativeActive&&view.stationary===true&&view.updating===false&&cached?.model===m&&cached.marker===this.marker&&cached.fan===this.fan&&cached.camera===view.camera&&cached.zoom===view.zoom&&cached.width===view.width&&cached.height===view.height&&cached.container===view.container&&cached.sampler===view.groundView?.elevationSampler)return;
   // Readability at globe/overview scale remains the validated SVG representation.
   if(view.zoom<10){this.showFallback(true);return;}
   const source=this.factory.point({longitude:m.lon,latitude:m.lat,spatialReference:{wkid:4326}}),ground=renderedGroundPoint(view,source,this.factory.point);
   if(!ground){this.showFallback(true);return;}
-  const origin=view.toScreen(ground),d=10,cos=Math.max(.01,Math.cos(m.lat*Math.PI/180));
+  const origin=view.toScreen(ground),cos=Math.max(.01,Math.cos(m.lat*Math.PI/180));
+  // At close phone zooms the old 10m probe can cross the near plane and report
+  // an enormous derivative, shrinking the mesh. Sample a few local pixels instead.
+  const d=mobileCloseZoomIndicator(view)
+   ?Math.min(10,Math.max(.001,156543.03392804097/2**view.zoom*cos*4)):10;
   const east=view.toScreen(this.factory.point({longitude:m.lon+d/(111320*cos),latitude:m.lat,z:ground.z,spatialReference:{wkid:4326}}));
   const north=view.toScreen(this.factory.point({longitude:m.lon,latitude:m.lat+d/111320,z:ground.z,spatialReference:{wkid:4326}}));
   if(![origin?.x,origin?.y,east?.x,east?.y,north?.x,north?.y].every(Number.isFinite)){this.showFallback(true);return;}
@@ -74,7 +84,7 @@ export class NativeCurrentImageMarker {
   }
   const ready=this.layerView&&!this.layerView.suspended&&this.layerView.visible!==false&&(this.nativeActive||!this.layerView.updating);
   if(!ready){this.showFallback(false);return;}
-  this.nativeActive=true;this.fallback.clear();this.presented(this.marker,view);this.settled={model:m,marker:this.marker,fan:this.fan,camera:view.camera,zoom:view.zoom,sampler:view.groundView?.elevationSampler};
+  this.nativeActive=true;this.fallback.clear();this.presented(this.marker,view);this.settled={model:m,marker:this.marker,fan:this.fan,camera:view.camera,zoom:view.zoom,width:view.width,height:view.height,container:view.container,sampler:view.groundView?.elevationSampler};
  }
  clear():void{
   const view=this.view;this.nativeActive=false;this.fallback.clear();this.presented(false,view);

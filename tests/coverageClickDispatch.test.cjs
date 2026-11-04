@@ -29,6 +29,7 @@ function setup({ hovered = true, priority, detection = false, regional = false }
   const widget = { props: { state: 'OPENED' }, state: { turboModeActive: true, jimuMapView: { view },
     objectsActive: detection, placesActive: priority === 'places' },
     turboCoverageLayer: {}, _turboRequestCount: 1,
+    _fieldNoteMap: { clearHighlight() {}, hasPickTargets: false, noteForGraphic: () => null },
     _coverageSelectionTargets: { snapshot: () => hovered && !regional ? { imageId: 'exact-image', sequenceId: 'sequence', geometry } : null, retain() {} },
     coverageSelectionContext: () => ({}), _pointCloudHits: { route: () => false },
     _turboMetadataCache: { get: () => undefined },

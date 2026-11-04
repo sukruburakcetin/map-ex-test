@@ -1,0 +1,32 @@
+{
+  "installer": "infobox-export-bottom-spacing",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/InfoBox.tsx",
+      "originalSha256": "d71d1d9e385dbf0a69692b0eccdcbbb60454d3fe1c2109a2c7ddb80a5c6127fc",
+      "resultSha256": "1eb0122d3fc5b80b1e7680cbaffc0b8242d65e3bc1ec5fb098a3bcbc1496e071"
+    },
+    {
+      "file": "src/styles/detectionControls.ts",
+      "originalSha256": "48c5e384c742498a0ee6f795dd859997c33b0575c8525fdf97d61cfd84531293",
+      "resultSha256": "cc8c8a26e4fe4d4861b9507ae2ea0b4cdc3dc2238b603c616e8a49f06ed86d2d"
+    },
+    {
+      "file": "src/i18n/runtimeMessages.ts",
+      "originalSha256": "99a9a48822992abdf8baea17531cd04205aa121844edd4e689a9570376971dbb",
+      "resultSha256": "6214623154353ff49bdccffb24e111e8c3d05d4287d81c3465cf348ba348c3b9"
+    },
+    {
+      "file": "tests/panelControls.browser.cjs",
+      "originalSha256": "bf3227d10612a05492860779a71366f70509ee15ae00f4fe2755fa857fe40f6a",
+      "resultSha256": "543f83f3e3de146ce38c6228d133a33dfd725a8cce587da4484ef57838bbf8a9"
+    },
+    {
+      "file": "docs/localization/translations.csv",
+      "originalSha256": "d94e252f04c3306d0895aaf6c5ceda647c9f161484d1f95bd4f92275ad565298",
+      "resultSha256": "af586d7be0161b5ba806910901c0a75ea3dfa155607fd9276837d28019f8ba0f"
+    }
+  ]
+}

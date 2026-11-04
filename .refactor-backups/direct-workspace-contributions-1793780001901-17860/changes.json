@@ -1,0 +1,132 @@
+{
+  "installer": "direct-workspace-contributions",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/FieldNotesPanel.tsx",
+      "originalSha256": "6b44289679f5d8a379dc0a661910bfad9ae74595b0cecc7af7f4d3a885a46b4b",
+      "resultSha256": "105aa553675690298681f2440b16b325ad5a617145658e589dbfba37d631f9a3"
+    },
+    {
+      "file": "src/components/types.ts",
+      "originalSha256": "cebcdcaceba6417dc260cb83518fa5c75d513665563ffe65c6ea1cfd354322b7",
+      "resultSha256": "9e9ba1160ef80d01cb7cb56353c74c4c21f317a18aca95c825f7e2ca2a527e38"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "adeb9c00ee98f1698579108ea3a5dbb2ece37e322d1f0aa79a8300e726bdd53a",
+      "resultSha256": "787af6d9aaeadf555f2e365326cebad1710ca8c5a80085a225dc570a273e88ea"
+    },
+    {
+      "file": "src/features/community-notes/communityWorkspace.ts",
+      "originalSha256": "b269f544c83a1e1f21bf8a0668a74c5496ca34954f2f256d22ab72ce3a41a96c",
+      "resultSha256": "f0535f5a6616f4db1e08ea02b298cb1337e492bff466b3b4ce51790c155ae9a9"
+    },
+    {
+      "file": "src/features/community-notes/CommunityWorkspacePanel.tsx",
+      "originalSha256": "a98b203f0dfad2e1fdfba8fab85b97bcfacafebd3d25ea3639ac6abe83d11de3",
+      "resultSha256": "cb7bf57d1f698202471d0743a69d9d534546d03e34d8d7fabad0d651bffc2da8"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceContributionCard.tsx",
+      "originalSha256": "82fea0d04f2757c236458a87dd238cdac14d7c68f4bc8cac282eee45ec84c377",
+      "resultSha256": "733d1e2a5f34f1f2ea5c0c4cdd089aab502140e38886ff9a50e4be5c6654cf79"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceContributionEditor.tsx",
+      "originalSha256": "0f265107edbe46d4fc2eaeb9e4adb4040441b2e2be0b33d4dff3c702f65e1bcf",
+      "resultSha256": "f9c16ce34bf749d102cdb46f842cb80af2a8405374a83e2a2850541aea238325"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceContributionTools.tsx",
+      "originalSha256": "e27de7448f082ef11ab3eef4ccd3e9fac46256ab25afa75f57ef2679538007e3",
+      "resultSha256": "8acac8819e5676a730cf54543be154fddeb621554ea775a8e5c9d06ebaba37da"
+    },
+    {
+      "file": "src/features/community-notes/localNoteChoices.ts",
+      "originalSha256": "8db7e3f5c41f5060b171c60451d1fa1e24eb882868368a7831c90d65f0096b44",
+      "resultSha256": "09505719d8ba1dca0f18485858850e22ebeee30c05948e234de6520511368402"
+    },
+    {
+      "file": "src/features/field-notes/mapGraphic.ts",
+      "originalSha256": "1afe2c0a047aa0036db02e93f840dc7acd7f4097301ce8541108dd35d75eb865",
+      "resultSha256": "c0a886a28eed3a8229f2d565753603587a3713a7aa0c62596e6902f89bfc580f"
+    },
+    {
+      "file": "tools/community-notes/schema.sql",
+      "originalSha256": "1689527e8a832d595b52d2c473a9fd571137fcf8f91b3c325f7af1852eb3bfc3",
+      "resultSha256": "060b891d345c9871ac0ac82c602dfccb3390754b0a44bd2514d793ada91bba06"
+    },
+    {
+      "file": "tools/community-notes/README.md",
+      "originalSha256": "91d5aa0a737ae1ccf3cff2eaa7fa68c79ae7526160de39f777d5c095638a672a",
+      "resultSha256": "2f4b2d88a36c930c69207c178a62506b2a843458a5e84b4fd1ceec101ebb9648"
+    },
+    {
+      "file": "src/features/community-notes/README.md",
+      "originalSha256": "7e7e3d2fcedfbba551da6eeffa3bc6bf402bf7acfae781914c3b724ba39ef4c2",
+      "resultSha256": "caff20d9bda3219a4f3d1a917ed8c4964abae151457bc9adc09e42d4f3f73d19"
+    },
+    {
+      "file": "tests/communityWorkspaceClient.test.cjs",
+      "originalSha256": "d21aa79b9ad5fe85d3b75b42e1310b7b7c129e4148a1a9ffec32b395b03fa6f8",
+      "resultSha256": "3e074d90bc960a568d3617799c93c6984b1f571dcd21434c81341dcdf901fce9"
+    },
+    {
+      "file": "tests/communityWorkspace.browser.cjs",
+      "originalSha256": "5b7aa1958cfef4f986c1d98e5424a0c415f754b750b6079c866516a806c5771e",
+      "resultSha256": "a5087603f0557471da2f3ce8991a24ef30f077d2cbc06e8557351bfaf299c161"
+    },
+    {
+      "file": "tests/coverageClickDispatch.test.cjs",
+      "originalSha256": "7622f744564591bf6f99ba14108b63bc60893a2b2c9068087be2788ca510448f",
+      "resultSha256": "e88e8886ebff04bdc9137b0d14b8486a82cf38b037bc2827bd80d6b0d76cc2e7"
+    },
+    {
+      "file": "tests/sequencePerformanceRuntime.test.cjs",
+      "originalSha256": "3a07ed28704133ae6bea4737ec9c22fef66150beb2cb2f249de5fbefad49bdf3",
+      "resultSha256": "f460fdfb483b9285bde8bd11e5c6e0ad8564c702d1f7acd86185dadee520d78d"
+    },
+    {
+      "file": "tests/coverageHoverRuntime.test.cjs",
+      "originalSha256": "18456f3e381f7c35197ba687b4fa97b60b568222dcd3b228f3eec98297a2eca1",
+      "resultSha256": "77c759d619c1172b75ba2e30e515b0bdf4515d998f7a8a711e72c0082d5c01fb"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceLocationPicker.ts",
+      "originalSha256": null,
+      "resultSha256": "5eaff3c21b26eda6469bfc20418d9f21491728a9748619a486280e8cfe75e8bc"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceContributionDraft.tsx",
+      "originalSha256": null,
+      "resultSha256": "1f4faad075fcd9aa886a4e7f8a903638647cf369c2240c3f301ec851e1df955c"
+    },
+    {
+      "file": "tools/community-notes/migrations/005-direct-contributions.sql",
+      "originalSha256": null,
+      "resultSha256": "c823566690461c208c9301fa626d9c4fe2564280528ac46ed9765623fe9f2695"
+    },
+    {
+      "file": "tests/workspaceLocationPicker.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "4750508334e9a21ff6fa81bfd2834e58828b2fdcb504bde99cfd1c101cbc2a7d"
+    },
+    {
+      "file": "tests/directContributionsDatabase.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "24adb946c2a056293b858bcbcedc3014ee9d01bd95b5d07ef3d8858663da8122"
+    },
+    {
+      "file": "tests/fixtures/communityWorkspaceBefore005.sql",
+      "originalSha256": null,
+      "resultSha256": "1689527e8a832d595b52d2c473a9fd571137fcf8f91b3c325f7af1852eb3bfc3"
+    },
+    {
+      "file": "docs/DIRECT-WORKSPACE-CONTRIBUTIONS.md",
+      "originalSha256": null,
+      "resultSha256": "a5e5877ac419d928a14fea5317826a7a113e3b7483ce7b7874cb27fe03aae1d7"
+    }
+  ]
+}

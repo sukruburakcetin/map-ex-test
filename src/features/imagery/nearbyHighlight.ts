@@ -1,80 +1,37 @@
-/** Nearby thumbnail pin and direction-cone presentation; no requests or playback state. */
-import { calculateBearing, createConeGeometry } from '../../utils/geoUtils';
+/** Bounded thumbnail preview using the image's own pose, never a direction to
+ * the current camera. Missing heading shows a point without inventing a cone. */
+import { ScreenDirectionCone } from '../map-graphics/ScreenDirectionCone';
 import type { NearbyImage } from '../../components/types';
-
-type HighlightView<G> = { graphics: { add(graphic: G): unknown; remove(graphic: G): unknown } };
-type HighlightState = { imageId: string | null; sequenceImages: { id: string; lat: number; lon: number }[] };
-type HighlightModules<G> = { Graphic: new (properties: any) => G };
-
+export function nearbyImagePose(img:NearbyImage):{lon:number;lat:number;heading:number|null}|null {
+ const valid=(p:any)=>Array.isArray(p)&&p.length>=2&&Number.isFinite(p[0])&&Math.abs(p[0])<=180&&Number.isFinite(p[1])&&Math.abs(p[1])<=90;
+ const computed=valid(img.computed_geometry?.coordinates)&&Number.isFinite(img.computed_compass_angle);
+ const coordinates=computed?img.computed_geometry!.coordinates:img.geometry?.coordinates;
+ if(!valid(coordinates))return null;
+ const heading=computed?img.computed_compass_angle:img.compass_angle;
+ return {lon:coordinates[0],lat:coordinates[1],heading:Number.isFinite(heading)?((heading!%360)+360)%360:null};
+}
 export class NearbyImageHighlight<G> {
-  private pin: G | null = null;
-  private direction: G | null = null;
-
-  /** Replace the hover pin/cone using WGS84 positions; null clears both graphics. */
-  update(view: HighlightView<G> | undefined, modules: HighlightModules<G> | null, state: HighlightState, img: NearbyImage | null): void {
-    if (!view || !modules) return;
-
-    // Remove previous pin and direction cone
-    if (this.pin) {
-      view.graphics.remove(this.pin);
-      this.pin = null;
-    }
-    if (this.direction) {
-      view.graphics.remove(this.direction);
-      this.direction = null;
-    }
-
-    if (!img) return;
-
-    const [lon, lat] = img.geometry.coordinates;
-    const { Graphic } = modules;
-
-    // 1. Yellow dot at hovered image position
-    this.pin = new Graphic({
-      geometry: {
-        type: "point",
-        longitude: lon,
-        latitude: lat,
-        spatialReference: { wkid: 4326 },
-      },
-      symbol: {
-        type: "simple-marker",
-        style: "circle",
-        color: [255, 200, 0, 0.95],
-        size: 12,
-        outline: { color: [255, 255, 255, 1], width: 2 },
-      },
-    });
-    view.graphics.add(this.pin);
-
-    // 2. Direction cone, get current camera position from sequenceImages
-    // (_cameraLat/_cameraLon are only populated during point cloud sessions)
-    const { imageId, sequenceImages } = state;
-    const activeImg = imageId ? sequenceImages.find((s) => s.id === imageId) : null;
-
-    const fromLat = activeImg?.lat ?? 0;
-    const fromLon = activeImg?.lon ?? 0;
-
-    if (!fromLat || !fromLon) return;
-
-    // Calculate bearing FROM hovered image TOWARD current camera position.
-    // This shows which direction the hovered image points back at you,
-    // giving a sense of what you would see if you jumped to it.
-    const bearing = calculateBearing(lat, lon, fromLat, fromLon);
-
-    const coneGeom = createConeGeometry(lon, lat, bearing, 10, 60);
-
-    this.direction = new Graphic({
-      geometry: coneGeom,
-      symbol: {
-        type: "simple-fill",
-        color: [50, 205, 50, 0.9],
-        outline: {
-          color: [255, 200, 0, 0.9],
-          width: 3,
-        },
-      } as any,
-    });
-    view.graphics.add(this.direction);
+ private pin:G|null=null;
+ private view:any=null;
+ private screen:ScreenDirectionCone|null=null;
+ clear():void {this.screen?.clear();if(this.pin)this.view?.graphics?.remove(this.pin);this.pin=null;this.view=null;}
+ update(view:any,modules:{Graphic:new(p:any)=>G;Point?:new(p:any)=>any}|null,state:{imageId:string|null},img:NearbyImage|null,anchor?:{lon:number;lat:number}):void {
+  this.clear();
+  if(!view||!modules||!img||String(img.id)===String(state.imageId))return;
+  const original=nearbyImagePose(img);if(!original)return;
+  const pose={...original,...anchor};
+  this.view=view;
+  const document=view.container?.ownerDocument;
+  if(document?.createElement&&modules.Point){
+   this.screen??=new ScreenDirectionCone(p=>new modules.Point!(p),()=>document.createElement('div'),
+    {request:callback=>requestAnimationFrame(callback),cancel:id=>cancelAnimationFrame(id)},undefined,
+    {fill:'#2bb83f',opacity:'0.35',stroke:'#ffc800',markerRadius:5});
+   this.screen.showMarker(view,pose.lon,pose.lat,[255,200,0,1],String(img.id));
+   if(pose.heading!==null)this.screen.show(view,pose.lon,pose.lat,pose.heading,4,50);
+   return;
   }
+  this.pin=new modules.Graphic({geometry:{type:'point',longitude:pose.lon,latitude:pose.lat,spatialReference:{wkid:4326}},
+   symbol:{type:'simple-marker',style:'circle',color:[255,200,0,1],size:8,outline:{color:'white',width:1.5}}});
+  view.graphics.add(this.pin);
+ }
 }

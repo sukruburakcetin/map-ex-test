@@ -31,7 +31,7 @@ export const CoverageAnalysisTrigger: React.FC<CoverageAnalysisTriggerProps> = p
     <React.Fragment>
       {/* Coverage Analysis button */}
       <div
-        style={coverageAnalysisTriggerRowStyle}
+        className="mly-coverage-analysis-trigger" style={coverageAnalysisTriggerRowStyle}
       >
         <button
           type="button" disabled={!canRun} aria-disabled={!canRun}

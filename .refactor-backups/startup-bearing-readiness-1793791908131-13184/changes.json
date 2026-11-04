@@ -1,0 +1,22 @@
+{
+  "installer": "startup-bearing-readiness",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "270bd7b83da407dd542925e3cbd86d2efe41191cbfb55802eb840476193a5f47",
+      "resultSha256": "693bd7974a66c4ad66f284a3f35bd366964ae35fd38a78893a82dd55e10faa3b"
+    },
+    {
+      "file": "src/features/navigation/sharedLinkRestoration.ts",
+      "originalSha256": "209275fc6a7bde3c1e65a83152cc07c8b10cbc90628f1c23840e3fd653556a32",
+      "resultSha256": "025e526e0a6e6bf9ab9f7366bd5347273b8078ef7ac9f6a17f93061c395a528a"
+    },
+    {
+      "file": "tests/sharedStartupReadiness.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "6f4dd4f119d2a7a182045567922616093d8db77bf466ea38d907efd5e763e006"
+    }
+  ]
+}

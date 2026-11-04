@@ -1,0 +1,17 @@
+{
+  "installer": "category-editor-spacing",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/community-notes/WorkspaceCategoryEditor.tsx",
+      "originalSha256": "cc81a02934410934a48131eab11853c2da55c335f9cfb361d1f0efd150809931",
+      "resultSha256": "15ec49c84d1ed9b4db6d6b3b13b186b36723174230fcc7c4f56a9adceb2b1122"
+    },
+    {
+      "file": "src/styles/communityWorkspace.ts",
+      "originalSha256": "6a81318eb2b2312de8fb81506e518601082d1acc14b3cf8721df3f26ef10a982",
+      "resultSha256": "94de46bbe5aba54d14967cd118ecc14f87643da84f2246c05eb25b0a86c5a532"
+    }
+  ]
+}

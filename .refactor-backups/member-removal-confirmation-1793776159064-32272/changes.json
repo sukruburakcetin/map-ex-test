@@ -1,0 +1,17 @@
+{
+  "installer": "member-removal-confirmation",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/community-notes/CommunityWorkspacePanel.tsx",
+      "originalSha256": "2db83324ee9318189b21e1699440c33df42d18c4ef3cac32aabbfd4f2de12a93",
+      "resultSha256": "a98b203f0dfad2e1fdfba8fab85b97bcfacafebd3d25ea3639ac6abe83d11de3"
+    },
+    {
+      "file": "tests/communityWorkspace.browser.cjs",
+      "originalSha256": "e5d6f7250ed014abf8d75e6a6184bed90639aa0d249fcaf857e1f1eca6dd039e",
+      "resultSha256": "5b7aa1958cfef4f986c1d98e5424a0c415f754b750b6079c866516a806c5771e"
+    }
+  ]
+}

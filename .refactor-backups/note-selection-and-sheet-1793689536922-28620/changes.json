@@ -1,0 +1,47 @@
+{
+  "installer": "note-selection-and-sheet",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/field-notes/FieldNoteMap.ts",
+      "originalSha256": "cfe948ac2826bb5665d4f40014e5114240de664a0edbd605e3e48c22643c5c09",
+      "resultSha256": "66dee3608d58261a58c6f13f8cb92cd28e3ea26bac7e1790651d85435ff4c2d4"
+    },
+    {
+      "file": "src/features/field-notes/mapGraphic.ts",
+      "originalSha256": "7e9f723b05cb35dd46314cc0c1553be78e4bf3fe0a297964ff8fb881b960cd66",
+      "resultSha256": "993527daf6c61398cc81adeeba3b6910897e3ba477cd23f006748c9383d9462c"
+    },
+    {
+      "file": "src/components/FieldNotesPanel.tsx",
+      "originalSha256": "0ecbad7c18ef56b75a60a8882d013cb4e076b7def6d71981b0450b06db580d73",
+      "resultSha256": "76432b9eab4ca4f92d8875b34162834ff6f5549ee609b422e0c065b9ebb985c1"
+    },
+    {
+      "file": "src/styles/enterpriseNotes.ts",
+      "originalSha256": "acfca4a13b3b1ff73a7e566149c92feeb6b3d94cf2b0874afdf1e9004ab50eab",
+      "resultSha256": "ced5069ab7803a69093e2c9b4cd363b8e934f226a176e869cd8e2d25b0d1fd49"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "d7de858b1602562375c05d09bac3168e9fe092b1b1fcfae67189811f2be52883",
+      "resultSha256": "27497bf10e0cce627c83990a8e614f941a11a744e0a2f62a9c8e9cb8c4725345"
+    },
+    {
+      "file": "tests/fieldNoteMap.test.cjs",
+      "originalSha256": "c998e12b491e1f14f5a2eb258d4a3f80e8e794462c2f0f9f22c89d87091a163e",
+      "resultSha256": "6666c3ee28aeeb0696b773871aa927d5d2e370d605fc33708a183632ca022405"
+    },
+    {
+      "file": "tests/communityWorkspace.browser.cjs",
+      "originalSha256": "9048e329aba5e41c04d397e4e6ddc9cd852c77cd550f03c4fd05e3bdaffb6e17",
+      "resultSha256": "9fe5c887725cbda815b04f2c9239aa2bab7feec00985e5d57b0c32581ba23563"
+    },
+    {
+      "file": "docs/NOTE-SELECTION-AND-SHEET.md",
+      "originalSha256": null,
+      "resultSha256": "378c0c0eb15d9cbf2851a25d14d1aafbb43b6b872907ee19abc024c887ba4a1c"
+    }
+  ]
+}

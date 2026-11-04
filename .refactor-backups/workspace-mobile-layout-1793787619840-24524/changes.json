@@ -1,0 +1,22 @@
+{
+  "installer": "workspace-mobile-layout",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/styles/communityWorkspace.ts",
+      "originalSha256": "0efcbddfd0be3e40466fe5e92702e4614d72a8d7b17b91a07bfa5d849e3a66f4",
+      "resultSha256": "9036c9905f493f3ef37a9027671466bc2eea2d68a2a008b146869f117958e525"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceContributionCard.tsx",
+      "originalSha256": "733d1e2a5f34f1f2ea5c0c4cdd089aab502140e38886ff9a50e4be5c6654cf79",
+      "resultSha256": "5a326e9fdd630fe8fa3bee38d9ac42afcc9ab6ab4c88d2fc1020ff3aa96ae5d6"
+    },
+    {
+      "file": "tests/communityWorkspace.browser.cjs",
+      "originalSha256": "63bc2a7805fa68bf942ed4a8f566ba67913cbefaad086a7ee45335a16ee590a6",
+      "resultSha256": "8a2b9186f0bb4ccf77b77e5892c4724295835c4d3ff780edb32cb27ce83bb312"
+    }
+  ]
+}

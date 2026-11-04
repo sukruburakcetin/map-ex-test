@@ -28,6 +28,15 @@ export function groundFanMatrix(front: { x: number; y: number }, right: { x: num
  return `matrix(${n(right.x/scale)},${n(right.y/scale)},${n(-front.x/scale)},${n(-front.y/scale)},0,0)`;
 }
 
+/** Close mobile views need a local projection sample, not a 10m probe that
+ * can extend behind the camera. This predicate never changes rendering mode. */
+export function mobileCloseZoomIndicator(view:any):boolean {
+ if(!(view?.zoom>=21))return false;
+ const narrow=Number.isFinite(view.width)&&view.width>0&&view.width<=480;
+ const touch=view.container?.ownerDocument?.defaultView?.matchMedia?.('(pointer: coarse)')?.matches===true;
+ return narrow||touch;
+}
+
 /** One SVG anchor: current-image circle and fan share the ground-plane orientation. */
 export class ScreenDirectionCone {
  private element: HTMLDivElement | null = null;
@@ -43,7 +52,8 @@ export class ScreenDirectionCone {
  private geometryKey='';
  constructor(private point: (properties: any) => any, private createElement: () => HTMLDivElement,
   private clock: { request(callback: FrameRequestCallback): number; cancel(frame: number): void },
-  private onMarkerPresented?: (presented: boolean, view: any) => void) {}
+  private onMarkerPresented?: (presented: boolean, view: any) => void,
+  private appearance={fill:"#ffb300",opacity:"0.55",stroke:"#ff9800",markerRadius:7}) {}
  show(view: any, lon: number, lat: number, heading: number, metres: number, spread: number): void {
   if(view!==this.view)this.clear();
   this.fanVisible=true;
@@ -53,7 +63,11 @@ export class ScreenDirectionCone {
  }
  showMarker(view: any, lon: number, lat: number, color: any, imageId: string): void {
   if(view!==this.view)this.clear();
-  if(this.markerId!==String(imageId))this.fanVisible=false;
+  if(this.markerId!==String(imageId)){
+   this.fanVisible=false;this.projectionCache=null;
+   if(this.element)this.element.style.display='none';
+   this.onMarkerPresented?.(false,view);
+  }
   this.markerId=String(imageId);this.markerVisible=true;
   const rgba=Array.isArray(color)?color:color?.toRgba?.();
   const channel=(v:any,f:number)=>Number.isFinite(v)?Math.max(0,Math.min(255,v)):f;
@@ -79,7 +93,7 @@ export class ScreenDirectionCone {
   if(this.geometryKey!==key){
    const a=m.spread*Math.PI/360,inner=9,x=Math.sin(a),y=Math.cos(a),r=m.radius;
    const left=`${60-r*x} ${60-r*y}`,right=`${60+r*x} ${60-r*y}`,start=`${60-inner*x} ${60-inner*y}`,end=`${60+inner*x} ${60-inner*y}`;
-   this.element.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><g data-direction-fan="true"><path d="M${start} L${left} A${r} ${r} 0 0 1 ${right} L${end} A${inner} ${inner} 0 0 0 ${start} Z" fill="#ffb300" fill-opacity="0.55" stroke="#ff9800" stroke-width="1.25" stroke-linejoin="round"/></g><circle data-current-image-marker="true" cx="60" cy="60" r="7" fill="#00ff00" stroke="#ffffff" stroke-width="2"/></svg>`;
+   this.element.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><g data-direction-fan="true"><path d="M${start} L${left} A${r} ${r} 0 0 1 ${right} L${end} A${inner} ${inner} 0 0 0 ${start} Z" fill="${this.appearance.fill}" fill-opacity="${this.appearance.opacity}" stroke="${this.appearance.stroke}" stroke-width="1.25" stroke-linejoin="round"/></g><circle data-current-image-marker="true" cx="60" cy="60" r="${this.appearance.markerRadius}" fill="#00ff00" stroke="#ffffff" stroke-width="2"/></svg>`;
    this.geometryKey=key;
   }
   return true;

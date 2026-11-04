@@ -65,6 +65,7 @@ for (const preview of [false, true]) test((preview ? 'hovered point snapshot' : 
   const opened = [], retained = [], graphic = { geometry, attributes: { image_id: 'image-1', sequence_id: 'sequence-A' } };
   const w = {
     props: {}, state: { turboModeActive: true, jimuMapView: { view } }, tooltipDiv: null,
+    _fieldNoteMap: { clearHighlight() {}, hasPickTargets: false, noteForGraphic: () => null },
     _turboRequestCount: 1, turboCoverageLayer: {}, _pointCloudHits: { route: () => false },
     _turboMetadataCache: { get: () => { metadataReads++; return undefined; } },
     _coverageSelectionTargets: {
@@ -109,7 +110,7 @@ test('actual image event cancels obsolete enrichment without starting replacemen
   mockFetch(t, async (url, options) => { fetched.push({ url, signal: options.signal }); return held.promise; });
   const viewer = {}, w = new Runtime(); w.accessToken = 'test'; w.mapillaryViewer = viewer;
   w.state = { imageId: 'A', isLoading: false, jimuMapView: { view: {} } };
-  w.setState = patch => applied.push(patch); w.updateProfileIndicator = () => {};
+  w.setState = patch => applied.push(patch); w.updateProfileIndicator = () => {}; w.highlightNearbyPin = image => assert.equal(image,null);
   w._liveSequenceFrames = { resolve: async () => null };
   const pending = w.checkForTimeTravel('A');
   const image = bindCallback(callback('this.mapillaryViewer.on', 'image'), w, { profileEventViewer: viewer });
@@ -130,6 +131,7 @@ test('a stale cross-sequence image event cannot replace the clicked image while 
     _liveSequenceFrames: { resolve: async image => { resolved.push(image.id); return null; } },
     _backgroundRequests: { setPaused: paused => queueChanges.push(paused) },
     updateProfileIndicator() {},
+    highlightNearbyPin(image) { assert.equal(image,null); },
     setState() { throw new Error('An obsolete event must not update the current selection'); },
   };
   const image = bindCallback(callback('this.mapillaryViewer.on', 'image'), w, { profileEventViewer: viewer });

@@ -1,0 +1,22 @@
+{
+  "installer": "mobile-hover-dismissal",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "787af6d9aaeadf555f2e365326cebad1710ca8c5a80085a225dc570a273e88ea",
+      "resultSha256": "4582831fc347730779400d4ebad6be246db442d12bfbe3d132a1187272501495"
+    },
+    {
+      "file": "src/features/coverage/CoverageTouchHover.ts",
+      "originalSha256": null,
+      "resultSha256": "4d8a94b48f03555c9996d076d1320a0597d71553328cabc25ecc6c08dbe9e7c4"
+    },
+    {
+      "file": "tests/coverageTouchHover.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "d13acd787cd90658411dc46a0c46d08420017e64c4318bd34743977630d0cd13"
+    }
+  ]
+}

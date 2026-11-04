@@ -1,0 +1,22 @@
+{
+  "installer": "ai-label-toggle-restore",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "049e3cd1925d60ce0754cbfd9162e2ce24646678f91c14e1a7edf1f19a9e78aa",
+      "resultSha256": "ace4a0be8404489558ce07d3f88bccfddf7bf5143ebe9de627bce6f713340863"
+    },
+    {
+      "file": "src/features/detections/DetectionToolsSection.tsx",
+      "originalSha256": "03ee94a7792f5d16cc6ea37c79d6bfbb5e37a7f9c067aa08b126b5d79d9a3828",
+      "resultSha256": "3e4777cd60c36319a811e3ffe911b1dfe0856ba550bcad610537b9f72fe3a3ab"
+    },
+    {
+      "file": "tests/aiLabelToggle.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "fc5f2c4c030f4c71d3356ecd2918bb0a8d7324b3fc849b1e9eb934710c074808"
+    }
+  ]
+}

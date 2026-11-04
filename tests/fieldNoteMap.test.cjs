@@ -13,13 +13,16 @@ function setup(kind,{hold=false,type='3d'}={}){
  class Layer{constructor(props){Object.assign(this,props);this.number=layers.length;this.graphics=[];layers.push(this);trace.push(['layer',structuredClone(props)])}removeAll(){this.graphics=[];trace.push(['removeAll',this.number])}add(g){this.graphics.push(g);trace.push(['graphic',this.number,structuredClone(g)])}destroy(){this.destroyed=true;trace.push(['destroy-layer',this.number])}}
  class Graphic{constructor(props){if(graphicFailure)throw Error('graphic failed');Object.assign(this,props)}}
  const load=names=>{trace.push(['load',names]);const d=deferred();d.kind=names[0].includes('GroupLayer')?'group':'layer';loads.push(d);if(!hold)d.resolve([d.kind==='group'?Group:Layer]);return d.promise};
- const Harness=new Function('FieldNoteMap','loadArcGISJSAPIModules','buildLocalNoteGraphic',compile('class Widget{'+(kind==='baseline'?fixture.handlers:actual)+'};return Widget;'))(m.exports.FieldNoteMap,load,descriptor.exports.buildLocalNoteGraphic);const w=new Harness();
+ const Harness=new Function('FieldNoteMap','loadArcGISJSAPIModules','buildLocalNoteGraphic','startNoteHighlight',compile('class Widget{'+(kind==='baseline'?fixture.handlers:actual)+'};return Widget;'))(m.exports.FieldNoteMap,load,descriptor.exports.buildLocalNoteGraphic,async(view,layer,graphic,current)=>{const handle={removed:false,remove(){this.removed=true}};if(current())trace.push(['native-highlight',graphic.attributes.id,handle]);return handle;});const w=new Harness();
  function view(type='3d'){const v={type,destroyed:false,map:{add:g=>trace.push(['map-add',views.indexOf(v),g.number]),remove:g=>trace.push(['map-remove',views.indexOf(v),g.number])}};views.push(v);return v}
  w.state={jimuMapView:{view:view(type)},fieldNotes:[note(),note('B',{source:'mapillary-detection',alt:undefined})]};w.props={config:{sharedFieldNotesUrl:' https://enterprise/notes/ '}};w.ArcGISModules={Graphic};w._sharedNotesDisposed=false;w._sharedNotesLayer=null;w._sharedNotesView=null;w.clearPendingNoteGraphic=()=>trace.push(['pending-clear']);w._fieldNotesGroup=null;w._fieldNotesLayer=null;w._fieldNotesGroupView=null;w._fieldNotesGroupVisible=true;w._fieldNotesGroupRevision=0;w._fieldNotesGroupLoad=null;
  return{w,trace,groups,layers,loads,views,view,Group,Layer,draw:()=>w.drawFieldNoteGraphics(),ensure:v=>w.ensureFieldNotesGroup(v||w.state.jimuMapView.view),clear:()=>w.clearFieldNotesGroup(),group:()=>kind==='baseline'?w._fieldNotesGroup:w._fieldNoteMap.group,layer:()=>kind==='baseline'?w._fieldNotesLayer:w._fieldNoteMap.layer,visible:()=>kind==='baseline'?w._fieldNotesGroupVisible:w._fieldNoteMap.visible,resolve:i=>loads[i].resolve([loads[i].kind==='group'?Group:Layer]),graphicFailure:value=>graphicFailure=value};
 }
-async function compare(run,options){const a=setup('baseline',options),b=setup('working',options);await run(a);await run(b);assert.deepEqual(b.trace,a.trace);assert.deepEqual(structuredClone(b.layers.map(l=>l.graphics)),structuredClone(a.layers.map(l=>l.graphics)));assert.equal(b.visible(),a.visible());return b}
-test('2D/3D exact local descriptors, group/layer properties, child attachment and drawing order match',async()=>{for(const type of ['2d','3d'])await compare(async h=>{await h.draw();assert.equal(h.groups.length,1);assert.equal(h.layers.length,1);assert.equal(h.layers[0].graphics.length,2);assert.equal(h.layers[0].graphics[0].geometry.hasZ,type==='3d')},{type})});
+async function compare(run,options){const a=setup('baseline',options),b=setup('working',options);await run(a);await run(b);// Popups intentionally gain structured fields; geometry/symbol/lifecycle stay frozen.
+ const normalize=g=>({...structuredClone(g),symbol:g.symbol.type==='point-3d'?{type:'simple-marker',style:'diamond',color:g.symbol.symbolLayers[0].material.color,size:g.symbol.symbolLayers[0].size,outline:{color:'white',width:1.5}}:g.symbol,attributes:{id:g.attributes.id,category:g.attributes.category,note:g.attributes.note},popupTemplate:undefined});
+ const trace=items=>items.map(item=>item[0]==='graphic'?[item[0],item[1],normalize(item[2])]:item);
+ assert.deepEqual(trace(b.trace),trace(a.trace));assert.deepEqual(b.layers.map(l=>l.graphics.map(normalize)),a.layers.map(l=>l.graphics.map(normalize)));assert.equal(b.visible(),a.visible());return b}
+test('local geometry, source colors, group/layer properties and drawing order preserve legacy behavior',async()=>{for(const type of ['2d','3d'])await compare(async h=>{await h.draw();assert.equal(h.groups.length,1);assert.equal(h.layers.length,1);assert.equal(h.layers[0].graphics.length,2);assert.equal(h.layers[0].graphics[0].geometry.hasZ,type==='3d')},{type})});
 test('repeated draws reuse layer/group and rebuild current notes without duplicate attachment',async()=>{await compare(async h=>{await h.draw();h.w.state.fieldNotes=[note('new')];await h.draw();assert.equal(h.layers.length,1);assert.equal(h.groups.length,1);assert.equal(h.trace.filter(x=>x[0]==='child-add').length,1);assert.equal(h.layers[0].graphics.length,1)})});
 test('concurrent first draws retain original graphics loads and shared group acquisition',async()=>{await compare(async h=>{const a=h.draw(),b=h.draw();assert.equal(h.loads.length,2);h.resolve(0);h.resolve(1);await flush();assert.equal(h.loads.length,3);h.resolve(2);await Promise.all([a,b]);assert.equal(h.layers.length,1);assert.equal(h.groups.length,1)},{hold:true})});
 test('missing/destroyed map or SDK readiness skips draw module loading',async()=>{for(const mode of ['view','map','destroyed','sdk'])await compare(async h=>{if(mode==='view')h.w.state.jimuMapView=null;if(mode==='map')h.views[0].map=null;if(mode==='destroyed')h.views[0].destroyed=true;if(mode==='sdk')h.w.ArcGISModules=null;await h.draw();assert.equal(h.loads.length,0)})});
@@ -39,4 +42,85 @@ test('clear during graphics readiness retains existing live-context draw policy 
 test('Graphic constructor is captured once and missing registry still fails before an empty loop',async()=>{
  await compare(async h=>{h.w.ArcGISModules.Graphic=class{constructor(props){Object.assign(this,props);h.w.ArcGISModules.Graphic=class{constructor(){throw Error('registry changed')}}}};await h.draw();assert.equal(h.layers[0].graphics.length,2)});
  await compare(async h=>{const p=h.draw();h.resolve(0);await flush();h.w.state.fieldNotes=[];h.w.ArcGISModules=null;h.resolve(1);await assert.rejects(p);assert.equal(h.layers[0].graphics.length,0)},{hold:true});
+});
+
+// Workspace navigation has no local copy; selection belongs to the map owner only.
+test('workspace focus renders a ground marker in 2D/3D with an empty local collection',async()=>{
+ for(const type of ['2d','3d']){const h=setup('working',{type});h.w.state.fieldNotes=[];const target=note('workspace:remote',{alt:undefined});
+ await h.w._fieldNoteMap.focusNote(target);
+ const layer=h.layers.find(l=>l.id==='workspace-note-selection');assert(layer);assert.equal(layer.elevationInfo.mode,'on-the-ground');
+ assert.equal(layer.graphics.length,1);assert.equal(layer.graphics[0].geometry.longitude,target.lon);assert.equal(layer.graphics[0].attributes.id,target.id);assert.equal(h.w.state.fieldNotes.length,0);
+ await h.draw();assert.equal(layer.graphics.length,1);assert.equal(h.layer().graphics.length,0);
+ }
+});
+test('selection replaces its marker and explicit clearing removes it',async()=>{
+ const h=setup('working');await h.w._fieldNoteMap.focusNote(note('workspace:first'));
+ await h.w._fieldNoteMap.focusNote(note('workspace:second',{lon:5}));assert.equal(h.layers.length,1);assert.equal(h.layers[0].graphics.length,1);assert.equal(h.layers[0].graphics[0].geometry.longitude,5);
+ await h.w._fieldNoteMap.focusNote(null);assert.equal(h.layers[0].graphics.length,0);
+});
+test('late workspace selections cannot replace a newer marker',async()=>{
+ const h=setup('working',{hold:true});const old=h.w._fieldNoteMap.focusNote(note('workspace:old'));h.resolve(0);await flush();assert.equal(h.loads.length,2);
+ const latest=h.w._fieldNoteMap.focusNote(note('workspace:latest'));await flush();h.resolve(2);await latest;h.resolve(1);await old;
+ assert.equal(h.layers.length,1);assert.equal(h.layers[0].graphics[0].attributes.id,'workspace:latest');
+});
+test('clear or view replacement during workspace SDK loading prevents stale attachment',async()=>{
+ for(const mode of ['clear','view','local']){const h=setup('working',{hold:true});const pending=h.w._fieldNoteMap.focusNote(note('workspace:old'));h.resolve(0);await flush();
+ if(mode==='clear')h.clear();else if(mode==='view')h.w.state.jimuMapView={view:h.view()};else await h.w._fieldNoteMap.focusNote(null);
+ h.resolve(1);await pending;assert.equal(h.layers.length,0);
+ }
+});
+test('workspace layer loading failure is retryable and does not mutate local notes',async()=>{
+ const h=setup('working',{hold:true});const before=structuredClone(h.w.state.fieldNotes);const failed=h.w._fieldNoteMap.focusNote(note('workspace:a'));h.resolve(0);await flush();h.loads[1].reject(Error('layer unavailable'));await assert.rejects(failed);
+ const retry=h.w._fieldNoteMap.focusNote(note('workspace:a'));await flush();h.resolve(2);await retry;assert.equal(h.layers[0].graphics.length,1);assert.deepEqual(h.w.state.fieldNotes,before);
+});
+test('actual Show on map dispatches workspace marker selection and preserves navigation',async()=>{
+ const method=cl.members.find(n=>n.name?.getText(sf)==='focusFieldNote').getText(sf);
+ const Harness=new Function(compile('class Widget{'+method+'};return Widget;'))();const w=new Harness(),selected=[],moves=[];
+ w.state={jimuMapView:{view:{zoom:15}},imageId:null};w._fieldNoteMap={focusNote:async n=>selected.push(n)};w.navigateMapView=(...args)=>moves.push(args);w.showToast=()=>{};
+ w.focusFieldNote(note('workspace:remote'));w.focusFieldNote(note('local'));await flush();assert.equal(selected[0].id,'workspace:remote');assert.equal(selected[1].id,'local');assert.equal(moves.length,2);assert.deepEqual(moves[0][1],{center:[1,2],zoom:18});
+});
+
+test('only our local and selected graphics resolve for note click routing',async()=>{
+ const h=setup('working');assert.equal(h.w._fieldNoteMap.hasPickTargets,true);await h.draw();
+ assert.equal(h.w._fieldNoteMap.noteForGraphic({layer:h.layer(),attributes:{id:'A'}}).id,'A');assert.equal(h.w._fieldNoteMap.noteForGraphic({layer:{},attributes:{id:'A'}}),null);
+ const target=note('workspace:a');await h.w._fieldNoteMap.focusNote(target);const layer=h.layers.find(l=>l.id==='workspace-note-selection');
+ assert.equal(h.w._fieldNoteMap.noteForGraphic({layer,attributes:{id:target.id}}),target);
+ h.w.state.fieldNotes=[];await h.w._fieldNoteMap.focusNote(null);assert.equal(h.w._fieldNoteMap.hasPickTargets,false);
+});
+
+test('native highlight is released on another click while its normal marker stays selectable',async()=>{
+ const h=setup('working');await h.w._fieldNoteMap.focusNote(note('workspace:a'));const event=h.trace.find(x=>x[0]==='native-highlight');assert(event);h.w._fieldNoteMap.clearHighlight();assert.equal(event[2].removed,true);assert.equal(h.layers[0].graphics.length,1);assert.equal(h.layers[0].graphics[0].symbol.symbolLayers[0].size,13);
+});
+test('clearing while SDK loads prevents a late highlight or popup',async()=>{
+ const h=setup('working',{hold:true});const pending=h.w._fieldNoteMap.focusNote(note('workspace:a'));h.resolve(0);await flush();h.w._fieldNoteMap.clearHighlight();h.resolve(1);await pending;assert.equal(h.trace.filter(x=>x[0]==='native-highlight').length,0);
+});
+
+test('all loaded workspace contributions appear without Show on map and selection reuses a real marker',async()=>{
+ const h=setup('working');h.w.state.fieldNotes=[];const one=note('workspace:owner',{workspace:{id:'w',name:'Survey',authorId:'owner',color:'#e53935'}}),two=note('workspace:peer',{workspace:{id:'w',name:'Survey',authorId:'peer',color:'#1565c0'}});
+ await h.w._fieldNoteMap.setWorkspaceNotes([one,two],[{name:'Other',color:'#e53935'}],'Survey');
+ const layer=h.layers.find(l=>l.id==='workspace-contributions');assert.equal(layer.graphics.length,2);assert.equal(layer.graphics[0].symbol.symbolLayers[0].material.color,'#e53935');assert.equal(layer.graphics[1].symbol.symbolLayers[0].material.color,'#1565c0');
+ await h.w._fieldNoteMap.focusNote(two);assert.equal(h.layers.length,1);assert.equal(h.trace.filter(e=>e[0]==='native-highlight').length,1);
+ assert.equal(h.w._fieldNoteMap.noteForGraphic({layer,attributes:{id:two.id}}),two);assert.equal(h.w.state.fieldNotes.length,0);
+ await h.w._fieldNoteMap.setWorkspaceNotes([],[],'');assert.equal(layer.graphics.length,0);assert.equal(h.w._fieldNoteMap.hasPickTargets,false);
+});
+test('workspace results survive view replacement but late disconnected results cannot attach',async()=>{
+ const h=setup('working');await h.w._fieldNoteMap.setWorkspaceNotes([note('workspace:a')],[],'Survey');h.clear();h.w.state.jimuMapView={view:h.view('2d')};await h.w._fieldNoteMap.drawWorkspace();assert.equal(h.layers.at(-1).graphics.length,1);
+ const held=setup('working',{hold:true});const old=held.w._fieldNoteMap.setWorkspaceNotes([note('workspace:old')],[],'Old');held.resolve(0);await flush();await held.w._fieldNoteMap.setWorkspaceNotes([],[],'');held.resolve(1);await old;assert.equal(held.layers.length,0);
+});
+test('contribution popup exposes structured category, status, description and workspace fields',()=>{
+ const props=descriptor.exports.buildLocalNoteGraphic(note('workspace:a',{status:'in_progress',workspace:{name:'Survey',color:'#1565c0',authorId:'peer'}}),false);
+ assert.equal(props.attributes.status,'In progress');const fields=props.popupTemplate.content[0].fieldInfos.map(field=>field.fieldName);for(const field of ['category','status','note','workspace','author'])assert(fields.includes(field));
+});
+
+test('all note sources use screen-facing icons in 3D and retain their real anchor/altitude',()=>{
+ for(const extra of [{},{workspace:{name:'Survey',color:'#1565c0',authorId:'peer'}}]){
+ const target=note('note',extra),symbol=descriptor.exports.buildLocalNoteGraphic(target,true);
+ assert.equal(symbol.symbol.type,'point-3d');assert.equal(symbol.symbol.symbolLayers[0].type,'icon');assert.equal(symbol.symbol.symbolLayers[0].anchor,'center');assert.equal(symbol.symbol.symbolLayers[0].resource.primitive,'kite');assert.equal(symbol.geometry.z,3);assert.equal(symbol.geometry.hasZ,true);
+ const flat=descriptor.exports.buildLocalNoteGraphic(target,false);assert.equal(flat.symbol.type,'simple-marker');assert.equal(flat.symbol.style,'diamond');
+ }
+});
+
+test('selected notes use ground placement unless a real altitude is stored',async()=>{
+ const h=setup('working');await h.w._fieldNoteMap.focusNote(note('workspace:ground',{alt:undefined}));assert.equal(h.layers[0].elevationInfo.mode,'on-the-ground');
+ await h.w._fieldNoteMap.focusNote(note('local:measured',{alt:123}));assert.equal(h.layers[0].elevationInfo.mode,'absolute-height');assert.equal(h.layers[0].graphics[0].geometry.z,123);
 });

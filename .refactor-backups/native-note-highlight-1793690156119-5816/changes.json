@@ -1,0 +1,42 @@
+{
+  "installer": "native-note-highlight",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/field-notes/FieldNoteMap.ts",
+      "originalSha256": "66dee3608d58261a58c6f13f8cb92cd28e3ea26bac7e1790651d85435ff4c2d4",
+      "resultSha256": "edcd22601cd0c3ff8d9250bb68ad2a273492724d05059bd6641a7e3669911e69"
+    },
+    {
+      "file": "src/features/field-notes/mapGraphic.ts",
+      "originalSha256": "993527daf6c61398cc81adeeba3b6910897e3ba477cd23f006748c9383d9462c",
+      "resultSha256": "7e9f723b05cb35dd46314cc0c1553be78e4bf3fe0a297964ff8fb881b960cd66"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "27497bf10e0cce627c83990a8e614f941a11a744e0a2f62a9c8e9cb8c4725345",
+      "resultSha256": "58fada0b0a24a9d4c58446cea13888c14bbbabd6af74648a4016adf2a4516152"
+    },
+    {
+      "file": "tests/fieldNoteMap.test.cjs",
+      "originalSha256": "6666c3ee28aeeb0696b773871aa927d5d2e370d605fc33708a183632ca022405",
+      "resultSha256": "efaea434f93be75f5ca8dc53f4d089dff44a45b283071250ff4449e18d1d7540"
+    },
+    {
+      "file": "docs/NOTE-SELECTION-AND-SHEET.md",
+      "originalSha256": "378c0c0eb15d9cbf2851a25d14d1aafbb43b6b872907ee19abc024c887ba4a1c",
+      "resultSha256": "088763b361ae1021ec8d4bef4267f0781a32d060513bba967af291c429b2c954"
+    },
+    {
+      "file": "src/features/field-notes/nativeNoteHighlight.ts",
+      "originalSha256": null,
+      "resultSha256": "474256fe2998a3d13b83299bcb348dfbd5bd4a3da31a67d6e7dc6186498c751b"
+    },
+    {
+      "file": "tests/nativeNoteHighlight.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "a0dfcdbe58ac3eaafa71ae0263e536ebdeec4c7b1478288bb291d62303c4b0b3"
+    }
+  ]
+}

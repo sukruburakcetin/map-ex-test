@@ -95,7 +95,7 @@ export const GRAPH_API = {
   creatorLookup:(username: string) => `https://graph.mapillary.com/images?creator_username=${username}&limit=1&fields=creator`,
 
   nearbyImages: (lat: number, lon: number, radius: number, limit: number) =>
-    `https://graph.mapillary.com/images?fields=id,thumb_256_url,thumb_512_url,captured_at,geometry,creator&lat=${lat}&lng=${lon}&radius=${Math.min(radius, 50)}&limit=${Math.min(limit, 100)}`,
+    `https://graph.mapillary.com/images?fields=id,thumb_256_url,thumb_512_url,captured_at,geometry,computed_geometry,compass_angle,computed_compass_angle,creator&lat=${lat}&lng=${lon}&radius=${Math.min(radius, 50)}&limit=${Math.min(limit, 100)}`,
 } as const;
 
 

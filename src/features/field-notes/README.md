@@ -1,6 +1,6 @@
 # Field-note contributor entry points
 
-## Teacher-owned workspace source
+## Collaboration workspace source
 
 The Workspace tab is composed by FieldNotesPanel independently of Enterprise configuration and lazily loads `../community-notes/CommunityWorkspacePanel.tsx`. That feature owns its own transient connection, sign-in and shared records. Existing Local/Enterprise note data, renderer/persistence paths and builder configuration are unchanged. Local drafts are passed as read-only inputs for deliberate single-note publication; shared map targets reuse the existing focus callback without merging records into local storage. See the community feature README and `tools/community-notes/README.md` for operator-owned setup and boundaries.
 

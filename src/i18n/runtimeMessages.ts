@@ -149,7 +149,7 @@ export const runtimeEn = {
  "uiClickToShowAllQualityBands": "Click to show all quality bands",
  "uiExportActiveSignsAndObjectsWithinTheMap": "Export active signs and objects within the map bounding box, using current filters",
  "uiExporting": "EXPORTING…",
- "uiExportArea": "EXPORT AREA",
+ "uiExportArea": "Export Data",
  "uiShowOrHideDetectionOutlines": "Show or hide detection outlines",
  "uiDetectionOutlines": "Detection outlines",
  "uiAiOverlay": "AI OVERLAY",

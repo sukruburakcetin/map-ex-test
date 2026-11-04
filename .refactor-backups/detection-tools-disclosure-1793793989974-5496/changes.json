@@ -1,0 +1,42 @@
+{
+  "installer": "detection-tools-disclosure",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "2488feeeccbd035a2bbbdb9207a3c45497abf3bd4ab2c4090f122b99dcfb87f4",
+      "resultSha256": "049e3cd1925d60ce0754cbfd9162e2ce24646678f91c14e1a7edf1f19a9e78aa"
+    },
+    {
+      "file": "src/components/InfoBox.tsx",
+      "originalSha256": "2e78eddf13755d2e1766c2a27c279fef55efa95c4fc10d20b0a3994161425a13",
+      "resultSha256": "25321ccf8ba10de43a426bad7df35bedd452737718a9cfa233bbc0e7b5789f1a"
+    },
+    {
+      "file": "src/components/types.ts",
+      "originalSha256": "75b17e0f51ef7e67c32ebebb82e2d8c77061d054fd0dcb5c8fcb7b52f2ead5bd",
+      "resultSha256": "ab139254fd37f571c5e883be858a0ec7aff1e340c46c415a3cc634b44f7ce2aa"
+    },
+    {
+      "file": "src/features/detections/DetectionToolsSection.tsx",
+      "originalSha256": "5333504c9f621ba08dc44828889e363a080eb47341c31cac5cc980ce486a8d1c",
+      "resultSha256": "03ee94a7792f5d16cc6ea37c79d6bfbb5e37a7f9c067aa08b126b5d79d9a3828"
+    },
+    {
+      "file": "src/styles/detectionControls.ts",
+      "originalSha256": "135f65a2109d03c9d8254b6ff18bb94554443d302a10408128dc4491d04e77c7",
+      "resultSha256": "48c5e384c742498a0ee6f795dd859997c33b0575c8525fdf97d61cfd84531293"
+    },
+    {
+      "file": "tests/panelControls.browser.cjs",
+      "originalSha256": "279abe29f09d1af41f4e2a3cd26368c277518d84f9f87d8d4d3e75d94ff55fa2",
+      "resultSha256": "ffbc72e7dab4bc0a4807c409ee5e399ac7102e1a7272df61a0d4d119e953d8e6"
+    },
+    {
+      "file": "tests/objectNearbyLifecycle.test.cjs",
+      "originalSha256": "89e4b2f50630bddb6ef22ec92140a8e00f4fcf566e3c47eaec9e909cd882a416",
+      "resultSha256": "d5c5bbcaa8bde9bedce0eeba846fe8cb2075bf5eae1e38e77b58d7398501eb92"
+    }
+  ]
+}

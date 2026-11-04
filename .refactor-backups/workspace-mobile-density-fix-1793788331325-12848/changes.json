@@ -1,0 +1,17 @@
+{
+  "installer": "workspace-mobile-density-fix",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/styles/communityWorkspace.ts",
+      "originalSha256": "c00d693a15602324abb8dea8acd6694c69f006f6575f20c5de81f81b5050247a",
+      "resultSha256": "87358f5c5f739693b3f5d54502d006a1c274c7abe8f5dafee5fb303b24beaa21"
+    },
+    {
+      "file": "tests/communityWorkspace.browser.cjs",
+      "originalSha256": "e055ee666307106a152a199d47946ea973a838c63cec11dc93548dbc77fb2d48",
+      "resultSha256": "6c70f27af89f8e2efaa40f71c9dbe5a793178824f4dd652ea1f7433c141eb72c"
+    }
+  ]
+}

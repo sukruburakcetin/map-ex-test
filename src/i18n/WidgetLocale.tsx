@@ -72,9 +72,10 @@ export const useWidgetLocale = (): LocaleValue => React.useContext(WidgetLocaleC
 export const LanguageChoice: React.FC = () => {
  const {t,locale,preference,setPreference,loading,failed,retry,allowSwitch,builderControlled,direction}=useWidgetLocale();
  if(!allowSwitch)return null;
- return <div dir={direction} style={{padding:'6px 8px',fontSize:12}}>
-  <label style={{display:'grid',gap:4}}>{t('language')}<select aria-label={t('language')} value={preference} disabled={builderControlled} onChange={event=>setPreference(preferenceOf(event.target.value))} style={{width:'100%',minWidth:0,color:'#172b22',background:'#fff',font:'inherit',padding:4}}>
-   <option value="auto">{t('automatic')}</option>{(['en','en-GB','ar','tr','es','fr','de','pt-BR','it','ja','ko','zh-CN','zh-TW'] as const).map(language=><option key={language} value={language} lang={locale==='en'?'en-US':locale}>{languageName(locale,language)}</option>)}
+ return <div dir={direction} style={{padding:'6px 8px',fontSize:11,color:'#e1eee5'}}>
+  <style>{`.mly-language-select:focus-visible{outline:2px solid #c5f6d6;outline-offset:1px}.mly-language-select option:checked{background:#31543d;color:#f0fff4}`}</style>
+  <label style={{display:'grid',gap:4}}>{t('language')}<select className="mly-language-select" aria-label={t('language')} value={preference} disabled={builderControlled} onChange={event=>setPreference(preferenceOf(event.target.value))} style={{width:'100%',minWidth:0,color:'#e1eee5',background:'#14281f',colorScheme:'dark',font:'inherit',padding:'6px 8px',minHeight:30,border:'1px solid #648b73',borderRadius:5,boxSizing:'border-box',cursor:builderControlled?'default':'pointer'}}>
+   <option value="auto" style={{background:preference==='auto'?'#31543d':'#192f24',color:'#e1eee5'}}>{t('automatic')}</option>{(['en','en-GB','ar','tr','es','fr','de','pt-BR','it','ja','ko','zh-CN','zh-TW'] as const).map(language=><option key={language} value={language} style={{background:preference===language?'#31543d':'#192f24',color:'#e1eee5'}} lang={locale==='en'?'en-US':locale}>{languageName(locale,language)}</option>)}
   </select></label>
   {loading&&<span role="status">{t('languageLoading')}</span>}
   {failed&&<div role="status">{t('languageError')} <button type="button" onClick={retry}>{t('retryLanguage')}</button></div>}

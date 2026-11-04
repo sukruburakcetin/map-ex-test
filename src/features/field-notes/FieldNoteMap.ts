@@ -12,18 +12,31 @@ export interface FieldNoteMapDependencies<G, L, A, V> {
   readShared(): { url?: string; loaded: boolean; view: V | null };
   clearPending(): void;
   loadGroupFactory(): Promise<(properties: { id: string; title: string; visible: boolean; visibilityMode: 'independent' }) => G>;
-  loadLayerFactory(): Promise<(properties: { id: string; title: string }) => L>;
+  loadLayerFactory(): Promise<(properties: { id: string; title: string; elevationInfo?: { mode: 'on-the-ground' } }) => L>;
   /** Capture the live Graphic constructor once after removeAll, before iterating notes. */
   readGraphicFactory(): (note: FieldNote, is3D: boolean) => A;
+  configureFocusLayer?(layer: L, hasMeasuredAltitude: boolean): void;
+  highlightNote?(view: V, layer: L, graphic: A, current: () => boolean): Promise<{ remove(): void }>;
 }
 
 /** Own the existing note group/local graphics state; Enterprise layers remain runtime-owned children.
  * Preserve original readiness, asynchronous sharing, view/revision guards and error propagation.
- * No note cache, requests, timers, viewer updates or new draw supersession policy are introduced.
+ * Workspace navigation additionally owns one transient selection layer; it never saves notes.
+ * No service requests, timers, viewer updates or local draw supersession policy are introduced.
  */
 export class FieldNoteMap<G extends NoteGroup<L>, L extends NoteGraphicsLayer<A>, A, V extends NoteMapView<G>> {
   private currentGroup: G | null = null;
   private currentLayer: L | null = null;
+  private focusedLayer: L | null = null;
+  private focusRevision = 0;
+  private highlightHandle: { remove(): void } | null = null;
+  private focusedNote: FieldNote | null = null;
+  private workspaceNotes: FieldNote[] = [];
+  private workspaceLayer: L | null = null;
+  private workspaceGraphics = new Map<string,A>();
+  private workspaceRevision = 0;
+  workspaceCategories: readonly { name: string; color: string }[] = [];
+  workspaceName = '';
   private groupView: V | null = null;
   private groupVisible = true;
   private revision = 0;
@@ -48,6 +61,11 @@ export class FieldNoteMap<G extends NoteGroup<L>, L extends NoteGraphicsLayer<A>
       const create = await d.loadGroupFactory();
       if (revision !== this.revision || view.destroyed || !view.map || d.readContext().view !== view || d.readContext().disposed) return null;
       if (this.currentGroup) {
+        this.highlightHandle?.remove();
+        this.highlightHandle = null;
+        this.focusedLayer = null;
+        this.workspaceLayer = null;
+        this.workspaceGraphics.clear();
         this.groupVisible = this.currentGroup.visible;
         this.groupView?.map?.remove(this.currentGroup); this.currentGroup.destroy();
       }
@@ -63,12 +81,110 @@ export class FieldNoteMap<G extends NoteGroup<L>, L extends NoteGraphicsLayer<A>
    */
   clear(): void {
     ++this.revision;
+    this.clearHighlight();
+    this.focusedLayer = null;
+    this.focusedNote = null;
+    ++this.workspaceRevision;
+    this.workspaceLayer = null;
+    this.workspaceGraphics.clear();
     this.dependencies.clearPending();
     if (this.currentGroup) {
       this.groupVisible = this.currentGroup.visible;
       this.groupView?.map?.remove(this.currentGroup); this.currentGroup.destroy();
     }
     this.currentGroup = null; this.groupView = null; this.currentLayer = null;
+  }
+
+  /** Release native selection and retire any pending highlight/popup work.
+   * Keep the normal workspace marker available for later clicks.
+   */
+  clearHighlight(): void {
+    ++this.focusRevision;
+    this.highlightHandle?.remove();
+    this.highlightHandle = null;
+  }
+
+  /** Include note layers in SDK picking only while they contain selectable notes. */
+  get hasPickTargets(): boolean { return !!this.focusedNote || this.workspaceNotes.length > 0 || this.dependencies.readNotes().length > 0; }
+
+  /** Resolve only our own note graphics, preserving external feature-pick priority. */
+  noteForGraphic(graphic: { layer?: L; attributes?: { id?: string } }): FieldNote | null {
+    const id = graphic.attributes?.id;
+    if (graphic.layer === this.workspaceLayer) return this.workspaceNotes.find(note => note.id === id) || null;
+    if (graphic.layer === this.focusedLayer && id === this.focusedNote?.id) return this.focusedNote;
+    return graphic.layer === this.currentLayer ? this.dependencies.readNotes().find(note => note.id === id) || null : null;
+  }
+
+  /** Replace the authorized, loaded workspace results without saving Local notes.
+   * Search/workspace/disconnect changes remove stale graphics and native selection.
+   * Counts and unloaded pages stay in the feature UI, never invented by the map.
+   */
+  async setWorkspaceNotes(notes: FieldNote[], categories: readonly {name:string;color:string}[], name: string): Promise<void> {
+    this.clearHighlight(); this.focusedLayer?.removeAll(); this.focusedNote=null;
+    this.workspaceNotes=notes; this.workspaceCategories=categories; this.workspaceName=name;
+    ++this.workspaceRevision;
+    this.workspaceLayer?.removeAll(); this.workspaceGraphics.clear();
+    await this.drawWorkspace();
+  }
+
+  /** Draw every loaded matching contribution, independent of its author.
+   * On-ground layer, view/data revision guards and shared SDK readiness support
+   * 2D/3D view replacement without API calls or duplicated local storage records.
+   */
+  async drawWorkspace(): Promise<void> {
+    const d=this.dependencies, view=d.readContext().view;
+    if(!this.workspaceNotes.length||!view?.map||view.destroyed||!d.readContext().ready||d.readContext().disposed)return;
+    const revision=this.workspaceRevision;
+    const current=()=>revision===this.workspaceRevision&&d.readContext().view===view&&!view.destroyed&&!d.readContext().disposed;
+    const group=await this.ensureGroup(view);if(!group||!current())return;
+    if(!this.workspaceLayer||this.workspaceLayer.destroyed){
+      const create=await d.loadLayerFactory();if(!current())return;
+      if(!this.workspaceLayer||this.workspaceLayer.destroyed)this.workspaceLayer=create({id:'workspace-contributions',title:'Workspace contributions',elevationInfo:{mode:'on-the-ground'}});
+    }
+    const layer=this.workspaceLayer;if(!group.layers.includes(layer))group.layers.add(layer);
+    layer.removeAll();this.workspaceGraphics.clear();const create=d.readGraphicFactory();
+    for(const note of this.workspaceNotes){const graphic=create(note,view.type==='3d');layer.add(graphic);this.workspaceGraphics.set(note.id,graphic);}
+  }
+
+  /** Show one navigation-only selected note without adding it to local storage.
+   * A dedicated ground layer survives local redraws. New selections, cleanup and
+   * view changes invalidate pending SDK loads so an older marker cannot reappear.
+   * Passing null explicitly clears selection; Local/Enterprise targets are never saved.
+   */
+  async focusNote(note: FieldNote | null): Promise<void> {
+    this.clearHighlight();
+    const selection = this.focusRevision;
+    this.focusedNote = note;
+    this.focusedLayer?.removeAll();
+    if (!note || !Number.isFinite(note.lon) || !Number.isFinite(note.lat)) return;
+    const d = this.dependencies, context = d.readContext(), view = context.view;
+    if (!view?.map || view.destroyed || !context.ready || context.disposed) return;
+    const revision = this.revision;
+    const current = () => selection === this.focusRevision && revision === this.revision
+      && d.readContext().view === view && !d.readContext().disposed && !view.destroyed;
+    const existing=this.workspaceGraphics.get(note.id);
+    if(existing&&this.workspaceLayer&&this.groupView===view){
+      if(d.highlightNote){const handle=await d.highlightNote(view,this.workspaceLayer,existing,current);if(current())this.highlightHandle=handle;else handle.remove();}
+      return;
+    }
+    const group = await this.ensureGroup(view);
+    if (!group || !current()) return;
+    if (!this.focusedLayer || this.focusedLayer.destroyed) {
+      const create = await d.loadLayerFactory();
+      if (!current()) return;
+      this.focusedLayer = create({ id: 'workspace-note-selection', title: 'Selected note', elevationInfo: { mode: 'on-the-ground' } });
+    }
+    const layer = this.focusedLayer;
+    if (!group.layers.includes(layer)) group.layers.add(layer);
+    layer.removeAll();
+    // Screen-facing symbols add no lift; honor only a genuinely stored altitude.
+    d.configureFocusLayer?.(layer,Number.isFinite(note.alt));
+    const graphic = d.readGraphicFactory()(note, view.type === '3d');
+    layer.add(graphic);
+    if (d.highlightNote) {
+      const handle = await d.highlightNote(view, layer, graphic, current);
+      if (current()) this.highlightHandle = handle; else handle.remove();
+    }
   }
 
   /** Rebuild local graphics using the existing layer/group readiness and live-view checks.

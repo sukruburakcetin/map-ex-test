@@ -1,0 +1,12 @@
+{
+  "installer": "fullscreen-minimap-radius",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/utils/styles.ts",
+      "originalSha256": "97550bb68da542d22a038ee08375c6875f617a01532413dacc9199dc966aafe1",
+      "resultSha256": "4b1447af592ad66621d727688e7466fffe893b9c890cf3f22acc2dad0fbabd34"
+    }
+  ]
+}

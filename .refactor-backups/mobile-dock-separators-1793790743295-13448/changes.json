@@ -1,0 +1,12 @@
+{
+  "installer": "mobile-dock-separators",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/styles/controlPanels.ts",
+      "originalSha256": "9e6535a05165aeb8a2b881a4a094367107b47d1846f92074df2e3d5db745c61a",
+      "resultSha256": "10a6da0e4d3872639bce8ce6269e99403ac3bf4a878c4c38b4ecae841f46a780"
+    }
+  ]
+}

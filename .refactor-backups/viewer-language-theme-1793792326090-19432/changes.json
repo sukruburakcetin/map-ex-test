@@ -1,0 +1,12 @@
+{
+  "installer": "viewer-language-theme",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/i18n/WidgetLocale.tsx",
+      "originalSha256": "3a58ce7c6c15bf9c09005495b17d0e836ed69bb1417727d48aac997ecf9271ea",
+      "resultSha256": "e4ad31056869cd1265c7fe193fdc0b201a4d8382b2b79962766bf5e9a3cfac35"
+    }
+  ]
+}

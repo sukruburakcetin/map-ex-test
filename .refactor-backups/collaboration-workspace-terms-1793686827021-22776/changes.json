@@ -1,0 +1,87 @@
+{
+  "installer": "collaboration-workspace-terms",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/FieldNotesPanel.tsx",
+      "originalSha256": "10b080a83f041b03abab39839e55dd3b0c30aefa82f119025d39813f9b13e745",
+      "resultSha256": "82c717d7850a13539a1f42ddc9740262644477f8caef8ca731838a82fafa2a9c"
+    },
+    {
+      "file": "src/features/community-notes/communityWorkspace.ts",
+      "originalSha256": "04172c312397b82555b7e45a170acac836fdc5b7b54881486da14af6ada45fe9",
+      "resultSha256": "cf590437ce8519ed024acfd6d54fdeaeeb35f9a4bc2266156a3348599faa19e2"
+    },
+    {
+      "file": "src/features/community-notes/CommunityWorkspacePanel.tsx",
+      "originalSha256": "7577ba6ae883d885b8eed69fc6a643ffcd7da28707725fb602613d68809a7f03",
+      "resultSha256": "9890e41f730a729e5fd0ba896ae38a13fd004e9cc5525e1f41e091769dfb1225"
+    },
+    {
+      "file": "src/features/community-notes/README.md",
+      "originalSha256": "f83313c81446f48b35ef3fac46cbfdec9b61fd69fbef34f9ecd410647fe329f2",
+      "resultSha256": "026aabcd995114aa6601c40410a4f6c754c5e927c40514bafdc503967c4e68c6"
+    },
+    {
+      "file": "src/features/field-notes/README.md",
+      "originalSha256": "510a0e1ed7443671ac8509dd26f0fd9cf8e59234d13926d3ba0ce1d6d86980ee",
+      "resultSha256": "c87e364bb63914193f5798105dd3135a37cc49aeea25745b5dab396ce68ff79b"
+    },
+    {
+      "file": "tools/community-notes/schema.sql",
+      "originalSha256": "fb78ba87dc9d9af6bfc5d1f56200bc40a2ec4179eb8b932547dd4e01688aa106",
+      "resultSha256": "8ab139a2187a832ace8848effae17227c421d5c671a1e999ebf45850a1124202"
+    },
+    {
+      "file": "tools/community-notes/README.md",
+      "originalSha256": "c160e9111b7540a369434834e567a7c5a6dea119d61bee8eed95ecb093175c54",
+      "resultSha256": "e4acd9a8ca7a5e43739f3a32926c6e0c88c14d515deff890e59ded0f19339a6f"
+    },
+    {
+      "file": "docs/TEACHER-OWNED-WORKSPACES.md",
+      "originalSha256": "fe610c77387350d0dd331417cf3cfe8fca7877e62242b45137e8e92ff1fa1cd3",
+      "resultSha256": "d2217afdc86b33841349f24dd017c6018ba7149dda96eeeede0f5592105a745c"
+    },
+    {
+      "file": "docs/REFACTORING-ROADMAP.md",
+      "originalSha256": "3c8973c7cd5d0367ea002b02233ae1f31af50659f4ff95eb94d199f6d1ad0895",
+      "resultSha256": "bd51492d277373e081ee09b704c58b9db61763fbaafc80b2bcadfd08c41f1ade"
+    },
+    {
+      "file": "tests/communityWorkspaceClient.test.cjs",
+      "originalSha256": "805fad66b0e32898ef1f3663525086c651c662d06c87c0b16c10455de6ad5904",
+      "resultSha256": "1ed9380eac9a48ae17150b697896bab6de68fcfe738fdf9bd757bf51d772052c"
+    },
+    {
+      "file": "tests/communityWorkspaceDatabase.test.cjs",
+      "originalSha256": "bfe3c4ee131e02027614ff7f24d7f84a8b1007d2a458c0634623c97ce4d63f49",
+      "resultSha256": "f684e88fdd457761625aba91a795eec8d82861c89bf7c1320f5f18aa72006471"
+    },
+    {
+      "file": "tests/communityWorkspace.browser.cjs",
+      "originalSha256": "25784bd59d5e20c338d0f428f321e8d83a7b79be583920c525d0b6aa32faef29",
+      "resultSha256": "80bd864e8785026a4e6e2fa451fbdb3fd889a2b57ca0e45d49e46cfc9318858c"
+    },
+    {
+      "file": "tools/community-notes/migrations/002-collaboration-creator.sql",
+      "originalSha256": null,
+      "resultSha256": "fcf8d8fbf532381f8447e73d13bf66554b9a158042d9ee4b3226b2666cd4915f"
+    },
+    {
+      "file": "tests/collaborationWorkspaceMigration.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "faa31b1dd8b50f71098fa85e4ac478110f6816ec782c6fb263621d46f3744fd3"
+    },
+    {
+      "file": "tests/fixtures/communityWorkspaceLegacy.sql",
+      "originalSha256": null,
+      "resultSha256": "fb78ba87dc9d9af6bfc5d1f56200bc40a2ec4179eb8b932547dd4e01688aa106"
+    },
+    {
+      "file": "docs/COLLABORATION-WORKSPACES.md",
+      "originalSha256": null,
+      "resultSha256": "9f1d423d4ec66b45e6322131a61c21f2bc4f7847e80e3b41916ee7b97232364a"
+    }
+  ]
+}

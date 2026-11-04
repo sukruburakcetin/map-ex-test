@@ -31,6 +31,9 @@ export interface LegendProps {
 }
 
 export interface NearbyImage {
+  computed_geometry?: { type: 'Point'; coordinates: [number, number] };
+  computed_compass_angle?: number;
+  compass_angle?: number;
   id: string;
   thumb_256_url: string;
   thumb_512_url: string;
@@ -50,6 +53,10 @@ export interface FieldNoteEditor {
     baseline?: Record<string, any>; saving?: boolean; error?: string;
 }
 export interface FieldNote {
+    /** Optional observation title; category is the fallback for legacy records. */
+    title?: string;
+    /** In-memory collaboration metadata; never implicitly saved to Local notes. */
+    workspace?: { id: string; name: string; authorId: string; authorName?: string; authorLabel?: string; color: string; updatedAt?: string; legacyRisk?: string | null };
     status?: FieldNoteStatus;
     resolutionNote?: string;
     sharedGlobalId?: string;
@@ -82,6 +89,7 @@ export const FIELD_NOTE_CATEGORIES = DEFAULT_FIELD_NOTE_CATEGORIES;
 
 // InfoBox props
 export interface InfoBoxProps {
+  detectionToolsRequest?: number;
   // visibility / config
   hideInfoBox?: boolean;
   turboCreator?: string;

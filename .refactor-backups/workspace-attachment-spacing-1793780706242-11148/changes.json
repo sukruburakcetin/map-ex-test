@@ -1,0 +1,12 @@
+{
+  "installer": "workspace-attachment-spacing",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/community-notes/WorkspaceContributionDraft.tsx",
+      "originalSha256": "47a7c14c1cca94fa4157fce4d7155218e07a9ff5ada2233beabe2b25a3996caa",
+      "resultSha256": "66c3f53d0a8d64b230076c1659e8ec70ce0ca4480bed3848b1d2653fabb89dcc"
+    }
+  ]
+}

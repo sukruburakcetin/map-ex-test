@@ -1,0 +1,22 @@
+{
+  "installer": "workspace-search-results-layout",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/community-notes/CommunityWorkspacePanel.tsx",
+      "originalSha256": "85ede148317c2e128bc8ded0092ee5418f9fde8e96335743c0fae7e32653acf8",
+      "resultSha256": "8b05f38077175eb8d691bf5b0c497c11fd1590f9e11e659c671ef090ba75c9e2"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceContributionTools.tsx",
+      "originalSha256": "e0a42a61e40d3b5083e067a0dd4fdae841aa352756b3749de83c7ffe07eebcbc",
+      "resultSha256": "c18b34a8ad05cf0c5c06fd96b2f172815c732180f8b1ea35b8ea45fb2d1fb577"
+    },
+    {
+      "file": "tests/communityWorkspace.browser.cjs",
+      "originalSha256": "a5087603f0557471da2f3ce8991a24ef30f077d2cbc06e8557351bfaf299c161",
+      "resultSha256": "63bc2a7805fa68bf942ed4a8f566ba67913cbefaad086a7ee45335a16ee590a6"
+    }
+  ]
+}

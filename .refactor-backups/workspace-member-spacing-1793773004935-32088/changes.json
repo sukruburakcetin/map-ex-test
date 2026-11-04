@@ -1,0 +1,12 @@
+{
+  "installer": "workspace-member-spacing",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/community-notes/CommunityWorkspacePanel.tsx",
+      "originalSha256": "a75dfd797e0a0fef9d2cf542c54201f07809d08e3f7cea53ef3306947c8ad948",
+      "resultSha256": "05b2ecb6b657008e6f1fd76f8a4fbb1c63f24ff1f3b7422463e9b4f98d240f61"
+    }
+  ]
+}

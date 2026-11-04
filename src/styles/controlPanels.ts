@@ -132,10 +132,10 @@ export const utilityDockCss = `
   .glass-image-utility-panel.mly-utility-dock .utility-button svg { width: 13px !important; height: 13px !important; }
   .glass-image-utility-panel.mly-utility-dock .mly-dock-divider { display: none; }
   .glass-image-utility-panel.mly-utility-dock .mly-dock-cloud-group { grid-column: span 2; justify-self: stretch; }
-  .glass-image-utility-panel.mly-utility-dock .mly-dock-mode-trigger { width: 18px !important; }
+  .glass-image-utility-panel.mly-utility-dock .mly-dock-mode-trigger { width: 18px !important; border-left: 0; }
   .glass-image-utility-panel.mly-utility-dock .mly-dock-cloud.is-loading { width: 70px !important; }
   .glass-image-utility-panel.mly-utility-dock > .utility-button:not(:last-child)::after,
-  .glass-image-utility-panel.mly-utility-dock .mly-dock-cloud-group::after { content: ""; position: absolute; right: -1px; top: 50%; transform: translateY(-50%); width: 1px; height: 11px; background: #b0cdb53d; pointer-events: none; }
+  .glass-image-utility-panel.mly-utility-dock .mly-dock-cloud-group::after { content: none; display: none; }
   .glass-image-utility-panel.mly-utility-dock .mly-dock-cloud-group { position: relative; }
 
 }
@@ -145,10 +145,10 @@ export const utilityDockCss = `
   .glass-image-utility-panel.mly-utility-dock .utility-button svg { width: 13px !important; height: 13px !important; }
   .glass-image-utility-panel.mly-utility-dock .mly-dock-divider { display: none; }
   .glass-image-utility-panel.mly-utility-dock .mly-dock-cloud-group { grid-column: span 2; justify-self: stretch; }
-  .glass-image-utility-panel.mly-utility-dock .mly-dock-mode-trigger { width: 18px !important; }
+  .glass-image-utility-panel.mly-utility-dock .mly-dock-mode-trigger { width: 18px !important; border-left: 0; }
   .glass-image-utility-panel.mly-utility-dock .mly-dock-cloud.is-loading { width: 70px !important; }
   .glass-image-utility-panel.mly-utility-dock > .utility-button:not(:last-child)::after,
-  .glass-image-utility-panel.mly-utility-dock .mly-dock-cloud-group::after { content: ""; position: absolute; right: -1px; top: 50%; transform: translateY(-50%); width: 1px; height: 11px; background: #b0cdb53d; pointer-events: none; }
+  .glass-image-utility-panel.mly-utility-dock .mly-dock-cloud-group::after { content: none; display: none; }
   .glass-image-utility-panel.mly-utility-dock .mly-dock-cloud-group { position: relative; }
 
 }

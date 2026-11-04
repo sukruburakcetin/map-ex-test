@@ -1,5 +1,6 @@
 import { nearestLoadedFrame } from '../features/coverage/nearestLoadedFrame';
 import { coverageClickHitTest } from '../features/coverage/coverageClickDispatch';
+import { CoverageTouchHover } from '../features/coverage/CoverageTouchHover';
 import { CoverageHoverResume } from '../features/coverage/CoverageHoverResume';
 import { hoverBearingImageId, HoverBearingHintCache } from '../features/imagery/hoverBearingTarget';
 /** @jsx jsx */
@@ -89,6 +90,7 @@ import { ActiveSequenceOverlay } from '../features/imagery/ActiveSequenceOverlay
 import { ClickRippleAnimations } from '../features/map-graphics/ClickRippleAnimations';
 import { NativeCurrentImageMarker } from '../features/map-graphics/NativeCurrentImageMarker';
 import { ScreenDirectionCone } from '../features/map-graphics/ScreenDirectionCone';
+import { CurrentImagePresentationOwner } from '../features/map-graphics/CurrentImagePresentationOwner';
 import { SelectionPulse, renderedGroundPoint } from '../features/map-graphics/SelectionPulse';
 import { capConeFootprint } from "../features/map-graphics/capConeFootprint";
 import { projectedConeRadius } from "../features/map-graphics/projectedConeRadius";
@@ -184,10 +186,13 @@ import { matchesEnterpriseLayerUrl, resolveEnterpriseNotesEndpoint } from '../fe
 import { buildEnterpriseNoteAttributes } from '../features/field-notes/enterpriseAttributes';
 import { assertEnterpriseNoteUnchanged, buildEnterpriseNoteEditAttributes } from '../features/field-notes/enterpriseEdit';
 import { prepareCurrentImageAttachment, validateNoteAttachmentFile } from '../features/field-notes/attachmentFiles';
+import { WorkspaceLocationPicker } from '../features/community-notes/WorkspaceLocationPicker';
+import type { WorkspaceLocationRequest } from '../features/community-notes/WorkspaceLocationPicker';
 import { FieldNoteMap } from '../features/field-notes/FieldNoteMap';
 import { FieldNoteFiles } from '../features/field-notes/FieldNoteFiles';
 import { showFieldNoteFileFeedback } from '../features/field-notes/FieldNoteFileFeedback';
-import { buildLocalNoteGraphic } from '../features/field-notes/mapGraphic';
+import { startNoteHighlight } from '../features/field-notes/nativeNoteHighlight';
+import { buildLocalNoteGraphic, buildNoteSymbol } from '../features/field-notes/mapGraphic';
 import { PendingNoteMarker } from '../features/field-notes/PendingNoteMarker';
 import { createFieldNoteViewerRenderer } from '../features/field-notes/viewerRenderer';
 import { selectViewerFieldNotes } from '../features/field-notes/viewerSelection';
@@ -210,7 +215,7 @@ import type { LiveSequenceFrame } from '../features/imagery/LiveSequenceFrames';
 import { SharedSequenceRequests } from '../features/imagery/sharedSequenceRequests';
 import { sequenceCacheStore } from '../features/imagery/sequenceCacheStore';
 import { NearbyImageDiscovery } from '../features/imagery/nearbyDiscovery';
-import { NearbyImageHighlight } from '../features/imagery/nearbyHighlight';
+import { NearbyImageHighlight, nearbyImagePose } from '../features/imagery/nearbyHighlight';
 import type { SequenceCoordinate, SequenceProgress } from '../features/imagery/sequenceCoordinates';
 type ResolvedRoutingProvider = {
   kind: "api-key" | "user" | "portal" | "custom";
@@ -358,6 +363,7 @@ interface State {
   nearbyImages?: NearbyImage[];
   nearbyLoading?: boolean;
   nearbyStripOpen?: boolean;
+  nearbyCanExpand?: boolean;
   isAnnotationMode: boolean;
   fieldNotes: FieldNote[];
   sharedNotesMessage?: string;
@@ -394,6 +400,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private currentGreenGraphic: __esri.Graphic | null = null;
   private clickedLocationGraphic: __esri.Graphic | null = null;
   private _directionHighlight: DirectionHoverMarker<__esri.Graphic> | null = null;
+  private _nearbyHoverAbort:AbortController|null=null;
   private _nearbyHighlight: NearbyImageHighlight<__esri.Graphic> | null = null;
   private _routeGraphicLayer: __esri.GraphicsLayer | null = null;
   private _routePointAGraphic: __esri.Graphic | null = null;
@@ -700,6 +707,23 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _mapFeatureTiles = new TurboTileCache(4 * 1024 * 1024);
   private _mapFeatureIndexes = new TurboIndexCache(8 * 1024 * 1024);
   private _selectedMapFeature: any = null;
+  private _detectionToolsRequest=0;
+  private revealDetectionTools=()=>{++this._detectionToolsRequest;this.forceUpdate();};
+  private _selectedMapFeatureKind: "signs" | "objects" | null = null;
+  private selectedMapFeatureEnabled(): boolean {
+    return this._selectedMapFeatureKind==='signs'?!!this.state.trafficSignsActive:this._selectedMapFeatureKind==='objects'?!!this.state.objectsActive:false;
+  }
+  private clearSelectedMapFeature(kind?:"signs"|"objects"):void {
+    if(kind&&this._selectedMapFeatureKind!==kind)return;
+    this._objectDetailsAbort?.abort();++this._objectDetailsRequest;
+    this._alternateNavigationAbort?.abort();++this._alternateNavigationRequest;
+    this._pendingDetectionFocus=null;this._selectedMapFeature=null;this._selectedMapFeatureKind=null;
+    if(this._objectPopupContent&&this._objectPopupView?.popup?.content===this._objectPopupContent)this._objectPopupView.closePopup();
+    this._objectPopupContent=null;this._objectPopupView=null;
+    this.setState({selectedFeatureMetadata:null,selectedFeatureLocation:null,alternateImages:[],isFetchingAlternates:false,
+      featureMetadataLoading:false,featureMetadataError:'',alternateImagesError:'',targetDetectionId:null,imageTrayTab:'nearby',
+      ...(this.state.imageTrayTab==='object'?{nearbyStripOpen:false}:{})});
+  }
   private _mapFeatureFilterCodes = new Map<string, string>();
   private _mapFeatureClickAbort: AbortController | null = null;
   private mapillaryTrafficSignsFeatureLayer: __esri.FeatureLayer | null = null;
@@ -847,6 +871,18 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _clickRippleAnimations: ClickRippleAnimations<__esri.Graphic, __esri.MapView | __esri.SceneView> | null = null;
   private _nativeCurrentImageMarker: NativeCurrentImageMarker | null = null;
   private _screenDirectionCone: ScreenDirectionCone | null = null;
+  private readonly _currentImagePresentation = new CurrentImagePresentationOwner();
+  private claimCurrentImagePresentation(view: __esri.MapView | __esri.SceneView): void {
+    if(!view?.map||view.destroyed||this.props.visible===false||this.props.state==='CLOSED')return;
+    this._currentImagePresentation.activate(view.map,String(this.props.id),()=>{
+      this._nearbyDiscovery?.cancel();
+      this.highlightNearbyPin?.(null);
+      this._nativeImageAnchorAbort?.abort();this._nativeImageAnchorAbort=null;this._nativeImageAnchorKey='';
+      if(this._coneRedrawRaf!=null){cancelAnimationFrame(this._coneRedrawRaf);this._coneRedrawRaf=null;}
+      this._nativeCurrentImageMarker?.clear();this._screenDirectionCone?.clear();
+      this._selectionPulse?.dispose();this._cameraCone?.dispose(view);
+    });
+  }
   private _cameraCone: CameraConeGraphics<__esri.Graphic, __esri.GraphicsLayer, __esri.MapView | __esri.SceneView> | null = null;
   private _turboMetadataCache = new TurboMetadataCache<any>();
   private _turboTileCache = new TurboTileCache();
@@ -869,6 +905,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _turboHoveredScreen: { x: number; y: number } | null = null;
   private _representativePickCache: RepresentativePickCache | null = null;
   private _coverageHoverResume: CoverageHoverResume | null = null;
+  private _coverageTouchHover: CoverageTouchHover | null = null;
   private _coverageHoverHandler: ((event: any) => void) | null = null;
   private _turboMapLeaveCleanup: (() => void) | null = null;
   private _turboClickPickAbort: AbortController | null = null;
@@ -931,7 +968,21 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       const { Graphic } = this.ArcGISModules;
       return (note, is3D) => new Graphic(buildLocalNoteGraphic(note, is3D));
     },
+    configureFocusLayer: (layer, measured) => { layer.elevationInfo = { mode: measured ? 'absolute-height' : 'on-the-ground' }; },
+    highlightNote: (view, layer, graphic, current) => startNoteHighlight(view, layer, graphic, current),
   });
+  private _workspaceNoteLocation = new WorkspaceLocationPicker<__esri.MapView | __esri.SceneView>();
+  /** Map intent only; workspace auth, categories and draft content remain feature-owned. */
+  private requestWorkspaceNoteLocation: WorkspaceLocationRequest = (picked,cancelled) => {
+    this._workspaceNoteLocation.cancel();
+    const view=this.state.jimuMapView?.view;
+    if(!view||view.destroyed||!view.map){this.showToast(this._owned('Connect a map before choosing a contribution location.'));cancelled();return()=>{};}
+    this._fieldNoteMap.clearHighlight();this._coverageHoverResume?.leave();this._turboHoverPickAbort?.abort();this.clearTurboHover();
+    const container=view.container as HTMLElement,previous=container?.style.cursor;
+    if(container)container.style.cursor='crosshair';
+    const restore=()=>{if(container?.style.cursor==='crosshair')container.style.cursor=previous||'';};
+    return this._workspaceNoteLocation.begin(view,point=>{restore();this.drawClickRipple(point.lon,point.lat,[245,166,35]);picked(point);},()=>{restore();cancelled();});
+  };
   /** Bind file intent to local state/persistence/renderers; conversion and browser work stay in feature. */
   private _fieldNoteFiles = new FieldNoteFiles({
     readNotes: () => this.state.fieldNotes,
@@ -1180,13 +1231,15 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _startupUrlParameters: URLSearchParams | null = null;
   private _sharedStateRestoreComplete: boolean = false;
   private _isFlyInActive: boolean = false;
+  private _sharedStartupBearing: number | null = null;
+  private _sharedStartupImageId: string | null = null;
   private _hasAttemptedMapSwitch: boolean = false;
 
-  /** Live viewer readers preserve replacement behavior during delayed shared-link restoration. */
+  /** Saved heading is applied to the ready image; final URL writes wait for the flight. */
   private readonly _sharedViewerBearingHost: SharedViewerBearingHost = {
     getViewer: () => this.mapillaryViewer,
-    onBearing: bearing => { this._lastBearing = bearing; },
-    updateUrl: (imageId, latitude, longitude) => this.updateUrlWithCurrentImage(imageId, latitude, longitude),
+    onBearing: bearing => { this._lastBearing = bearing;const view=this.state.jimuMapView?.view;if(view)this.requestConeRedraw(view);this.updateMinimapTracking(); },
+    updateUrl: (imageId, latitude, longitude) => { if(!this._isFlyInActive)this.updateUrlWithCurrentImage(imageId, latitude, longitude); },
     warn: error => console.warn("Could not set shared bearing on viewer:", error),
   };
 
@@ -1221,6 +1274,7 @@ private syncMapLegendLayer() {
     if (!this._sharedStateRestoreComplete && (targetType === "2d" || targetType === "3d") && view.type !== targetType) return;
     this._mapSymbolLegend ??= new MapSymbolLegend(properties => new this.ArcGISModules.FeatureLayer(properties),this._presentation);
     this._mapSymbolLegend.sync(view, this.props.id);
+    this._mapSymbolLegend.setCommunityCategories(this._fieldNoteMap.workspaceCategories,this._fieldNoteMap.workspaceName);
   }
 
   private _solarViewer: SolarViewerRenderer | null = null;
@@ -1498,7 +1552,7 @@ private syncMapLegendLayer() {
         .getBearing()
         .then((b: number) => {
           if (typeof b === "number") {
-            this._lastBearing = b;
+            this._lastBearing = this._sharedStartupBearing ?? b;
             redrawCone();
           }
         })
@@ -1519,7 +1573,7 @@ private syncMapLegendLayer() {
     // 2. Bearing Change Event
     this.mapillaryViewer.on("bearing", (event: any) => {
       if (this.mapillaryViewer !== profileEventViewer) return;
-      this._lastBearing = event.bearing;
+      this._lastBearing = this._sharedStartupBearing ?? event.bearing;
 
       /**
        * Cone drawing in SceneView is relatively expensive.
@@ -1577,6 +1631,7 @@ private syncMapLegendLayer() {
       // turn into a lateral jump that cancels the user's latest image request.
       if ((this.state.isLoading || this._imageryOpeningRequest != null) && this._selectionRetry &&
         String(event.image.id) !== String(this._selectionRetry.imageId)) return;
+      this.highlightNearbyPin(null);
       const firstImageForViewer = this._profileConfirmedViewer !== profileEventViewer;
       this._profileConfirmedViewer = profileEventViewer;
       this._profileConfirmedImageId = String(event.image.id);
@@ -1589,6 +1644,7 @@ private syncMapLegendLayer() {
       const newId = String(event.image.id);
       this._detectionAbort?.abort();
       this._timeTravelAvailability?.cancelUnless(newId);
+      this._nearbyDiscovery?.cancel();
       const view = this.state.jimuMapView?.view;
       if (!view) return;
       let newImg: LiveSequenceFrame | null;
@@ -1927,6 +1983,12 @@ private syncMapLegendLayer() {
 
 
   private async loadSequenceById(sequenceId: string, startImageId: string, clickPoint?: { lon: number; lat: number }, representative = false, nearestToClick = false, clickStartedAt?: number) {
+    this._nearbyDiscovery?.cancel();
+    this.highlightNearbyPin?.(null);
+    if(this._sharedStartupImageId&&String(startImageId)!==this._sharedStartupImageId){
+      this._sharedStartupImageId=null;this._sharedStartupBearing=null;this._isFlyInActive=false;
+      (this.state.jimuMapView?.view as any)?.animation?.stop();
+    }
     // Reuse completed geometry in its current view. Other selections open first,
     // then reuse cached geometry or request only a nearby coordinate window.
     const loadedSequence = this.state.sequenceImages;
@@ -1966,7 +2028,6 @@ private syncMapLegendLayer() {
     if (clickPoint && Number.isFinite(clickPoint.lon) && Number.isFinite(clickPoint.lat)) {
       this.drawPulsingPoint(clickPoint.lon, clickPoint.lat, [0, 255, 0, 1], startImageId);
     }
-    this._nearbyDiscovery?.cancel();
     this.setState({ nearbyLoading: false, isLoading: true, imageryRepresentative: representative && !nearestToClick, sequenceRouteProgress: undefined, sequenceRouteLoading: false, selectionError: undefined, selectionCanRetry: false });
 
     if (this.state.isElevationProfileActive && !reuseLoadedRoute) this.clearElevationProfile();
@@ -2719,7 +2780,11 @@ private syncMapLegendLayer() {
   // destroys Mapillary viewer instance, clears DOM container,
   // and resets internal state if requested.
   private cleanupWidgetEnvironment(resetState: boolean = false, fullRemove: boolean = true) {
+    this._sharedStartupImageId=null;this._sharedStartupBearing=null;this._isFlyInActive=false;
+    if(resetState||fullRemove)this.clearSelectedMapFeature?.();
+    this._currentImagePresentation?.release();
     if (resetState || fullRemove) { this._placesExploreAbort?.abort(); this._places?.dispose(); this._places = null; this._placesView = null; }
+    this.highlightNearbyPin(null);
     this.clearSequenceDiagnostics();
     this._hoverTimingAbort?.abort(); this._hoverSequenceTiming?.cancel();
     this._imageSequenceTiming?.cancel(); this._imageSequenceTiming = undefined;
@@ -2763,6 +2828,12 @@ private syncMapLegendLayer() {
     this.finishTurboLoading();
     this.clearClickRipples();
     this.clearGreenPulse();
+    // Responsive layout remounts must release both full renderers, not only
+    // hide their marker part while a fan/mesh and animation remain attached.
+    this._nativeCurrentImageMarker?.clear();
+    this._screenDirectionCone?.clear();
+    this._cameraCone?.dispose(this.state.jimuMapView?.view);
+
 
     if (this._coneRedrawRaf != null) {
       cancelAnimationFrame(this._coneRedrawRaf);
@@ -3652,7 +3723,7 @@ private syncMapLegendLayer() {
 
   /**
    * Sets up hover interactions for AI detection tags.
-   * Shows label text only when the user hovers over a detection polygon.
+   * Labels controls all detection text; hover and target state only emphasize outlines.
    */
   private setupDetectionHover(tagComponent: any, tags: OutlineTag[]) {
     if (!this.viewerContainer.current) return;
@@ -3694,7 +3765,7 @@ private syncMapLegendLayer() {
         const isHovered = tag.id === hoveredId;
         const isTarget = tag.id === this.state.targetDetectionId;
 
-        const shouldShowText = this.state.showAiTags && (isHovered || isTarget);
+        const shouldShowText = this.state.showAiTags;
 
         // Defaults
         let lineColor = config.color;
@@ -3840,9 +3911,14 @@ private syncMapLegendLayer() {
     ++this._alternateNavigationRequest;
     this._pendingDetectionFocus = null;
     this._alternateNavigationAbort?.abort();
+    const layerId=this._selectedMapFeature?.layer?.id||this._selectedMapFeature?.graphic?.layer?.id;
+    this._selectedMapFeatureKind=[LAYER_IDS.TRAFFIC_SIGNS_VT,LAYER_IDS.TRAFFIC_SIGNS_FL].includes(layerId)?'signs':
+      [LAYER_IDS.OBJECTS_VT,LAYER_IDS.OBJECTS_FL].includes(layerId)?'objects':null;
+    if(!this.selectedMapFeatureEnabled())return;
+    this.revealDetectionTools();
     const attrs = this._selectedMapFeature?.graphic?.attributes || {};
     const metadata = { id: String(featureId), name: attrs.name || attrs.value || "Selected object", firstSeen: attrs.first_seen_at, lastSeen: attrs.last_seen_at };
-    const current = () => !controller.signal.aborted && request === this._objectDetailsRequest;
+    const current = () => !controller.signal.aborted && request === this._objectDetailsRequest&&this.selectedMapFeatureEnabled();
     const cached = this._objectDetailsCache.get(String(featureId));
     this.setState({ selectedFeatureMetadata: cached?.metadata || metadata, featureMetadataLoading: !cached,
       featureMetadataError: "", alternateImagesError: "", isFetchingAlternates: !cached,
@@ -3920,13 +3996,16 @@ private syncMapLegendLayer() {
     capturedAt: number;
     geometry: { type: "Point"; coordinates: [number, number] };
   }) => {
+    if(!this.selectedMapFeatureEnabled())return;
+    this._nearbyDiscovery?.cancel();
+    this.revealDetectionTools();
     this._alternateNavigationAbort?.abort();
     const navigation = new AbortController();
     this._alternateNavigationAbort = navigation;
     const request = ++this._alternateNavigationRequest;
     this._pendingDetectionFocus = { imageId: String(img.id), detectionId: String(img.detectionId), request };
     const featureLocation = this.state.selectedFeatureLocation;
-    const current = () => !navigation.signal.aborted && request === this._alternateNavigationRequest;
+    const current = () => !navigation.signal.aborted && request === this._alternateNavigationRequest&&this.selectedMapFeatureEnabled();
     try {
       this.setState({ targetDetectionId: img.detectionId, detectionsActive: !!(this.state.trafficSignsActive || this.state.objectsActive) });
 
@@ -4566,7 +4645,7 @@ private syncMapLegendLayer() {
     if (signs) { this.mapillaryTrafficSignsFeatureLayer = null; this.trafficSignsZoomHandle?.remove(); this.trafficSignsStationaryHandle?.remove(); }
     else { this.mapillaryObjectsFeatureLayer = null; this.objectsZoomHandle?.remove(); this.objectsStationaryHandle?.remove(); }
     let layer = view.map.findLayerById(id) as __esri.VectorTileLayer;
-    if (!active) { this.setState(signs ? { showTrafficSignsFilterBox: false } : { showObjectsFilterBox: false }); if (layer) view.map.remove(layer); this._mapFeatureClickAbort?.abort(); this._turboHoverPickAbort?.abort(); this.clearTurboHoverDetails(); this._selectedMapFeature = null; return; }
+    if (!active) { this.setState(signs ? { showTrafficSignsFilterBox: false } : { showObjectsFilterBox: false }); if (layer) view.map.remove(layer); this._mapFeatureClickAbort?.abort(); this._turboHoverPickAbort?.abort(); this.clearTurboHoverDetails(); return; }
     if (!layer) {
       if (signs) this.initMapillaryTrafficSignsLayer(); else this.initMapillaryObjectsLayer();
       layer = (signs ? this.mapillaryTrafficSignsLayer : this.mapillaryObjectsLayer)!;
@@ -4713,7 +4792,7 @@ private syncMapLegendLayer() {
   }
   private toggleMapillaryTrafficSigns = async () => {
     const next = !this.state.trafficSignsActive;
-    this.setState({ trafficSignsActive: next }, () => { void this.syncMapFeatureCoverage("signs"); this.syncDetectionLayerAvailability(); });
+    this.setState({ trafficSignsActive: next }, () => { if(!next)this.clearSelectedMapFeature("signs");void this.syncMapFeatureCoverage("signs"); this.syncDetectionLayerAvailability(); });
   };
 
 
@@ -4763,7 +4842,7 @@ private syncMapLegendLayer() {
   }
   private toggleMapillaryObjects = async () => {
     const next = !this.state.objectsActive;
-    this.setState({ objectsActive: next }, () => { void this.syncMapFeatureCoverage("objects"); this.syncDetectionLayerAvailability(); });
+    this.setState({ objectsActive: next }, () => { if(!next)this.clearSelectedMapFeature("objects");void this.syncMapFeatureCoverage("objects"); this.syncDetectionLayerAvailability(); });
   };
 
 
@@ -4929,8 +5008,10 @@ private syncMapLegendLayer() {
     const sharedView = this.state.jimuMapView?.view;
     if (!sharedView?.map || sharedView.destroyed) return;
     const sharedMap = sharedView.map;
-    const current = () => isStartupCurrent() && this.state.jimuMapView?.view === sharedView &&
-      sharedView.map === sharedMap && !sharedView.destroyed;
+    const startupClickRevision=this._mapClickRevision;
+    const current = () => this._mapClickRevision===startupClickRevision && isStartupCurrent() && this.state.jimuMapView?.view === sharedView &&
+      sharedView.map === sharedMap && !sharedView.destroyed&&this.props.state!=='CLOSED'&&this.props.visible!==false&&
+      (!this._currentImagePresentation||this._currentImagePresentation.owns(sharedMap));
     if (!current()) return;
     // 1. Get the query string.
     // We attempt to read the PARENT window (the main browser URL),
@@ -4992,33 +5073,27 @@ private syncMapLegendLayer() {
           const coords = data.geometry?.coordinates; // [lon, lat]
 
           if (seqId && coords) {
-            // Take control of the camera and don't let anyone else in.
-            this._isFlyInActive = true;
-
-            // 1. Load the sequence in the viewer
-            await this.loadSequenceById(seqId, sharedId);
-            if (!current()) return;
-
-            // Restore only the originating view; a replacement owns its own camera.
-            if (this.ArcGISModules) {
-              const { Point } = this.ArcGISModules;
-              await restoreSharedMapCamera(sharedView, coords, bearing, mapZoom, properties => new Point(properties));
-              if (!current()) return;
+            // Pin the saved heading while the SDK opens/centers the image.
+            this._isFlyInActive=true;this._sharedStartupImageId=String(sharedId);this._sharedStartupBearing=bearing;this._lastBearing=bearing;
+            try {
+              await this.loadSequenceById(seqId,sharedId);
+              const restoreCurrent=()=>current()&&String(this.state.imageId)===String(sharedId);
+              if(!restoreCurrent())return;
+              await restoreSharedViewerBearing(sharedId,coords,bearing,this._sharedViewerBearingHost,restoreCurrent);
+              if(!restoreCurrent())return;
+              // Anchoring can run in parallel with the camera flight when detail
+              // coverage is already available; it never blocks imagery or flight.
+              this.refreshActivePulseAnchor(sharedView);
+              if(this.ArcGISModules){
+                const {Point}=this.ArcGISModules;
+                await restoreSharedMapCamera(sharedView,coords,bearing,mapZoom,properties=>new Point(properties),restoreCurrent);
+              }
+              if(!restoreCurrent())return;
+              this.refreshActivePulseAnchor(sharedView);
+              this.requestConeRedraw(sharedView);
+            } finally {
+              if(current()){this._sharedStartupImageId=null;this._sharedStartupBearing=null;this._isFlyInActive=false;}
             }
-
-            // Flight complete, restore normal camera tracking.
-            setTimeout(() => {
-              if (current()) this._isFlyInActive = false;
-            }, 1500);
-
-            // 3. Apply camera angles after viewer is ready.
-            //    setBearing() is not a real Mapillary-JS API; the correct
-            //    way to point the viewer at a specific bearing is setCenter([x, 0.5])
-            //    where x is derived from the diff between target bearing and the
-            //    image's compassAngle (same pattern used in _handleSelectAlternateImage).
-            setTimeout(() => {
-              if (current()) void restoreSharedViewerBearing(sharedId, coords, bearing, this._sharedViewerBearingHost);
-            }, 1000);
           }
         }
       } catch (err) {
@@ -5049,7 +5124,7 @@ private syncMapLegendLayer() {
         this._isFlyInActive = true;
         try {
           const { Point } = this.ArcGISModules;
-          await restoreSharedMapCamera(sharedView, [longitude, latitude], bearing, zoom, properties => new Point(properties));
+          await restoreSharedMapCamera(sharedView, [longitude, latitude], bearing, zoom, properties => new Point(properties), current);
         } catch (error) {
           if (current() && (error as any)?.name !== "AbortError") console.warn("[MapView] Could not restore the shared viewport:", error);
         } finally {
@@ -5641,6 +5716,7 @@ private syncMapLegendLayer() {
       background: { ...this._backgroundRequests.stats, limit: this._backgroundRequests.concurrency },
       routes: sequenceRouteMemoryStats(this.sequenceCoordsCache),
       nearby: this._sequenceDemand.memoryStats,
+      nearbyDiscovery:this._nearbyDiscovery?.stats??null,
       view: this.state.jimuMapView?.view?.type ?? null,
       imageTiling: this._viewerImageTiling ?? null,
       places: { active: !!this.state.placesActive, status: this.state.placesStatus?.kind ?? 'off', ...this._places?.stats },
@@ -5658,7 +5734,7 @@ private syncMapLegendLayer() {
     this.clearSequenceDiagnostics();
     if (!this.props.config.debugMode || this.props.state === 'CLOSED' || typeof window === 'undefined') return;
     const registry = (window as any).__mapillarySequencePerformance ??= Object.create(null);
-    const entry = { snapshot: () => this.sequenceDiagnosticsSnapshot(), reset: () => this._sequencePerformance.reset() };
+    const entry = { snapshot: () => this.sequenceDiagnosticsSnapshot(), reset: () => {this._sequencePerformance.reset();this._nearbyDiscovery?.resetStats();} };
     registry[this.props.id] = entry; this._sequenceDiagnosticsEntry = entry;
     if (typeof PerformanceObserver !== 'undefined' && PerformanceObserver.supportedEntryTypes?.includes('longtask')) {
       this._sequenceLongTaskObserver = new PerformanceObserver(list => {
@@ -10238,7 +10314,7 @@ private syncMapLegendLayer() {
   }
 
   /** Release the group from its creating view after stopping the pending note marker. */
-  private clearFieldNotesGroup() { this._fieldNoteMap.clear(); }
+  private clearFieldNotesGroup() { this._workspaceNoteLocation?.cancel(); this._fieldNoteMap.clear(); }
 
   private sharedNotesUrl(read = false): string {
     return resolveEnterpriseNotesEndpoint(this.props.config, read);
@@ -10268,7 +10344,7 @@ private syncMapLegendLayer() {
     this.clearSharedNotesView();
     const revision = this._sharedNotesRevision;
     const layer: __esri.FeatureLayer = new this.ArcGISModules.FeatureLayer({ url, id: "mapillary-shared-field-notes", title: "Enterprise Field Notes", outFields: ["category", "note_text", "image_id", "created_at"], refreshInterval: 0,
-      elevationInfo: { mode: "on-the-ground" }, renderer: { type: "simple", symbol: { type: "simple-marker", style: "diamond", color: "#35b7c4", size: 12, outline: { color: "white", width: 1 } } },
+      elevationInfo: { mode: "on-the-ground" }, renderer: { type: "simple", symbol: buildNoteSymbol("#35b7c4", view.type === "3d") },
       popupTemplate: { title: this._owned("Enterprise Field Note"), content: [{ type: "fields", fieldInfos: [{ fieldName: "category", label: this._owned("Category") }, { fieldName: "note_text", label: this._owned("Note") }, { fieldName: "created_at", label: this._owned("Created"), format: { dateFormat: "short-date-short-time" } }, { fieldName: "image_id", label: this._owned("Mapillary image") }] }] } });
     this._sharedNotesLayer = layer; this._sharedNotesView = view;
     this.setState({ sharedNotesMessage: this._owned("Loading enterprise notes…") });
@@ -10665,6 +10741,9 @@ private syncMapLegendLayer() {
   private focusFieldNote = (note: FieldNote) => {
     const view = this.state.jimuMapView?.view;
     if (!view) return;
+    // Selection is a transient highlight; it never creates a saved local copy.
+    void this._fieldNoteMap.focusNote(note)
+      .catch(() => this.showToast(this._owned('Selected note marker could not be displayed. Try Show on map again.')));
     this.navigateMapView(view, { center: [note.lon, note.lat], zoom: Math.max(view.zoom, 18) }, { animate: true, duration: 600 });
 
     // If the note has an associated image, jump the viewer there too
@@ -10679,7 +10758,14 @@ private syncMapLegendLayer() {
    * Renders all stored field notes as diamond-shaped graphic markers on the ArcGIS map view.
    * Orange diamonds denote manual entries, while green diamonds indicate AI detections.
    */
-  private async drawFieldNoteGraphics() { await this._fieldNoteMap.draw(); }
+  private async drawFieldNoteGraphics() { await this._fieldNoteMap.draw(); await this._fieldNoteMap.drawWorkspace(); }
+
+  /** Receive only authorized loaded results; the notes feature owns auth/search. */
+  private updateWorkspaceMapNotes = (notes: FieldNote[], categories: readonly {name:string;color:string}[], workspaceName:string) => {
+    void this._fieldNoteMap.setWorkspaceNotes(notes,categories,workspaceName)
+      .catch(() => this.showToast(this._owned('Workspace markers could not be displayed. Refresh contributions to retry.')));
+    this.syncMapLegendLayer();
+  };
 
   /**
    * Synchronizes and renders field notes in the Mapillary panoramic/perspective viewer.
@@ -11144,6 +11230,14 @@ private stopSafePlayback = () => {
   }
 
   componentDidUpdate(prevProps: AllWidgetProps<any>, prevState: State) {
+    const nearbyVisible=this.nearbyPanelVisible();
+    const wasNearbyVisible=this._nearbyDemandVisible;this._nearbyDemandVisible=nearbyVisible;
+    if(!nearbyVisible){
+      if(!this.state.nearbyStripOpen||this.state.imageTrayTab==='object'||this.props.visible===false||this.props.state==='CLOSED')this._nearbyPointerInside=false;
+      this._nearbyDiscovery?.cancel();
+    }else if(!wasNearbyVisible||prevState.imageId!==this.state.imageId||prevState.isLoading!==this.state.isLoading)
+      this.refreshNearbyAfterPause(!prevState.nearbyStripOpen||prevState.imageTrayTab==='object');
+
 
     if (this._coverageAnalysisCurrent && !this._coverageAnalysisCurrent()) {
       this.cancelCoverageAnalysis();
@@ -11196,6 +11290,9 @@ private stopSafePlayback = () => {
       this.cleanupWidgetEnvironment(true, false);
     }
 
+    if(prevProps.visible===false&&this.props.visible!==false&&this.state.jimuMapView?.view)
+      this.claimCurrentImagePresentation(this.state.jimuMapView.view);
+
     // Closed: Full cleanup
     if (prevProps.state === "OPENED" && this.props.state === "CLOSED") {
       this.log("Widget closed - cleaning up completely");
@@ -11204,6 +11301,7 @@ private stopSafePlayback = () => {
 
     // 3. Handle Reopening (Seamless Filter Loading)
     if (prevProps.state === "CLOSED" && this.props.state === "OPENED" && this.state.jimuMapView) {
+      this.claimCurrentImagePresentation(this.state.jimuMapView.view);
       this.log("Widget reopened - initializing environment...");
 
       // A. Define the initialization logic that should run ONLY after the layer is ready
@@ -11440,6 +11538,7 @@ private stopSafePlayback = () => {
     if (!view?.map || view.destroyed) return;
     this.syncSceneTerrain(view);
     const startupRevision = ++this._viewStartupRevision;
+    this._sharedStartupImageId=null;this._sharedStartupBearing=null;
     this._startupUrlParameters ??= readSharedLinkParameters();
     this._isFlyInActive = false;
     const startupMap = view.map;
@@ -11531,6 +11630,7 @@ private stopSafePlayback = () => {
     this._reverseGeocodeAbort?.abort(); this._backgroundRequests.clear();
     this._timeTravelAvailability?.clear(); this._cachedSequencePreview?.clear();
     this.clearFieldNotesGroup();
+    this.claimCurrentImagePresentation(view);
     // Commit the NEW MapView first.
     // Only then restore graphics and sign/object watchers.
     this.setState(
@@ -11850,8 +11950,12 @@ private stopSafePlayback = () => {
         }
         this._currentHoveredFeatureId = null;
       };
+      const touchHover = new CoverageTouchHover(mapContainer, onMapLeave);
+      this._coverageTouchHover = touchHover;
       mapContainer.addEventListener("mouseleave", onMapLeave);
       this._turboMapLeaveCleanup = () => {
+        touchHover.dispose();
+        if(this._coverageTouchHover===touchHover)this._coverageTouchHover=null;
         hoverResume.dispose();
         if (this._coverageHoverResume === hoverResume) { this._coverageHoverResume = null; this._coverageHoverHandler = null; }
         mapContainer.removeEventListener("mouseleave", onMapLeave);
@@ -11861,13 +11965,23 @@ private stopSafePlayback = () => {
 
     // CLICK HANDLER
     this.mapClickHandle = view.on("click", async (evt) => {
-      if (this.props.state === "CLOSED") return;
+      if (this.props.state === "CLOSED"||this.props.visible===false) return;
+      if(this._isFlyInActive)(view as any).animation?.stop();
+      this._sharedStartupImageId=null;this._sharedStartupBearing=null;this._isFlyInActive=false;this._sharedStateRestoreComplete=true;
+      this.claimCurrentImagePresentation?.(view);
+      if(this._workspaceNoteLocation?.active){
+        evt.stopPropagation();const point=view.toMap(evt);
+        this._workspaceNoteLocation.consume(view,point?{lon:point.longitude,lat:point.latitude}:null);
+        return;
+      }
+      this._fieldNoteMap.clearHighlight();
       this._coverageHoverResume?.leave();
       // Claim the click before any await. SDK hit tests cannot be aborted, so
       // late results must lose ownership before they can open imagery or tools.
       const clickRevision = this._mapClickRevision = (this._mapClickRevision ?? 0) + 1;
       const clickCurrent = () => this._mapClickRevision === clickRevision &&
-        this.state.jimuMapView?.view === view && !view.destroyed && this.props.state !== "CLOSED";
+        this.state.jimuMapView?.view === view && !view.destroyed && this.props.state !== "CLOSED" &&
+        (!this._currentImagePresentation||this._currentImagePresentation.owns(view.map));
       this._turboClickPickAbort?.abort();
       this._mapFeatureClickAbort?.abort();
       if (this.state.coverageFrameResolving) this.setState({ coverageFrameResolving: false });
@@ -11916,7 +12030,7 @@ private stopSafePlayback = () => {
 
       try {
         const response = await coverageClickHitTest(!!pointPreviewAtClick, {
-          sharedNotes: !!this._sharedNotesLayer,
+          sharedNotes: !!this._sharedNotesLayer || this._fieldNoteMap.hasPickTargets,
           pointCloud: !!this._pointCloudMapLayer?.layer,
           places: !!this.state.placesActive,
           detectionFeatures: !!this.mapillaryObjectsFeatureLayer || !!this.mapillaryTrafficSignsFeatureLayer,
@@ -11935,6 +12049,15 @@ private stopSafePlayback = () => {
           return;
         }
 
+
+        // Note clicks select the same highlight as Show on map without moving the camera.
+        const noteHit = response.results.find((result: any) => result.graphic && this._fieldNoteMap.noteForGraphic(result.graphic));
+        if (noteHit && (noteHit as any).graphic) {
+          const graphic = (noteHit as any).graphic;
+          const note = this._fieldNoteMap.noteForGraphic(graphic);
+          if (note) void this._fieldNoteMap.focusNote(note).catch(() => {});
+          return;
+        }
 
         if (this._pointCloudHits.route(response.results)) return;
 
@@ -12153,6 +12276,8 @@ private stopSafePlayback = () => {
 
     // HOVER HANDLER
     this.pointerMoveHandle = view.on("pointer-move", this._coverageHoverHandler = (evt) => {
+      if(this._coverageTouchHover?.shouldIgnore(evt))return;
+      if(this._workspaceNoteLocation?.active)return;
       this._coverageHoverResume?.move(evt);
       this._coverageAlignmentDiagnostic?.pointer(view, { x: evt.x, y: evt.y });
       this._turboHoverPickAbort?.abort();
@@ -12277,6 +12402,7 @@ private stopSafePlayback = () => {
   private drawPulsingPoint(lon: number, lat: number, baseColor: any = [0, 255, 0, 1], imageId = this.state.imageId) {
     const view = this.state.jimuMapView?.view;
     if (!view || !this.ArcGISModules || !Number.isFinite(lon) || !Number.isFinite(lat)) return null;
+    if(this._currentImagePresentation&&!this._currentImagePresentation.owns(view.map))return null;
     const anchor = this.getCoverageDisplayPosition(String(imageId), lon, lat);
     const graphic = this.ensureSelectionPulseOwner().show(view, anchor, lon, lat, baseColor, imageId, false);
     {
@@ -12553,6 +12679,7 @@ private stopSafePlayback = () => {
   private drawCone(lon: number, lat: number, heading: number, radiusMeters = 5, spreadDeg = 60) {
     const view = this.state.jimuMapView?.view;
     if (!view || !this.ArcGISModules || ![lon, lat, heading, radiusMeters, spreadDeg].every(Number.isFinite) || radiusMeters <= 0 || spreadDeg <= 0 || spreadDeg >= 180) return null;
+    if(this._currentImagePresentation&&!this._currentImagePresentation.owns(view.map))return null;
     const screenCone = this.ensureScreenDirectionCone();
     if (screenCone) {
       const anchor = this.getCoverageDisplayPosition(String(this.state.imageId), lon, lat);
@@ -12883,21 +13010,30 @@ private stopSafePlayback = () => {
    * @param imageId - ID of the currently active image, excluded from results
    *                  so the viewer does not show the current image as a "nearby" suggestion.
    */
-  private refreshNearbyAfterPause = () => {
-    const image = this.state.sequenceImages.find((img: { id: string; lat: number; lon: number }) => String(img.id) === this.state.imageId);
-    if (image && this._userPaused) this.fetchNearbyImages(image.lat, image.lon, String(image.id));
+  private refreshNearbyAfterPause = (immediate=false,expanded=false) => {
+    const image = this._liveSequenceFrames.find(String(this.state.imageId)) || this.state.sequenceImages.find((img: { id: string; lat: number; lon: number }) => String(img.id) === this.state.imageId);
+    if (image && this._userPaused) this.fetchNearbyImages(image.lat, image.lon, String(image.id),immediate,expanded);
   };
-  private fetchNearbyImages(lat: number, lon: number, imageId: string) {
+  private _nearbyDemandVisible=false;
+  private _nearbyPointerInside=false;
+  private nearbyPanelVisible=()=>!!this.state.nearbyStripOpen&&this.state.imageTrayTab!=='object'&&
+    this.props.state!=='CLOSED'&&this.props.visible!==false&&!this.state.isLoading&&this._imageryOpeningRequest==null&&
+    (!this._currentImagePresentation||!!this.state.jimuMapView?.view?.map&&this._currentImagePresentation.owns(this.state.jimuMapView.view.map));
+  private fetchNearbyImages(lat: number, lon: number, imageId: string,immediate=false,expanded=false) {
+    if(!this.nearbyPanelVisible())return;
     this._nearbyDiscovery ??= new NearbyImageDiscovery({
       getState: () => this.state,
       update: patch => this.setState(patch),
       isPaused: () => this._userPaused,
+      isVisible:()=>this.nearbyPanelVisible(),
+      isInteracting:()=>this._nearbyPointerInside,
       getToken: () => this.accessToken,
       isInitialLoad: () => this._isInitialImageLoad,
       markInitialLoadComplete: () => { this._isInitialImageLoad = false; },
       runBackground: (work, signal) => this.runSequenceBackground(work, signal),
     });
-    this._nearbyDiscovery.schedule(lat, lon, imageId);
+    const anchor=this.getCoverageDisplayPosition(String(imageId),lon,lat);
+    this._nearbyDiscovery.schedule(anchor.lat, anchor.lon, imageId,immediate,expanded);
   }
 
   /**
@@ -12909,9 +13045,71 @@ private stopSafePlayback = () => {
    * @param img - The nearby image whose coordinates should be pinned, or
    *              `null` to remove the existing pin.
    */
+  private _nearbySelectionRevision=0;
+  private async selectNearbyImage(img:NearbyImage):Promise<void> {
+    const viewer=this.mapillaryViewer;if(!viewer)return;
+    this._nearbyDiscovery?.cancel();
+    const request=++this._nearbySelectionRevision;
+    const selection=this._selectionRequestId,view=this.state.jimuMapView?.view;
+    const current=()=>request===this._nearbySelectionRevision&&this.mapillaryViewer===viewer&&this._selectionRequestId===selection&&this.state.jimuMapView?.view===view;
+    this.highlightNearbyPin(null);this._nearbySelectedId=img.id;this.forceUpdate();
+    try {
+      await viewer.moveTo(img.id);if(!current())return;
+      const image=await viewer.getImage();if(!current()||String(image.id)!==String(img.id))return;
+      const pose=nearbyImagePose(img);
+      if(pose?.heading!==null&&pose?.heading!==undefined){
+        const x=(((.5+(pose.heading-(image.compassAngle??0))/360)%1)+1)%1;
+        viewer.setCenter([x,.5]);this._lastBearing=pose.heading;if(view)this.requestConeRedraw(view);
+      }
+    }catch(error){if(current())this.log('[Mapillary nearby] Image selection failed:',error);}
+  }
+
   private highlightNearbyPin(img: NearbyImage | null) {
+    this._nearbyHoverAbort?.abort();this._nearbyHoverAbort=null;
     this._nearbyHighlight ??= new NearbyImageHighlight<__esri.Graphic>();
-    this._nearbyHighlight.update(this.state.jimuMapView?.view, this.ArcGISModules, this.state, img);
+    const view=this.state.jimuMapView?.view,pose=img&&nearbyImagePose(img);
+    if(!view||!img||!pose||String(img.id)===String(this.state.imageId)||(this._currentImagePresentation&&!this._currentImagePresentation.owns(view.map))){
+      this._nearbyHighlight.update(view,this.ArcGISModules,this.state,null);return;
+    }
+    const context=this.coverageSelectionContext();
+    const anchor=this._coverageSelectionTargets.anchor(context,String(img.id));
+    if(anchor||!context.enabled||!context.individual){
+      this._nearbyHighlight.update(view,this.ArcGISModules,this.state,img,anchor?{lon:anchor.lon,lat:anchor.lat}:undefined);return;
+    }
+    // Resolve the exact ID from shared coverage bytes before displaying a new
+    // preview; nearby API coordinates must never snap to a neighbouring image.
+    this._nearbyHighlight.clear();
+    const controller=new AbortController();this._nearbyHoverAbort=controller;
+    void this.resolveNearbyPreviewAnchor(view,img,pose,controller);
+  }
+
+  private async resolveNearbyPreviewAnchor(view:__esri.MapView|__esri.SceneView,img:NearbyImage,pose:{lon:number;lat:number},controller:AbortController):Promise<void>{
+    const context={...this.coverageSelectionContext()},token=this.accessToken;
+    const current=()=>this._nearbyHoverAbort===controller&&!controller.signal.aborted&&this.state.jimuMapView?.view===view&&!view.destroyed&&
+      this.accessToken===token&&this.state.turboModeActive&&this.props.state!=='CLOSED'&&this.props.visible!==false&&
+      (!this._currentImagePresentation||this._currentImagePresentation.owns(view.map))&&
+      this.coverageSelectionContext().revision===context.revision&&this.coverageSelectionContext().layer===context.layer;
+    try{
+      const zoom=ZOOM.TILE_FETCH,n=2**zoom,latitude=Math.max(-85.05112878,Math.min(85.05112878,pose.lat));
+      const x=Math.max(0,Math.min(n-1,Math.floor((pose.lon+180)/360*n))),y=Math.max(0,Math.min(n-1,Math.floor((1-Math.asinh(Math.tan(latitude*Math.PI/180))/Math.PI)/2*n)));
+      const tiles:[number,number,number][]=[[x,y,zoom]];
+      for(const [key] of this._turboTileCache.snapshot()){
+        const [z,tx,ty]=key.split('/').map(Number);if(z===zoom&&Math.abs(tx-x)<=1&&Math.abs(ty-y)<=1&&(tx!==x||ty!==y))tiles.push([tx,ty,z]);
+      }
+      for(const tile of tiles){
+        if(!current())return;
+        const [tx,ty,z]=tile,buffer=this._turboTileCache.get(`${z}/${tx}/${ty}`)??await this.runSequenceBackground(signal=>this.getTurboTileBuffer(tile,signal),controller.signal);
+        if(!current())return;if(!buffer.byteLength)continue;
+        const index=this._sequenceTileIndex.has(buffer)?await this.getSequenceTileIndex(buffer,controller.signal):await this.runSequenceBackground(signal=>this.getSequenceTileIndex(buffer,signal),controller.signal);if(!current())return;
+        const point=nativeImageAnchor(buffer,index,bytes=>new VectorTile(new Pbf(new Uint8Array(bytes))),tile,String(img.id));
+        if(!point)continue;
+        this._coverageSelectionTargets.retain(this.coverageSelectionContext(),String(img.id),new this.ArcGISModules.Point({...point,spatialReference:{wkid:3857}}));break;
+      }
+    }catch(error){if(current()&&(error as any)?.name!=='AbortError')this.log('[Mapillary nearby] Coverage alignment unavailable:',error);}
+    if(current()){
+      const anchor=this.getCoverageDisplayPosition(String(img.id),pose.lon,pose.lat);
+      this._nearbyHighlight?.update(view,this.ArcGISModules,this.state,img,anchor);
+    }
   }
 
   private getFeatureZoomThresholds(view: __esri.MapView | __esri.SceneView) {
@@ -13178,10 +13376,14 @@ private stopSafePlayback = () => {
               }}
             >
               <div role="tablist" aria-label={this._t('appImageSources')} style={{ display: "flex", gap: 8 }}>
-                {(["nearby", "object"] as const).map(tab => <button key={tab} role="tab" aria-selected={(this.state.imageTrayTab || "nearby") === tab} onClick={() => this.setState({ imageTrayTab: tab })} style={{ background: "none", border: 0, color: (this.state.imageTrayTab || "nearby") === tab ? "#8bdbb7" : "#bbb", padding: "6px", cursor: "pointer" }}>{tab === "nearby" ? <OwnedMessage source={"Nearby ({value0})"} values={{value0:String((this.state.nearbyImages || []).length)}}/> : <OwnedMessage source={"Selected object ({value0})"} values={{value0:String(this.state.alternateImages.length)}}/>}</button>)}
+                {(["nearby", "object"] as const).filter(tab=>tab==='nearby'||!!this.state.selectedFeatureMetadata).map(tab => <button key={tab} role="tab" aria-selected={(this.state.imageTrayTab || "nearby") === tab} onClick={() => {this.highlightNearbyPin(null);if(tab==='object')this.revealDetectionTools();this.setState({ imageTrayTab: tab });}} style={{ background: "none", border: 0, color: (this.state.imageTrayTab || "nearby") === tab ? "#8bdbb7" : "#bbb", padding: "6px", cursor: "pointer" }}>{tab === "nearby" ? <OwnedMessage source={"Nearby ({value0})"} values={{value0:String((this.state.nearbyImages || []).length)}}/> : <OwnedMessage source={"Selected object ({value0})"} values={{value0:String(this.state.alternateImages.length)}}/>}</button>)}
               </div>
+              {this.state.imageTrayTab!=='object'&&this.state.nearbyCanExpand&&<button type="button" disabled={!!this.state.nearbyLoading}
+                title={this._owned('Search a larger sample and show the nearest 20 captures')}
+                onClick={()=>this.refreshNearbyAfterPause(true,true)}
+                style={{fontSize:9,padding:'2px 5px',border:'1px solid #648b73',borderRadius:4,background:'#214233',color:'#e1eee5',cursor:'pointer'}}>{this._owned('Search more')}</button>}
               <button
-                onClick={() => this.setState({ nearbyStripOpen: false })}
+                onClick={() => {this.highlightNearbyPin(null);this.setState({ nearbyStripOpen: false });}}
                 style={{
                   background: "none",
                   border: "none",
@@ -13197,7 +13399,9 @@ private stopSafePlayback = () => {
             </div>
 
             {/* Rows stay mounted while switching tabs, preserving independent scroll positions. */}
-            <div role="tabpanel" aria-label={this._t('appNearbyImages')}
+            <div role="tabpanel" aria-label={this._t('appNearbyImages')} aria-busy={!!this.state.nearbyLoading}
+              onPointerEnter={event=>{if(event.pointerType==='mouse'||event.pointerType==='pen')this._nearbyPointerInside=true;}}
+              onPointerLeave={()=>{this._nearbyPointerInside=false;this._nearbyDiscovery?.flush();}}
               style={{
                 display: this.state.imageTrayTab === "object" ? "none" : "flex",
                 flex: "1 1 0",
@@ -13212,6 +13416,7 @@ private stopSafePlayback = () => {
                 paddingBottom: "2px",
               }}
             >
+              {this.state.nearbyLoading&&!this.state.nearbyImages?.length&&<span role="status" style={{fontSize:11,padding:8,color:'#b5ccbf'}}>{this._owned('Loading nearby captures…')}</span>}
               {(this.state.nearbyImages ?? []).map((img) => {
                 // Use _nearbySelectedId for instant highlight on click,
                 // fall back to imageId so the current sequence image
@@ -13226,11 +13431,7 @@ private stopSafePlayback = () => {
                   <div
                     key={img.id}
                     onClick={() => {
-                      // Set instantly, no waiting for image event
-                      this._nearbySelectedId = img.id;
-                      // Force re-render so green border appears immediately
-                      this.forceUpdate();
-                      this.mapillaryViewer?.moveTo(img.id);
+                      void this.selectNearbyImage(img);
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = "scale(1.04)";
@@ -13273,7 +13474,7 @@ private stopSafePlayback = () => {
                 );
               })}
             </div>
-            <div role="tabpanel" aria-label={this._t('appSelectedObjectImages')} style={{ display: this.state.imageTrayTab === "object" ? "flex" : "none", gap: 6, flex: "1 1 0", minHeight: 0, overflowX: "auto", overflowY: "hidden", alignItems: "flex-start", color: "#ddd", fontSize: 12 }}>
+            <div role="tabpanel" aria-label={this._t('appSelectedObjectImages')} style={{ display: this.state.imageTrayTab === "object"&&this.state.selectedFeatureMetadata ? "flex" : "none", gap: 6, flex: "1 1 0", minHeight: 0, overflowX: "auto", overflowY: "hidden", alignItems: "flex-start", color: "#ddd", fontSize: 12 }}>
               {this.state.isFetchingAlternates && <span style={{ alignSelf: "center" }} role="status"> {this._t('appLoadingAssociatedImages')} </span>}
               {this.state.alternateImagesError && <span style={{ alignSelf: "center" }} role="alert">{<OwnedMessage source={String(this.state.alternateImagesError ?? "")}/>} <button onClick={() => { const location = this.state.selectedFeatureLocation; const id = this.state.selectedFeatureMetadata?.id; if (location && id) void this.fetchAlternateImages(id, location.lat, location.lon); }}> {this._t('appRetry')} </button></span>}
               {!this.state.isFetchingAlternates && !this.state.alternateImagesError && !this.state.alternateImages.length && <span> {this._t('appNoAssociatedImagesAvailableSelectASignOrObject')} </span>}
@@ -13400,11 +13601,15 @@ private stopSafePlayback = () => {
           onExport={this.exportFieldNotes}
           onImportFile={this.importFieldNotesFile}
           onFocusNote={this.focusFieldNote}
+          onWorkspaceMapChange={this.updateWorkspaceMapNotes}
+          onWorkspacePickLocation={this.requestWorkspaceNoteLocation}
+          currentImageId={this.state.imageId}
           onCloseList={() => this.setState({ fieldNotesListOpen: false })}
         />
 
         {/* INFO BOX */}
         {!this.state.isFullscreen && <InfoBox
+          detectionToolsRequest={this._detectionToolsRequest}
           hideInfoBox={this.props.config.hideInfoBox}
           turboCreator={this.props.config.turboCreator}
           turboOrganization={this.props.config.turboOrganization || this.state.turboFilterOrganization}

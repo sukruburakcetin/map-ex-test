@@ -1,0 +1,22 @@
+{
+  "installer": "mobile-grounded-zoom-fix",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/map-graphics/NativeCurrentImageMarker.ts",
+      "originalSha256": "34a580be3a49fbb8f2de53ee2661951e02e87311fe56e7d54d4fd4da78b1d756",
+      "resultSha256": "020c37ccad28b0b346b1439bd95f36de9d37ffd01f4fd4854f5abd563042cf67"
+    },
+    {
+      "file": "src/features/map-graphics/ScreenDirectionCone.ts",
+      "originalSha256": "fc468c1e476bcac5aa2b0e4f868afda86872d83347d07bff72c8ea4ca4fd7a65",
+      "resultSha256": "50ae046952e4de542f9483f86dc5a8ba042452d99ef89e0991b89ba843f8027c"
+    },
+    {
+      "file": "tests/nativeCurrentImageMarker.test.cjs",
+      "originalSha256": "0f5647dc316a768e38b597bb1fcbd762202d3650806c6088373f2000f2728bd4",
+      "resultSha256": "6f8b3c59ec0d04523ee31dcea18ec4a6fe742399ae9f5c4aa497e6ae0bcf73f8"
+    }
+  ]
+}

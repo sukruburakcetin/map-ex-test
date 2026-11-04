@@ -1,0 +1,82 @@
+{
+  "installer": "workspace-display-names",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/community-notes/communityWorkspace.ts",
+      "originalSha256": "bafde26d70d8ba46d879c2121c2db223a51c8f2b369297f6f1d0eb768d834ed6",
+      "resultSha256": "b269f544c83a1e1f21bf8a0668a74c5496ca34954f2f256d22ab72ce3a41a96c"
+    },
+    {
+      "file": "src/features/community-notes/CommunityWorkspacePanel.tsx",
+      "originalSha256": "05b2ecb6b657008e6f1fd76f8a4fbb1c63f24ff1f3b7422463e9b4f98d240f61",
+      "resultSha256": "2db83324ee9318189b21e1699440c33df42d18c4ef3cac32aabbfd4f2de12a93"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceContributionCard.tsx",
+      "originalSha256": "12dd26cf5a25d1147599e33634a3164d3a3204fdea97ee713f46ff62aa69a380",
+      "resultSha256": "82fea0d04f2757c236458a87dd238cdac14d7c68f4bc8cac282eee45ec84c377"
+    },
+    {
+      "file": "src/features/field-notes/mapGraphic.ts",
+      "originalSha256": "9a1406e5f5dbabe39a7dcf0245c2ea4cccb0e50f30807bea9ff896b5943f5e67",
+      "resultSha256": "1afe2c0a047aa0036db02e93f840dc7acd7f4097301ce8541108dd35d75eb865"
+    },
+    {
+      "file": "src/components/types.ts",
+      "originalSha256": "334a4e7c4c3a4db0c68cdc50e4117ab8eae597a887783840ca71b7a95aac6466",
+      "resultSha256": "cebcdcaceba6417dc260cb83518fa5c75d513665563ffe65c6ea1cfd354322b7"
+    },
+    {
+      "file": "tools/community-notes/schema.sql",
+      "originalSha256": "f010cf1e2eae620078d72f315cd1aeb0c9fbaefd575de74a5317325875fde236",
+      "resultSha256": "1689527e8a832d595b52d2c473a9fd571137fcf8f91b3c325f7af1852eb3bfc3"
+    },
+    {
+      "file": "tools/community-notes/README.md",
+      "originalSha256": "8124ca8cf6b4451b5e48c39c06845d58c5d620c798946992626b8c3f30613911",
+      "resultSha256": "91d5aa0a737ae1ccf3cff2eaa7fa68c79ae7526160de39f777d5c095638a672a"
+    },
+    {
+      "file": "src/features/community-notes/README.md",
+      "originalSha256": "4a1324efeb02a6c9095b667e307e76371cf2ca90046aa14a80c5b8e991a337c0",
+      "resultSha256": "7e7e3d2fcedfbba551da6eeffa3bc6bf402bf7acfae781914c3b724ba39ef4c2"
+    },
+    {
+      "file": "tests/communityWorkspaceClient.test.cjs",
+      "originalSha256": "32563d4db967b2e0ef87e9287f5f1c97ae7dbb6417a68e2260052e9deea0a2c4",
+      "resultSha256": "d21aa79b9ad5fe85d3b75b42e1310b7b7c129e4148a1a9ffec32b395b03fa6f8"
+    },
+    {
+      "file": "tests/communityWorkspace.browser.cjs",
+      "originalSha256": "d89d86788932b2b097929751b6d7a5e11097afcee0a473b1d79f845029c949c8",
+      "resultSha256": "e5d6f7250ed014abf8d75e6a6184bed90639aa0d249fcaf857e1f1eca6dd039e"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceDisplayNameEditor.tsx",
+      "originalSha256": null,
+      "resultSha256": "d474a6ae3c5a66f284f4c484a5a354d3f02cdbec22e4475d86108cb1a230328b"
+    },
+    {
+      "file": "tools/community-notes/migrations/004-workspace-display-names.sql",
+      "originalSha256": null,
+      "resultSha256": "63bf7d84ed972f1992cbd0032a6e4ce400339dfab6e7a383995dc3bac977bef5"
+    },
+    {
+      "file": "docs/WORKSPACE-DISPLAY-NAMES.md",
+      "originalSha256": null,
+      "resultSha256": "cc199afbba14b40c043124782a35c55e83bad8541f9fe3ed848bb0f88a83a65d"
+    },
+    {
+      "file": "tests/workspaceDisplayNamesDatabase.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "8266e3c899f21f386228ace3040b5f8ed80d4aa2ee40527be667f04fba050c05"
+    },
+    {
+      "file": "tests/fixtures/communityWorkspaceBefore004.sql",
+      "originalSha256": null,
+      "resultSha256": "f010cf1e2eae620078d72f315cd1aeb0c9fbaefd575de74a5317325875fde236"
+    }
+  ]
+}

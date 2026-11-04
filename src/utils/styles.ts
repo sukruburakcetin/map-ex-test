@@ -106,7 +106,7 @@ export const getMinimapContainerStyle = (showMinimap: boolean): React.CSSPropert
     backdropFilter: "blur(12px)",
     WebkitBackdropFilter: "blur(12px)",
     border: "1px solid rgba(255, 255, 255, 0.15)",
-    borderRadius: "20px",
+    borderRadius: "5px",
     overflow: "hidden",
     boxShadow: `
         0 8px 32px 0 rgba(0, 0, 0, 0.6), 
@@ -1387,7 +1387,7 @@ export const overrideStyles = `
         .esri-view-width-xsmall .esri-popup--docked-bottom-center .esri-popup__main-container { left: auto !important; right: auto !important; }
         .splash-screen-logo { margin-bottom: 15px !important; }
         .splash-screen-text { font-size: 10px !important; }
-        .minimap-container { top: auto !important; bottom: 12px !important; left: 12px !important; right: auto !important; transform: none !important; width: min(34vw, 156px) !important; max-width: 156px !important; height: 104px !important; border-radius: 10px !important; }
+        .minimap-container { top: auto !important; bottom: 12px !important; left: 12px !important; right: auto !important; transform: none !important; width: min(34vw, 156px) !important; max-width: 156px !important; height: 104px !important; border-radius: 5px !important; }
         .warning-message-container { font-size: 8px !important; }
         .glass-scroll-container { border-radius: 0px !important; padding: 0px !important; margin-top: 0px !important; gap: 2px !important }
         .glass-datepicker-calendar { width: 160px !important; padding: 6px 6px 5px !important; }

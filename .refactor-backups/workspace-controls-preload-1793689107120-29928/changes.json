@@ -1,0 +1,17 @@
+{
+  "installer": "workspace-controls-preload",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/FieldNotesPanel.tsx",
+      "originalSha256": "82c717d7850a13539a1f42ddc9740262644477f8caef8ca731838a82fafa2a9c",
+      "resultSha256": "0ecbad7c18ef56b75a60a8882d013cb4e076b7def6d71981b0450b06db580d73"
+    },
+    {
+      "file": "tests/communityWorkspace.browser.cjs",
+      "originalSha256": "80bd864e8785026a4e6e2fa451fbdb3fd889a2b57ca0e45d49e46cfc9318858c",
+      "resultSha256": "9048e329aba5e41c04d397e4e6ddc9cd852c77cd550f03c4fd05e3bdaffb6e17"
+    }
+  ]
+}

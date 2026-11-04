@@ -1,0 +1,17 @@
+{
+  "installer": "workspace-mobile-compact-fix",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/styles/communityWorkspace.ts",
+      "originalSha256": "9036c9905f493f3ef37a9027671466bc2eea2d68a2a008b146869f117958e525",
+      "resultSha256": "c00d693a15602324abb8dea8acd6694c69f006f6575f20c5de81f81b5050247a"
+    },
+    {
+      "file": "tests/communityWorkspace.browser.cjs",
+      "originalSha256": "8a2b9186f0bb4ccf77b77e5892c4724295835c4d3ff780edb32cb27ce83bb312",
+      "resultSha256": "e055ee666307106a152a199d47946ea973a838c63cec11dc93548dbc77fb2d48"
+    }
+  ]
+}

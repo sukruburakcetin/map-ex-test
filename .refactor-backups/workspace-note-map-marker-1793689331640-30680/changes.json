@@ -1,0 +1,22 @@
+{
+  "installer": "workspace-note-map-marker",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/field-notes/FieldNoteMap.ts",
+      "originalSha256": "db1c4fff84bdc8c8a57228dcf7bd56d5f613fa5e6b4979a22d0f77f87dd6493f",
+      "resultSha256": "cfe948ac2826bb5665d4f40014e5114240de664a0edbd605e3e48c22643c5c09"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "f2fa3fb78c9ec6bc41b11848533baa68f90190fa724c482486c9e11ecc8fb212",
+      "resultSha256": "d7de858b1602562375c05d09bac3168e9fe092b1b1fcfae67189811f2be52883"
+    },
+    {
+      "file": "tests/fieldNoteMap.test.cjs",
+      "originalSha256": "c18e09b438300b25044febe71846ac8fe6b2b9caf9cda98ca8fd815195afbd68",
+      "resultSha256": "c998e12b491e1f14f5a2eb258d4a3f80e8e794462c2f0f9f22c89d87091a163e"
+    }
+  ]
+}

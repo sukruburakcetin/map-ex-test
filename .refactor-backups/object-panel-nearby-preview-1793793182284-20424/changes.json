@@ -1,0 +1,37 @@
+{
+  "installer": "object-panel-nearby-preview",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "693bd7974a66c4ad66f284a3f35bd366964ae35fd38a78893a82dd55e10faa3b",
+      "resultSha256": "2488feeeccbd035a2bbbdb9207a3c45497abf3bd4ab2c4090f122b99dcfb87f4"
+    },
+    {
+      "file": "src/features/imagery/nearbyHighlight.ts",
+      "originalSha256": "ecd6b43cbe60861d156899b77ca10a414ae291f68c3a94d72dd58dedd7b2cd5a",
+      "resultSha256": "460e6c2244f39e0d5dde332ee87abe601029e9b57fc4eb36d25f62070264e547"
+    },
+    {
+      "file": "src/features/map-graphics/ScreenDirectionCone.ts",
+      "originalSha256": "50ae046952e4de542f9483f86dc5a8ba042452d99ef89e0991b89ba843f8027c",
+      "resultSha256": "6bc32012a55bce7c4ec57940d47668a58be6aa48484acc088373056c86c1d9ad"
+    },
+    {
+      "file": "src/components/types.ts",
+      "originalSha256": "9e9ba1160ef80d01cb7cb56353c74c4c21f317a18aca95c825f7e2ca2a527e38",
+      "resultSha256": "75b17e0f51ef7e67c32ebebb82e2d8c77061d054fd0dcb5c8fcb7b52f2ead5bd"
+    },
+    {
+      "file": "src/utils/constants.ts",
+      "originalSha256": "219a06e021367f3dc33f39736d2f819d078c31524b3cd1df481e281c34e851c3",
+      "resultSha256": "5f52bcb5d2ed9e7bb4b6333c42bb0264768fc519153ff3ee25ad8fd9959efaa1"
+    },
+    {
+      "file": "tests/objectNearbyLifecycle.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "89e4b2f50630bddb6ef22ec92140a8e00f4fcf566e3c47eaec9e909cd882a416"
+    }
+  ]
+}
