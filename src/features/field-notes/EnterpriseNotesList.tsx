@@ -1,6 +1,8 @@
 /** @jsx jsx */
 /** Paged Enterprise records; mounted only for the open Enterprise tab. No automatic polling. */
 import { useWidgetLocale } from '../../i18n/WidgetLocale';
+import { LinkedDetectionNoteText } from '../detections/LinkedDetectionPreview';
+import type { DetectionPreviewLoader } from '../detections/detectionPreview';
 import { React, jsx } from 'jimu-core';
 import { NotesSearchControls } from './NotesSearchControls';
 import { filterNotes } from './noteSearch';
@@ -10,7 +12,7 @@ import type { EnterpriseNotesLoader } from './enterpriseList';
 import { noteActionStyle, noteListActionStyle, getNoteStatusBadgeStyle } from '../../styles/fieldNotes';
 import { enterpriseToolbarStyle, enterpriseRowsStyle, enterpriseRowStyle, enterpriseActionsStyle, notesSourceHintStyle, enterpriseErrorStyle, notesLocalPanelStyle, notesRowHeadingStyle, notesWorkflowStatusStyle, notesRowMetaStyle, notesRowButtonsStyle } from '../../styles/enterpriseNotes';
 
-export interface EnterpriseNotesListProps {
+export interface EnterpriseNotesListProps {onLoadDetectionPreview?:DetectionPreviewLoader;onLoadDetectionAttachment?:(note:FieldNote,id:string,signal:AbortSignal)=>Promise<string>;
   loadPage: EnterpriseNotesLoader;
   context?: unknown;
   layerUrl?: string;
@@ -73,7 +75,7 @@ export const EnterpriseNotesList: React.FC<EnterpriseNotesListProps> = props => 
       const canManage = !!note.sharedGlobalId && !!note.sharedLayerUrl;
       return <div key={note.id} style={enterpriseRowStyle}>
         <div style={notesRowHeadingStyle}><strong>{note.category}</strong><span style={notesRowMetaStyle}>{Number.isFinite(note.createdAt) && new Date(note.createdAt).toLocaleString(locale)}</span></div>
-        {note.note && <div>{note.note}</div>}{note.resolutionNote && <div> {t('uiResolution')} {note.resolutionNote}</div>}
+        {note.note && <div><LinkedDetectionNoteText value={note.note} loadAttachment={props.onLoadDetectionAttachment?(id,signal)=>props.onLoadDetectionAttachment!(note,id,signal):undefined} load={props.onLoadDetectionPreview}/></div>}{note.resolutionNote && <div> {t('uiResolution')} {note.resolutionNote}</div>}
         <div style={enterpriseActionsStyle}>
           <div style={notesWorkflowStatusStyle}><span>{t('uiStatus')}:</span><span style={getNoteStatusBadgeStyle(note.status)}>{t(note.status==='in_progress'?'uiStatusProgress':note.status==='completed'?'uiStatusCompleted':note.status==='dismissed'?'uiStatusDismissed':'uiStatusOpen')}</span></div>
           <div style={notesRowButtonsStyle}>

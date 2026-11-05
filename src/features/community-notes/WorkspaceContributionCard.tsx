@@ -1,4 +1,6 @@
 /** @jsx jsx */
+import { LinkedDetectionNoteText } from '../detections/LinkedDetectionPreview';
+import type { DetectionPreviewLoader } from '../detections/detectionPreview';
 import { React, jsx } from 'jimu-core';
 import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import { formatWorkspaceContributor } from './communityWorkspace';
@@ -7,7 +9,7 @@ import { WorkspaceCategoryBadge } from './WorkspaceCategoryBadge';
 import { workspaceContributionCardStyle as card, workspaceRowStyle as row, workspaceButtonStyle as button,
   workspaceSecondaryButtonStyle as secondary, workspaceDangerButtonStyle as danger, workspaceStatusBadgeStyle as statusBadge } from '../../styles/communityWorkspace';
 
-interface Props {busy:boolean;note:CommunityRecord;color:string;own:boolean;ownerContribution:boolean;canEdit:boolean;canRemove:boolean;
+interface Props {onLoadDetectionPreview?:DetectionPreviewLoader;onLoadDetectionAttachment?:(id:string,signal:AbortSignal)=>Promise<string>;busy:boolean;note:CommunityRecord;color:string;own:boolean;ownerContribution:boolean;canEdit:boolean;canRemove:boolean;
  onShow():void;onEdit():void;onRemove():void;children?:React.ReactNode}
 const statuses:Record<string,string>={open:'Open',in_progress:'In progress',completed:'Completed',dismissed:'Dismissed'};
 const legacy:Record<string,string>={high:'High risk',low:'Low risk',no_obvious_hazards:'No obvious hazards observed'};
@@ -15,13 +17,13 @@ const legacy:Record<string,string>={high:'High risk',low:'Low risk',no_obvious_h
 /** Separate category/status, author/date, readable content and next actions.
  * Ownership changes permissions and labels, never the marker's appearance.
  */
-export function WorkspaceContributionCard({note,color,own,ownerContribution,canEdit,canRemove,onShow,onEdit,onRemove,children,busy}:Props){
+export function WorkspaceContributionCard({note,color,own,ownerContribution,canEdit,canRemove,onShow,onEdit,onRemove,children,busy,onLoadDetectionPreview,onLoadDetectionAttachment}:Props){
  const {owned:text,formatLocale}=useWidgetLocale();
  return <article style={{...card,borderInlineStart:'4px solid '+color}}>
   <div style={{...row,justifyContent:'space-between'}}><WorkspaceCategoryBadge name={note.category} color={color}/><span style={statusBadge}>{text('Status')}: {text(statuses[note.status]||note.status)}</span></div>
   <h3 style={{margin:0,fontSize:'var(--mly-workspace-title-size, 15px)',lineHeight:1.4,overflowWrap:'anywhere'}}>{note.title?.trim()||note.category}</h3>
   <div style={{...row,fontSize:10,color:'#bdd0c5'}}><bdi style={{fontWeight:600,overflowWrap:'anywhere'}}>{formatWorkspaceContributor(note.author_id,note.author_display_name,text('Contributor'))}</bdi><span>{text(own?'Your contribution':ownerContribution?'Owner’s contribution':'Member’s contribution')}</span><span>{text('Last updated')}: {new Date(note.updated_at||note.created_at).toLocaleString(formatLocale)}</span></div>
-  <p style={{margin:0,fontSize:'var(--mly-workspace-description-size, 13px)',lineHeight:1.6,whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{note.note_text}</p>
+  <div style={{margin:0,fontSize:'var(--mly-workspace-description-size, 13px)',lineHeight:1.6,whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}><LinkedDetectionNoteText value={note.note_text} loadAttachment={onLoadDetectionAttachment} load={onLoadDetectionPreview}/></div>
   {note.resolution_note&&<div style={{fontSize:12,lineHeight:1.5}}><strong>{text('Outcome / follow-up')}: </strong>{note.resolution_note}</div>}
   {note.risk_label&&<small>{text('Legacy risk assessment')}: {text(legacy[note.risk_label]||note.risk_label)}</small>}
   <div style={{...row,borderTop:'1px solid #496052',paddingTop:8}}>

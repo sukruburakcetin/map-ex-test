@@ -1,5 +1,6 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
+import { RoutePreviewControls } from './RoutePreviewControls';
 /** Routing controls and extra-time picker UI. Route services, analysis and waypoint state remain parent-owned. */
 import { OwnedMessage } from '../../i18n/WidgetLocale';
 import { useWidgetLocale, WidgetLocaleContext } from '../../i18n/WidgetLocale';
@@ -88,7 +89,7 @@ class ExtraTimePicker extends React.PureComponent<ExtraTimePickerProps, { open: 
 }
 
 
-export type RouteControlsProps = Pick<InfoBoxProps, 'runtimeRoutingEngine' | 'isGeneratingRoute' | 'onChangeRuntimeRoutingEngine' | 'runtimeTravelMode' | 'onChangeRuntimeTravelMode' | 'travelModeAvailability' | 'routeData' | 'routePickMode' | 'onSetRoutePickMode' | 'routeStartPoint' | 'routeEndPoint' | 'onResetRoutePoints' | 'routeSpareMinutes' | 'onChangeSpareMinutes' | 'onGenerateRoute' | 'routeGenerationProgress' | 'onDownloadRouteGPX'>;
+export type RouteControlsProps = Pick<InfoBoxProps, 'routePreviewHost' | 'runtimeRoutingEngine' | 'isGeneratingRoute' | 'onChangeRuntimeRoutingEngine' | 'runtimeTravelMode' | 'onChangeRuntimeTravelMode' | 'travelModeAvailability' | 'routeData' | 'routePickMode' | 'onSetRoutePickMode' | 'routeStartPoint' | 'routeEndPoint' | 'onResetRoutePoints' | 'routeSpareMinutes' | 'onChangeSpareMinutes' | 'onGenerateRoute' | 'routeGenerationProgress' | 'onDownloadRouteGPX'>;
 
 /** Render route drafting/progress/results and forward original callbacks; no requests or route calculation occur here. */
 export const RouteControls: React.FC<RouteControlsProps> = props => {
@@ -390,6 +391,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
               ✕
             </button>
           </div>
+          <RoutePreviewControls route={routeData} host={props.routePreviewHost}/>
         </div>
       )}
     </div>

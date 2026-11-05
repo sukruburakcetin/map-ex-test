@@ -1,3 +1,5 @@
+import type { DetectionExplorerOptions, DetectionSummary } from '../features/detections/detectionExploration';
+import type { RoutePreviewHost } from '../features/routing/RoutePreviewSimulation';
 /** @file Shared prop types for Mapillary Explorer sub-components */
 
 import { JimuMapView } from "jimu-arcgis";
@@ -89,6 +91,7 @@ export const FIELD_NOTE_CATEGORIES = DEFAULT_FIELD_NOTE_CATEGORIES;
 
 // InfoBox props
 export interface InfoBoxProps {
+  routePreviewHost?: RoutePreviewHost;
   detectionToolsRequest?: number;
   // visibility / config
   hideInfoBox?: boolean;
@@ -110,6 +113,9 @@ export interface InfoBoxProps {
   objectsActive?: boolean;
   detectionsActive: boolean;
   showAiTags: boolean;
+  detectionExplorer?: DetectionExplorerOptions;
+  detectionSummary?: DetectionSummary;
+  onChangeDetectionExplorer?: (options:DetectionExplorerOptions)=>void;
   alternateImages: AlternateImage[];
   isFetchingAlternates: boolean;
   accessToken: string;
@@ -306,6 +312,8 @@ export interface CoverageResult {
 
 // ControlBar props
 export interface ControlBarProps {
+    signSpritesStatus?:'idle'|'loading'|'error';
+    objectSpritesStatus?:'idle'|'loading'|'error';
     enablePlaces?: boolean;
     placesAvailable?: boolean;
     placesActive?: boolean;

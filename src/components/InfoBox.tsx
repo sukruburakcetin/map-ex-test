@@ -342,6 +342,9 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
             imageId={imageId}
             detectionsActive={detectionsActive}
             showAiTags={showAiTags}
+            detectionExplorer={this.props.detectionExplorer}
+            detectionSummary={this.props.detectionSummary}
+            onChangeDetectionExplorer={this.props.onChangeDetectionExplorer}
             mapFeatureExportLoading={this.props.mapFeatureExportLoading}
             onDownloadFeatures={onDownloadFeatures}
             onToggleDetections={onToggleDetections}
@@ -354,7 +357,7 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
           {(coverageAnalysisLoading || coverageResult) && (
             <CoverageAnalysisResults coverageAnalysisLoading={coverageAnalysisLoading} coverageAnalysisProgress={coverageAnalysisProgress} onCancelCoverageAnalysis={onCancelCoverageAnalysis} coverageResult={coverageResult} coverageSegmentsVisible={coverageSegmentsVisible} onToggleCoverageSegments={onToggleCoverageSegments} onDismissCoverageResult={onDismissCoverageResult}
               renderRoutingControls={() => (coverageSegmentsVisible && (
-                        <RouteControls runtimeRoutingEngine={runtimeRoutingEngine} isGeneratingRoute={isGeneratingRoute} onChangeRuntimeRoutingEngine={onChangeRuntimeRoutingEngine} runtimeTravelMode={runtimeTravelMode} onChangeRuntimeTravelMode={onChangeRuntimeTravelMode} travelModeAvailability={travelModeAvailability} routeData={routeData} routePickMode={routePickMode} onSetRoutePickMode={onSetRoutePickMode} routeStartPoint={routeStartPoint} routeEndPoint={routeEndPoint} onResetRoutePoints={onResetRoutePoints} routeSpareMinutes={routeSpareMinutes} onChangeSpareMinutes={onChangeSpareMinutes} onGenerateRoute={onGenerateRoute} routeGenerationProgress={routeGenerationProgress} onDownloadRouteGPX={onDownloadRouteGPX} />
+                        <RouteControls routePreviewHost={this.props.routePreviewHost} runtimeRoutingEngine={runtimeRoutingEngine} isGeneratingRoute={isGeneratingRoute} onChangeRuntimeRoutingEngine={onChangeRuntimeRoutingEngine} runtimeTravelMode={runtimeTravelMode} onChangeRuntimeTravelMode={onChangeRuntimeTravelMode} travelModeAvailability={travelModeAvailability} routeData={routeData} routePickMode={routePickMode} onSetRoutePickMode={onSetRoutePickMode} routeStartPoint={routeStartPoint} routeEndPoint={routeEndPoint} onResetRoutePoints={onResetRoutePoints} routeSpareMinutes={routeSpareMinutes} onChangeSpareMinutes={onChangeSpareMinutes} onGenerateRoute={onGenerateRoute} routeGenerationProgress={routeGenerationProgress} onDownloadRouteGPX={onDownloadRouteGPX} />
                       ))} />
           )}
 

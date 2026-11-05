@@ -1,4 +1,6 @@
 /** @jsx jsx */
+import type { DetectionPreviewLoader } from '../detections/detectionPreview';
+import type { DetectionContributionSeed } from '../detections/detectionNote';
 import { React, jsx } from 'jimu-core';
 import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import type { FieldNote } from '../../components/types';
@@ -15,7 +17,7 @@ import { CommunityWorkspaceClient, communityNoteTarget, parseWorkspaceInvitation
 import type { CommunityWorkspace, CommunityRecord, WorkspaceMember, WorkspaceInvite, WorkspaceCategory } from './communityWorkspace';
 import { workspaceReadabilityCss, workspacePanelStyle as panel, workspaceCardStyle as card, workspaceRowStyle as row, workspaceFieldStyle as field, workspaceInputStyle as input, workspaceButtonStyle as button, workspaceSectionStyle as sectionStyle, workspaceSummaryStyle as summaryStyle, workspaceHeadingStyle as headingStyle, workspaceSecondaryButtonStyle as secondary } from '../../styles/communityWorkspace';
 
-interface Props { onPickLocation?:WorkspaceLocationRequest;currentImageId?:string|null;notes: readonly FieldNote[]; onFocus(note: FieldNote): void; onClose(): void;
+interface Props {onDetectionDraftLocation?:(requestId:string,point:{lon:number;lat:number})=>void;onDetectionDraftFinished?:(requestId:string)=>void; onLoadDetectionPreview?:DetectionPreviewLoader; detectionDraft?:DetectionContributionSeed|null;onClearDetectionDraft?:(applied?:boolean)=>void; onPickLocation?:WorkspaceLocationRequest;currentImageId?:string|null;notes: readonly FieldNote[]; onFocus(note: FieldNote): void; onClose(): void;
   onMapNotes?(notes: FieldNote[],categories: readonly WorkspaceCategory[],workspaceName: string): void }
 const emptyRecords: CommunityRecord[] = [], emptyCategories: WorkspaceCategory[] = [];
 
@@ -23,7 +25,7 @@ const emptyRecords: CommunityRecord[] = [], emptyCategories: WorkspaceCategory[]
  * live in this mount only. No local note leaves the browser without Publish.
  * All database rights are verified by the operator's RLS, never by button visibility.
  */
-export const CommunityWorkspacePanel: React.FC<Props> = ({notes,onFocus,onClose,onMapNotes,onPickLocation,currentImageId}) => {
+export const CommunityWorkspacePanel: React.FC<Props> = ({notes,onFocus,onClose,onMapNotes,onPickLocation,currentImageId,detectionDraft,onClearDetectionDraft,onLoadDetectionPreview,onDetectionDraftFinished,onDetectionDraftLocation}) => {
   const { owned: text } = useWidgetLocale();
   const [connectionOpen,setConnectionOpen]=React.useState(true);
   const resultsRef=React.useRef<HTMLDivElement>(null),createRef=React.useRef<HTMLDetailsElement>(null),publishRef=React.useRef<HTMLDetailsElement>(null),categoriesRef=React.useRef<HTMLDetailsElement>(null);
@@ -81,7 +83,7 @@ export const CommunityWorkspacePanel: React.FC<Props> = ({notes,onFocus,onClose,
   const action=(label:string,callback:()=>void,disabled=busy)=><button type="button" style={button} disabled={disabled} onClick={callback}>{text(label)}</button>;
   // Retain the card element tree while typing; large loaded lists must not
   // re-render descriptions/editors for every search-input character.
-  const contributionCards=React.useMemo(()=>workspace?records.map(note=><WorkspaceContributionCard key={note.id} note={note} color={categories.find(category=>category.name===note.category)?.color||'#f5a623'}
+  const contributionCards=React.useMemo(()=>workspace?records.map(note=><WorkspaceContributionCard onLoadDetectionAttachment={(id,signal)=>client.current!.noteImage(note.id,id,signal)} onLoadDetectionPreview={onLoadDetectionPreview} key={note.id} note={note} color={categories.find(category=>category.name===note.category)?.color||'#f5a623'}
         busy={busy} own={note.author_id===client.current?.userId} ownerContribution={note.author_id===workspace.owner_id}
         canEdit={owner||canWrite&&note.author_id===client.current?.userId} canRemove={owner||canWrite&&note.author_id===client.current?.userId}
         onShow={()=>onFocus(communityNoteTarget(note,categories,workspace.name))}
@@ -91,9 +93,10 @@ export const CommunityWorkspacePanel: React.FC<Props> = ({notes,onFocus,onClose,
           onCancel={()=>{setEditing('');setEditError('');}}
           onSave={(values,version)=>{const api=client.current!;setEditError('');void run(()=>api.editContribution(active,note.id,values,version),()=>{contributions.refresh();setEditing('');setMessage(text('Contribution updated.'));},setEditError);}} />}
 
-      </WorkspaceContributionCard>):[],[records,categories,busy,owner,canWrite,editing,editError,onFocus,active,workspace,run,contributions.refresh,text]);
+      </WorkspaceContributionCard>):[],[records,categories,busy,owner,canWrite,editing,editError,onFocus,active,workspace,run,contributions.refresh,text,onLoadDetectionPreview]);
   return <section className="mly-notes-scroll mly-workspace-scroll" role="tabpanel" aria-label={text('Workspace notes')} style={panel} onClick={event=>event.stopPropagation()} onPointerDown={event=>event.stopPropagation()} onKeyDown={event=>event.stopPropagation()}>
     <style>{workspaceReadabilityCss}</style>
+    {detectionDraft&&!canWrite&&<div role="status" style={card}><strong>{detectionDraft.title}</strong><span>{text('Detection draft ready. Connect, sign in and choose a workspace where you can contribute.')}</span>{action('Discard detection draft',()=>onClearDetectionDraft?.(),false)}</div>}
     <div style={row}><strong>{text('Collaboration workspace')}</strong>{action('Close',onClose,false)}{connected&&action('Disconnect',disconnect,false)}</div>
     <details open={connectionOpen} onToggle={event=>setConnectionOpen(event.currentTarget.open)} className="mly-workspace-section" style={sectionStyle}><summary style={summaryStyle}>{text('Connection and workspace settings')}</summary>
     {!connected?<div style={card}>
@@ -151,7 +154,7 @@ export const CommunityWorkspacePanel: React.FC<Props> = ({notes,onFocus,onClose,
       </div>
       {owner&&<WorkspaceCategoryEditor key={'categories:'+active} sectionRef={categoriesRef} categories={categories} busy={busy} onSave={(name,color,archived)=>{const api=client.current!;void run(()=>api.setCategory(active,name,color,archived),()=>{contributions.refresh();setMessage(text('Workspace category saved.'));});}} />}
       {contributions.page&&!activeCategories.length&&!contributions.busy&&<p>{text(owner?'Add a workspace category to enable publishing.':'The owner must add an active workspace category before new contributions can be published.')}</p>}
-      {canWrite&&<WorkspaceContributionDraft key={'draft:'+active} sectionRef={createRef} categories={categories} busy={busy} error={createError} onPickLocation={onPickLocation} currentImageId={currentImageId}
+      {canWrite&&<WorkspaceContributionDraft onDetectionDraftLocation={onDetectionDraftLocation} onDetectionDraftFinished={onDetectionDraftFinished} detectionDraft={detectionDraft} onClearDetectionDraft={onClearDetectionDraft} key={'draft:'+active} sectionRef={createRef} categories={categories} busy={busy} error={createError} onPickLocation={onPickLocation} currentImageId={currentImageId}
         onPublish={(values,onSaved)=>{const api=client.current!;setCreateError('');void run(()=>api.createContribution(active,values),created=>{contributions.clearSearch();contributions.refresh();setMessage(text(created?'Contribution published.':'This draft was already published; no duplicate was created.'));onSaved();goToSection(resultsRef);},setCreateError);}} />}
       {canWrite&&<details ref={publishRef} className="mly-workspace-section" style={{...sectionStyle,display:'block'}}><summary style={summaryStyle}>{text('Publish a local note')}</summary>
         <div style={{display:'grid',gap:12,minWidth:0,paddingTop:8}}>

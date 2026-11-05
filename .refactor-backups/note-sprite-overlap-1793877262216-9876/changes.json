@@ -1,0 +1,27 @@
+{
+  "installer": "note-sprite-overlap",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "c32b38f7ac606fcb6d8862cd6c0150f4c866626c921108ed139c400b603709c1",
+      "resultSha256": "affcb39521556fe5312382a9235c6019498b9edf44b4e082ab633d06f4dd8a3d"
+    },
+    {
+      "file": "src/features/detections/NoteObjectChoice.ts",
+      "originalSha256": null,
+      "resultSha256": "196b3d81f5addef988f4d91b3e04fee4d2b1b84e57473af9afc936ec21fadf80"
+    },
+    {
+      "file": "tests/noteObjectChoice.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "448c08460282308cc8268656adae9e22fa4f1aead9cabac86b0d1d97b50b7001"
+    },
+    {
+      "file": "tests/noteObjectChoice.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "c55caae27cd1d0ba0d17a157c3e0cf5472ff4690a179273e40cec8c3539abbdc"
+    }
+  ]
+}

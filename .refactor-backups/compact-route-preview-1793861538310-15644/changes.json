@@ -1,0 +1,22 @@
+{
+  "installer": "compact-route-preview",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/routing/RouteControls.tsx",
+      "originalSha256": "4f2eeac36b9d2f2edab37c7ab0bfef02793469d7d8630bce595a9c3bcda85eab",
+      "resultSha256": "5154b87041c128f0a194fcd0d227cbc35ae2f43c906f9ee89b2e6d7b93e82914"
+    },
+    {
+      "file": "src/features/routing/RoutePreviewControls.tsx",
+      "originalSha256": "22c4e9cfeab59bb9f827a997e1fce2d239317235fc7e17d6b52af97e847d5a5b",
+      "resultSha256": "55431e0ad39cc120205e67f17cc4c6a1c85439ca51363c4c96a3d6132c4790a3"
+    },
+    {
+      "file": "tests/routePreviewControls.browser.cjs",
+      "originalSha256": "c86ff7aa3fb712502e248cd5f4de428d7e6d7f02fd33699cc9aac29ad8fe29ea",
+      "resultSha256": "a4169b32a5b1d4b24c6037776825bf72b11411d5cba2be17bbf6e3b534de9034"
+    }
+  ]
+}

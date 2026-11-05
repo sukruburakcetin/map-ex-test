@@ -1,3 +1,4 @@
+import { attachmentMetadata, readDetectionCrop, validSavedCrop, validAttachmentId } from '../detections/detectionImageAttachment';
 /** Operator-managed collaboration transport. No developer endpoint, ambient SDK credentials,
  * automatic connections, local-note uploads, polling or persistent auth storage. */
 import type { FieldNote } from '../../components/types';
@@ -80,7 +81,7 @@ export class CommunityWorkspaceClient {
     try {
     const response = await this.transport(this.connection.endpoint + path, {
       method, credentials: 'omit', redirect: 'error', cache: 'no-store', signal: controller?.signal||this.lifetime.signal,
-      headers: { apikey: this.connection.publicKey, 'Content-Type': 'application/json', ...(authenticated ? { Authorization: `Bearer ${this.session!.token}` } : {}), ...(method === 'POST' && path.startsWith('/rest/v1/mly_workspace_notes') ? { Prefer: 'resolution=ignore-duplicates,return=representation' } : (method === 'PATCH' || method === 'DELETE') ? { Prefer: 'return=representation' } : {}) },
+      headers: { apikey: this.connection.publicKey, 'Content-Type': 'application/json', ...(authenticated ? { Authorization: `Bearer ${this.session!.token}` } : {}), ...(method === 'POST' && (path.startsWith('/rest/v1/mly_workspace_notes')||path.startsWith('/rest/v1/mly_workspace_note_images')) ? { Prefer: 'resolution=ignore-duplicates,return=representation' } : (method === 'PATCH' || method === 'DELETE') ? { Prefer: 'return=representation' } : {}) },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
     if (!response.ok) throw new Error(response.status === 401 ? 'Session expired. Sign in again.' : response.status === 403 ? 'The workspace operator has not granted this action.' : `Workspace request failed (HTTP ${response.status}). Refresh before retrying a submission.`);
@@ -161,10 +162,18 @@ export class CommunityWorkspaceClient {
   }
   async publish(workspace: string, note: FieldNote, risk: string|null): Promise<boolean> {
     if((note.title!==undefined&&(typeof note.title!=='string'||note.title.length>160))||!note.id||!note.category||!Number.isFinite(note.lon)||!Number.isFinite(note.lat)||Math.abs(note.lon)>180||Math.abs(note.lat)>90||!statuses.has(note.status||'open')||(risk!==null&&!risks.has(risk)))throw new Error('Invalid local note or assessment.');
+    const image=attachmentMetadata(note.note||'').reference?.attachmentId;
+    const crop=image?await readDetectionCrop(image):null;
     const result=await this.request('/rest/v1/mly_workspace_notes?on_conflict=workspace_id,author_id,source_id','POST',{
       workspace_id:uuid(workspace),author_id:this.userId,source_id:note.id,...(note.title===undefined?{}:{title:note.title.trim()}),category:note.category,note_text:note.note||'',resolution_note:note.resolutionNote||'',lon:note.lon,lat:note.lat,image_id:note.imageId||null,status:note.status||'open',risk_label:risk,
     });
-    if(!Array.isArray(result))throw new Error('Unconfirmed submission. Refresh before retrying.');return result.length>0;
+    if(!Array.isArray(result))throw new Error('Unconfirmed submission. Refresh before retrying.');
+    if(image&&crop){
+      const rows=result.length?result:await this.list<CommunityRecord>(`/rest/v1/mly_workspace_notes?workspace_id=eq.${uuid(workspace)}&author_id=eq.${uuid(this.userId||'')}&source_id=eq.${encodeURIComponent(note.id)}&select=*&limit=1`);
+      const saved=rows[0];if(rows.length!==1||saved.note_text!==(note.note||''))throw Error('The saved note differs from this crop draft. Refresh and review it.');
+      try{await this.request('/rest/v1/mly_workspace_note_images?on_conflict=note_id','POST',{note_id:uuid(saved.id),workspace_id:uuid(workspace),attachment_id:uuid(image),uploaded_by:this.userId,image_data:crop});const confirmed=await this.noteImage(saved.id,image);if(confirmed!==crop)throw Error('Different saved crop.');}catch{throw Error('The note may be saved, but its cropped image was not confirmed. Apply workspace migration 006 if needed, then retry this draft.');}
+    }
+    return result.length>0;
   }
   /** Direct drafts use a stable source key across retries. A duplicate is accepted
    * only when its persisted content matches, never by overwriting a prior note.
@@ -179,6 +188,11 @@ export class CommunityWorkspaceClient {
     const saved=rows[0];
     if(rows.length!==1||saved.title!==title||saved.category!==draft.category||saved.note_text!==draft.description||saved.lon!==draft.lon||saved.lat!==draft.lat||(saved.image_id||null)!==draft.imageId)throw new Error('A contribution from this draft may already exist with different content. Refresh and review it before retrying. Your draft is kept.');
     return false;
+  }
+  async noteImage(noteId:string,id:string,signal?:AbortSignal):Promise<string>{
+    if(!validAttachmentId(id))throw Error('Invalid image reference.');
+    const rows=await this.request(`/rest/v1/mly_workspace_note_images?note_id=eq.${uuid(noteId)}&attachment_id=eq.${uuid(id)}&select=image_data&limit=1`,'GET',undefined,true,signal);
+    if(!Array.isArray(rows)||rows.length!==1||!validSavedCrop(rows[0].image_data))throw Error('Saved image unavailable.');return rows[0].image_data;
   }
   async review(workspace: string, id: string, status: string, risk: string|null, category?: string): Promise<void> {
     if(!statuses.has(status)||(risk!==null&&!risks.has(risk)))throw new Error('Invalid assessment.');

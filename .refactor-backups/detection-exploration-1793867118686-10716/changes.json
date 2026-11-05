@@ -1,0 +1,67 @@
+{
+  "installer": "detection-exploration",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "d09c88fc156351d42a0b992d4ba936e4b43b91c47627e24236b6de756ccfadd4",
+      "resultSha256": "273ba81f1b48c759ede8ac8d0a12a6a7b866479dd0c9c45b5616868b2c20a710"
+    },
+    {
+      "file": "src/components/types.ts",
+      "originalSha256": "d69b96f6f4f5b2bf394f1c3291740573cc7ac4aaec8afe4690f79f49e99082ea",
+      "resultSha256": "3fbbb18103757ee33ec9971f00d27c3db3cae93d7f80091b92eaf18121c741b6"
+    },
+    {
+      "file": "src/components/InfoBox.tsx",
+      "originalSha256": "da6d0a897b24bb6ff9731a7444f58adeb18e968e124af32126db60c1b3079977",
+      "resultSha256": "d1db8d0c9242cad9e0244b63e3541377dfd891392309ebf0b5348737476978ca"
+    },
+    {
+      "file": "src/features/detections/DetectionToolsSection.tsx",
+      "originalSha256": "3e4777cd60c36319a811e3ffe911b1dfe0856ba550bcad610537b9f72fe3a3ab",
+      "resultSha256": "278d03bbab8e481a8e1a3cc66ee9c9a724dd3b760b44e25c9930a3045b79d906"
+    },
+    {
+      "file": "src/features/detections/PanoramaDetectionLabels.ts",
+      "originalSha256": "4bb54d87a52595aacddc3bf280cbb4eb054e0a4155ccc023d010037ac25535ea",
+      "resultSha256": "be4227a0253e9c5529f8724404c5c730c359d4b2e9f188dbd021ed1a8da634b1"
+    },
+    {
+      "file": "tests/panoramaDetectionRuntime.test.cjs",
+      "originalSha256": "469466bfec02548ec8975205b14055ecd5a102f639df3529366277b15396a50c",
+      "resultSha256": "59268aeecd3aa213f99c43a3caca38ff20e4b3b71a98a302ac98352148ffceeb"
+    },
+    {
+      "file": "tests/sequenceV6Runtime.test.cjs",
+      "originalSha256": "45d9d70825b232d5e588f80b2b4c1622c230bcfbf9564bf9d73d43e1f562170e",
+      "resultSha256": "82eecf5ca785b14341128d576b84004edb1c408134b44cd2de2faa73d1726c68"
+    },
+    {
+      "file": "tests/panoramaDetectionLabels.browser.cjs",
+      "originalSha256": "0e7d4ce4d1292de67cab889dba428ef31fb070288674c9514514a667804963f6",
+      "resultSha256": "abbf7e956185f2d81ba0ef78728728c94f343c426846e191c2146c9c435c1b85"
+    },
+    {
+      "file": "src/features/detections/detectionExploration.ts",
+      "originalSha256": null,
+      "resultSha256": "6ec2a50e1889b45e0abf24601227fb37de7866f2b18a932702609d6d539a9da8"
+    },
+    {
+      "file": "src/features/detections/DetectionExplorerControls.tsx",
+      "originalSha256": null,
+      "resultSha256": "73167830db51a8a213fb4ffda2d4dcb40e324e7fb7e820fc71d6dc51f3f3000e"
+    },
+    {
+      "file": "tests/detectionExploration.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "809a9e1e110c782099704417f8f045204108ce1a6b35693abd0a2726491763f5"
+    },
+    {
+      "file": "tests/detectionExplorerControls.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "e7518e23b56724643002a0a59aa31b1b38244c094d8d8309d50aedd04c1a8bf9"
+    }
+  ]
+}

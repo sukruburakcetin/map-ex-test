@@ -1,0 +1,57 @@
+{
+  "installer": "route-simulation-preview",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/coverage/CoverageAnalysisTrigger.tsx",
+      "originalSha256": "4ec2566361dd4c55ac0c827259bb08d9750411a3e5a57e27dff5434c6d4fde3d",
+      "resultSha256": "45ad3abeb4886f385a7e2335ca9563f9f2b3c72c650c52fd95b23c096a32c781"
+    },
+    {
+      "file": "src/components/types.ts",
+      "originalSha256": "ab139254fd37f571c5e883be858a0ec7aff1e340c46c415a3cc634b44f7ce2aa",
+      "resultSha256": "d69b96f6f4f5b2bf394f1c3291740573cc7ac4aaec8afe4690f79f49e99082ea"
+    },
+    {
+      "file": "src/components/InfoBox.tsx",
+      "originalSha256": "1eb0122d3fc5b80b1e7680cbaffc0b8242d65e3bc1ec5fb098a3bcbc1496e071",
+      "resultSha256": "da6d0a897b24bb6ff9731a7444f58adeb18e968e124af32126db60c1b3079977"
+    },
+    {
+      "file": "src/features/routing/RouteControls.tsx",
+      "originalSha256": "7cce112efe8bc80a47613fcefc412ab9285f54eeeb1cd6f86419ab6b68353578",
+      "resultSha256": "4f2eeac36b9d2f2edab37c7ab0bfef02793469d7d8630bce595a9c3bcda85eab"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "7a0d5cb53de045ac87988360fdf07d03341976d9ae5545c3086b9cf066cd7ed1",
+      "resultSha256": "178fecbd564b7a42004ab3c1ebcc853102ce318bfd653e61548a95cc29002c62"
+    },
+    {
+      "file": "tests/panelControls.browser.cjs",
+      "originalSha256": "c6ad8f7d171140713f682863abc2848e15eac65a605e6a5e188f4e7c332ea1a0",
+      "resultSha256": "9f0415eedeb41cc7c251ca1cdf5785f491acb08d80e7eca569a094d5733b2033"
+    },
+    {
+      "file": "src/features/routing/RoutePreviewSimulation.ts",
+      "originalSha256": null,
+      "resultSha256": "e43dce976f58f7af72df17c314cb81d59eca56fc654cc6ebe06c27a0110156dd"
+    },
+    {
+      "file": "src/features/routing/RoutePreviewControls.tsx",
+      "originalSha256": null,
+      "resultSha256": "22c4e9cfeab59bb9f827a997e1fce2d239317235fc7e17d6b52af97e847d5a5b"
+    },
+    {
+      "file": "tests/routePreviewSimulation.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "f17069090be7f2ed8abc072ff84bc96786cd7c17fec2d2228b4b907e9adedf4d"
+    },
+    {
+      "file": "tests/routePreviewControls.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "c86ff7aa3fb712502e248cd5f4de428d7e6d7f02fd33699cc9aac29ad8fe29ea"
+    }
+  ]
+}

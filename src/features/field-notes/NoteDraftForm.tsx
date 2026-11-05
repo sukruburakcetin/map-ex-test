@@ -5,6 +5,7 @@ import { React, jsx } from 'jimu-core';
 import { noteDraftDialogStyle, noteDraftTitleStyle, noteDraftSelectStyle, noteDraftTextStyle, noteDraftShareStyle, noteDraftActionsStyle, noteDraftCancelStyle, noteDraftSaveStyle } from '../../styles/fieldNotes';
 
 export interface NoteDraftFormProps {
+  detectionTitle?:string; detectionDestination?:'local'|'enterprise';
   categories: string[];
   translateDefaultCategories?: boolean;
   category: string;
@@ -26,6 +27,7 @@ export const NoteDraftForm: React.FC<NoteDraftFormProps> = props => {
   return (
 <div style={noteDraftDialogStyle}>
                     <div style={noteDraftTitleStyle}> {t('uiNewFieldNote')} </div>
+                    {props.detectionTitle&&<div style={{fontSize:11,color:'#c7dfd0',overflowWrap:'anywhere'}}>{props.detectionTitle}<small style={{display:'block'}}>{owned(props.detectionDestination==='enterprise'?'Enterprise publication also keeps a local copy.':'Local detection note')}</small></div>}
                     <select
                         value={category}
                         onChange={(e) => setCategory((e.target as HTMLSelectElement).value)}

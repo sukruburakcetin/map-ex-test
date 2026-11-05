@@ -1,0 +1,117 @@
+{
+  "installer": "detection-crop-attachments",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/detections/detectionNote.ts",
+      "originalSha256": "0b892212bdad587f96480ff0bf4cb00e082d8b61f2e36dbf22188867c92e2187",
+      "resultSha256": "f873bd974131b8f488b4a030759ce1a5cba9c22a726958f40e0a054c4625d63e"
+    },
+    {
+      "file": "src/features/detections/DetectionNoteAction.tsx",
+      "originalSha256": "1c07f93785eef9b4797322bd196375937499f7a39467dc6b3a8429ed14fec37f",
+      "resultSha256": "749be0298273a4c56c89f85bbf29d01dbf81b296072e224663006578e4557d7a"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "87c129345f6bb801a9186b1e5930769fb879424d778178f749e177b260109c9c",
+      "resultSha256": "c32b38f7ac606fcb6d8862cd6c0150f4c866626c921108ed139c400b603709c1"
+    },
+    {
+      "file": "src/features/field-notes/FieldNoteDraft.ts",
+      "originalSha256": "58049ffc4913013deb3245faccdb70c8b12c1c34821955f40bc8491a0658a0a4",
+      "resultSha256": "d290e3e506b438b9bee02785644c32f1c947e1624756fcdef4723aa96871a18f"
+    },
+    {
+      "file": "src/components/FieldNotesPanel.tsx",
+      "originalSha256": "656196c0979ad40d972ed4670dc62d5ad6aa4249b85d84bce1e9454d6dfae83c",
+      "resultSha256": "10114447da603950d5e2ebff09025889c8e2d5266a0ba48ae6ded10743ca16b1"
+    },
+    {
+      "file": "src/features/community-notes/CommunityWorkspacePanel.tsx",
+      "originalSha256": "d8d868ce89c13a5d36860e2824ad5eda485fed6b737cc977bdb9588fbdf4449b",
+      "resultSha256": "954a08e7e79da21d088abdb948301e916bf0a56394ca56918cb1062e1f7455b0"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceContributionCard.tsx",
+      "originalSha256": "aaad0de941fed9ad8437bf21af5f9e8d3ce6462e0ce05d45ed68685f8dd87db5",
+      "resultSha256": "3b87a92765dd68e2a84d6c97606a23fbc63262f31a5128014c7197f43a2f99c5"
+    },
+    {
+      "file": "src/features/field-notes/LocalNotesList.tsx",
+      "originalSha256": "534f26afebe056c30828634024b829e95b8b36a99d6431631db761a85cc4bf3a",
+      "resultSha256": "15c7293b316bdf3c4c87eb0ecc229acca96f010b146df9918b6043f6ca60f182"
+    },
+    {
+      "file": "src/features/field-notes/EnterpriseNotesList.tsx",
+      "originalSha256": "17233b0e79d8d407d4dbe25ed87f97dfe1778e32cce6771af7af503e3e7d8d5e",
+      "resultSha256": "fb528656c36c9eae4b704666671636950d8bdd11b1131a4afac41866b48f3935"
+    },
+    {
+      "file": "tests/detectionFieldNotes.test.cjs",
+      "originalSha256": "0bd7cc34e0d0684a051479f2ef36cd331571fd65a895c36cda9d8dff332fc230",
+      "resultSha256": "5f516db65af536259a47ecec390f5df5c43012877998bfdd63c5c47130c04bbd"
+    },
+    {
+      "file": "tests/detectionFieldNotes.browser.cjs",
+      "originalSha256": "8f5a4d93132094be2342f441493ca637e40cdd7251bbeb2248a3d0b6d8eba707",
+      "resultSha256": "5f5b324244a2977fac6238f853533c94f8f748e6184e3174f595f58342bd10ce"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceContributionDraft.tsx",
+      "originalSha256": "a9e7da96c3644cec92c2b49a151d8b7bd0dd53be4c30f2bc638766c7fb883f7e",
+      "resultSha256": "675e40bd5195626101da6b34c8e9314d091ba74471f941712243f335a834fcd0"
+    },
+    {
+      "file": "src/features/detections/LinkedDetectionPreview.tsx",
+      "originalSha256": "d66fa352cf083dce40fc9a8a7028eff0f402484c20331edbf74e9f1dc432c6ea",
+      "resultSha256": "fb87317f518e8c8b12cfcd1431a3e25ac757e2a15c35b6cddd431d7501689e8e"
+    },
+    {
+      "file": "src/features/detections/PanoramaDetectionLabels.ts",
+      "originalSha256": "be4227a0253e9c5529f8724404c5c730c359d4b2e9f188dbd021ed1a8da634b1",
+      "resultSha256": "5be4569bad670e90924a019b00d8a11dd2f9e77bbafae55432b1517b7a400491"
+    },
+    {
+      "file": "src/features/community-notes/communityWorkspace.ts",
+      "originalSha256": "f0535f5a6616f4db1e08ea02b298cb1337e492bff466b3b4ce51790c155ae9a9",
+      "resultSha256": "3724d55ce1759ed38537986e974855a414136b0412bd0eb6ef8ceb8d14d2e969"
+    },
+    {
+      "file": "tests/detectionLinkedPreview.browser.cjs",
+      "originalSha256": "5bf44a480eefc0a1465f0938d2fd2f5d7ba5c8facb303226e556625e3dd8a5d0",
+      "resultSha256": "5d41dba119e2a5c5c0f1c7b3431dd4427ce8a952ae34370c54c198c9559cd2e6"
+    },
+    {
+      "file": "tests/fieldNoteMap.test.cjs",
+      "originalSha256": "0b20eb4898abe41dc0fc8d662dc5966c76f6f85fe79c4f9e92e1ccab8985484c",
+      "resultSha256": "68029b63b2f0f8ff4214dfaf42af31396b651c929d1b786fdd2ccf19c182f3e4"
+    },
+    {
+      "file": "src/features/detections/detectionImageAttachment.ts",
+      "originalSha256": null,
+      "resultSha256": "42d081272e477504946e807b746dd4ea6ce591bc5514fcc2d4c550e16acac9f5"
+    },
+    {
+      "file": "tools/community-notes/migrations/006-detection-image-attachments.sql",
+      "originalSha256": null,
+      "resultSha256": "a566f3b3243e8cfa9419ab7c0fb7f75d33a28b5ea9d51a95d7df6e7c9aa12106"
+    },
+    {
+      "file": "tests/detectionCropAttachments.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "c5dcecb813019f9eba80c6bc8f349200a052a280844e1acecd82daa18bb06fff"
+    },
+    {
+      "file": "tests/detectionImageAttachmentsDatabase.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "6538137ce130f06acd684377f0bd27d6186b381d671057c7fe2332559462c35c"
+    },
+    {
+      "file": "tests/detectionCropOwnership.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "055a26d3e751f97400f92a12aba03d9663bd1b31699fdcb5e26556c5eb410712"
+    }
+  ]
+}

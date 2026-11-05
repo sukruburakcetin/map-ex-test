@@ -1,0 +1,12 @@
+{
+  "installer": "places-row-radius",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/LoadedPlacesList.tsx",
+      "originalSha256": "af4fdc5caa1ea5f2f6b60b4df575abb13bb235b4a49865ace80dfc67a317db4b",
+      "resultSha256": "192ae022dea98661edbcdee300c189bf6a08d4184632c38f71eb61437fab3595"
+    }
+  ]
+}

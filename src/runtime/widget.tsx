@@ -47,8 +47,6 @@ import {
   SHARE_PARAMS,
   TIMING,
   DEFAULT_FILTER_LABELS,
-  DETECTION_HIDDEN_RAW,
-  DETECTION_HIDDEN_CATEGORIES,
   OVERPASS_ROAD_QUERY,
   STREET_COVERAGE_CONFIG,
   POINT_CLOUD_CONFIG,
@@ -155,6 +153,17 @@ import { decodeAndNormalizeGeometry, getDetectionColor } from "../utils/mapillar
 import { createYearBasedRenderer, YEAR_COLOR_PALETTE } from "../utils/mapillaryRenderers";
 import { loadImage, cropSpriteImage, processInChunks } from "../utils/spriteUtils";
 import { Viewer, OutlineTag, PolygonGeometry, geodeticToEnu, RenderPass } from "mapillary-js";
+import { PanoramaDetectionLabels } from '../features/detections/PanoramaDetectionLabels';
+import { DetectionNoteAction } from '../features/detections/DetectionNoteAction';
+import { MapSpriteLoading } from '../features/detections/MapSpriteLoading';
+import type { MapSpriteStatus } from '../features/detections/MapSpriteLoading';
+import { createNoteObjectChoice, deferNoteObjectPopup } from '../features/detections/NoteObjectChoice';
+import { attachmentMetadata, captureDetectionCrop, storeDetectionCrop, readDetectionCrop, deleteDetectionCrop } from '../features/detections/detectionImageAttachment';
+import { validDetectionNoteLocation, mappedDetectionLocation } from '../features/detections/detectionNote';
+import type { DetectionNoteSelection, DetectionNoteDestination, DetectionContributionSeed } from '../features/detections/detectionNote';
+import type { DetectionPreviewLoader } from '../features/detections/detectionPreview';
+import { defaultDetectionExplorer, detectionGroup, showDetection } from '../features/detections/detectionExploration';
+import type { DetectionExplorerOptions, DetectionSummary } from '../features/detections/detectionExploration';
 import "mapillary-js/dist/mapillary.css";
 import { InfoBox } from "../components/InfoBox";
 import { shouldRecenterImage } from "../features/imagery/imageFollowPolicy";
@@ -294,6 +303,8 @@ interface State {
   turboFilterOrganization: string;
   organizationName: { id: string; name: string } | null;
   showTurboFilterBox: boolean;
+  signSpritesStatus:MapSpriteStatus;
+  objectSpritesStatus:MapSpriteStatus;
   trafficSignsOptions: Array<{ value: string; label: string; iconUrl: string | null }>;
   showTrafficSignsFilterBox: boolean;
   objectsOptions: Array<{ value: string; label: string; iconUrl: string | null }>;
@@ -307,6 +318,8 @@ interface State {
   minimapExpanded?: boolean;
   detectionsActive: boolean;
   showAiTags: boolean;
+  detectionExplorer: DetectionExplorerOptions;
+  detectionSummary: DetectionSummary;
   isSharedState: boolean;
   imageTrayTab?: "nearby" | "object";
   selectedFeatureMetadata?: { id: string; name: string; firstSeen?: string | number; lastSeen?: string | number };
@@ -370,6 +383,10 @@ interface State {
   fieldNoteEditor?: FieldNoteEditor | null;
   fieldNoteAttachments?: FieldNoteAttachments | null;
   pendingFieldNote: PendingFieldNote | null;
+  viewerDetectionNote: DetectionNoteSelection | null;
+  detectionNotePicking: boolean;
+  detectionNoteCapturing:boolean;
+  detectionWorkspaceDraft: DetectionContributionSeed | null;
   fieldNotesListOpen: boolean;
   isGeneratingRoute?: boolean;
   routeGenerationProgress?: { usedMinutes: number; budgetMinutes: number } | null;
@@ -556,7 +573,80 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _detectionLoadRequest = 0;
   private _detectionAbort: AbortController | null = null;
 
+  private _detectionImageData: {imageId:string; data:any; viewer:any} | null = null;
+  private _detectionSignCodes = new Set<string>();
+  private _detectionObjectCodes = new Set<string>(Object.keys(objectNameMap));
+  private changeDetectionExplorer = (options: DetectionExplorerOptions) => {
+    this.setState({detectionExplorer: options}, () => this.refreshDetectionExploration());
+  };
+  private refreshDetectionExploration() {
+    if (this.state.detectionsActive && this.state.imageId) void this.loadDetections(this.state.imageId);
+  }
+  private _panoramaDetectionLabels: PanoramaDetectionLabels | null = null;
+
+  private _pendingDetectionImageId:string|null=null;
+  private _detectionCropAbort:AbortController|null=null;
+  private _focusedViewerNote:FieldNote|null=null;
+  private _detectionViewerMarkers:PanoramaDetectionLabels|null=null;
+  private _detectionWorkspaceImage:string|null=null;
+  private _detectionNoteAfterFullscreen: (()=>void) | null = null;
+  private _detectionWorkspaceMarkerOwner: string | null = null;
+  private moveDetectionWorkspaceMarker = (requestId:string,point:{lon:number;lat:number}) => {if(this._detectionWorkspaceMarkerOwner===requestId&&validDetectionNoteLocation(point))this.drawPendingNoteGraphic(point.lon,point.lat);};
+  private finishDetectionWorkspaceMarker = (requestId:string) => {if(this._detectionWorkspaceMarkerOwner===requestId){this._detectionWorkspaceMarkerOwner=null;this.clearPendingNoteGraphic();this._detectionWorkspaceImage=null;}};
+  private _detectionNotePickCancel: (()=>void) | null = null;
+  private cancelDetectionNoteLocation = () => { if(this._pendingDetectionImageId){void deleteDetectionCrop(this._pendingDetectionImageId).catch(()=>{});this._pendingDetectionImageId=null;}if(this._detectionCropAbort)this.setState({detectionNoteCapturing:false});this._detectionCropAbort?.abort(); this._detectionCropAbort=null; this._detectionNoteAfterFullscreen=null; this._detectionNotePickCancel?.(); this._detectionNotePickCancel=null; };
+  private dismissViewerDetection = () => { this.cancelDetectionNoteLocation(); if(!this.state.pendingFieldNote&&!this.state.detectionWorkspaceDraft&&!this._detectionWorkspaceMarkerOwner)this.clearPendingNoteGraphic(); this.setState({viewerDetectionNote:null,detectionNotePicking:false}); };
+  private chooseDetectionNoteLocation = async (destination:DetectionNoteDestination, includePreview=false) => {
+    const selection=this.state.viewerDetectionNote;
+    if (!selection || selection.imageId!==String(this.state.imageId) || !this.state.detectionsActive) return;
+    if (destination==='enterprise' && !(this.props.config.sharedFieldNotesEnabled && this.props.config.sharedFieldNotesUrl)) return;
+    if (this.state.pendingFieldNote || this.state.detectionWorkspaceDraft || this._detectionWorkspaceMarkerOwner) { this.showToast(this._owned('Finish or cancel the current note draft first.')); return; }
+    this.cancelDetectionNoteLocation();
+    let attachmentId:string|undefined;
+    if(includePreview){
+      const controller=new AbortController();this._detectionCropAbort=controller;this.setState({detectionNoteCapturing:true});
+      try{const data=await captureDetectionCrop(selection,this.loadDetectionPreview,controller.signal);if(controller.signal.aborted||this.state.viewerDetectionNote!==selection)return;attachmentId=crypto.randomUUID();await storeDetectionCrop(attachmentId,data);this._pendingDetectionImageId=attachmentId;if(controller.signal.aborted||this.state.viewerDetectionNote!==selection){await deleteDetectionCrop(attachmentId);return;}}
+      catch(error){if(!controller.signal.aborted)this.showToast(this._owned('The detection image could not be saved. Retry or turn off the image attachment.'));return;}
+      finally{if(this._detectionCropAbort===controller){this._detectionCropAbort=null;this.setState({detectionNoteCapturing:false});}}
+    }
+    const finish=(point:{lon:number;lat:number})=>{
+      this._detectionNotePickCancel=null;
+      if(this.state.viewerDetectionNote!==selection||selection.imageId!==String(this.state.imageId)||!this.state.detectionsActive||!validDetectionNoteLocation(point))return;
+      this._pendingDetectionImageId=null;
+      const draft={...selection,includePreview,attachmentId};
+      this.setState({viewerDetectionNote:null,detectionNotePicking:false});
+      if(destination==='workspace'){const seed={...draft,...point,requestId:crypto.randomUUID()};this._detectionWorkspaceMarkerOwner=seed.requestId;this._detectionWorkspaceImage=attachmentId||null;this.drawPendingNoteGraphic(point.lon,point.lat);this.setState({detectionWorkspaceDraft:seed,fieldNotesListOpen:true,nearbyStripOpen:false});}
+      else this._fieldNoteDraft.open(point.lon,point.lat,undefined,{...draft,destination});
+    };
+    if(selection.location&&validDetectionNoteLocation(selection.location)){finish(selection.location);return;}
+    // Only detections without a verified map-feature association require ground picking.
+    const begin=()=>{
+      if(this.state.viewerDetectionNote!==selection)return;
+      this.setState({detectionNotePicking:true});
+      this._detectionNotePickCancel=this.requestWorkspaceNoteLocation(finish,()=>{this._detectionNotePickCancel=null;this.setState({detectionNotePicking:false});});
+    };
+    if(this.state.isFullscreen){this._detectionNoteAfterFullscreen=begin;void this.toggleFullscreen().catch(()=>{this._detectionNoteAfterFullscreen=null;this.showToast(this._owned('Exit fullscreen, then choose the note location.'));});}else begin();
+  };
+  private loadDetectionNoteAttachment = async (note:FieldNote,id:string,signal:AbortSignal):Promise<string> => {
+    try{return await readDetectionCrop(id);}catch{ /* Remote Enterprise readers use the real layer attachment. */ }
+    if(!note.sharedGlobalId||!note.sharedLayerUrl||note.sharedLayerUrl!==this.sharedNotesUrl())throw Error('Image unavailable for this Enterprise configuration.');
+    const layer=new this.ArcGISModules.FeatureLayer({url:note.sharedLayerUrl});
+    try{await layer.load();const field=layer.fields.find(item=>item.type==='global-id')?.name;if(!field||!/^\{[0-9a-f-]{36}\}$/i.test(note.sharedGlobalId))throw Error('Invalid note.');const result=await layer.queryFeatures({where:`${field} = '${note.sharedGlobalId}'`,outFields:[layer.objectIdField],returnGeometry:false,num:1},{signal});const oid=result.features[0]?.attributes[layer.objectIdField];if(!Number.isFinite(oid))throw Error('Note unavailable.');const files=await layer.queryAttachments({objectIds:[oid]});const file=files[oid]?.find(item=>item.name===`detection-${id}.jpg`);if(!file)throw Error('Attachment unavailable.');const [request]=await loadArcGISJSAPIModules(['esri/request']);const response=await request(`${note.sharedLayerUrl}/${oid}/attachments/${file.id}`,{responseType:'blob',signal});return await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);reader.readAsDataURL(response.data);});}finally{layer.destroy();}
+  };
+  private loadDetectionPreview:DetectionPreviewLoader = async (imageId,signal) => {
+    if(!/^\d+$/.test(imageId))throw new Error('Invalid image reference.');
+    const token=this.accessToken;
+    const data=await this.runSequenceBackground(requestSignal=>this.fetchMapillaryJson(`${GRAPH_API.BASE}/${imageId}?fields=thumb_1024_url`,token,requestSignal),signal);
+    if(typeof data.thumb_1024_url!=='string')throw new Error('Preview unavailable.');
+    return data.thumb_1024_url;
+  };
   private clearDetectionOverlays() {
+    this.cancelDetectionNoteLocation();
+    if(this.state.viewerDetectionNote&&!this.state.pendingFieldNote&&!this.state.detectionWorkspaceDraft&&!this._detectionWorkspaceMarkerOwner)this.clearPendingNoteGraphic();
+    if(this.state.viewerDetectionNote)this.setState({viewerDetectionNote:null,detectionNotePicking:false});
+
+    this._detectionImageData = null;
+    this._panoramaDetectionLabels?.dispose(); this._panoramaDetectionLabels = null;
     ++this._detectionLoadRequest;
     this._detectionAbort?.abort(); this._detectionAbort = null;
     this._pendingDetectionFocus = null;
@@ -570,7 +660,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   }
 
   private syncDetectionLayerAvailability() {
-    if (this.state.trafficSignsActive || this.state.objectsActive) return;
+    if (this.state.trafficSignsActive || this.state.objectsActive) { this.refreshDetectionExploration(); return; }
     this.clearDetectionOverlays();
     this.setState({ detectionsActive: false, targetDetectionId: null });
   }
@@ -875,6 +965,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private claimCurrentImagePresentation(view: __esri.MapView | __esri.SceneView): void {
     if(!view?.map||view.destroyed||this.props.visible===false||this.props.state==='CLOSED')return;
     this._currentImagePresentation.activate(view.map,String(this.props.id),()=>{
+      this._stopRoutePreview?.();
       this._nearbyDiscovery?.cancel();
       this.highlightNearbyPin?.(null);
       this._nativeImageAnchorAbort?.abort();this._nativeImageAnchorAbort=null;this._nativeImageAnchorKey='';
@@ -1362,6 +1453,7 @@ private syncMapLegendLayer() {
     selectedQualityBand: null,
     showTrafficSignsFilterBox: false,
     trafficSignsFilterValue: { value: DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS, label: DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS, iconUrl: null },
+    signSpritesStatus:'idle',objectSpritesStatus:'idle',
     trafficSignsOptions: [{ value: DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS, label: DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS, iconUrl: null }],
     showObjectsFilterBox: false,
     objectsFilterValue: { value: DEFAULT_FILTER_LABELS.OBJECTS, label: DEFAULT_FILTER_LABELS.OBJECTS, iconUrl: null },
@@ -1373,6 +1465,8 @@ private syncMapLegendLayer() {
     showMinimap: true,
     detectionsActive: false,
     showAiTags: true,
+    detectionExplorer: {...defaultDetectionExplorer, groups:[...defaultDetectionExplorer.groups]},
+    detectionSummary: {total:0,shown:0,counts:{}},
     isSharedState: false,
     alternateImages: [],
     selectedFeatureLocation: null,
@@ -1406,6 +1500,7 @@ private syncMapLegendLayer() {
     isAnnotationMode: false,
     fieldNotes: [],
     pendingFieldNote: null,
+    viewerDetectionNote:null, detectionNotePicking:false, detectionNoteCapturing:false, detectionWorkspaceDraft:null,
     fieldNotesListOpen: false,
     isGeneratingRoute: false,
     routeData: null,
@@ -1642,6 +1737,15 @@ private syncMapLegendLayer() {
         this.applyCustomCameraAngle();
       }
       const newId = String(event.image.id);
+      this._stopRoutePreview?.();
+      if(this.state.viewerDetectionNote && this.state.viewerDetectionNote.imageId!==newId){
+        this.cancelDetectionNoteLocation();
+        if(!this.state.pendingFieldNote&&!this.state.detectionWorkspaceDraft&&!this._detectionWorkspaceMarkerOwner)this.clearPendingNoteGraphic();
+        this.setState({viewerDetectionNote:null,detectionNotePicking:false});
+      }
+      this._detectionViewerMarkers?.dispose();this._detectionViewerMarkers=null;
+      this._detectionImageData = null;
+      this._panoramaDetectionLabels?.dispose(); this._panoramaDetectionLabels = null;
       this._detectionAbort?.abort();
       this._timeTravelAvailability?.cancelUnless(newId);
       this._nearbyDiscovery?.cancel();
@@ -1985,6 +2089,7 @@ private syncMapLegendLayer() {
   private async loadSequenceById(sequenceId: string, startImageId: string, clickPoint?: { lon: number; lat: number }, representative = false, nearestToClick = false, clickStartedAt?: number) {
     this._nearbyDiscovery?.cancel();
     this.highlightNearbyPin?.(null);
+    this._stopRoutePreview?.();
     if(this._sharedStartupImageId&&String(startImageId)!==this._sharedStartupImageId){
       this._sharedStartupImageId=null;this._sharedStartupBearing=null;this._isFlyInActive=false;
       (this.state.jimuMapView?.view as any)?.animation?.stop();
@@ -2780,6 +2885,8 @@ private syncMapLegendLayer() {
   // destroys Mapillary viewer instance, clears DOM container,
   // and resets internal state if requested.
   private cleanupWidgetEnvironment(resetState: boolean = false, fullRemove: boolean = true) {
+    this._mapSpriteLoading.clearAll();
+    this._stopRoutePreview?.();
     this._sharedStartupImageId=null;this._sharedStartupBearing=null;this._isFlyInActive=false;
     if(resetState||fullRemove)this.clearSelectedMapFeature?.();
     this._currentImagePresentation?.release();
@@ -3591,6 +3698,8 @@ private syncMapLegendLayer() {
           this.log("Centered map on active frame:", currentImageCoords);
         }
       }
+      // Begin the user-picked note location only after fullscreen camera restoration.
+      if(!this.state.isFullscreen){const next=this._detectionNoteAfterFullscreen;this._detectionNoteAfterFullscreen=null;next?.();}
     });
   };
 
@@ -3644,7 +3753,9 @@ private syncMapLegendLayer() {
 
     try {
       const url = `${GRAPH_API.BASE}/${imageId}/detections?fields=id,value,geometry&access_token=${this.accessToken}`;
-      const data = await this.runSequenceBackground(async signal => {
+      const cached = this._detectionImageData?.imageId === String(imageId) && this._detectionImageData.viewer === viewer ? this._detectionImageData.data : null;
+      if (!cached) this.setState({detectionSummary:{total:0,shown:0,counts:{},loading:true}});
+      const data = cached || await this.runSequenceBackground(async signal => {
         const resp = await fetch(url, { signal });
         if (!resp.ok) throw new Error(`Detection request failed (${resp.status})`);
         return resp.json();
@@ -3653,6 +3764,11 @@ private syncMapLegendLayer() {
       const activeImage = await viewer.getImage();
       if (controller.signal.aborted || request !== this._detectionLoadRequest || String(activeImage.id) !== String(imageId)) return;
 
+      this._detectionImageData = {imageId:String(imageId),data,viewer};
+      const options = this.state.detectionExplorer;
+      const counts: DetectionSummary['counts'] = {};
+      const detections = (Array.isArray(data.data) ? data.data : []).filter((det:any) => typeof det.value === 'string' && !!det.geometry);
+      detections.forEach((det:any) => { const group=detectionGroup(det.value,this._detectionSignCodes); counts[group]=(counts[group]||0)+1; });
       const tagComponent = this.mapillaryViewer.getComponent("tag");
       if (!tagComponent || !data.data) return;
 
@@ -3662,11 +3778,13 @@ private syncMapLegendLayer() {
         delete (tagComponent as any)._detectionHoverCleanup;
       }
 
+      this._panoramaDetectionLabels?.dispose(); this._panoramaDetectionLabels = null;
       tagComponent.removeAll();
 
       const tags: OutlineTag[] = [];
 
-      data.data.forEach((det: any) => {
+      this.detectionTagMap.clear();
+      detections.forEach((det: any) => {
         if (!det.geometry) return;
 
         const labelFull = det.value
@@ -3674,11 +3792,10 @@ private syncMapLegendLayer() {
           .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, " "))
           .join(" ");
 
-        const labelRaw = det.value.split("--").pop();
-
-        // HIDE such as UNLABELED
-        const labelLower = labelFull.toLowerCase();
-        if (DETECTION_HIDDEN_RAW.includes(labelRaw ?? "") || DETECTION_HIDDEN_CATEGORIES.some((cat) => labelLower.includes(cat))) return;
+        const group = detectionGroup(det.value,this._detectionSignCodes);
+        const isTarget = String(det.id) === String(this.state.targetDetectionId);
+        if (!isTarget && !showDetection(det.value,group,options,{signs:!!this.state.trafficSignsActive,objects:!!this.state.objectsActive,
+          signCode:this._mapFeatureFilterCodes.get('signs'),objectCode:this._mapFeatureFilterCodes.get('objects'),knownObjects:this._detectionObjectCodes})) return;
 
         this.detectionTagMap.set(det.id, det.value);
 
@@ -3687,7 +3804,7 @@ private syncMapLegendLayer() {
         if (points.length >= 3) {
           try {
             const geometry = new PolygonGeometry(points);
-            const color = getDetectionColor(det.value);
+            const color = getDetectionColor(det.value) || 0x72b8dc;
 
             // Is this the specific object the user clicked in the alternate panel?
             const isTarget = String(det.id) === String(this.state.targetDetectionId);
@@ -3695,12 +3812,13 @@ private syncMapLegendLayer() {
             if (bounds) void this.focusSelectedDetection(imageId, bounds);
 
             const tag = new OutlineTag(det.id, geometry, {
-              text: this.state.showAiTags ? labelFull : "",
+              text: this.state.showAiTags && (options.labelMode === 'all' || isTarget) ? labelFull : "",
               textColor: isTarget ? 0xffff00 : 0xffffff,
               lineColor: isTarget ? 0xffff00 : color,
-              lineWidth: isTarget ? 4 : 2,
+              lineWidth: isTarget ? 4 : 1,
+              lineOpacity: isTarget ? 1 : 0.65,
               fillColor: color,
-              fillOpacity: isTarget ? 0.0 : 0.3, // Empty (transparent) fill for target
+              fillOpacity: 0, // Keep imagery readable; hover adds a subtle fill
             });
             tags.push(tag);
           } catch (err) {
@@ -3709,15 +3827,27 @@ private syncMapLegendLayer() {
         }
       });
 
+      this.setState({detectionSummary:{total:detections.length,shown:tags.length,counts}});
+      this.updateViewerFieldNoteMarkers?.();
       if (tags.length > 0) {
         tagComponent.add(tags);
         this.log(`Successfully rendered ${tags.length} AI objects.`);
 
         // hover listeners after tags are added
         this.setupDetectionHover(tagComponent, tags);
+        if (activeImage.cameraType === 'spherical' && this.viewerContainer.current) {
+          this._panoramaDetectionLabels = new PanoramaDetectionLabels(viewer, this.viewerContainer.current,
+            tags.map(tag => ({ id:tag.id, text: this.getDetectionValueFromTagId(tag.id).split('--').map(part => part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, ' ')).join(' '),
+              point: (tag.geometry as PolygonGeometry).getPoleOfInaccessibility2d(),
+              target: String(tag.id) === String(this.state.targetDetectionId) })), this.state.showAiTags);
+        }
+        (tagComponent as any)._refreshDetectionLabels?.();
       }
     } catch (err) {
-      if (!controller.signal.aborted && (err as any)?.name !== 'AbortError') console.error("Failed to load image detections:", err);
+      if (!controller.signal.aborted && request === this._detectionLoadRequest && (err as any)?.name !== 'AbortError') {
+        this.setState({detectionSummary:{total:0,shown:0,counts:{},error:true}});
+        console.error("Failed to load image detections:", err);
+      }
     } finally { if (this._detectionAbort === controller) this._detectionAbort = null; }
   }
 
@@ -3729,21 +3859,26 @@ private syncMapLegendLayer() {
     if (!this.viewerContainer.current) return;
 
     const container = this.viewerContainer.current;
+    const detectionViewer = this.mapillaryViewer;
+    const detectionImageId = String(this.state.imageId);
 
     // Store original tag configurations
-    const tagConfigs = new Map<string, { text: string; color: number }>();
+    const tagConfigs = new Map<string, { text: string; color: number; bounds?:{x:number;y:number;width:number;height:number} }>();
     tags.forEach((tag) => {
       const detectionValue = this.getDetectionValueFromTagId(tag.id);
       const labelFull = detectionValue
         .split("--")
         .map((part) => part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, " "))
         .join(" ");
-      const color = getDetectionColor(detectionValue);
+      const color = getDetectionColor(detectionValue) || 0x72b8dc;
 
-      tagConfigs.set(tag.id, { text: labelFull, color });
+      tagConfigs.set(tag.id, { text: labelFull, color, bounds:detectionThumbnailBounds((tag.geometry as PolygonGeometry).polygon) });
     });
 
     let currentHoveredId: string | null = null;
+    let selectedId: string | null = null;
+    let disposed = false;
+    let hitRevision = 0;
     let updateTimeout: any = null;
 
     // Flashing State Variables
@@ -3755,6 +3890,10 @@ private syncMapLegendLayer() {
       if (currentHoveredId === hoveredId && !isFlashUpdate) return;
       currentHoveredId = hoveredId;
 
+      if (disposed) return;
+      const activeIds = new Set([hoveredId,selectedId,this.state.targetDetectionId].filter(Boolean) as string[]);
+      const allLabels = (this.state.detectionExplorer?.labelMode ?? 'all') === 'all';
+      this._panoramaDetectionLabels?.setActive(allLabels ? null : activeIds);
       tagComponent.removeAll();
 
       const updatedTags: OutlineTag[] = [];
@@ -3765,13 +3904,13 @@ private syncMapLegendLayer() {
         const isHovered = tag.id === hoveredId;
         const isTarget = tag.id === this.state.targetDetectionId;
 
-        const shouldShowText = this.state.showAiTags;
+        const shouldShowText = this.state.showAiTags && (allLabels || activeIds.has(tag.id));
 
         // Defaults
         let lineColor = config.color;
         let fillColor = config.color;
-        let fillOpacity = 0.3;
-        let lineWidth = 2;
+        let fillOpacity = 0;
+        let lineWidth = 1;
 
         // 1. Target Priority (Flashing Empty Box)
         if (isTarget) {
@@ -3780,8 +3919,8 @@ private syncMapLegendLayer() {
           lineWidth = 4; // Thick border to show vertices clearly
         }
         // 2. Hover State (More solid fill)
-        else if (isHovered) {
-          fillOpacity = 0.6;
+        else if (isHovered || tag.id === selectedId) {
+          fillOpacity = 0.15;
           lineWidth = 3;
         }
 
@@ -3792,6 +3931,7 @@ private syncMapLegendLayer() {
             textColor: isTarget ? 0xffff00 : 0xffffff,
             lineColor: lineColor,
             lineWidth: lineWidth,
+            lineOpacity: isTarget || isHovered || tag.id === selectedId ? 1 : 0.65,
             fillColor: fillColor,
             fillOpacity: fillOpacity,
           });
@@ -3820,6 +3960,7 @@ private syncMapLegendLayer() {
     const handleMouseMove = async (event: MouseEvent) => {
       if (!this.mapillaryViewer) return;
 
+      const revision = ++hitRevision;
       try {
         const canvas = container.querySelector("canvas");
         if (!canvas) return;
@@ -3828,6 +3969,7 @@ private syncMapLegendLayer() {
         const pixelPoint = [event.clientX - rect.left, event.clientY - rect.top];
 
         const tagIds = await tagComponent.getTagIdsAt(pixelPoint);
+        if (disposed || revision !== hitRevision) return;
         const hoveredTagId = tagIds.length > 0 ? tagIds[0] : null;
 
         if (updateTimeout) clearTimeout(updateTimeout);
@@ -3836,6 +3978,7 @@ private syncMapLegendLayer() {
           updateTags(hoveredTagId, false);
         }, 50);
       } catch (err) {
+        if (disposed || revision !== hitRevision) return;
         if (updateTimeout) clearTimeout(updateTimeout);
         updateTimeout = setTimeout(() => updateTags(null, false), 50);
       }
@@ -3843,16 +3986,43 @@ private syncMapLegendLayer() {
 
     // Mouse leave handler
     const handleMouseLeave = () => {
+      ++hitRevision;
       if (updateTimeout) clearTimeout(updateTimeout);
       updateTags(null, false);
     };
 
+    const handleClick = async (event: MouseEvent) => {
+      const revision = ++hitRevision;
+      try {
+        const canvas = container.querySelector('canvas'); if (!canvas) return;
+        const rect=canvas.getBoundingClientRect();
+        const ids=await tagComponent.getTagIdsAt([event.clientX-rect.left,event.clientY-rect.top]);
+        if (disposed || revision !== hitRevision || this.mapillaryViewer!==detectionViewer || String(this.state.imageId)!==detectionImageId || !this.state.detectionsActive) return;
+        selectedId=ids[0]||null;
+        const config=selectedId?tagConfigs.get(selectedId):null;
+        this.cancelDetectionNoteLocation();
+        const selection:DetectionNoteSelection|null=config&&selectedId?{imageId:detectionImageId,detectionId:selectedId,title:config.text,bounds:config.bounds}:null;
+        if(selection)selection.location=mappedDetectionLocation(selection,{featureId:this.state.selectedFeatureMetadata?.id,point:this.state.selectedFeatureLocation,images:this.state.alternateImages});
+        if(!this.state.pendingFieldNote&&!this.state.detectionWorkspaceDraft&&!this._detectionWorkspaceMarkerOwner){
+          if(selection?.location)this.drawPendingNoteGraphic(selection.location.lon,selection.location.lat);
+          else this.clearPendingNoteGraphic();
+        }
+        this.setState({viewerDetectionNote:selection,detectionNotePicking:false});
+        updateTags(currentHoveredId,true);
+      } catch { /* A failed pick leaves the existing selection intact. */ }
+    };
+    // Click includes touch taps; this listener never consumes viewer gestures.
+    container.addEventListener('click',handleClick);
     // Attach listeners
     container.addEventListener("mousemove", handleMouseMove);
     container.addEventListener("mouseleave", handleMouseLeave);
 
     // Store cleanup function
-    (tagComponent as any)._detectionHoverCleanup = () => {
+    const cleanup = () => {
+      if(disposed)return;
+      disposed=true; ++hitRevision;
+      detectionViewer?.off?.('remove',cleanup);
+      container.removeEventListener('click',handleClick);
       if (updateTimeout) clearTimeout(updateTimeout);
       if (flashInterval) clearInterval(flashInterval); // Kill the flashing interval
       container.removeEventListener("mousemove", handleMouseMove);
@@ -3860,6 +4030,8 @@ private syncMapLegendLayer() {
       delete (tagComponent as any)._refreshDetectionLabels;
       tagConfigs.clear();
     };
+    (tagComponent as any)._detectionHoverCleanup=cleanup;
+    detectionViewer?.on?.('remove',cleanup);
   }
 
   // Retrieves the detection label/value associated with a given tag ID.
@@ -3889,6 +4061,7 @@ private syncMapLegendLayer() {
     this.setState((prev: { showAiTags: boolean }) => ({ showAiTags: !prev.showAiTags }), () => {
       const tags = this.mapillaryViewer?.getComponent("tag");
       (tags as any)?._refreshDetectionLabels?.();
+      this._panoramaDetectionLabels?.setVisible(this.state.showAiTags);
     });
   };
 
@@ -4112,6 +4285,7 @@ private syncMapLegendLayer() {
       const [jsonResp, img] = await Promise.all([fetch(`${spriteBaseUrl}.json`).then((r) => r.json()), loadImage(`${spriteBaseUrl}.png`)]);
 
       const codes = Object.keys(jsonResp);
+      this._detectionSignCodes = new Set(codes);
 
       processInChunks(
         codes,
@@ -4160,6 +4334,7 @@ private syncMapLegendLayer() {
       const [jsonResp, img] = await Promise.all([fetch(`${spriteBaseUrl}.json`).then((r) => r.json()), loadImage(`${spriteBaseUrl}.png`)]);
 
       const codes = Object.keys(jsonResp);
+      this._detectionObjectCodes = new Set(codes);
 
       processInChunks(
         codes,
@@ -4218,6 +4393,7 @@ private syncMapLegendLayer() {
    */
   private filterTrafficSignsVTLayer(selectedValue: string) {
     this._mapFeatureFilterCodes.set("signs", selectedValue || "");
+    this.refreshDetectionExploration();
     if (!this.mapillaryTrafficSignsLayer) return;
 
     const styleJson = this.mapillaryTrafficSignsLayer.style;
@@ -4235,7 +4411,7 @@ private syncMapLegendLayer() {
 
     try {
       const { VectorTileLayer } = this.ArcGISModules;
-      const filteredLayer = new VectorTileLayer({ style: newStyle });
+      const filteredLayer = new VectorTileLayer({ id:LAYER_IDS.TRAFFIC_SIGNS_VT, title:"Mapillary Traffic Signs Coverage", style: newStyle });
 
       const { view } = this.state.jimuMapView;
       if (this.mapillaryTrafficSignsLayer && view.map.layers.includes(this.mapillaryTrafficSignsLayer)) {
@@ -4243,6 +4419,7 @@ private syncMapLegendLayer() {
       }
       this.mapillaryTrafficSignsLayer = filteredLayer;
       view.map.add(this.mapillaryTrafficSignsLayer);
+      this._mapSpriteLoading.start("signs",view as any,filteredLayer);
       void this.applyMapFeatureSpriteScale("signs");
     } catch (err) {
       console.error("Error applying traffic signs filter:", err);
@@ -4256,6 +4433,7 @@ private syncMapLegendLayer() {
    */
   private filterObjectsVTLayer(selectedValue?: string) {
     this._mapFeatureFilterCodes.set("objects", selectedValue || "");
+    this.refreshDetectionExploration();
     if (!this.mapillaryObjectsLayer) return;
 
     const styleJson = this.mapillaryObjectsLayer.style;
@@ -4272,7 +4450,7 @@ private syncMapLegendLayer() {
 
     try {
       const { VectorTileLayer } = this.ArcGISModules;
-      const filteredLayer = new VectorTileLayer({ style: newStyle });
+      const filteredLayer = new VectorTileLayer({ id:LAYER_IDS.OBJECTS_VT, title:"Mapillary Objects Coverage", style: newStyle });
 
       const { view } = this.state.jimuMapView;
       if (this.mapillaryObjectsLayer && view.map.layers.includes(this.mapillaryObjectsLayer)) {
@@ -4280,6 +4458,7 @@ private syncMapLegendLayer() {
       }
       this.mapillaryObjectsLayer = filteredLayer;
       view.map.add(this.mapillaryObjectsLayer);
+      this._mapSpriteLoading.start("objects",view as any,filteredLayer);
       void this.applyMapFeatureSpriteScale("objects");
     } catch (err) {
       console.error("Error applying objects filter:", err);
@@ -4635,9 +4814,10 @@ private syncMapLegendLayer() {
         * Stores the layer in `this.mapillaryTrafficSignsLayer` for later toggling
     */
   /** Native tiles own all sprites; no per-viewport FeatureLayer is constructed. */
+  private _mapSpriteLoading=new MapSpriteLoading((kind,status)=>{if(!this._sharedNotesDisposed)this.setState(kind==='signs'?{signSpritesStatus:status}:{objectSpritesStatus:status});});
   private async syncMapFeatureCoverage(kind: "signs" | "objects") {
     const view = this.state.jimuMapView?.view;
-    if (!view) return;
+    if (!view) {this._mapSpriteLoading.clear(kind);return;}
     const signs = kind === "signs", active = signs ? this.state.trafficSignsActive : this.state.objectsActive;
     const id = signs ? LAYER_IDS.TRAFFIC_SIGNS_VT : LAYER_IDS.OBJECTS_VT;
     const oldFeature = view.map.findLayerById(signs ? LAYER_IDS.TRAFFIC_SIGNS_FL : LAYER_IDS.OBJECTS_FL);
@@ -4645,7 +4825,7 @@ private syncMapLegendLayer() {
     if (signs) { this.mapillaryTrafficSignsFeatureLayer = null; this.trafficSignsZoomHandle?.remove(); this.trafficSignsStationaryHandle?.remove(); }
     else { this.mapillaryObjectsFeatureLayer = null; this.objectsZoomHandle?.remove(); this.objectsStationaryHandle?.remove(); }
     let layer = view.map.findLayerById(id) as __esri.VectorTileLayer;
-    if (!active) { this.setState(signs ? { showTrafficSignsFilterBox: false } : { showObjectsFilterBox: false }); if (layer) view.map.remove(layer); this._mapFeatureClickAbort?.abort(); this._turboHoverPickAbort?.abort(); this.clearTurboHoverDetails(); return; }
+    if (!active) { this._mapSpriteLoading.clear(kind);this.setState(signs ? { showTrafficSignsFilterBox: false } : { showObjectsFilterBox: false }); if (layer) view.map.remove(layer); this._mapFeatureClickAbort?.abort(); this._turboHoverPickAbort?.abort(); this.clearTurboHoverDetails(); return; }
     if (!layer) {
       if (signs) this.initMapillaryTrafficSignsLayer(); else this.initMapillaryObjectsLayer();
       layer = (signs ? this.mapillaryTrafficSignsLayer : this.mapillaryObjectsLayer)!;
@@ -4656,10 +4836,35 @@ private syncMapLegendLayer() {
     const code = this._mapFeatureFilterCodes.get(kind);
     if (code) { if (signs) this.filterTrafficSignsVTLayer(code); else this.filterObjectsVTLayer(code); }
     void this.applyMapFeatureSpriteScale(kind);
+    const displayedLayer=signs?this.mapillaryTrafficSignsLayer:this.mapillaryObjectsLayer;
+    if(displayedLayer)this._mapSpriteLoading.start(kind,view as any,displayedLayer);
     this.enforceMapillaryLayerOrder(view);
   }
 
   /** Inspect only pointer-local source tiles; keep bytes, not decoded feature collections. */
+  private openPickedMapDetection(feature:any) {
+    this._selectedMapFeature=feature;
+    const attrs=feature.graphic.attributes,featureId=attrs.id||attrs.value;
+    const geoPt=webMercatorUtils.webMercatorToGeographic(feature.graphic.geometry) as __esri.Point;
+    this.drawPoint(geoPt.longitude,geoPt.latitude);
+    void this.fetchAlternateImages(featureId,geoPt.latitude,geoPt.longitude);
+  }
+  private offerNoteObjectChoice(view:__esri.MapView|__esri.SceneView,graphic:__esri.Graphic,openNote:()=>void,current:()=>boolean):boolean {
+    if(!(this.state.trafficSignsActive||this.state.objectsActive))return false;
+    let content:HTMLElement;
+    const choiceCurrent=()=>current()&&(!view.popup||(view.popup.visible&&view.popup.content===content));
+    content=createNoteObjectChoice(document,source=>this._owned(source),()=>{if(!choiceCurrent())return;view.closePopup();openNote();},async()=>{
+      if(!choiceCurrent()||!(this.state.trafficSignsActive||this.state.objectsActive))return false;
+      const screen=view.toScreen(graphic.geometry as __esri.Point);
+      if(!screen||!Number.isFinite(screen.x)||!Number.isFinite(screen.y)||screen.x<0||screen.y<0||screen.x>view.width||screen.y>view.height)return false;
+      this._mapFeatureClickAbort?.abort();const controller=new AbortController();this._mapFeatureClickAbort=controller;
+      const picked=await this.pickMapFeature({x:screen.x,y:screen.y},view,controller.signal);
+      if(!choiceCurrent()||controller.signal.aborted||!picked?.graphic)return false;
+      view.closePopup();this.openPickedMapDetection(picked);return true;
+    },choiceCurrent);
+    view.openPopup({title:this._owned('Note and map objects'),content,location:graphic.geometry as __esri.Point});return true;
+  }
+
   private async pickMapFeature(screen: { x: number; y: number }, view: __esri.MapView | __esri.SceneView, signal: AbortSignal): Promise<any | null> {
     const stationary = () => view.stationary !== false;
     // SceneView can report 13.99999 for a settled zoom-14 target.
@@ -4792,7 +4997,7 @@ private syncMapLegendLayer() {
   }
   private toggleMapillaryTrafficSigns = async () => {
     const next = !this.state.trafficSignsActive;
-    this.setState({ trafficSignsActive: next }, () => { if(!next)this.clearSelectedMapFeature("signs");void this.syncMapFeatureCoverage("signs"); this.syncDetectionLayerAvailability(); });
+    this.setState({ trafficSignsActive: next,signSpritesStatus:next?'loading':'idle' }, () => { if(!next)this.clearSelectedMapFeature("signs");void this.syncMapFeatureCoverage("signs"); this.syncDetectionLayerAvailability(); });
   };
 
 
@@ -4842,7 +5047,7 @@ private syncMapLegendLayer() {
   }
   private toggleMapillaryObjects = async () => {
     const next = !this.state.objectsActive;
-    this.setState({ objectsActive: next }, () => { if(!next)this.clearSelectedMapFeature("objects");void this.syncMapFeatureCoverage("objects"); this.syncDetectionLayerAvailability(); });
+    this.setState({ objectsActive: next,objectSpritesStatus:next?'loading':'idle' }, () => { if(!next)this.clearSelectedMapFeature("objects");void this.syncMapFeatureCoverage("objects"); this.syncDetectionLayerAvailability(); });
   };
 
 
@@ -5948,6 +6153,9 @@ private syncMapLegendLayer() {
     const zoom = view?.zoom ?? 0;
     if (this.state.coverageFrameResolving) return { text: this._t('appFindingNearbyImage'), busy: true };
     if (this.state.isLoading) return { text: this._t('appOpeningImage'), busy: true };
+    const signsLoading=this.state.trafficSignsActive&&this.state.signSpritesStatus==='loading',objectsLoading=this.state.objectsActive&&this.state.objectSpritesStatus==='loading';
+    if(signsLoading||objectsLoading)return{text:this._owned(signsLoading&&objectsLoading?'Loading traffic sign and object icons…':signsLoading?'Loading traffic sign icons…':'Loading object icons…'),busy:true};
+    if((this.state.trafficSignsActive&&this.state.signSpritesStatus==='error')||(this.state.objectsActive&&this.state.objectSpritesStatus==='error'))return{text:this._owned('Map icons could not load. Toggle the affected layer off and on to retry.')};
     if (this.state.imageId && this.state.sequenceRouteLoading) return { text: this.state.sequenceRouteProgress ? this._t('uiProfileRoute',{progress:this.state.sequenceRouteProgress}) : this._t('uiLoadingProfileRoute'), busy: true };
     if (this.state.turboLoading || this.state.turboUpdatingVisible) return { text: this._t('appLoadingCoverage'), busy: !!this.state.turboUpdatingVisible };
     if (this.state.turboModeActive && this.getTurboOrganizationId() === -1) return { text: this._t('appEnterAValidOrganizationId') };
@@ -6124,7 +6332,11 @@ private syncMapLegendLayer() {
     if (action === "show" || action === "data" || action === "tilt") {
       try {
         if (action === "show" || action === "data") {
-          const targetZoom = action === "data" ? ZOOM.FEATURES_INTERACTIVE : 14;
+          // Scene buildings obscure feature sprites at the source-tile selection threshold.
+          // Use a closer navigation target only; tile loading and hit-test thresholds stay unchanged.
+          const targetZoom = action === "data"
+            ? (view.type === "3d" ? Math.max(17, ZOOM.FEATURES_INTERACTIVE) : ZOOM.FEATURES_INTERACTIVE)
+            : 14;
           let center: number[] | __esri.Point | null = null;
           if (action === "show") {
             const controller = new AbortController();
@@ -7157,6 +7369,7 @@ private syncMapLegendLayer() {
   };
 
   // Exports the generated route as a GPX file.
+  private _stopRoutePreview:(()=>void)|null=null;
   private downloadRouteGPX = () => downloadCaptureRouteGPX(this.state.routeData);
 
   /**
@@ -10314,7 +10527,7 @@ private syncMapLegendLayer() {
   }
 
   /** Release the group from its creating view after stopping the pending note marker. */
-  private clearFieldNotesGroup() { this._workspaceNoteLocation?.cancel(); this._fieldNoteMap.clear(); }
+  private clearFieldNotesGroup() { this._detectionViewerMarkers?.dispose();this._detectionViewerMarkers=null; this._workspaceNoteLocation?.cancel(); this._fieldNoteMap.clear(); }
 
   private sharedNotesUrl(read = false): string {
     return resolveEnterpriseNotesEndpoint(this.props.config, read);
@@ -10438,6 +10651,13 @@ private syncMapLegendLayer() {
         const result = await writer.applyEdits({ addFeatures: [new this.ArcGISModules.Graphic({ geometry: { type: "point", longitude: note.lon, latitude: note.lat, spatialReference: { wkid: 4326 } }, attributes })] }, { globalIdUsed: true });
         const added = result.addFeatureResults?.[0];
         if (!added || added.error) throw new Error(added?.error?.message || "The layer did not confirm the save. Retry safely after checking your connection.");
+      }
+      const crop=attachmentMetadata(note.note).reference;
+      if(crop?.attachmentId){
+        if(!writer.capabilities?.data?.supportsAttachment)throw Error('The note was saved, but image attachments are not enabled on the Enterprise layer. Enable them and retry sharing.');
+        const saved=await writer.queryFeatures({where:`${globalIdField} = '${globalId}'`,outFields:[writer.objectIdField],returnGeometry:false,num:1});const feature=saved.features[0],oid=feature?.attributes[writer.objectIdField];if(!Number.isFinite(oid))throw Error('The saved note could not be confirmed for its image attachment.');
+        const files=await writer.queryAttachments({objectIds:[oid]}),name=`detection-${crop.attachmentId}.jpg`;
+        if(!files[oid]?.some(file=>file.name===name)){const data=await readDetectionCrop(crop.attachmentId),blob=new Blob([Uint8Array.from(atob(data.split(',')[1]),char=>char.charCodeAt(0))],{type:'image/jpeg'}),form=new FormData();form.append('attachment',new File([blob],name,{type:'image/jpeg'}));const added=await writer.addAttachment(feature,form);if(!added||added.error)throw Error('The note was saved, but its image attachment was not confirmed. Retry sharing to check before uploading again.');}
       }
       await this.patchSharedFieldNote(id, { sharedStatus: "shared", sharedError: undefined });
       this._sharedNotesLayer?.refresh();
@@ -10723,7 +10943,7 @@ private syncMapLegendLayer() {
   /**
    * Cancels the currently pending field note creation and closes the entry modal.
    */
-  private cancelPendingFieldNote = () => this._fieldNoteDraft.cancel();
+  private cancelPendingFieldNote = () => {const pending=this.state.pendingFieldNote;if(pending?.attachmentId)void deleteDetectionCrop(pending.attachmentId).catch(()=>{});this._fieldNoteDraft.cancel();};
   /**
    * Deletes a field note by its unique identifier and synchronizes state, storage, and graphics.
    * @param id Unique identifier of the note to remove.
@@ -10739,6 +10959,8 @@ private syncMapLegendLayer() {
    * @param note The target field note to focus.
    */
   private focusFieldNote = (note: FieldNote) => {
+    this._focusedViewerNote=this.state.fieldNotes.some(item=>item.id===note.id)?null:note;
+    this.updateViewerFieldNoteMarkers();
     const view = this.state.jimuMapView?.view;
     if (!view) return;
     // Selection is a transient highlight; it never creates a saved local copy.
@@ -10762,6 +10984,7 @@ private syncMapLegendLayer() {
 
   /** Receive only authorized loaded results; the notes feature owns auth/search. */
   private updateWorkspaceMapNotes = (notes: FieldNote[], categories: readonly {name:string;color:string}[], workspaceName:string) => {
+    if(this._focusedViewerNote?.workspace&&!notes.some(note=>note.id===this._focusedViewerNote!.id)){this._focusedViewerNote=null;this.updateViewerFieldNoteMarkers();}
     void this._fieldNoteMap.setWorkspaceNotes(notes,categories,workspaceName)
       .catch(() => this.showToast(this._owned('Workspace markers could not be displayed. Refresh contributions to retry.')));
     this.syncMapLegendLayer();
@@ -10772,6 +10995,13 @@ private syncMapLegendLayer() {
    * Uses a custom WebGL renderer (field-notes-renderer) instead of DOM SimpleMarkers
    * to ensure proper 3D positioning, distance scaling, and alignment with Point Cloud data.
    */
+  private detectionNoteReference(note:FieldNote) {
+    const saved=attachmentMetadata(note.note).reference;if(saved)return saved;
+    if(note.source!=='mapillary-detection'||!note.detectionId||String(note.imageId)!==String(this.state.imageId)||this._detectionImageData?.imageId!==String(note.imageId))return null;
+    const det=this._detectionImageData.data?.data?.find((item:any)=>String(item.id)===String(note.detectionId));
+    const bounds=det?.geometry?detectionThumbnailBounds(decodeAndNormalizeGeometry(det.geometry)):undefined;
+    return bounds?{imageId:String(note.imageId),detectionId:note.detectionId,bounds}:null;
+  }
   private updateViewerFieldNoteMarkers = () => {
     if (!this.mapillaryViewer) return;
 
@@ -10781,7 +11011,11 @@ private syncMapLegendLayer() {
       if (markerComponent) markerComponent.removeAll();
     } catch (e) {}
 
-    const relevant = selectViewerFieldNotes(this.state.fieldNotes, this.state.sequenceImages, this.state.imageId, FIELD_NOTE_CONFIG.VIEWER_MAX_DIST_M, distanceMeters) ?? [];
+    this._detectionViewerMarkers?.dispose();this._detectionViewerMarkers=null;
+    const markerNotes=this._focusedViewerNote?[...this.state.fieldNotes,this._focusedViewerNote]:this.state.fieldNotes;
+    const anchored=markerNotes.map(note=>({note,ref:this.detectionNoteReference(note)})).filter(item=>item.ref&&item.ref.imageId===String(this.state.imageId));
+    if(anchored.length&&this.viewerContainer.current)this._detectionViewerMarkers=new PanoramaDetectionLabels(this.mapillaryViewer,this.viewerContainer.current,anchored.map(item=>({id:item.note.id,text:'',marker:true,point:[item.ref!.bounds.x+item.ref!.bounds.width/2,item.ref!.bounds.y+item.ref!.bounds.height/2]})),true);
+    const relevant = (selectViewerFieldNotes(this.state.fieldNotes, this.state.sequenceImages, this.state.imageId, FIELD_NOTE_CONFIG.VIEWER_MAX_DIST_M, distanceMeters) ?? []).filter(note=>note.source!=='mapillary-detection'&&!this.detectionNoteReference(note));
 
     if (relevant.length === 0) {
       if ((this as any)._fieldNotesRendererActive) {
@@ -10813,7 +11047,7 @@ private syncMapLegendLayer() {
 
     const renderer: any = createFieldNoteViewerRenderer(relevantNotes, {
       getRelevantNotesOnReference: () => {
-        return selectViewerFieldNotes(this.state.fieldNotes, this.state.sequenceImages, this.state.imageId, 60, distanceMeters);
+        return selectViewerFieldNotes(this.state.fieldNotes, this.state.sequenceImages, this.state.imageId, 60, distanceMeters)?.filter(note=>note.source!=='mapillary-detection'&&!this.detectionNoteReference(note));
       },
       getPointCloudVisible: () => this.state.pointCloudVisible,
       getBaseAltitude: () => this._baseAlt,
@@ -12029,15 +12263,22 @@ private stopSafePlayback = () => {
       this.setState({ clickLon: point.longitude, clickLat: point.latitude });
 
       try {
-        const response = await coverageClickHitTest(!!pointPreviewAtClick, {
+        const responsePromise = coverageClickHitTest(!!pointPreviewAtClick, {
           sharedNotes: !!this._sharedNotesLayer || this._fieldNoteMap.hasPickTargets,
           pointCloud: !!this._pointCloudMapLayer?.layer,
           places: !!this.state.placesActive,
           detectionFeatures: !!this.mapillaryObjectsFeatureLayer || !!this.mapillaryTrafficSignsFeatureLayer,
         }, () => view.hitTest(evt));
+        if(typeof (evt as any).defer==='function'&&(this.state.trafficSignsActive||this.state.objectsActive)&&(this._sharedNotesLayer||this._fieldNoteMap.hasPickTargets)){
+          deferNoteObjectPopup(evt as any,responsePromise,hit=>hit.results.some((result:any)=>
+            (!!this._sharedNotesLayer&&(result.layer||result.graphic?.layer)===this._sharedNotesLayer)||
+            (result.graphic&&!!this._fieldNoteMap.noteForGraphic(result.graphic))),clickCurrent);
+        }
+        const response=await responsePromise;
         if (!clickCurrent()) return;
         const enterpriseNoteHit = response.results.find((result: any) => (result.layer || result.graphic?.layer) === this._sharedNotesLayer);
         if (enterpriseNoteHit && (enterpriseNoteHit as any).graphic) {
+          const openEnterpriseNote=()=>{
           view.openPopup({ features: [(enterpriseNoteHit as any).graphic], location: (enterpriseNoteHit as any).graphic.geometry });
           this._sharedNotesPopupHandle?.remove();
           this._sharedNotesPopupHandle = view.popup?.on("trigger-action", event => {
@@ -12046,7 +12287,9 @@ private stopSafePlayback = () => {
               void this.openSharedFieldNoteEditor(view.popup.selectedFeature);
             }
           }) || null;
-          return;
+          };
+          if((this.state.trafficSignsActive||this.state.objectsActive)&&this.offerNoteObjectChoice(view,(enterpriseNoteHit as any).graphic,openEnterpriseNote,clickCurrent))return;
+          openEnterpriseNote();return;
         }
 
 
@@ -12055,8 +12298,9 @@ private stopSafePlayback = () => {
         if (noteHit && (noteHit as any).graphic) {
           const graphic = (noteHit as any).graphic;
           const note = this._fieldNoteMap.noteForGraphic(graphic);
-          if (note) void this._fieldNoteMap.focusNote(note).catch(() => {});
-          return;
+          const openNote=()=>{if(note)void this._fieldNoteMap.focusNote(note).catch(()=>{});};
+          if(note&&(this.state.trafficSignsActive||this.state.objectsActive)&&this.offerNoteObjectChoice(view,graphic,()=>{openNote();const popupGraphic=graphic.clone();popupGraphic.attributes={...popupGraphic.attributes,note:attachmentMetadata(note.note).text};view.openPopup({features:[popupGraphic],location:graphic.geometry});},clickCurrent))return;
+          openNote();return;
         }
 
         if (this._pointCloudHits.route(response.results)) return;
@@ -12112,18 +12356,7 @@ private stopSafePlayback = () => {
           ? await this.pickMapFeature({ x: evt.x, y: evt.y }, view, featureController.signal) : null);
         if (!clickCurrent() || featureController.signal.aborted) return;
         if (selectedFeature && (selectedFeature as any).graphic) {
-          this._selectedMapFeature = selectedFeature;
-          const attrs = (selectedFeature as any).graphic.attributes;
-          const featureId = attrs.id || attrs.value; // Mapillary usually uses 'id' for the feature ID
-
-          // Get feature coordinates
-          const geoPt = webMercatorUtils.webMercatorToGeographic((selectedFeature as any).graphic.geometry) as __esri.Point;
-
-          // 1. Highlight the feature (Optional: Draw a specific marker for the selected object)
-          this.drawPoint(geoPt.longitude, geoPt.latitude);
-
-          // 2. Fetch alternates
-          this.fetchAlternateImages(featureId, geoPt.latitude, geoPt.longitude);
+          this.openPickedMapDetection(selectedFeature);
 
           // Stop here so we don't trigger the "nearest sequence" search
           return;
@@ -13478,7 +13711,10 @@ private stopSafePlayback = () => {
               {this.state.isFetchingAlternates && <span style={{ alignSelf: "center" }} role="status"> {this._t('appLoadingAssociatedImages')} </span>}
               {this.state.alternateImagesError && <span style={{ alignSelf: "center" }} role="alert">{<OwnedMessage source={String(this.state.alternateImagesError ?? "")}/>} <button onClick={() => { const location = this.state.selectedFeatureLocation; const id = this.state.selectedFeatureMetadata?.id; if (location && id) void this.fetchAlternateImages(id, location.lat, location.lon); }}> {this._t('appRetry')} </button></span>}
               {!this.state.isFetchingAlternates && !this.state.alternateImagesError && !this.state.alternateImages.length && <span> {this._t('appNoAssociatedImagesAvailableSelectASignOrObject')} </span>}
-              {this.state.alternateImages.map(img => <button key={img.id} onClick={() => void this._handleSelectAlternateImage(img)} aria-label={this._owned("Open associated image {value0}",{value0:String(img.id)})} title={`${img.detectionLabel || "Detected object"} · ${Number.isFinite(img.capturedAt) ? new Date(img.capturedAt).toLocaleDateString(this._runtimeLocale?.formatLocale) : this._t('appDateUnavailable')}`} style={{ flex: "0 0 auto", width: "var(--tray-card-width)", padding: 0, background: "#182321", color: "#ddd", border: img.id === this.state.imageId ? "2px solid #05a056" : "2px solid transparent", borderRadius: 5, overflow: "hidden", cursor: "pointer" }}>
+              {this.state.alternateImages.map(img => <button key={img.id}
+                onMouseEnter={event => { event.currentTarget.style.transform = "scale(1.04)"; }}
+                onMouseLeave={event => { event.currentTarget.style.transform = "scale(1)"; }}
+                onClick={() => void this._handleSelectAlternateImage(img)} aria-label={this._owned("Open associated image {value0}",{value0:String(img.id)})} title={`${img.detectionLabel || "Detected object"} · ${Number.isFinite(img.capturedAt) ? new Date(img.capturedAt).toLocaleDateString(this._runtimeLocale?.formatLocale) : this._t('appDateUnavailable')}`} style={{ flex: "0 0 auto", width: "var(--tray-card-width)", padding: 0, transition: "transform 0.12s", background: "#182321", color: "#ddd", border: img.id === this.state.imageId ? "2px solid #05a056" : "2px solid transparent", borderRadius: 5, overflow: "hidden", cursor: "pointer" }}>
                 <span style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "var(--tray-image-height)", background: "#0f1618" }}>
                   <span style={{ display: "inline-block", position: "relative", lineHeight: 0 }}>
                   <img src={img.thumbUrl} alt={this._t('appAssociatedCameraCapture')} loading="lazy" style={{ width: "auto", height: "auto", maxWidth: "var(--tray-card-width)", maxHeight: "var(--tray-image-height)", display: "block" }} />
@@ -13569,7 +13805,16 @@ private stopSafePlayback = () => {
 
         </div>}
 
+        {this.state.detectionsActive && this.state.viewerDetectionNote && <DetectionNoteAction key={this.state.viewerDetectionNote.imageId+':'+this.state.viewerDetectionNote.detectionId}
+          onLoadPreview={this.loadDetectionPreview} selection={this.state.viewerDetectionNote} enterpriseEnabled={!!(this.props.config.sharedFieldNotesEnabled&&this.props.config.sharedFieldNotesUrl)}
+          hasTray={this.state.nearbyStripOpen} busy={this.state.detectionNoteCapturing} picking={this.state.detectionNotePicking} onChoose={this.chooseDetectionNoteLocation} onCancel={this.cancelDetectionNoteLocation} onClose={this.dismissViewerDetection}/>}
         <FieldNotesPanel
+          onLoadDetectionPreview={this.loadDetectionPreview}
+          onLoadDetectionAttachment={this.loadDetectionNoteAttachment}
+          onDetectionDraftFinished={this.finishDetectionWorkspaceMarker}
+          onDetectionDraftLocation={this.moveDetectionWorkspaceMarker}
+          detectionWorkspaceDraft={this.state.detectionWorkspaceDraft}
+          onClearDetectionWorkspaceDraft={applied=>{if(!applied&&this.state.detectionWorkspaceDraft)this.finishDetectionWorkspaceMarker(this.state.detectionWorkspaceDraft.requestId);this.setState({detectionWorkspaceDraft:null});}}
           isAnnotationMode={this.state.isAnnotationMode}
           pendingNote={this.state.pendingFieldNote}
           notes={this.state.fieldNotes}
@@ -13628,6 +13873,9 @@ private stopSafePlayback = () => {
           objectsActive={this.state.objectsActive}
           detectionsActive={this.state.detectionsActive}
           showAiTags={this.state.showAiTags}
+          detectionExplorer={this.state.detectionExplorer}
+          detectionSummary={this.state.detectionSummary}
+          onChangeDetectionExplorer={this.changeDetectionExplorer}
           alternateImages={this.state.alternateImages}
           isFetchingAlternates={this.state.isFetchingAlternates}
           accessToken={this.accessToken}
@@ -13713,6 +13961,9 @@ private stopSafePlayback = () => {
           onGenerateRoute={this.generateCaptureRoute}
           onClearRoute={this.clearCaptureRoute}
           onDownloadRouteGPX={this.downloadRouteGPX}
+          routePreviewHost={this.state.jimuMapView?.view&&this.ArcGISModules?{
+            view:this.state.jimuMapView.view,interactionElement:this.viewerContainer.current,registerStop:stop=>{this._stopRoutePreview=stop;return()=>{if(this._stopRoutePreview===stop)this._stopRoutePreview=null;};},createLayer:properties=>new this.ArcGISModules.GraphicsLayer(properties),
+            createGraphic:properties=>new this.ArcGISModules.Graphic(properties)}:undefined}
           routeStartPoint={this.state.routeStartPoint}
           routeEndPoint={this.state.routeEndPoint}
           routeSpareMinutes={this.state.routeSpareMinutes}
@@ -13855,6 +14106,7 @@ private stopSafePlayback = () => {
 
         {/* Control Bar */}
         <ControlBar
+          signSpritesStatus={this.state.signSpritesStatus} objectSpritesStatus={this.state.objectSpritesStatus}
           hideTurboFilter={this.props.config.hideTurboFilter}
           enablePlaces={this.props.config.enablePlaces === true}
           placesAvailable={!!placesServiceUrl(this.props.config.placesServiceUrl)}

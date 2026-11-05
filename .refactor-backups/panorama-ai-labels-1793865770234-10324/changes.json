@@ -1,0 +1,27 @@
+{
+  "installer": "panorama-ai-labels",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "d8c335785e2a655f6bb887f079c532907941ad5b644f479cae274facd459dbe5",
+      "resultSha256": "d09c88fc156351d42a0b992d4ba936e4b43b91c47627e24236b6de756ccfadd4"
+    },
+    {
+      "file": "src/features/detections/PanoramaDetectionLabels.ts",
+      "originalSha256": null,
+      "resultSha256": "4bb54d87a52595aacddc3bf280cbb4eb054e0a4155ccc023d010037ac25535ea"
+    },
+    {
+      "file": "tests/panoramaDetectionLabels.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "0e7d4ce4d1292de67cab889dba428ef31fb070288674c9514514a667804963f6"
+    },
+    {
+      "file": "tests/panoramaDetectionRuntime.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "469466bfec02548ec8975205b14055ecd5a102f639df3529366277b15396a50c"
+    }
+  ]
+}

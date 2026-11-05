@@ -93,7 +93,7 @@ export const infoPanelResponsiveCss = `
 /** Compact location-first card aligned with the existing 96px tool sections. */
 export const infoDetailsCss = `
 .mly-info-panel { container: mly-info / inline-size; min-width: 0; box-sizing: border-box; font-family: "Segoe UI", sans-serif; width: 96px; max-width: calc(100% - 44px); gap: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 3px 10px #0003; }
-.mly-info-toggle { pointer-events: auto; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 4px 5px; min-height: 24px; border: 0; border-radius: 0; background: rgba(18,31,27,.7); backdrop-filter: blur(8px); color: #d6f1df; font: inherit; font-size: 10px; cursor: pointer; }
+.mly-info-toggle { pointer-events: auto; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 4px 5px; min-height: 24px; border: 0; border-radius: 5px; background: rgba(18,31,27,.7); backdrop-filter: blur(8px); color: #d6f1df; font: inherit; font-size: 10px; cursor: pointer; }
 .mly-info-location { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mly-info-body { min-height: 0; display: flex; flex-direction: column; pointer-events: auto; border-radius: 0; background: rgba(18,31,27,.62); backdrop-filter: blur(8px); padding: 0; }
 .mly-info-body[hidden] { display: none; }

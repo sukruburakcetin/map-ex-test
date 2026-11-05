@@ -1,0 +1,12 @@
+{
+  "installer": "object-thumb-hover",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "451dcad3b3347adc60e0a52dc6d0fe03b010089365d022f534a8bf36a303c839",
+      "resultSha256": "d8c335785e2a655f6bb887f079c532907941ad5b644f479cae274facd459dbe5"
+    }
+  ]
+}

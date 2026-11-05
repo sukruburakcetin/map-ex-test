@@ -185,3 +185,9 @@ export const utilityDockCss = `
 .mly-fullscreen-viewer.mly-minimap-expanded .glass-image-utility-panel.mly-utility-dock { display: none !important; }
 @media (prefers-reduced-motion: reduce) { .mly-dock-spinner { animation: none; } .glass-image-utility-panel.mly-utility-dock .utility-button { transition: none !important; } }
 `;
+
+export const mapSpriteLoadingCss=`
+.mly-rail-loading {position:absolute;right:2px;top:2px;width:9px;height:9px;box-sizing:border-box;border:2px solid #93b4a388;border-top-color:#e1fff0;border-radius:50%;animation:mlySpriteSpin .8s linear infinite;}
+@keyframes mlySpriteSpin {to {transform:rotate(360deg);}}
+@media(prefers-reduced-motion:reduce){.mly-rail-loading{animation:none;border-top-color:#a9edc4;}}
+`;

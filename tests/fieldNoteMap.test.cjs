@@ -76,7 +76,7 @@ test('workspace layer loading failure is retryable and does not mutate local not
 test('actual Show on map dispatches workspace marker selection and preserves navigation',async()=>{
  const method=cl.members.find(n=>n.name?.getText(sf)==='focusFieldNote').getText(sf);
  const Harness=new Function(compile('class Widget{'+method+'};return Widget;'))();const w=new Harness(),selected=[],moves=[];
- w.state={jimuMapView:{view:{zoom:15}},imageId:null};w._fieldNoteMap={focusNote:async n=>selected.push(n)};w.navigateMapView=(...args)=>moves.push(args);w.showToast=()=>{};
+ w.state={fieldNotes:[],jimuMapView:{view:{zoom:15}},imageId:null};w.updateViewerFieldNoteMarkers=()=>{};w._fieldNoteMap={focusNote:async n=>selected.push(n)};w.navigateMapView=(...args)=>moves.push(args);w.showToast=()=>{};
  w.focusFieldNote(note('workspace:remote'));w.focusFieldNote(note('local'));await flush();assert.equal(selected[0].id,'workspace:remote');assert.equal(selected[1].id,'local');assert.equal(moves.length,2);assert.deepEqual(moves[0][1],{center:[1,2],zoom:18});
 });
 

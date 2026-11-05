@@ -1,4 +1,9 @@
 /** @jsx jsx */
+import type { DetectionPreviewLoader } from '../features/detections/detectionPreview';
+import type { PendingFieldNote } from '../features/field-notes/FieldNoteDraft';
+import type { DetectionContributionSeed } from '../features/detections/detectionNote';
+import { attachmentMetadata, withAttachmentMetadata } from '../features/detections/detectionImageAttachment';
+import { detectionNoteDescription } from '../features/detections/detectionNote';
 import { OwnedMessage } from '../i18n/WidgetLocale';
 import { useWidgetLocale } from '../i18n/WidgetLocale';
 import { React, jsx } from "jimu-core";
@@ -16,6 +21,12 @@ import { notesTabsStyle, getNotesTabStyle, notesSheetStyle, notesSheetHandleStyl
 import { FieldNote, FieldNoteEditor, FieldNoteAttachments, FIELD_NOTE_CATEGORIES } from "./types";
 
 interface Props {
+    onDetectionDraftLocation?:(requestId:string,point:{lon:number;lat:number})=>void;
+    onDetectionDraftFinished?:(requestId:string)=>void;
+    onLoadDetectionAttachment?:(note:FieldNote,id:string,signal:AbortSignal)=>Promise<string>;
+    onLoadDetectionPreview?:DetectionPreviewLoader;
+    detectionWorkspaceDraft?:DetectionContributionSeed|null;
+    onClearDetectionWorkspaceDraft?:(applied?:boolean)=>void;
     onWorkspacePickLocation?: WorkspaceLocationRequest;
     currentImageId?: string | null;
     onWorkspaceMapChange?: (notes: FieldNote[], categories: readonly {name:string;color:string}[], workspaceName:string) => void;
@@ -35,7 +46,7 @@ interface Props {
     onSaveEdit?: (values: { category: string; note: string; status: string; resolutionNote: string }) => void;
     onCancelEdit?: () => void;
     isAnnotationMode: boolean;
-    pendingNote: { lon: number; lat: number; imageId: string | null } | null;
+    pendingNote: PendingFieldNote | null;
     notes: FieldNote[];
     listOpen: boolean;
     categories?: string[];
@@ -120,6 +131,7 @@ export const FieldNotesPanel: React.FC<Props> = (props) => {
     // Warm only the interface code while the user reads Local/Enterprise notes.
     React.useEffect(() => { if (listOpen) void loadWorkspaceControls().catch(() => {}); }, [listOpen]);
     const [workspaceVisited, setWorkspaceVisited] = React.useState(false);
+    React.useEffect(()=>{if(props.detectionWorkspaceDraft){setNoteSource('workspace');setWorkspaceVisited(true);}},[props.detectionWorkspaceDraft]);
     React.useEffect(() => { if (listOpen && activeSource === 'workspace') setWorkspaceVisited(true); }, [listOpen, activeSource]);
     React.useEffect(()=>{if(!listOpen||activeSource!=='workspace')cancelWorkspacePick.current?.();},[listOpen,activeSource]);
     const sources: Array<"local" | "enterprise" | "workspace"> = enterpriseAvailable ? ["local", "enterprise", "workspace"] : ["local", "workspace"];
@@ -127,7 +139,8 @@ export const FieldNotesPanel: React.FC<Props> = (props) => {
     React.useEffect(() => {
         if (pendingNote) {
             setCategory(categories[0] || "Other");
-            setNoteText(""); setShare(false);
+            setNoteText(pendingNote.detectionId ? attachmentMetadata(detectionNoteDescription({...pendingNote,imageId:pendingNote.imageId||'',detectionId:pendingNote.detectionId,title:pendingNote.title||'Detected object'})).text : '');
+            setShare(pendingNote.destination==='enterprise');
         }
     }, [pendingNote, categories]);
 
@@ -138,7 +151,7 @@ export const FieldNotesPanel: React.FC<Props> = (props) => {
             {props.editor && props.onSaveEdit && props.onCancelEdit && <NoteEditor key={props.editor.key} editor={props.editor} categories={categories} translateDefaultCategories={!propCategories?.length} onSave={props.onSaveEdit} onCancel={props.onCancelEdit} />}
             {/* Note entry form: centered modal, avoids all fixed chrome */}
             {pendingNote && (
-                <NoteDraftForm categories={categories} translateDefaultCategories={!propCategories?.length} category={category} noteText={noteText} share={share} sharingEnabled={props.sharingEnabled} setCategory={setCategory} setNoteText={setNoteText} setShare={setShare} onSubmitNote={onSubmitNote} onCancelPending={onCancelPending} />
+                <NoteDraftForm detectionTitle={pendingNote.title} detectionDestination={pendingNote.destination} categories={categories} translateDefaultCategories={!propCategories?.length} category={category} noteText={noteText} share={share} sharingEnabled={props.sharingEnabled} setCategory={setCategory} setNoteText={setNoteText} setShare={setShare} onSubmitNote={(category,text,share)=>onSubmitNote(category,pendingNote.detectionId?withAttachmentMetadata(text,{...pendingNote,imageId:pendingNote.imageId||'',detectionId:pendingNote.detectionId}):text,share)} onCancelPending={onCancelPending} />
             )}
 
             {workspacePicking&&<div role="status" onPointerDown={event=>event.stopPropagation()} onClick={event=>event.stopPropagation()} style={{position:'absolute',bottom:12,left:12,right:12,zIndex:999999994,padding:12,background:'#13251ef2',color:'#eef6f0',border:'1px solid #7fae94',borderRadius:6,display:'flex',flexWrap:'wrap',alignItems:'center',gap:10}}>
@@ -177,11 +190,11 @@ export const FieldNotesPanel: React.FC<Props> = (props) => {
                       style={{ display: activeSource === 'workspace' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, flex: '1 1 0' }}>
                       <WorkspaceBoundary fallback={<div role="alert" style={workspaceFeedbackStyle}>{owned('Workspace controls could not load. Local notes remain available; reload the page to retry.')}</div>}>
                         <React.Suspense fallback={<div role="status" style={workspaceFeedbackStyle}>{owned('Loading workspace controls…')}</div>}>
-                          <CommunityWorkspacePanel notes={notes} onFocus={onFocusNote} onClose={onCloseList} onMapNotes={props.onWorkspaceMapChange} onPickLocation={props.onWorkspacePickLocation?requestWorkspacePick:undefined} currentImageId={props.currentImageId} />
+                          <CommunityWorkspacePanel onDetectionDraftLocation={props.onDetectionDraftLocation} onDetectionDraftFinished={props.onDetectionDraftFinished} onLoadDetectionPreview={props.onLoadDetectionPreview} detectionDraft={props.detectionWorkspaceDraft} onClearDetectionDraft={props.onClearDetectionWorkspaceDraft} notes={notes} onFocus={onFocusNote} onClose={onCloseList} onMapNotes={props.onWorkspaceMapChange} onPickLocation={props.onWorkspacePickLocation?requestWorkspacePick:undefined} currentImageId={props.currentImageId} />
                         </React.Suspense>
                       </WorkspaceBoundary>
                     </div>}
-                    {listOpen && activeSource !== 'workspace' && (activeSource === "enterprise" && props.onLoadEnterpriseNotes ? <EnterpriseNotesList loadPage={props.onLoadEnterpriseNotes} context={props.enterpriseContext} layerUrl={props.enterpriseLayerUrl} onFocus={onFocusNote} onEdit={props.sharingEnabled ? props.onEditSharedNote : undefined} onAttachments={props.onAttachments} editorBusy={!!props.editor?.saving} attachmentsBusy={!!props.attachments?.busy} onClose={onCloseList} /> : <LocalNotesList notes={notes} fileInputRef={fileInputRef} isConfirmingClear={isConfirmingClear} setIsConfirmingClear={setIsConfirmingClear}
+                    {listOpen && activeSource !== 'workspace' && (activeSource === "enterprise" && props.onLoadEnterpriseNotes ? <EnterpriseNotesList onLoadDetectionAttachment={props.onLoadDetectionAttachment} onLoadDetectionPreview={props.onLoadDetectionPreview} loadPage={props.onLoadEnterpriseNotes} context={props.enterpriseContext} layerUrl={props.enterpriseLayerUrl} onFocus={onFocusNote} onEdit={props.sharingEnabled ? props.onEditSharedNote : undefined} onAttachments={props.onAttachments} editorBusy={!!props.editor?.saving} attachmentsBusy={!!props.attachments?.busy} onClose={onCloseList} /> : <LocalNotesList onLoadDetectionAttachment={props.onLoadDetectionAttachment} onLoadDetectionPreview={props.onLoadDetectionPreview} notes={notes} fileInputRef={fileInputRef} isConfirmingClear={isConfirmingClear} setIsConfirmingClear={setIsConfirmingClear}
                       sharingEnabled={props.sharingEnabled} editorBusy={props.editor?.saving} attachmentsBusy={props.attachments?.busy}
                       onShareNote={props.onShareNote} onEditNote={props.onEditNote} onEditSharedNote={props.onEditSharedNote} onAttachments={props.onAttachments}
                       onDeleteNote={onDeleteNote} onClearAll={onClearAll} onExport={onExport} onImportFile={onImportFile} onFocusNote={onFocusNote} onCloseList={onCloseList} />)}

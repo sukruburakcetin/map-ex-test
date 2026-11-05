@@ -1,7 +1,9 @@
+import type { DetectionBounds } from '../detections/detectionPreview';
+import type { DetectionNoteSelection } from '../detections/detectionNote';
 import type { FieldNote } from '../../components/types';
 
 /** Pending map coordinates in WGS84 degrees, optional source altitude in meters and clicked image ID. */
-export interface PendingFieldNote { lon: number; lat: number; alt?: number; imageId: string | null; }
+export interface PendingFieldNote { lon: number; lat: number; alt?: number; imageId: string | null; detectionId?:string; title?:string; bounds?:DetectionBounds; includePreview?:boolean;attachmentId?:string; destination?:'local'|'enterprise'; }
 export type FieldNoteDraftNotice = 'mode' | 'saved';
 export interface FieldNoteDraftState {
   isAnnotationMode: boolean;
@@ -48,11 +50,11 @@ export class FieldNoteDraft {
   /** Draw ripple, draw the pending marker, then capture the current image ID into the draft.
    * Preserve optional altitude and coordinate values; projection/marker lifecycle stay outside.
    */
-  open(lon: number, lat: number, alt?: number): void {
+  open(lon: number, lat: number, alt?: number, detection?:DetectionNoteSelection & {destination:'local'|'enterprise'}): void {
     const d = this.dependencies;
     d.drawRipple(lon, lat, [245, 166, 35], 0.7, 2);
     d.drawPending(lon, lat, alt);
-    d.setState({ pendingFieldNote: { lon, lat, alt, imageId: d.readState().imageId } });
+    d.setState({ pendingFieldNote: { lon, lat, alt, imageId: detection?.imageId ?? d.readState().imageId, ...(detection?{detectionId:detection.detectionId,title:detection.title,bounds:detection.bounds,attachmentId:detection.attachmentId,...(detection.includePreview?{includePreview:true}:{}),destination:detection.destination}:{}) }, ...(detection?{fieldNotesListOpen:false,nearbyStripOpen:false}:{}) });
   }
 
   /** Capture the pending draft, clear its marker, and create the same manual-note shape and ID.
@@ -67,7 +69,8 @@ export class FieldNoteDraft {
     d.clearPending();
     const newNote: FieldNote = {
       id: `note_${d.now()}_${Math.round(d.random() * 1000)}`,
-      source: 'manual', category, note,
+      source: pendingFieldNote.detectionId ? 'mapillary-detection' : 'manual', category, note,
+      ...(pendingFieldNote.detectionId ? {detectionId:pendingFieldNote.detectionId,title:pendingFieldNote.title} : {}),
       lon: pendingFieldNote.lon, lat: pendingFieldNote.lat, alt: pendingFieldNote.alt,
       imageId: pendingFieldNote.imageId, createdAt: d.now(),
     };

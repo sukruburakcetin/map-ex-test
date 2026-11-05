@@ -1,0 +1,12 @@
+{
+  "installer": "scene-feature-zoom",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "178fecbd564b7a42004ab3c1ebcc853102ce318bfd653e61548a95cc29002c62",
+      "resultSha256": "451dcad3b3347adc60e0a52dc6d0fe03b010089365d022f534a8bf36a303c839"
+    }
+  ]
+}

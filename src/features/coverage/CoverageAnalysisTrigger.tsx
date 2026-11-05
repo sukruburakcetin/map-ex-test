@@ -56,7 +56,7 @@ export const CoverageAnalysisTrigger: React.FC<CoverageAnalysisTriggerProps> = p
           )}
         </button>
       </div>
-      {!canRun && !coverageAnalysisLoading && <div role="status" style={{ fontSize: 8, lineHeight: 1.35, color: "#b5ccbf", padding: "3px 0" }}>
+      {!canRun && !coverageAnalysisLoading && <div role="status" style={{ fontSize: 8, lineHeight: 1.35, color: "#b5ccbf", padding: "3px 4px", boxSizing: "border-box" }}>
         {belowZoom ? t('uiMoveCloserToAnalyseTheseStreets') : t('uiWaitingForCoverageToFinishLoading')}
       </div>}
     </React.Fragment>

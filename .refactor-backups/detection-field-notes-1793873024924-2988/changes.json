@@ -1,0 +1,72 @@
+{
+  "installer": "detection-field-notes",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "273ba81f1b48c759ede8ac8d0a12a6a7b866479dd0c9c45b5616868b2c20a710",
+      "resultSha256": "13f6cdb1de735ac09d6f2c0aab2fcaba0276e7b65d7d82c0d8324fe63bdb6346"
+    },
+    {
+      "file": "src/features/field-notes/FieldNoteDraft.ts",
+      "originalSha256": "cb897bbc9dad5724a4952da9b7ba41a2f55e7701085b862a6d65bf154f6df1d0",
+      "resultSha256": "5a5459474d3b0828ecad015ae2d929a97f186a37c848bbe1e96d080b02ed9eee"
+    },
+    {
+      "file": "src/components/FieldNotesPanel.tsx",
+      "originalSha256": "105aa553675690298681f2440b16b325ad5a617145658e589dbfba37d631f9a3",
+      "resultSha256": "f13deec64b3d9f13dcddf5e62aeace104ef77e5e9f169ace1995e0b247811f14"
+    },
+    {
+      "file": "src/features/community-notes/CommunityWorkspacePanel.tsx",
+      "originalSha256": "8b05f38077175eb8d691bf5b0c497c11fd1590f9e11e659c671ef090ba75c9e2",
+      "resultSha256": "4fda902a5bf53626b6c7c7cc94a18a5e01fd29d5873f5b9de531b72c0b055de6"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceContributionDraft.tsx",
+      "originalSha256": "66c3f53d0a8d64b230076c1659e8ec70ce0ca4480bed3848b1d2653fabb89dcc",
+      "resultSha256": "43ace2aebfdf80283fff19a581e70b1bbdf63aca84fbaebed29d96df25ca4c26"
+    },
+    {
+      "file": "src/features/field-notes/NoteDraftForm.tsx",
+      "originalSha256": "7987dacdd2f0c2891406b6e6db5950709198719e156af4575297eb8b55a59704",
+      "resultSha256": "cdde32917f41d3d68f1e3762fb6bfe3fa6b0239942869d92821ec0366cdb385c"
+    },
+    {
+      "file": "tests/detectionExploration.test.cjs",
+      "originalSha256": "eba5063a808cdbfcbf128dc9fc8c5940bb07567a75574ea4f252194ad9fd5148",
+      "resultSha256": "4391be5e5b41f2d81efacd1c89bd5684025904b732754099dace264a77bd9af8"
+    },
+    {
+      "file": "tests/panoramaDetectionRuntime.test.cjs",
+      "originalSha256": "210c5703beb355ed8bf10ec4c734db38ee08e53cd043c8814e3c9fb651d1cf25",
+      "resultSha256": "6cb6681382d5d3b72af17af025641ed9f4ce78d90cc3f5dfed7c7261c7bfb817"
+    },
+    {
+      "file": "tests/sequenceV6Runtime.test.cjs",
+      "originalSha256": "82eecf5ca785b14341128d576b84004edb1c408134b44cd2de2faa73d1726c68",
+      "resultSha256": "9604f7581f961dbe58bd17b65feb9f14f9cf2910d142d3c87d492f1dc4143e82"
+    },
+    {
+      "file": "src/features/detections/detectionNote.ts",
+      "originalSha256": null,
+      "resultSha256": "0fcdc449a4e4fe8d3040bfe1b7633125f0d26e1a178d8c9e2092da0fa917b0a5"
+    },
+    {
+      "file": "src/features/detections/DetectionNoteAction.tsx",
+      "originalSha256": null,
+      "resultSha256": "32022d74dfc5e678f0fdf1ebde3e3da08b0c60f219fc4da9f293670499a43fd2"
+    },
+    {
+      "file": "tests/detectionFieldNotes.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "df26001edb79eb976cf57784d3e20a8037d73cddc88b45d21755acbd21d03849"
+    },
+    {
+      "file": "tests/detectionFieldNotes.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "62e972534c26f761f2de10f69241d905332bb49245eb890dbbc9a579f5655879"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "installer": "control-feedback",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/ControlBar.tsx",
+      "originalSha256": "eac8944a8d984acfc24d50d9cbdae2eb9b154530e4e1f6a7b4b410134c92553f",
+      "resultSha256": "1d0dec5f06434432407bc69272de81414bbff0f058f2af44185671e1d9cdcc2e"
+    },
+    {
+      "file": "src/components/types.ts",
+      "originalSha256": "3fbbb18103757ee33ec9971f00d27c3db3cae93d7f80091b92eaf18121c741b6",
+      "resultSha256": "de75d3338bf4626ca407d278cb04e4f7d76119abab173af098f4b7e73263044d"
+    },
+    {
+      "file": "src/styles/infoBox.ts",
+      "originalSha256": "c8e39e1a9a3f3fb8290128f0a2a18a256df5cb7ac5e1fdb7550bb2ca41738e0f",
+      "resultSha256": "d3002e5956edfe447a40db5185f21bce1fa18ac76b3cf10bbfca00f8bd65b0e6"
+    },
+    {
+      "file": "src/styles/controlPanels.ts",
+      "originalSha256": "10a6da0e4d3872639bce8ce6269e99403ac3bf4a878c4c38b4ecae841f46a780",
+      "resultSha256": "8180b13c957306bbf2be3d3485ca293172eb285570a8876d9f6abdda2b44be2c"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "affcb39521556fe5312382a9235c6019498b9edf44b4e082ab633d06f4dd8a3d",
+      "resultSha256": "722db8946f40fa6da0d3d526ef9be37307c91f263dfed5574febcbcb0c6e473e"
+    },
+    {
+      "file": "tests/panelControls.browser.cjs",
+      "originalSha256": "9f0415eedeb41cc7c251ca1cdf5785f491acb08d80e7eca569a094d5733b2033",
+      "resultSha256": "34d0c0e1839ab8b07c5646bd530bfefd479dcd404faa04ec82bda1f5e8962fd0"
+    },
+    {
+      "file": "src/features/detections/MapSpriteLoading.ts",
+      "originalSha256": null,
+      "resultSha256": "90ac1a9c79fa8caf1e247ca4d7595b95e9f9c798472830ec4d7d45bcd5b32717"
+    },
+    {
+      "file": "tests/mapSpriteLoading.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "a6bd0314327df73233b1d7fb288bcfbbac64e0dd5d4be1bd9492eb6195081fa0"
+    },
+    {
+      "file": "tests/controlFeedback.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "14dda8b8bf17a7471b355ce01b99b5261ff48328905f6ea46cc6a3ccdc934d4a"
+    }
+  ]
+}

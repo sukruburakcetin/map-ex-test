@@ -310,6 +310,8 @@ test('clearing the sequence cache during image paint cancels optional jobs and p
 });
 
 function detectionViewer(w, imageId) {
+  w.cancelDetectionNoteLocation=()=>{};
+  w.setState ??= patch => Object.assign(w.state,patch);
   const calls = { images: 0, removed: 0, added: 0, cleaned: 0 };
   const tags = { removeAll: () => { calls.removed++; }, add: () => { calls.added++; },
     _detectionHoverCleanup: () => { calls.cleaned++; }, _refreshDetectionLabels() {} };

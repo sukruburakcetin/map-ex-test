@@ -2,6 +2,8 @@
 /** Local note-list presentation. Persistence, server actions and clear-confirmation lifetime remain parent-owned. */
 import { OwnedMessage } from '../../i18n/WidgetLocale';
 import { useWidgetLocale } from '../../i18n/WidgetLocale';
+import { LinkedDetectionNoteText } from '../detections/LinkedDetectionPreview';
+import type { DetectionPreviewLoader } from '../detections/detectionPreview';
 import { React, jsx } from 'jimu-core';
 import { NotesSearchControls } from './NotesSearchControls';
 import { filterNotes } from './noteSearch';
@@ -11,7 +13,7 @@ import { noteListToolbarStyle, noteListToolbarActionsStyle, noteListImportStyle,
 import { noteListActionStyle } from '../../styles/fieldNotes';
 import { notesSourceHintStyle, notesLocalPanelStyle, enterpriseRowsStyle, enterpriseActionsStyle, notesRowHeadingStyle, notesWorkflowStatusStyle, notesRowMetaStyle, notesRowButtonsStyle, notesAttachmentHintStyle } from '../../styles/enterpriseNotes';
 
-export interface LocalNotesListProps {
+export interface LocalNotesListProps {onLoadDetectionPreview?:DetectionPreviewLoader;onLoadDetectionAttachment?:(note:FieldNote,id:string,signal:AbortSignal)=>Promise<string>;
   notes: FieldNote[];
   fileInputRef: { current: HTMLInputElement | null };
   isConfirmingClear: boolean;
@@ -147,7 +149,7 @@ export const LocalNotesList: React.FC<LocalNotesListProps> = props => {
                                 {n.sharedStatus !== "shared" && props.sharingEnabled && <div style={notesAttachmentHintStyle}> {t('uiShareFirstToAttachFiles')} </div>}
                                 {n.resolutionNote && <div style={noteListResolutionStyle}> {t('uiResolution')} {n.resolutionNote}</div>}
                                 {n.sharedError && <div style={noteListErrorStyle}>{<OwnedMessage source={String(n.sharedError ?? "")}/>}</div>}
-                                {n.note && <div style={noteListTextStyle}>{n.note}</div>}
+                                {n.note && <div style={noteListTextStyle}><LinkedDetectionNoteText value={n.note} loadAttachment={props.onLoadDetectionAttachment?(id,signal)=>props.onLoadDetectionAttachment!(n,id,signal):undefined} load={props.onLoadDetectionPreview}/></div>}
 
                             </div>
                         ))}
