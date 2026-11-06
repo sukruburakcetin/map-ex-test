@@ -1,8 +1,8 @@
 /** @jsx jsx */
 import type { DetectionPreviewLoader } from '../features/detections/detectionPreview';
 import type { PendingFieldNote } from '../features/field-notes/FieldNoteDraft';
-import type { DetectionContributionSeed } from '../features/detections/detectionNote';
-import { attachmentMetadata, withAttachmentMetadata } from '../features/detections/detectionImageAttachment';
+import type { ExternalContributionSeed } from '../features/places/placeNote';
+import { attachmentMetadata, withAttachmentMetadata, withPlaceAttachmentMetadata } from '../features/detections/detectionImageAttachment';
 import { detectionNoteDescription } from '../features/detections/detectionNote';
 import { OwnedMessage } from '../i18n/WidgetLocale';
 import { useWidgetLocale } from '../i18n/WidgetLocale';
@@ -25,7 +25,7 @@ interface Props {
     onDetectionDraftFinished?:(requestId:string)=>void;
     onLoadDetectionAttachment?:(note:FieldNote,id:string,signal:AbortSignal)=>Promise<string>;
     onLoadDetectionPreview?:DetectionPreviewLoader;
-    detectionWorkspaceDraft?:DetectionContributionSeed|null;
+    detectionWorkspaceDraft?:ExternalContributionSeed|null;
     onClearDetectionWorkspaceDraft?:(applied?:boolean)=>void;
     onWorkspacePickLocation?: WorkspaceLocationRequest;
     currentImageId?: string | null;
@@ -139,7 +139,7 @@ export const FieldNotesPanel: React.FC<Props> = (props) => {
     React.useEffect(() => {
         if (pendingNote) {
             setCategory(categories[0] || "Other");
-            setNoteText(pendingNote.detectionId ? attachmentMetadata(detectionNoteDescription({...pendingNote,imageId:pendingNote.imageId||'',detectionId:pendingNote.detectionId,title:pendingNote.title||'Detected object'})).text : '');
+            setNoteText(pendingNote.detectionId ? attachmentMetadata(detectionNoteDescription({...pendingNote,imageId:pendingNote.imageId||'',detectionId:pendingNote.detectionId,title:pendingNote.title||'Detected object'})).text : pendingNote.initialDescription||'');
             setShare(pendingNote.destination==='enterprise');
         }
     }, [pendingNote, categories]);
@@ -151,7 +151,7 @@ export const FieldNotesPanel: React.FC<Props> = (props) => {
             {props.editor && props.onSaveEdit && props.onCancelEdit && <NoteEditor key={props.editor.key} editor={props.editor} categories={categories} translateDefaultCategories={!propCategories?.length} onSave={props.onSaveEdit} onCancel={props.onCancelEdit} />}
             {/* Note entry form: centered modal, avoids all fixed chrome */}
             {pendingNote && (
-                <NoteDraftForm detectionTitle={pendingNote.title} detectionDestination={pendingNote.destination} categories={categories} translateDefaultCategories={!propCategories?.length} category={category} noteText={noteText} share={share} sharingEnabled={props.sharingEnabled} setCategory={setCategory} setNoteText={setNoteText} setShare={setShare} onSubmitNote={(category,text,share)=>onSubmitNote(category,pendingNote.detectionId?withAttachmentMetadata(text,{...pendingNote,imageId:pendingNote.imageId||'',detectionId:pendingNote.detectionId}):text,share)} onCancelPending={onCancelPending} />
+                <NoteDraftForm sourceLabel={pendingNote.placeId?owned('Overture place note'):undefined} detectionTitle={pendingNote.title} detectionDestination={pendingNote.destination} categories={categories} translateDefaultCategories={!propCategories?.length} category={category} noteText={noteText} share={share} sharingEnabled={props.sharingEnabled} setCategory={setCategory} setNoteText={setNoteText} setShare={setShare} onSubmitNote={(category,text,share)=>onSubmitNote(category,pendingNote.detectionId?withAttachmentMetadata(text,{...pendingNote,imageId:pendingNote.imageId||'',detectionId:pendingNote.detectionId}):pendingNote.placeId?withPlaceAttachmentMetadata(text,{...pendingNote,placeId:pendingNote.placeId}):text,share)} onCancelPending={onCancelPending} />
             )}
 
             {workspacePicking&&<div role="status" onPointerDown={event=>event.stopPropagation()} onClick={event=>event.stopPropagation()} style={{position:'absolute',bottom:12,left:12,right:12,zIndex:999999994,padding:12,background:'#13251ef2',color:'#eef6f0',border:'1px solid #7fae94',borderRadius:6,display:'flex',flexWrap:'wrap',alignItems:'center',gap:10}}>

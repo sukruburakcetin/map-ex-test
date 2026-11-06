@@ -1,0 +1,77 @@
+{
+  "installer": "places-note-review",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/placeNote.ts",
+      "originalSha256": "f7c346a3a29286c39a1d626a6a02f5e6bb31648c66178a7e34f818278bdd64df",
+      "resultSha256": "cc9433d86797cbc185a9ee4dd6c0d225036fa7ec9e4ac61ebd59135f3bb3c2ce"
+    },
+    {
+      "file": "src/components/SelectedPlaceCard.tsx",
+      "originalSha256": "dbbf9fccda1fd3dc95a0d18ef8d60381aff7e497b50fdab008e0fabb8de70d7b",
+      "resultSha256": "91af17ce6c62e09e22f72bb500b0520d874e6ae1f1b41e6f714f81a833e10f75"
+    },
+    {
+      "file": "src/features/detections/detectionImageAttachment.ts",
+      "originalSha256": "42d081272e477504946e807b746dd4ea6ce591bc5514fcc2d4c550e16acac9f5",
+      "resultSha256": "f98a645c3257981bd4f5411fa641590d92596c4c4de41a1c3e6eed6baa39876e"
+    },
+    {
+      "file": "src/features/detections/LinkedDetectionPreview.tsx",
+      "originalSha256": "fb87317f518e8c8b12cfcd1431a3e25ac757e2a15c35b6cddd431d7501689e8e",
+      "resultSha256": "0482014e74d131942d41825fc9c21d809fd882ffcb95103b2728f23584bfb6af"
+    },
+    {
+      "file": "src/features/field-notes/FieldNoteDraft.ts",
+      "originalSha256": "44ce1e396dcf46c7a55a5fad655e4e32952b6af28881c4af6a17ba3f28253fd2",
+      "resultSha256": "e4d7a1613e4e7fa039969ce1304f6b9dd0330581c88e89a2af7eaa2ff8e0edc9"
+    },
+    {
+      "file": "src/components/FieldNotesPanel.tsx",
+      "originalSha256": "3535321d5a32e5171a9b4273207c4d00d78cd70158c81e79f132fd04451e98bb",
+      "resultSha256": "e8eb747005c2e4e0c6f7f4823d2ea506fcc20d62f87dea81288f6cd185d89893"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceContributionDraft.tsx",
+      "originalSha256": "1db1678516ee6ec874fd722e501ba96a5395f96513c3f74ee5f87e68b737bcbe",
+      "resultSha256": "97a6a775320476afc882158b258bbbb293b5a874842588012a6f1f23b1e2e9c8"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "fc7e7ca714336a960e3f4adad74e54c1b38baf5aff44db812d5a62683cd3ed9f",
+      "resultSha256": "73fbf784d2fcc4e87cc4b7745f3439586abe2033e56802194eafb1b3425d40f3"
+    },
+    {
+      "file": "src/features/places/PlaceNoteReview.ts",
+      "originalSha256": null,
+      "resultSha256": "8d5d3e698cbc36eec9777406672d5045bf01168e9365c081c231accec1f42601"
+    },
+    {
+      "file": "src/features/places/PlaceNoteActions.tsx",
+      "originalSha256": null,
+      "resultSha256": "dbdb899b2d48e04200eae23451b413fbbdff15542b005278a42b9700bb617e8c"
+    },
+    {
+      "file": "tests/placeNoteReview.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "a3fe8cfce28d8130a85179c5fbf10b236af06cf506d219c34d3f430c89160a76"
+    },
+    {
+      "file": "tests/placeNoteReview.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "2940ddb032373a969a6ebf7ac6b5d0f4cb4f2b184c84fdfa8d1fa095ab27d568"
+    },
+    {
+      "file": "tests/placeNoteForms.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "92ca33bbcbb9729cc1e97e864ce5145a1c6b7560cc03be8137050a7e9d95b4e8"
+    },
+    {
+      "file": "tests/placeImageAttachment.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "9d910b5fc25ba8685b8284d31f0b6a197df079bd583a7b772b2a3a607df63392"
+    }
+  ]
+}

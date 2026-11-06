@@ -1,0 +1,37 @@
+{
+  "installer": "places-hybrid-search",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/PlacesController.ts",
+      "originalSha256": "b291069cbe542a97d1a61a7035fee2331df34c5759437b60d4a4470fb0876e4a",
+      "resultSha256": "f98ded1875a9ed4c45f2f05c19e25ff55694e1ab3b31decb58d12a1bb2a8acc9"
+    },
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "5602cee148cd92a0e29b20441d93be0db67e29b8228d579b15e89150c09d9a74",
+      "resultSha256": "ad38807d2b27ca5599aae60fd83e1a7903a9dc79cf73bcee7124d873a47aeb24"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "39e9b50bffb3e3427cbdf48ea0cc5926b25586e35d26b071609b10bc1a293d0b",
+      "resultSha256": "d869a351e596a041cbafaf884a771de09a3e99dbacf69768f0bc1f1623307b9c"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "1e958a7e963752cc896883ad5251045fd5bf5383dbf9ca5f443f9d9267c0b6a9",
+      "resultSha256": "b6af5fb23a31ea823f265e6085c72076cc4542c636045c3f125d800f3efa319a"
+    },
+    {
+      "file": "src/features/places/placeSearchMovement.ts",
+      "originalSha256": null,
+      "resultSha256": "a36f41258d419045123ddf41819826ae490df9cac938accb7069e510d3a4fdc5"
+    },
+    {
+      "file": "tests/placesHybridSearch.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "9151ea4674b7e5c29f0091cfef63f44c4ce9d3e37a579c6b8983293d94c644b2"
+    }
+  ]
+}

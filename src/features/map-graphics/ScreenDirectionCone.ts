@@ -50,6 +50,7 @@ export class ScreenDirectionCone {
  private markerFill='#00ff00';
  private markerOpacity='1';
  private geometryKey='';
+ private clipKey='';
  constructor(private point: (properties: any) => any, private createElement: () => HTMLDivElement,
   private clock: { request(callback: FrameRequestCallback): number; cancel(frame: number): void },
   private onMarkerPresented?: (presented: boolean, view: any) => void,
@@ -126,7 +127,7 @@ export class ScreenDirectionCone {
    let ground=view.type==='3d'?renderedGroundPoint(view,source,this.point):source;
    if(!ground&&view.zoom<14)ground=this.point({longitude:m.lon,latitude:m.lat,z:0,spatialReference:{wkid:4326}});
    pixel=ground&&view.toScreen(ground);
-   if(!pixel||!Number.isFinite(pixel.x)||!Number.isFinite(pixel.y)||pixel.x<0||pixel.y<0||pixel.x>view.width||pixel.y>view.height){hide();return;}
+   if(!pixel||!Number.isFinite(pixel.x)||!Number.isFinite(pixel.y)){hide();return;}
    orientation='rotate(0)';
    if(this.fanVisible||(view.type==='3d'&&this.markerVisible)){
     const radians=m.heading*Math.PI/180,distance=Math.min(50000,Math.max(10,156543.03392804097/2**(view.zoom||0)*40)),cos=Math.max(.01,Math.cos(m.lat*Math.PI/180));
@@ -141,8 +142,26 @@ export class ScreenDirectionCone {
    }
    this.projectionCache={model:m,fanVisible:this.fanVisible,markerVisible:this.markerVisible,pixel,orientation,camera:view.camera,zoom:view.zoom,rotation:view.rotation,width:view.width,height:view.height};
   }
-  element.style.display='block';
+  // Culling is not a projection failure: keep ownership so the native fallback
+  // cannot reappear while the selected point is beyond the viewport boundary.
+  if(pixel.x<0||pixel.y<0||pixel.x>view.width||pixel.y>view.height){
+   element.style.display='none';this.onMarkerPresented?.(this.markerVisible,view);return;
+  }
+  // offsetParent is unavailable while display:none in real browser layouts.
+  if(element.style.display==='none')element.style.display='block';
   const position=haloOverlayPosition(view.container,element,pixel,view.width,view.height);if(!position){hide();return;}
+  const topLeft=haloOverlayPosition(view.container,element,{x:0,y:0},view.width,view.height);
+  const bottomRight=haloOverlayPosition(view.container,element,{x:view.width,y:view.height},view.width,view.height);
+  if(!topLeft||!bottomRight){hide();return;}
+  // The SVG owns a finite projected point even when culled. Restoring the native
+  // marker at the center boundary creates a competing, differently clipped marker.
+  const half=60,leftEdge=position.x-half,topEdge=position.y-half;
+  const topClip=Math.max(0,topLeft.y-topEdge),right=Math.max(0,leftEdge+120-bottomRight.x);
+  const bottom=Math.max(0,topEdge+120-bottomRight.y),leftClip=Math.max(0,topLeft.x-leftEdge);
+  const clip=`inset(${topClip}px ${right}px ${bottom}px ${leftClip}px)`;
+  if(this.clipKey!==clip){element.style.clipPath=clip;this.clipKey=clip;}
+  const outside=topClip>=120||right>=120||bottom>=120||leftClip>=120;
+  const display=outside?'none':'block';if(element.style.display!==display)element.style.display=display;
   const left=`${position.x}px`,top=`${position.y}px`;
   if(element.style.left!==left)element.style.left=left;if(element.style.top!==top)element.style.top=top;
   const fan=element.querySelector('[data-direction-fan]'),transform=`translate(60 60) ${orientation} translate(-60 -60)`;
@@ -154,6 +173,6 @@ export class ScreenDirectionCone {
  clear():void {
   this.onMarkerPresented?.(false,this.view);
   if(this.frame!=null)this.clock.cancel(this.frame);
-  this.frame=null;this.element?.remove();this.element=null;this.view=null;this.model=null;this.projectionCache=null;this.geometryKey='';this.markerVisible=false;this.fanVisible=false;this.markerId=null;
+  this.frame=null;this.element?.remove();this.element=null;this.view=null;this.model=null;this.projectionCache=null;this.geometryKey='';this.clipKey='';this.markerVisible=false;this.fanVisible=false;this.markerId=null;
  }
 }

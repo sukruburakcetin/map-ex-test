@@ -1,7 +1,7 @@
 /** @jsx jsx */
-import type { DetectionContributionSeed } from '../detections/detectionNote';
+import type { ExternalContributionSeed } from '../places/placeNote';
 import { detectionNoteDescription } from '../detections/detectionNote';
-import { attachmentMetadata, withAttachmentMetadata } from '../detections/detectionImageAttachment';
+import { attachmentMetadata, withAttachmentMetadata, withPlaceAttachmentMetadata } from '../detections/detectionImageAttachment';
 import { React, jsx } from 'jimu-core';
 import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import type { WorkspaceLocationRequest, WorkspaceMapLocation } from './WorkspaceLocationPicker';
@@ -14,7 +14,7 @@ import { workspaceSectionStyle as section, workspaceSummaryStyle as summary, wor
  * unmount/cancel cleans map intent. Existing drafts retain their category choice.
  */
 export function WorkspaceContributionDraft({categories,busy,error,onPickLocation,onPublish,sectionRef,currentImageId,detectionDraft,onClearDetectionDraft,onDetectionDraftFinished,onDetectionDraftLocation}:{categories:readonly WorkspaceCategory[];busy:boolean;error:string;onPickLocation?:WorkspaceLocationRequest;
- onPublish(values:DirectContributionValues,onSaved:()=>void):void;sectionRef:React.RefObject<HTMLDetailsElement>;currentImageId?:string|null;detectionDraft?:DetectionContributionSeed|null;onClearDetectionDraft?:(applied?:boolean)=>void;onDetectionDraftFinished?:(requestId:string)=>void;onDetectionDraftLocation?:(requestId:string,point:WorkspaceMapLocation)=>void}) {
+ onPublish(values:DirectContributionValues,onSaved:()=>void):void;sectionRef:React.RefObject<HTMLDetailsElement>;currentImageId?:string|null;detectionDraft?:ExternalContributionSeed|null;onClearDetectionDraft?:(applied?:boolean)=>void;onDetectionDraftFinished?:(requestId:string)=>void;onDetectionDraftLocation?:(requestId:string,point:WorkspaceMapLocation)=>void}) {
  const {owned:text}=useWidgetLocale();
  const [title,setTitle]=React.useState(''),[description,setDescription]=React.useState(''),[category,setCategory]=React.useState('');
  const [point,setPoint]=React.useState<WorkspaceMapLocation|null>(null),[picking,setPicking]=React.useState(false),[attach,setAttach]=React.useState<string|null>(null);
@@ -23,13 +23,13 @@ export function WorkspaceContributionDraft({categories,busy,error,onPickLocation
  const source=React.useRef(''),cancel=React.useRef<(()=>void)|null>(null);
  React.useEffect(()=>()=>{cancel.current?.();},[]);
  React.useEffect(()=>{if(!category){const first=categories.find(item=>!item.archived);if(first)setCategory(first.name);}},[categories,category]);
- const appliedSeed=React.useRef<DetectionContributionSeed|null>(null);
+ const appliedSeed=React.useRef<ExternalContributionSeed|null>(null);
  const appliedDetection=React.useRef('');
  React.useEffect(()=>()=>{if(appliedDetection.current)onDetectionDraftFinished?.(appliedDetection.current);},[onDetectionDraftFinished]);
  function applyDetection(){
   if(!detectionDraft||busy)return;
   cancel.current?.();cancel.current=null;source.current='';setPicking(false);
-  setTitle(detectionDraft.title.slice(0,160));setDescription(attachmentMetadata(detectionNoteDescription(detectionDraft)).text);appliedSeed.current=detectionDraft;
+  setTitle(detectionDraft.title.slice(0,160));setDescription('placeId' in detectionDraft?detectionDraft.description:attachmentMetadata(detectionNoteDescription(detectionDraft)).text);appliedSeed.current=detectionDraft;
   setPoint({lon:detectionDraft.lon,lat:detectionDraft.lat});setAttach(detectionDraft.imageId);
   appliedDetection.current=detectionDraft.requestId;
   if(sectionRef.current){sectionRef.current.open=true;sectionRef.current.scrollIntoView({block:'nearest'});}
@@ -38,10 +38,10 @@ export function WorkspaceContributionDraft({categories,busy,error,onPickLocation
  React.useEffect(()=>{if(detectionDraft&&appliedDetection.current!==detectionDraft.requestId){if(sectionRef.current){sectionRef.current.open=true;sectionRef.current.scrollIntoView({block:'nearest'});}if(!point&&!title&&!description&&!busy)applyDetection();}},[detectionDraft,busy]);
  const active=categories.filter(item=>!item.archived),validCategory=active.some(item=>item.name===category);
  function reset(){appliedSeed.current=null;if(appliedDetection.current){onDetectionDraftFinished?.(appliedDetection.current);appliedDetection.current='';}cancel.current?.();cancel.current=null;source.current='';setTitle('');setDescription('');setPoint(null);setPicking(false);setAttach(null);}
- function chooseLocation(){if(!onPickLocation)return;cancel.current?.();setPicking(true);cancel.current=onPickLocation(location=>{cancel.current=null;setPoint(location);if(appliedDetection.current)onDetectionDraftLocation?.(appliedDetection.current,location);setPicking(false);},()=>{cancel.current=null;setPicking(false);});}
+ function chooseLocation(){if(!onPickLocation)return;cancel.current?.();setPicking(true);cancel.current=onPickLocation(location=>{cancel.current=null;setPoint(location);if(appliedSeed.current&&'placeId' in appliedSeed.current)setDescription(value=>value.replace(/^Note location: [^\n]*$/m,`Note location: ${location.lat.toFixed(6)}, ${location.lon.toFixed(6)}`).replace(/^Location: mapped Overture place\.$/m,'Location: adjusted on map.'));if(appliedDetection.current)onDetectionDraftLocation?.(appliedDetection.current,location);setPicking(false);},()=>{cancel.current=null;setPicking(false);});}
  return <details ref={sectionRef} className="mly-workspace-section" style={{...section,display:'block'}}><summary style={summary}>{text('Create contribution')}</summary>
-  {detectionDraft&&appliedDetection.current!==detectionDraft.requestId&&<div role="status" style={{display:'grid',gap:6,paddingTop:8}}><strong>{detectionDraft.title}</strong><span>{text('A contribution draft is already open. Replace it with this detection?')}</span><button type="button" style={secondary} disabled={busy} onClick={applyDetection}>{text('Use detected object')}</button><button type="button" style={secondary} disabled={busy} onClick={()=>onClearDetectionDraft?.()}>{text('Keep current draft')}</button></div>}
-  <form aria-label={text('Create contribution')} style={{display:'grid',gap:10,minWidth:0,paddingTop:8}} onSubmit={event=>{event.preventDefault();if(busy||!point||!validCategory||!title.trim())return;if(!source.current)source.current='community:'+crypto.randomUUID();onPublish({sourceId:source.current,title:title.trim(),description:appliedSeed.current?withAttachmentMetadata(description,appliedSeed.current):description,category,lon:point.lon,lat:point.lat,imageId:attach},reset);}}>
+  {detectionDraft&&appliedDetection.current!==detectionDraft.requestId&&<div role="status" style={{display:'grid',gap:6,paddingTop:8}}><strong>{detectionDraft.title}</strong><span>{text('A contribution draft is already open. Replace it with the incoming note?')}</span><button type="button" style={secondary} disabled={busy} onClick={applyDetection}>{text(detectionDraft&&'placeId' in detectionDraft?'Use selected place':'Use detected object')}</button><button type="button" style={secondary} disabled={busy} onClick={()=>onClearDetectionDraft?.()}>{text('Keep current draft')}</button></div>}
+  <form aria-label={text('Create contribution')} style={{display:'grid',gap:10,minWidth:0,paddingTop:8}} onSubmit={event=>{event.preventDefault();if(busy||!point||!validCategory||!title.trim())return;if(!source.current)source.current='community:'+crypto.randomUUID();onPublish({sourceId:source.current,title:title.trim(),description:appliedSeed.current&&'detectionId' in appliedSeed.current?withAttachmentMetadata(description,appliedSeed.current):appliedSeed.current&&'placeId' in appliedSeed.current&&attach===appliedSeed.current.imageId?withPlaceAttachmentMetadata(description,appliedSeed.current):description,category,lon:point.lon,lat:point.lat,imageId:attach},reset);}}>
    <p style={{margin:0}}>{text('Choose a map location and use this workspace’s categories. No local draft or Builder access is required.')}</p>
    <button type="button" style={secondary} disabled={busy||!onPickLocation} onClick={chooseLocation}>{text(point?'Choose another map location':'Choose location on map')}</button>
    <span ref={locationStatus} tabIndex={-1} role="status">{picking?text('Click the map to place this contribution.'):point?`${text('Selected location')}: ${point.lat.toFixed(6)}, ${point.lon.toFixed(6)}`:text('Select a location before publishing.')}</span>

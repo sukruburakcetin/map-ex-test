@@ -1,0 +1,32 @@
+{
+  "installer": "places-imagery-refinement",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/nearbyPlaceImagery.ts",
+      "originalSha256": "f8036bea6808b3585b3f78eaeb0afa3e7cdb78bb0884502958c564ff59ea7da2",
+      "resultSha256": "717cf5b57301b1314212819064c7f32cacf67f41843c674180bd9fb39f420550"
+    },
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "3e7f62dcfe259fa995b3620d60af7a293f2a0b3154922126afaf6153a8b68afe",
+      "resultSha256": "3cf13d88f4b7f8d3b756ca2c84911af0a30f3bfa3a354293ef1d1f57d8601d1b"
+    },
+    {
+      "file": "src/features/places/placePopupStyles.ts",
+      "originalSha256": "f82ad2993412332ac131e288815f8e8b28951dc9bac75b012c527265e59fea6a",
+      "resultSha256": "22af0fa6af4d397a3dcdca4233e902104ba000a9791c12abc85b08bf01825a30"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "cec91b8ec2d1005aa814733e81372d2910c08d8f5b2d6e408f2e0f16dad3f857",
+      "resultSha256": "ddf7487b630bc286167692ab2ed6da550e538b5ec54f7792c0992a5904f930df"
+    },
+    {
+      "file": "tests/placesImagerySuggestions.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "d67c33dd2b05ebcb2a005b692e57d888d1f857b8b7e7ef12b22780644da929ed"
+    }
+  ]
+}

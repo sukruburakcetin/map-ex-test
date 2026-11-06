@@ -41,7 +41,10 @@ export function rankPlaceImagery(place: Pick<Place, 'lon' | 'lat'>, rows: any[],
     if (typeof row.captured_at === 'number' && row.captured_at > 0 && Number.isFinite(new Date(row.captured_at).getTime())) candidate.capturedAt = row.captured_at;
     candidates.push({ image: candidate, rank });
   }
-  candidates.sort((a, b) => a.rank - b.rank || a.image.distance - b.image.distance || (b.image.capturedAt || 0) - (a.image.capturedAt || 0) || a.image.id.localeCompare(b.image.id));
+  // Fixed 5m distance bands keep freshness a deterministic close-tie preference.
+  // Avoid a pairwise 'within 5m' comparator: it can produce non-transitive ordering.
+  candidates.sort((a, b) => a.rank - b.rank || Math.floor(a.image.distance / 5) - Math.floor(b.image.distance / 5) ||
+    (b.image.capturedAt || 0) - (a.image.capturedAt || 0) || a.image.distance - b.image.distance || a.image.id.localeCompare(b.image.id));
   const unique = new Set<string>();
   const ranked = candidates.filter(candidate => { if (unique.has(candidate.image.id)) return false; unique.add(candidate.image.id); return true; });
   if (!ranked.length) return [];
@@ -68,7 +71,7 @@ export function choosePlaceImagery(place: Pick<Place, 'lon' | 'lat'>, rows: any[
 }
 export function placeImageryCaptureLabel(image: PlaceImagery, l10n: Presentation = englishPresentation): string {
   if (!image.capturedAt || !Number.isFinite(image.capturedAt) || !Number.isFinite(new Date(image.capturedAt).getTime())) return l10n.text("Capture date unknown");
-  return l10n.text("Captured") + " " + l10n.date(new Date(image.capturedAt),{ year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+  return l10n.text("Captured") + " " + l10n.date(new Date(image.capturedAt),{ year: 'numeric', month: 'short', timeZone: 'UTC' });
 }
 
 export function placeImageryDirectionLabel(image: PlaceImagery, l10n: Presentation = englishPresentation): string {
@@ -76,8 +79,8 @@ export function placeImageryDirectionLabel(image: PlaceImagery, l10n: Presentati
 }
 /** Straight-line distance and UTC capture day from the existing candidate only. */
 export function placeImageryChoiceMeta(image: PlaceImagery, l10n: Presentation = englishPresentation): string {
-  const distance = Number.isFinite(image.distance) && image.distance >= 0 ? l10n.text("About {value0} m away",{value0:String(Math.ceil(image.distance))}) : l10n.text("Distance unknown");
-  return `${placeImageryCaptureLabel(image, l10n)} · ${distance}`;
+  const distance = Number.isFinite(image.distance) && image.distance >= 0 ? l10n.text("About {value0} m away",{value0:l10n.number(Math.ceil(image.distance))}) : l10n.text("Distance unknown");
+  return `${distance} · ${placeImageryCaptureLabel(image, l10n)}`;
 }
 /** One local viewer read; the loaded SDK cameraType is authoritative, not Graph's is_pano flag. */
 export async function facePlaceInPanorama(viewer: any, image: PlaceImagery, current: () => boolean): Promise<number | null> {

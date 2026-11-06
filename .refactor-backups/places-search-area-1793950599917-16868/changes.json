@@ -1,0 +1,37 @@
+{
+  "installer": "places-search-area",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/PlacesController.ts",
+      "originalSha256": "2289d057b0d8a8691eb37f256611af946cf318a3587edf39298abd4d5b31b46f",
+      "resultSha256": "b291069cbe542a97d1a61a7035fee2331df34c5759437b60d4a4470fb0876e4a"
+    },
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "3cf13d88f4b7f8d3b756ca2c84911af0a30f3bfa3a354293ef1d1f57d8601d1b",
+      "resultSha256": "5602cee148cd92a0e29b20441d93be0db67e29b8228d579b15e89150c09d9a74"
+    },
+    {
+      "file": "src/components/PlacesPanel.tsx",
+      "originalSha256": "a85b9c40ded361047d63148644d975f08062415135e7aa90917129fefaab1eb5",
+      "resultSha256": "7edbce767ba830c56737b72cbb3b1e44619f4bff3d8a8f76aa120cf0eeb19cfd"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "0064b42807a089c88da150b85ec8fc66917af1f9ddfa9babc4bdb486f18cf141",
+      "resultSha256": "39e9b50bffb3e3427cbdf48ea0cc5926b25586e35d26b071609b10bc1a293d0b"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "8e41ebfc2789dfe49d2a1198f500dff6cec638ce34b6cdc8232121ff160198a9",
+      "resultSha256": "1e958a7e963752cc896883ad5251045fd5bf5383dbf9ca5f443f9d9267c0b6a9"
+    },
+    {
+      "file": "tests/placesSearchArea.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "ccd056632abf5d2dcd25671eb3a5cea50121bfc4b3658b2d3fb5a7367b61c2d7"
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "installer": "places-exploration",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/LoadedPlacesList.tsx",
+      "originalSha256": "192ae022dea98661edbcdee300c189bf6a08d4184632c38f71eb61437fab3595",
+      "resultSha256": "a5521b38f9bd7a1064f95900f7b8733786afe6de6f2e30c4a615d441df63540b"
+    },
+    {
+      "file": "src/components/PlacesPanel.tsx",
+      "originalSha256": "812a053cbbbc307f135b1304d78ffc94bb9ba0a093a04a8a9c6f6de37cd96e60",
+      "resultSha256": "96e3ff1f8d89017860d1ee0ea46494f47775ade81b4b8d745d9f5a824f6be58f"
+    },
+    {
+      "file": "src/components/SelectedPlaceCard.tsx",
+      "originalSha256": "8d0fd0e236428a437eef151d71e8337c488146957dd6ff87b129b4f6c70f4a5c",
+      "resultSha256": "255d72a7d523f86016b138c04e132e81094c63352a4ba1e3945b528cc75c9071"
+    },
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "1c60c5c0f61bdbe8d9bd14bb8845189802821fe1739bd6b520494603e62fc036",
+      "resultSha256": "3e7f62dcfe259fa995b3620d60af7a293f2a0b3154922126afaf6153a8b68afe"
+    },
+    {
+      "file": "src/features/places/PlacePopupFocus.ts",
+      "originalSha256": "c798b4f6c3b9eb92d73f4c58b9f308e12690820b4e4633abe355ba8cabd377ff",
+      "resultSha256": "a321d8b647e31820f8a8a1cc8c33ad77dff1eef03fcdb615b5514e45439d3084"
+    },
+    {
+      "file": "src/features/places/placeListUtils.ts",
+      "originalSha256": "9dddd3ce2ee9b71585990be4c582e172a5ac3d96625989a4d9b4543747554856",
+      "resultSha256": "c57495a29672bed3645864eacf3517b12e211384ddc6ddbfb7b832f16bf77065"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "722db8946f40fa6da0d3d526ef9be37307c91f263dfed5574febcbcb0c6e473e",
+      "resultSha256": "c6ba486dc474f5fbafec5702b37e323ce0c0d60ad657cafb3f1b41cdbc9dacd9"
+    },
+    {
+      "file": "src/features/field-notes/FieldNoteDraft.ts",
+      "originalSha256": "d290e3e506b438b9bee02785644c32f1c947e1624756fcdef4723aa96871a18f",
+      "resultSha256": "44ce1e396dcf46c7a55a5fad655e4e32952b6af28881c4af6a17ba3f28253fd2"
+    },
+    {
+      "file": "src/components/FieldNotesPanel.tsx",
+      "originalSha256": "10114447da603950d5e2ebff09025889c8e2d5266a0ba48ae6ded10743ca16b1",
+      "resultSha256": "3535321d5a32e5171a9b4273207c4d00d78cd70158c81e79f132fd04451e98bb"
+    },
+    {
+      "file": "src/features/field-notes/NoteDraftForm.tsx",
+      "originalSha256": "cdde32917f41d3d68f1e3762fb6bfe3fa6b0239942869d92821ec0366cdb385c",
+      "resultSha256": "bf2d8933aca776e94542410a30296877852a130f7019b751680a3566c50c41bd"
+    },
+    {
+      "file": "src/features/community-notes/CommunityWorkspacePanel.tsx",
+      "originalSha256": "954a08e7e79da21d088abdb948301e916bf0a56394ca56918cb1062e1f7455b0",
+      "resultSha256": "95dbcab3b9f35459f2d4ee1d26dd39b04a03ec3d899e4990328513b2209b9eb8"
+    },
+    {
+      "file": "src/features/community-notes/WorkspaceContributionDraft.tsx",
+      "originalSha256": "675e40bd5195626101da6b34c8e9314d091ba74471f941712243f335a834fcd0",
+      "resultSha256": "1db1678516ee6ec874fd722e501ba96a5395f96513c3f74ee5f87e68b737bcbe"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "1d816a2c7e4828a01c22f7018e4840d8fdf66bfe72b42f99c245f60ef2e438d5",
+      "resultSha256": "cec91b8ec2d1005aa814733e81372d2910c08d8f5b2d6e408f2e0f16dad3f857"
+    },
+    {
+      "file": "src/features/places/placeNote.ts",
+      "originalSha256": null,
+      "resultSha256": "f7c346a3a29286c39a1d626a6a02f5e6bb31648c66178a7e34f818278bdd64df"
+    },
+    {
+      "file": "tests/placesExploration.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "91ec2a7353b7261527e5a80ad5a7e9aa10f72bc389b52d300939ff8aa75a8c19"
+    },
+    {
+      "file": "tests/placesNoteDraft.browser.cjs",
+      "originalSha256": null,
+      "resultSha256": "f30fc876b23cf9bb112161c4a7db8410187e09737f110bf7d84d0a8734a7e259"
+    }
+  ]
+}

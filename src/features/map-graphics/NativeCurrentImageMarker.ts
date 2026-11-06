@@ -59,6 +59,13 @@ export class NativeCurrentImageMarker {
   // an enormous derivative, shrinking the mesh. Sample a few local pixels instead.
   const d=mobileCloseZoomIndicator(view)
    ?Math.min(10,Math.max(.001,156543.03392804097/2**view.zoom*cos*4)):10;
+  if(Number.isFinite(origin?.x)&&Number.isFinite(origin?.y)&&(origin.x<0||origin.y<0||origin.x>view.width||origin.y>view.height)){
+   // Hide both native mesh and SVG while retaining presentation ownership.
+   // Mark this before clearing SVG so its callback cannot revive the fallback dot.
+   this.nativeActive=true;this.settled=null;
+   if(this.layer)this.layer.visible=false;
+   this.fallback.clear();this.presented(this.marker,view);return;
+  }
   const east=view.toScreen(this.factory.point({longitude:m.lon+d/(111320*cos),latitude:m.lat,z:ground.z,spatialReference:{wkid:4326}}));
   const north=view.toScreen(this.factory.point({longitude:m.lon,latitude:m.lat+d/111320,z:ground.z,spatialReference:{wkid:4326}}));
   if(![origin?.x,origin?.y,east?.x,east?.y,north?.x,north?.y].every(Number.isFinite)){this.showFallback(true);return;}

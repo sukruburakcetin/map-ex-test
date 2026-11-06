@@ -1,6 +1,6 @@
 /** @jsx jsx */
 import type { DetectionPreviewLoader } from '../detections/detectionPreview';
-import type { DetectionContributionSeed } from '../detections/detectionNote';
+import type { ExternalContributionSeed } from '../places/placeNote';
 import { React, jsx } from 'jimu-core';
 import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import type { FieldNote } from '../../components/types';
@@ -17,7 +17,7 @@ import { CommunityWorkspaceClient, communityNoteTarget, parseWorkspaceInvitation
 import type { CommunityWorkspace, CommunityRecord, WorkspaceMember, WorkspaceInvite, WorkspaceCategory } from './communityWorkspace';
 import { workspaceReadabilityCss, workspacePanelStyle as panel, workspaceCardStyle as card, workspaceRowStyle as row, workspaceFieldStyle as field, workspaceInputStyle as input, workspaceButtonStyle as button, workspaceSectionStyle as sectionStyle, workspaceSummaryStyle as summaryStyle, workspaceHeadingStyle as headingStyle, workspaceSecondaryButtonStyle as secondary } from '../../styles/communityWorkspace';
 
-interface Props {onDetectionDraftLocation?:(requestId:string,point:{lon:number;lat:number})=>void;onDetectionDraftFinished?:(requestId:string)=>void; onLoadDetectionPreview?:DetectionPreviewLoader; detectionDraft?:DetectionContributionSeed|null;onClearDetectionDraft?:(applied?:boolean)=>void; onPickLocation?:WorkspaceLocationRequest;currentImageId?:string|null;notes: readonly FieldNote[]; onFocus(note: FieldNote): void; onClose(): void;
+interface Props {onDetectionDraftLocation?:(requestId:string,point:{lon:number;lat:number})=>void;onDetectionDraftFinished?:(requestId:string)=>void; onLoadDetectionPreview?:DetectionPreviewLoader; detectionDraft?:ExternalContributionSeed|null;onClearDetectionDraft?:(applied?:boolean)=>void; onPickLocation?:WorkspaceLocationRequest;currentImageId?:string|null;notes: readonly FieldNote[]; onFocus(note: FieldNote): void; onClose(): void;
   onMapNotes?(notes: FieldNote[],categories: readonly WorkspaceCategory[],workspaceName: string): void }
 const emptyRecords: CommunityRecord[] = [], emptyCategories: WorkspaceCategory[] = [];
 
@@ -96,7 +96,7 @@ export const CommunityWorkspacePanel: React.FC<Props> = ({notes,onFocus,onClose,
       </WorkspaceContributionCard>):[],[records,categories,busy,owner,canWrite,editing,editError,onFocus,active,workspace,run,contributions.refresh,text,onLoadDetectionPreview]);
   return <section className="mly-notes-scroll mly-workspace-scroll" role="tabpanel" aria-label={text('Workspace notes')} style={panel} onClick={event=>event.stopPropagation()} onPointerDown={event=>event.stopPropagation()} onKeyDown={event=>event.stopPropagation()}>
     <style>{workspaceReadabilityCss}</style>
-    {detectionDraft&&!canWrite&&<div role="status" style={card}><strong>{detectionDraft.title}</strong><span>{text('Detection draft ready. Connect, sign in and choose a workspace where you can contribute.')}</span>{action('Discard detection draft',()=>onClearDetectionDraft?.(),false)}</div>}
+    {detectionDraft&&!canWrite&&<div role="status" style={card}><strong>{detectionDraft.title}</strong><span>{text('Note draft ready. Connect, sign in and choose a workspace where you can contribute.')}</span>{action('Discard incoming draft',()=>onClearDetectionDraft?.(),false)}</div>}
     <div style={row}><strong>{text('Collaboration workspace')}</strong>{action('Close',onClose,false)}{connected&&action('Disconnect',disconnect,false)}</div>
     <details open={connectionOpen} onToggle={event=>setConnectionOpen(event.currentTarget.open)} className="mly-workspace-section" style={sectionStyle}><summary style={summaryStyle}>{text('Connection and workspace settings')}</summary>
     {!connected?<div style={card}>

@@ -1,0 +1,17 @@
+{
+  "installer": "places-panel-polish",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/PlacesPanel.tsx",
+      "originalSha256": "96e3ff1f8d89017860d1ee0ea46494f47775ade81b4b8d745d9f5a824f6be58f",
+      "resultSha256": "a85b9c40ded361047d63148644d975f08062415135e7aa90917129fefaab1eb5"
+    },
+    {
+      "file": "src/components/SelectedPlaceCard.tsx",
+      "originalSha256": "255d72a7d523f86016b138c04e132e81094c63352a4ba1e3945b528cc75c9071",
+      "resultSha256": "dbbf9fccda1fd3dc95a0d18ef8d60381aff7e497b50fdab008e0fabb8de70d7b"
+    }
+  ]
+}

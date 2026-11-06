@@ -1,10 +1,11 @@
 const fs=require('node:fs'),path=require('node:path'),test=require('node:test'),assert=require('node:assert/strict'),ts=require(process.env.MAPILLARY_TYPESCRIPT||'typescript');
 const compile=s=>ts.transpileModule(s,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText,root=path.resolve(__dirname,'..');
 function load(name){const file=path.resolve(root,name.endsWith('.ts')?name:path.join(name==='geoUtils'?'src/utils':'src/features/places',name+'.ts')),m={exports:{}};new Function('require','module','exports',compile(fs.readFileSync(file,'utf8')))(id=>load(path.relative(root,path.resolve(path.dirname(file),id+'.ts'))),m,m.exports);return m.exports;}
+const {coverageClickHitTest}=load('src/features/coverage/coverageClickDispatch.ts');
 const model=load('placesModel'),{PlacesController}=load('PlacesController');
 const row=(i=1,extra={})=>({attributes:{gers_id:'gers-'+i,place_name:'School '+i,category:'school',place_group:'education',confidence:.98,...extra},geometry:{x:.5,y:.5}});
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
-function fixture(){let now=0,id=0;const timers=new Map(),idle=new Map(),calls=[],displays=[],statuses=[];const f={view:{token:{},bbox:[0,0,1,1],zoom:16,stationary:true},busy:false,clears:0,visible:true,calls,displays,statuses};const host={view:()=>f.view,busy:()=>f.busy,query:(bbox,group,signal)=>new Promise((resolve,reject)=>calls.push({bbox,group,signal,resolve,reject})),display:(places,token)=>displays.push({places,token}),visible:v=>f.visible=v,clear:()=>f.clears++,status:s=>statuses.push(s),timer:(work,ms)=>{const key=++id;timers.set(key,{work,at:now+ms});return key;},cancelTimer:k=>timers.delete(k),idle:work=>{const key=++id;idle.set(key,work);return key;},cancelIdle:k=>idle.delete(k),now:()=>now};f.controller=new PlacesController(host);f.advance=async(ms=650)=>{now+=ms;for(const[k,t]of[...timers])if(t.at<=now){timers.delete(k);t.work();}for(const[k,work]of[...idle]){idle.delete(k);work();}await flush();};f.complete=async(features=[row()],limited=false)=>{calls.at(-1).resolve({features,limited});await flush();};f.pending=()=>timers.size+idle.size;return f;}
+function fixture(manualSearch=false){let now=0,id=0;const timers=new Map(),idle=new Map(),calls=[],displays=[],statuses=[];const f={view:{token:{},bbox:[0,0,1,1],zoom:16,stationary:true},busy:false,clears:0,visible:true,calls,displays,statuses};const host={manualSearch,view:()=>f.view,busy:()=>f.busy,query:(bbox,group,signal)=>new Promise((resolve,reject)=>calls.push({bbox,group,signal,resolve,reject})),display:(places,token)=>displays.push({places,token}),visible:v=>f.visible=v,clear:()=>f.clears++,status:s=>statuses.push(s),timer:(work,ms)=>{const key=++id;timers.set(key,{work,at:now+ms});return key;},cancelTimer:k=>timers.delete(k),idle:work=>{const key=++id;idle.set(key,work);return key;},cancelIdle:k=>idle.delete(k),now:()=>now};f.controller=new PlacesController(host);f.advance=async(ms=650)=>{now+=ms;for(const[k,t]of[...timers])if(t.at<=now){timers.delete(k);t.work();}for(const[k,work]of[...idle]){idle.delete(k);work();}await flush();};f.complete=async(features=[row()],limited=false)=>{calls.at(-1).resolve({features,limited});await flush();};f.pending=()=>timers.size+idle.size;return f;}
 test('URL validation requires a credential-free HTTPS FeatureServer layer endpoint',()=>{assert.equal(model.placesServiceUrl('https://host/arcgis/rest/services/Places/FeatureServer/0/'),'https://host/arcgis/rest/services/Places/FeatureServer/0');for(const url of ['','http://host/FeatureServer/0','https://a:b@host/FeatureServer/0','https://host/FeatureServer/0?token=x','https://host/MapServer/0','https://host/FeatureServer'])assert.equal(model.placesServiceUrl(url),null);});
 test('bounded normalization rejects low-confidence, wrong-category, invalid and duplicate records',()=>{const rows=[row(),row(),row(2,{confidence:.2}),row(3,{place_group:'services'}),{...row(4),geometry:{x:Infinity,y:0}},row(5,{website:'javascript:alert(1)'})];const p=model.normalizePlaces(rows,[0,0,1,1],'education');assert.equal(p.length,2);assert.equal(p[1].website,'');assert.equal(model.normalizePlaces(Array.from({length:1000},(_,i)=>row(i)),[0,0,1,1],'all').length,200);});
 test('disabled feature does no work: no timers, queries, layer display or cache allocation',async()=>{const f=fixture();for(let i=0;i<100;i++)f.controller.sync();await f.advance(10000);assert.equal(f.calls.length,0);assert.equal(f.displays.length,0);assert.equal(f.pending(),0);assert.equal(f.controller.stats.cacheBytes,0);});
@@ -34,7 +35,7 @@ test('ArcGIS adapter owns only bounded graphics, escapes popup content and remov
  try{
  assert.equal(serviceCount,0);assert.equal(layers.length,0);owner.controller.setEnabled(true);await new Promise(r=>setTimeout(r,710));
  assert.equal(serviceCount,1);assert.equal(layers.length,1);assert(layers[0] instanceof GraphicsLayer);assert.equal(query.num,200);assert.equal(query.where,'confidence >= 0.95');assert.equal(query.outSpatialReference.wkid,4326);assert.equal(layers[0].items.length,1);assert.equal(layers[0].items[0].symbol.type,'picture-marker');assert.equal(layers[0].items[0].symbol.width,12);assert.equal(listed.length,1);assert.equal(owner.hoverLabel(listed[0]),'<img onerror=evil()> · school');const originalSymbol=layers[0].items[0].symbol;owner.setHover('gers-1');assert.notEqual(layers[0].items[0].symbol,originalSymbol);owner.controller.host.visible(false);assert.equal(layers[0].items[0].symbol,originalSymbol);owner.controller.host.visible(false);assert.equal(listed.length,0);owner.controller.host.visible(true);assert.equal(listed.length,1);assert.equal(serviceCount,1);
- const hits=[{layer:layers[0],graphic:layers[0].items[0]}];assert.equal(owner.screenTarget({x:10,y:10}),'gers-1');assert.equal(owner.screenTarget({x:25,y:10}),null);assert(owner.open([],owner.screenTarget({x:10,y:10})));busy=true;assert.equal(owner.hoverLayer,null);assert(owner.open(hits));assert.equal(serviceCount,1);busy=false;assert.equal(view.popup.content.children[0].textContent,'<img onerror=evil()>');assert(!view.popup.content.children.some(x=>x.href==='javascript:evil()'));assert.equal(explored,null);const searchButton=view.popup.content.children.find(x=>x.textContent==='Find imagery within 75 m');await searchButton.onclick();assert.equal(explored.id,'gers-1');assert.equal(openedImage,null);assert.equal(searchButton.textContent,'Suggested view · Direction unknown');await searchButton.onclick();assert.equal(openedImage.id,'img-1');const options=view.popup.content.children.find(x=>x.children?.some(y=>y.textContent?.startsWith('Open view'))).children.filter(x=>x.type==='button');assert.equal(options.length,2);assert.equal(options[0].textContent,'Open view · Panorama');assert.equal(view.popup.content.children.filter(x=>x.className==='mly-place-choice-note'&&!x.hidden).length,1);assert.match(view.popup.content.children.find(x=>x.className==='mly-place-meta mly-place-choice-meta').textContent,/Capture date unknown · About 32 m away/);options[1].onclick();assert.equal(openedImage.id,'img-3');
+ const hits=[{layer:layers[0],graphic:layers[0].items[0]}];assert.equal(owner.screenTarget({x:10,y:10}),'gers-1');assert.equal(owner.screenTarget({x:25,y:10}),null);assert(owner.open([],owner.screenTarget({x:10,y:10})));busy=true;assert.equal(owner.hoverLayer,null);assert(owner.open(hits));assert.equal(serviceCount,1);busy=false;assert.equal(view.popup.content.children[0].textContent,'<img onerror=evil()>');assert(!view.popup.content.children.some(x=>x.href==='javascript:evil()'));assert.equal(explored,null);const searchButton=view.popup.content.children.find(x=>x.textContent==='Find imagery within 75 m');await searchButton.onclick();assert.equal(explored.id,'gers-1');assert.equal(openedImage,null);assert.equal(searchButton.textContent,'Suggested view\nDirection unknown');await searchButton.onclick();assert.equal(openedImage.id,'img-1');const options=view.popup.content.children.find(x=>x.children?.some(y=>y.textContent?.startsWith('Open view'))).children.filter(x=>x.type==='button');assert.equal(options.length,2);assert.equal(options[0].textContent,'Open view\nPanorama');assert.equal(view.popup.content.children.filter(x=>x.className==='mly-place-choice-note'&&!x.hidden).length,1);assert.match(view.popup.content.children.find(x=>x.className==='mly-place-meta mly-place-choice-meta').textContent,/About 32 m away · Capture date unknown/);options[1].onclick();assert.equal(openedImage.id,'img-3');
  assert.equal(owner.hit([{layer:{},graphic:layers[0].items[0]}]),null);const retained=owner.selection.place;owner.clear();assert.equal(listed.length,0);openedImage=null;options[0].onclick();assert.equal(openedImage,null,'closed-popup alternatives cannot open imagery');assert.equal(owner.selection.place,retained);assert(owner.open([],retained.id),'selected place details reopen after the viewport records clear');owner.clearSelection();assert.equal(owner.selection.place,null);assert.equal(view.popup,null);owner.controller.setEnabled(false);assert.equal(layers.length,0);assert.equal(ui.length,0);assert.equal(view.popup,null);
  }finally{owner.dispose();global.document=oldDocument;global.window=oldWindow;}assert.equal(removed,1);
 });
@@ -49,16 +50,16 @@ test('paused states distinguish foreground work from map movement and idle prepa
 test('actual map-click handler opens direct POI hits before coverage guards or wider picking',async()=>{
  let callback;function visit(n){if(ts.isCallExpression(n)&&n.expression.getText(sf)==='view.on'&&n.arguments[0]?.text==='click')callback=n.arguments[1];ts.forEachChild(n,visit);}visit(sf);assert(callback);
  const view={destroyed:false,toMap:()=>({longitude:1,latitude:1}),hitTest:async()=>({results:[{layer:{id:'places'}}]})};let opened=0,picks=0;
- const w={props:{state:'OPENED'},state:{jimuMapView:{view},turboModeActive:true,placesActive:true},_coverageSelectionTargets:{snapshot:()=>null},coverageSelectionContext:()=>({}),_sharedNotesLayer:null,_pointCloudHits:{route:()=>false},setState(){},showPlacesHit(){opened++;return true;},pickMapFeature(){picks++;throw Error('must not pick coverage or features for direct POI');}};
- const make=new Function('view','TURBO_LIMITS',compile('return '+callback.getText(sf)));const handler=make.call(w,view,{pickRadiusPx:10});await handler({x:20,y:20});assert.equal(opened,1);assert.equal(picks,0);
+ const w={_fieldNoteMap:{clearHighlight(){},hasPickTargets:false,noteForGraphic(){return null}},props:{state:'OPENED'},state:{jimuMapView:{view},turboModeActive:true,placesActive:true},_coverageSelectionTargets:{snapshot:()=>null},coverageSelectionContext:()=>({}),_sharedNotesLayer:null,_pointCloudHits:{route:()=>false},setState(){},showPlacesHit(){opened++;return true;},pickMapFeature(){picks++;throw Error('must not pick coverage or features for direct POI');}};
+ const make=new Function('view','TURBO_LIMITS','coverageClickHitTest',compile('return '+callback.getText(sf)));const handler=make.call(w,view,{pickRadiusPx:10},coverageClickHitTest);await handler({x:20,y:20});assert.equal(opened,1);assert.equal(picks,0);
  view.destroyed=true;await handler({x:20,y:20});assert.equal(opened,1);
 });
 test('POI click stops automatic popup handling before asynchronous hitTest and retains a missed marker ID',async()=>{
  let callback;function visit(n){if(ts.isCallExpression(n)&&n.expression.getText(sf)==='view.on'&&n.arguments[0]?.text==='click')callback=n.arguments[1];ts.forEachChild(n,visit);}visit(sf);
  let resolve,stopped=0,opened=0,target;const view={destroyed:false,toMap:()=>({longitude:1,latitude:1}),hitTest:()=>new Promise(r=>resolve=r)};
  const owner={screenTarget:()=> 'gers-1'};
- const w={props:{state:'OPENED'},state:{jimuMapView:{view},turboModeActive:true,placesActive:true},_places:owner,_coverageSelectionTargets:{snapshot:()=>null},coverageSelectionContext:()=>({}),_sharedNotesLayer:null,_pointCloudHits:{route:()=>false},setState(){},showPlacesHit(results,id){assert.deepEqual(results,[]);target=id;opened++;return true;}};
- const handler=new Function('view','TURBO_LIMITS',compile('return '+callback.getText(sf))).call(w,view,{pickRadiusPx:10});const pending=handler({x:10,y:10,stopPropagation(){stopped++;}});assert.equal(stopped,1);assert.equal(opened,0);resolve({results:[]});await pending;assert.equal(target,'gers-1');assert.equal(opened,1);
+ const w={_fieldNoteMap:{clearHighlight(){},hasPickTargets:false,noteForGraphic(){return null}},props:{state:'OPENED'},state:{jimuMapView:{view},turboModeActive:true,placesActive:true},_places:owner,_coverageSelectionTargets:{snapshot:()=>null},coverageSelectionContext:()=>({}),_sharedNotesLayer:null,_pointCloudHits:{route:()=>false},setState(){},showPlacesHit(results,id){assert.deepEqual(results,[]);target=id;opened++;return true;}};
+ const handler=new Function('view','TURBO_LIMITS','coverageClickHitTest',compile('return '+callback.getText(sf))).call(w,view,{pickRadiusPx:10},coverageClickHitTest);const pending=handler({x:10,y:10,stopPropagation(){stopped++;}});assert.equal(stopped,1);assert.equal(opened,0);resolve({results:[]});await pending;assert.equal(target,'gers-1');assert.equal(opened,1);
 });
 const nearby=load('nearbyPlaceImagery');const distance=load('geoUtils').distanceMeters;
 test('nearby imagery starts within 75m and rejects original/computed coordinate jumps',()=>{
@@ -88,9 +89,9 @@ test('popup wider search is explicit, duplicate clicks are blocked and obsolete 
  }finally{owner.dispose();global.document=oldDocument;global.window=oldWindow;}
 });
 test('actual widget search returns a candidate without navigation and rejects superseded requests',async()=>{
- const method=widget.members.find(m=>m.name?.getText(sf)==='explorePlace').getText(sf);const Runtime=new Function('placeImageryBbox','rankPlaceImagery','distanceMeters','GRAPH_API',compile('class Runtime{'+method+'}\nreturn Runtime;'))(nearby.placeImageryBbox,nearby.rankPlaceImagery,distance,{BASE:'https://graph.mapillary.com'});
+ const method=widget.members.find(m=>m.name?.getText(sf)==='explorePlace').getText(sf);const Runtime=new Function('PlaceImageryCache','placeImageryBbox','rankPlaceImagery','distanceMeters','GRAPH_API',compile('class Runtime{'+method+'}\nreturn Runtime;'))(load('PlaceImageryCache').PlaceImageryCache,nearby.placeImageryBbox,nearby.rankPlaceImagery,distance,{BASE:'https://graph.mapillary.com'});
  const w=new Runtime(),view={destroyed:false};w.state={jimuMapView:{view}};w._selectionRequestId=1;w.accessToken='test';let url,resolve;w.fetchMapillaryJson=async(u,t,signal)=>{url=u;assert.equal(t,'test');assert(!signal.aborted);return {data:[{id:'i',sequence:'s',geometry:{coordinates:[0,.0001]}}]};};w.loadSequenceById=()=>{throw Error('search must not navigate');};const candidate=await w.explorePlace({lon:0,lat:0},75,new AbortController().signal);assert.equal(candidate[0].id,'i');assert(url.includes('limit=40'));assert(url.includes('computed_geometry'));assert(url.includes('captured_at'));assert.equal(w._placesExploreAbort,null);
- w.fetchMapillaryJson=()=>new Promise(r=>resolve=r);const pending=w.explorePlace({lon:0,lat:0},75,new AbortController().signal);w._selectionRequestId++;resolve({data:[]});await assert.rejects(pending,{name:'AbortError'});assert.equal(w._placesExploreAbort,null);
+ w._placesImageryCache.clear();w.fetchMapillaryJson=()=>new Promise(r=>resolve=r);const pending=w.explorePlace({lon:0,lat:0},75,new AbortController().signal);w._selectionRequestId++;resolve({data:[]});await assert.rejects(pending,{name:'AbortError'});assert.equal(w._placesExploreAbort,null);
 });
 test('heading ranking prefers facing images over closer away/unknown images and wraps north correctly',()=>{
  const place={lon:0,lat:0},image=(id,metres,heading,extra={})=>({id,sequence:'s',geometry:{coordinates:[0,-metres/111195]},compass_angle:heading,...extra});
@@ -221,9 +222,9 @@ test('changing a category after cache age still filters the displayed records lo
 
 test('imagery choice labels preserve uncertain directions and compact existing metadata',()=>{
  for(const [direction,label] of [['facing','Facing the place'],['panorama','Panorama'],['sideways','Side view'],['away','Facing away'],['unknown','Direction unknown'],[undefined,'Direction unknown']]) assert.equal(nearby.placeImageryDirectionLabel({direction}),label);
- assert.equal(nearby.placeImageryChoiceMeta({distance:32.2}),'Capture date unknown · About 33 m away');
- assert.match(nearby.placeImageryChoiceMeta({distance:0,capturedAt:1704067200000}),/^Captured .*2024 · About 0 m away$/);
- assert.equal(nearby.placeImageryChoiceMeta({distance:NaN}),'Capture date unknown · Distance unknown');
+ assert.equal(nearby.placeImageryChoiceMeta({distance:32.2}),'About 33 m away · Capture date unknown');
+ assert.match(nearby.placeImageryChoiceMeta({distance:0,capturedAt:1704067200000}),/^About 0 m away · Captured .*2024$/);
+ assert.equal(nearby.placeImageryChoiceMeta({distance:NaN}),'Distance unknown · Capture date unknown');
 });
 
 test('Back to place centers either map mode without touching imagery or selection',()=>{
@@ -267,4 +268,113 @@ test('popup focus never steals focus from another control, replacement popup or 
   focus.open(view,{content:{}},trigger);await flush();global.document.activeElement=body;popup.content={};changes();assert.equal(restored,0);assert.equal(removed,2);
   view.openPopup=o=>new Promise(r=>{popup.content=o.content;resolve=r;});focus.open(view,{content:{}},trigger);focus.cancel();resolve();await flush();assert.equal(removed,2);assert.equal(restored,0);
  }finally{global.document=old;}
+});
+
+test('closest-first browsing uses the stated reference, preserves input and remains bounded',()=>{
+ const {filterLoadedPlaces,placeListDistance}=load('placeListUtils');
+ const places=[{id:'far',name:'Alpha',category:'school',lon:0,lat:.01},{id:'near',name:'Zulu',category:'school',lon:0,lat:.001}];
+ assert.deepEqual(filterLoadedPlaces(places,'',{lon:0,lat:0,kind:'image'}).map(p=>p.id),['near','far']);
+ assert.deepEqual(filterLoadedPlaces(places,'').map(p=>p.id),['far','near']);assert.equal(places[0].id,'far');
+ assert(placeListDistance(places[1],{lon:0,lat:0,kind:'map'})>110);
+ assert.equal(filterLoadedPlaces(Array.from({length:300},(_,i)=>({...places[0],id:String(i)})),'').length,200);
+});
+test('place note provenance records supplied attributes without fabricating an image or detection',()=>{
+ const {placeNoteDescription}=load('placeNote');const text=placeNoteDescription({id:'gers-1',name:'Library',category:'public_library',address:'Main St',website:'https://example.com',release:'2026-10'});
+ for(const value of ['Library','gers-1','public library','Main St','https://example.com','2026-10'])assert(text.includes(value));assert(!text.includes('undefined'));
+});
+test('actual place action creates drafts at mapped coordinates for all destinations without automatic saving',()=>{
+ const {placeNoteDescription}=load('placeNote');const method=widget.members.find(m=>m.name?.getText(sf)==='createPlaceFieldNote').getText(sf);
+ const Runtime=new Function('placeNoteDescription',compile('class Runtime{'+method+'}\nreturn Runtime;'))(placeNoteDescription);
+ const place={id:'gers-1',name:'Library',category:'library',lon:29,lat:41};const calls=[];const w=new Runtime();w.state={placesActive:true,selectedPlace:place,jimuMapView:{view:{closePopup(){calls.push('close');}}}};w.props={config:{sharedFieldNotesEnabled:true,sharedFieldNotesUrl:'https://host/FeatureServer/0'}};w.dismissViewerDetection=()=>{};w.drawPendingNoteGraphic=(...p)=>calls.push(p);w._fieldNoteDraft={openPlace:(...p)=>calls.push(p)};w.setState=p=>Object.assign(w.state,p);w._owned=t=>t;w.showToast=t=>calls.push(t);
+ w.createPlaceFieldNote('local');assert.equal(calls.at(-1)[1],'local');assert.equal(calls.at(-1)[0],place);
+ w.createPlaceFieldNote('enterprise');assert.equal(calls.at(-1)[1],'enterprise');
+ w.createPlaceFieldNote('workspace');const seed=w.state.detectionWorkspaceDraft;assert.equal(seed.placeId,place.id);assert.equal(seed.lon,29);assert.equal(seed.lat,41);assert.equal(seed.imageId,null);assert.equal(seed.detectionId,undefined);assert.equal(w.state.fieldNotesListOpen,true);
+ const count=calls.length;w.createPlaceFieldNote('local');assert.equal(calls.length,count+1);assert.match(calls.at(-1),/Finish or cancel/);
+ w.state.detectionWorkspaceDraft=null;w._detectionWorkspaceMarkerOwner=null;w.props.config.sharedFieldNotesEnabled=false;const before=calls.length;w.createPlaceFieldNote('enterprise');assert.equal(calls.length,before);
+});
+test('imagery auto-start waits for owned popup readiness and ignores a cancelled opening',async()=>{
+ const {PlacePopupFocus}=load('PlacePopupFocus');const focus=new PlacePopupFocus();let resolve,started=0;const content={};const view={openPopup:()=>new Promise(r=>resolve=r),popup:{content,visible:true}};
+ focus.open(view,{content},null,()=>started++);assert.equal(started,0);resolve();await flush();assert.equal(started,1);
+ focus.open(view,{content},null,()=>started++);focus.cancel();resolve();await flush();assert.equal(started,1);
+});
+test('place drafts preserve mapped position and title and publish only after an explicit shared save',()=>{
+ const {FieldNoteDraft}=load('src/features/field-notes/FieldNoteDraft.ts');let state={fieldNotes:[],imageId:'unrelated-image',pendingFieldNote:null},saved=0,published=0;
+ const d=new FieldNoteDraft({readState:()=>state,setState:(p,done)=>{Object.assign(state,typeof p==='function'?p(state):p);done?.();},drawRipple(){},drawPending(){},clearPending(){},persist(){saved++;},drawMapNotes(){},updateViewerNotes(){},publish(){published++;},notify(){},now:()=>1,random:()=>.2});
+ const place={id:'p',name:'School',lon:2,lat:3};d.openPlace(place,'local','Overture ID: p');assert.equal(saved,0);assert.equal(state.pendingFieldNote.imageId,null);assert.equal(state.pendingFieldNote.initialDescription,'Overture ID: p');d.submit('Other','Overture ID: p');assert.equal(published,0);assert.equal(saved,1);assert.equal(state.fieldNotes[0].title,'School');assert.equal(state.fieldNotes[0].lon,2);assert.equal(state.fieldNotes[0].lat,3);assert.equal(state.fieldNotes[0].source,'manual');assert.equal(state.fieldNotes[0].imageId,null);
+ d.openPlace(place,'enterprise','Overture ID: p');assert.equal(published,0);d.submit('Other','Overture ID: p',true);assert.equal(published,1);
+});
+test('freshness breaks only similar-direction and fixed 5m distance-band ties',()=>{
+ const place={lon:0,lat:0},row=(id,m,heading,date)=>({id,sequence:id,geometry:{coordinates:[0,-m/111195]},compass_angle:heading,captured_at:date});
+ const old=1704067200000,recent=1735689600000;
+ assert.equal(nearby.choosePlaceImagery(place,[row('old-near',21,0,old),row('new-near',23,0,recent)],75,distance).id,'new-near');
+ assert.equal(nearby.choosePlaceImagery(place,[row('old-close',16,0,old),row('new-far',24,0,recent)],75,distance).id,'old-close');
+ assert.equal(nearby.choosePlaceImagery(place,[row('old-facing',50,0,old),row('new-away',5,180,recent)],75,distance).id,'old-facing');
+ assert.equal(nearby.choosePlaceImagery(place,[row('known',23,0,recent),row('undated',21,0,null)],75,distance).id,'known');
+ const rows=[row('a',21,0,old),row('b',23,0,recent),row('c',24,0,null),row('d',30,0,recent)];
+ const expected=nearby.rankPlaceImagery(place,rows,75,distance).map(i=>i.id);assert.deepEqual(nearby.rankPlaceImagery(place,[...rows].reverse(),75,distance).map(i=>i.id),expected);
+});
+test('suggestion metadata is distance-first, compact and uses locale number formatting',()=>{
+ const base=load('src/i18n/PresentationText.ts').englishPresentation;
+ const l10n={...base,number:value=>'n'+value};
+ const text=nearby.placeImageryChoiceMeta({distance:24.2,capturedAt:1735689600000},l10n);
+ assert.equal(text,'About n25 m away · Captured Jan 2025');assert(!text.includes('Jan 1,'));
+});
+test('imagery cache expires results and empty searches independently and returns isolated copies',()=>{
+ const {PlaceImageryCache}=load('PlaceImageryCache');let now=0;const cache=new PlaceImageryCache(()=>now),place={id:'p',lon:0,lat:0,release:'r'},image={id:'i',sequence:'s',distance:10,lon:0,lat:0,radius:75};cache.scope({},'credential','service');cache.put(place,75,[image]);image.id='changed';assert.equal(cache.get(place,75)[0].id,'i');const returned=cache.get(place,75);returned[0].id='mutated';assert.equal(cache.get(place,75)[0].id,'i');assert.equal(cache.get(place,250),undefined);assert.equal(cache.get({...place,lon:1},75),undefined);assert.equal(cache.get({...place,release:'new'},75),undefined);
+ cache.put(place,250,[]);now=20000;assert.equal(cache.get(place,250),undefined);assert.equal(cache.get(place,75)[0].id,'i');now=120000;assert.equal(cache.get(place,75),undefined);assert.equal(cache.stats.entries,0);assert.equal(cache.stats.bytes,0);
+});
+test('imagery cache bounds memory with LRU eviction and clears on map, service or credential changes',()=>{
+ const {PlaceImageryCache}=load('PlaceImageryCache'),cache=new PlaceImageryCache(()=>0),view={},place={id:'p',lon:0,lat:0,release:''};cache.scope(view,'a','s');for(let i=0;i<12;i++)cache.put({...place,id:String(i)},75,[]);cache.get({...place,id:'0'},75);cache.put({...place,id:'12'},75,[]);assert.equal(cache.stats.entries,12);assert.deepEqual(cache.get({...place,id:'0'},75),[]);assert.equal(cache.get({...place,id:'1'},75),undefined);
+ cache.put(place,75,[{id:'x'.repeat(40000)}]);assert.equal(cache.get(place,75),undefined);assert(cache.stats.bytes<=65536);
+ cache.scope(view,'a','s');assert.equal(cache.stats.entries,12);cache.scope(view,'b','s');assert.equal(cache.stats.entries,0);cache.put(place,75,[]);cache.scope(view,'b','other');assert.equal(cache.stats.entries,0);cache.put(place,75,[]);cache.scope({},'b','other');assert.equal(cache.stats.entries,0);cache.put(place,75,[]);cache.clear();assert.equal(cache.stats.entries,0);
+});
+test('actual widget reuses successful searches without fetching and does not cache failed or stale work',async()=>{
+ const method=widget.members.find(m=>m.name?.getText(sf)==='explorePlace').getText(sf);const Runtime=new Function('PlaceImageryCache','placeImageryBbox','rankPlaceImagery','distanceMeters','GRAPH_API',compile('class Runtime{'+method+'}\nreturn Runtime;'))(load('PlaceImageryCache').PlaceImageryCache,nearby.placeImageryBbox,nearby.rankPlaceImagery,distance,{BASE:'https://graph.mapillary.com'});
+ const w=new Runtime(),view={destroyed:false},place={id:'p',lon:0,lat:0,release:''};w.state={jimuMapView:{view}};w._selectionRequestId=1;w.accessToken='a';let calls=0;w.fetchMapillaryJson=async()=>{calls++;return{data:[{id:'i',sequence:'s',geometry:{coordinates:[0,.0001]}}]};};
+ await w.explorePlace(place,75,new AbortController().signal);await w.explorePlace(place,75,new AbortController().signal);assert.equal(calls,1);await w.explorePlace(place,250,new AbortController().signal);assert.equal(calls,2);w.accessToken='b';await w.explorePlace(place,75,new AbortController().signal);assert.equal(calls,3);
+ w._placesImageryCache.clear();w.fetchMapillaryJson=async()=>{calls++;throw Error('offline');};await assert.rejects(w.explorePlace(place,75,new AbortController().signal),/offline/);assert.equal(w._placesImageryCache.stats.entries,0);
+ let resolve;w.fetchMapillaryJson=()=>new Promise(r=>resolve=r);const abort=new AbortController(),pending=w.explorePlace(place,75,abort.signal);abort.abort();resolve({data:[]});await assert.rejects(pending,{name:'AbortError'});assert.equal(w._placesImageryCache.stats.entries,0);assert.equal(w._placesExploreAbort,null);
+ const pendingDestroyed=w.explorePlace(place,75,new AbortController().signal);view.destroyed=true;resolve({data:[]});await assert.rejects(pendingDestroyed,{name:'AbortError'});assert.equal(w._placesImageryCache.stats.entries,0);
+});
+test('manual Places enable and repeated pan/settle perform no query until Search this area',async()=>{
+ const f=fixture(true);f.controller.setEnabled(true);await f.advance(50000);assert.equal(f.calls.length,0);assert.equal(f.pending(),0);assert.equal(f.statuses.at(-1).kind,'search');assert.equal(f.statuses.at(-1).canSearch,true);
+ for(let i=0;i<20;i++){f.view.stationary=false;f.controller.sync();assert.equal(f.statuses.at(-1).canSearch,false);f.view={...f.view,stationary:true,bbox:[0,0,1+i*.01,1]};f.controller.sync();await f.advance();}assert.equal(f.calls.length,0);f.controller.searchArea();await f.advance();assert.equal(f.calls.length,1);await f.complete();assert.equal(f.statuses.at(-1).kind,'ready');f.controller.dispose();
+});
+test('manual panning preserves loaded results, marks them stale and filters without a request',async()=>{
+ const f=fixture(true);f.controller.setEnabled(true);f.controller.searchArea();await f.advance();await f.complete([row(),row(2,{place_group:'health'})]);const count=f.displays.length;
+ f.view.stationary=false;f.controller.sync();f.view={...f.view,stationary:true,bbox:[0,0,2,1]};f.controller.sync();await f.advance(10000);assert.equal(f.calls.length,1);assert.equal(f.displays.length,count);assert.equal(f.statuses.at(-1).count,2);assert.match(f.statuses.at(-1).reason,/last search/);
+ f.controller.setGroup('health');await f.advance();assert.equal(f.calls.length,1);assert.equal(f.displays.at(-1).places.length,1);assert.equal(f.statuses.at(-1).kind,'search');assert.equal(f.statuses.at(-1).loadedCounts.all,2);
+ f.controller.searchArea();await f.advance();assert.equal(f.calls.length,2);await f.complete();f.controller.dispose();
+});
+test('manual movement consumes pending intent and late responses cannot start or replace work',async()=>{
+ const f=fixture(true);f.controller.setEnabled(true);f.controller.searchArea();f.view.stationary=false;f.controller.sync();await f.advance();assert.equal(f.calls.length,0);f.view.stationary=true;f.controller.sync();await f.advance();assert.equal(f.calls.length,0);
+ f.controller.searchArea();await f.advance();const call=f.calls[0];f.view={...f.view,bbox:[0,0,2,1]};f.controller.sync();assert(call.signal.aborted);await f.complete();await f.advance();assert.equal(f.calls.length,1);assert.equal(f.displays.length,0);assert.equal(f.statuses.at(-1).kind,'search');f.controller.dispose();
+});
+test('manual busy, low zoom, outside extent and disabled states reject search intent',async()=>{
+ const f=fixture(true);f.controller.searchArea();await f.advance();assert.equal(f.calls.length,0);f.controller.setEnabled(true);f.busy=true;f.controller.searchArea();await f.advance();assert.equal(f.calls.length,0);f.busy=false;f.controller.sync();await f.advance();assert.equal(f.calls.length,0);
+ f.view.zoom=14;f.controller.searchArea();await f.advance();assert.equal(f.statuses.at(-1).kind,'zoom');assert.equal(f.calls.length,0);f.view.zoom=16;f.controller.host.extent=()=>[10,10,11,11];f.controller.searchArea();await f.advance();assert.equal(f.statuses.at(-1).kind,'outside');assert.equal(f.calls.length,0);f.controller.dispose();
+});
+test('manual repeated clicks coalesce and explicit retries do not become automatic loops',async()=>{
+ const f=fixture(true);f.controller.setEnabled(true);for(let i=0;i<10;i++)f.controller.searchArea();await f.advance();assert.equal(f.calls.length,1);for(let i=0;i<10;i++)f.controller.searchArea();await f.advance(12000);assert.equal(f.calls.length,1);assert.equal(f.statuses.at(-1).kind,'error');await f.complete();await f.advance(20000);assert.equal(f.calls.length,1);f.controller.retry();await f.advance();assert.equal(f.calls.length,2);await f.complete();f.controller.dispose();
+});
+test('manual map replacement and stale cache return require an explicit new area search',async()=>{
+ const f=fixture(true);f.controller.setEnabled(true);f.controller.searchArea();await f.advance();await f.complete();f.view={...f.view,token:{}};f.controller.sync();await f.advance();assert.equal(f.calls.length,1);assert.equal(f.statuses.at(-1).kind,'search');assert.equal(f.statuses.at(-1).count,0);assert(f.clears>0);
+ f.controller.searchArea();await f.advance();assert.equal(f.calls.length,1,'valid feature cache is reused only after click');assert.equal(f.statuses.at(-1).kind,'ready');f.controller.dispose();
+});
+test('manual old transport finishing resumes only a newer explicitly requested area',async()=>{
+ const f=fixture(true);f.controller.setEnabled(true);f.controller.searchArea();await f.advance();const old=f.calls[0];f.view={...f.view,bbox:[0,0,2,1]};f.controller.sync();f.controller.searchArea();await f.advance();assert.equal(f.calls.length,1);assert(old.signal.aborted);await f.complete();await f.advance();assert.equal(f.calls.length,2);await f.complete();assert.equal(f.displays.length,1);f.controller.dispose();
+});
+test('production widget enables explicit Places searching without an automatic first query',()=>{
+ let options;class Owner{constructor(host){options=host;this.controller={setGroup(){},setEnabled(){},sync(){}};}}
+ const Runtime=new Function('ArcGISPlaces','placesServiceUrl','PLACE_GROUPS','webMercatorUtils',compile('class Runtime{'+methods+'}\nreturn Runtime;'))(Owner,model.placesServiceUrl,model.PLACE_GROUPS,{});const w=new Runtime();w.props={id:'test',config:{enablePlaces:true,placesServiceUrl:'https://host/FeatureServer/0'}};w.state={placesActive:true,placesGroup:'all',jimuMapView:{view:{ready:true}}};w.ArcGISModules={FeatureLayer:class{}};w.syncPlaces();assert.equal(options.manualSearch,true);
+});
+test('ArcGIS adapter forwards manual search and settling events cannot query automatically',async()=>{
+ const {ArcGISPlaces}=load('ArcGISPlaces'),oldDocument=global.document,oldWindow=global.window;let calls=0,changed;const statuses=[];global.window={};global.document={addEventListener(){},removeEventListener(){},createElement:()=>({style:{},appendChild(){},remove(){}})};
+ class FeatureLayer{constructor(){this.fields=['gers_id','place_name','category','place_group','confidence','address','website','data_release'].map(name=>({name}));}async load(){}async queryFeatures(){calls++;return{features:[row()]};}destroy(){}}
+ class Value{constructor(p){Object.assign(this,p);}}class Layer extends Value{constructor(p){super(p);this.visible=true;}addMany(items){this.graphics={toArray:()=>items};}removeAll(){}destroy(){}}
+ const view={ready:true,zoom:16,stationary:true,extent:{xmin:0,ymin:0,xmax:1,ymax:1,spatialReference:{isGeographic:true}},toScreen:()=>({x:20,y:20}),map:{add(){},remove(){}},ui:{add(){},remove(){}},watch(keys,callback){changed=callback;return{remove(){}};}};
+ let owner;try{owner=new ArcGISPlaces({manualSearch:true,id:'manual',url:'https://host/FeatureServer/0',modules:{FeatureLayer,GraphicsLayer:Layer,Graphic:Value,Point:Value},view:()=>view,geographic:x=>x,busy:()=>false,status:s=>statuses.push(s),explore(){},openImagery(){}});owner.controller.setEnabled(true);assert.equal(calls,0);assert.equal(statuses.at(-1).kind,'search');owner.controller.searchArea();await new Promise(r=>setTimeout(r,710));assert.equal(calls,1);view.stationary=false;changed();view.extent.xmax=2;view.stationary=true;changed();await new Promise(r=>setTimeout(r,710));assert.equal(calls,1);assert.equal(statuses.at(-1).kind,'search');}finally{owner?.dispose();global.document=oldDocument;global.window=oldWindow;}
+});
+test('manual category filtering preserves active search feedback while using loaded records',async()=>{
+ const f=fixture(true);f.controller.setEnabled(true);f.controller.searchArea();await f.advance();await f.complete([row(),row(2,{place_group:'health'})]);f.view={...f.view,bbox:[0,0,2,1]};f.controller.sync();f.controller.searchArea();await f.advance();assert.equal(f.statuses.at(-1).kind,'loading');f.controller.setGroup('health');assert.equal(f.statuses.at(-1).kind,'loading');assert.equal(f.displays.at(-1).places.length,1);assert.equal(f.calls.length,2);await f.complete([row(3,{place_group:'health'})]);assert.equal(f.statuses.at(-1).kind,'ready');assert.equal(f.displays.at(-1).places[0].id,'gers-3');f.controller.dispose();
 });

@@ -1,9 +1,10 @@
+import type { Place } from '../places/placesModel';
 import type { DetectionBounds } from '../detections/detectionPreview';
 import type { DetectionNoteSelection } from '../detections/detectionNote';
 import type { FieldNote } from '../../components/types';
 
 /** Pending map coordinates in WGS84 degrees, optional source altitude in meters and clicked image ID. */
-export interface PendingFieldNote { lon: number; lat: number; alt?: number; imageId: string | null; detectionId?:string; title?:string; bounds?:DetectionBounds; includePreview?:boolean;attachmentId?:string; destination?:'local'|'enterprise'; }
+export interface PendingFieldNote { lon: number; lat: number; alt?: number; imageId: string | null; detectionId?:string; title?:string; placeId?:string;initialDescription?:string;bounds?:DetectionBounds; includePreview?:boolean;attachmentId?:string; destination?:'local'|'enterprise'; }
 export type FieldNoteDraftNotice = 'mode' | 'saved';
 export interface FieldNoteDraftState {
   isAnnotationMode: boolean;
@@ -57,6 +58,12 @@ export class FieldNoteDraft {
     d.setState({ pendingFieldNote: { lon, lat, alt, imageId: detection?.imageId ?? d.readState().imageId, ...(detection?{detectionId:detection.detectionId,title:detection.title,bounds:detection.bounds,attachmentId:detection.attachmentId,...(detection.includePreview?{includePreview:true}:{}),destination:detection.destination}:{}) }, ...(detection?{fieldNotesListOpen:false,nearbyStripOpen:false}:{}) });
   }
 
+  openPlace(place:Place,destination:'local'|'enterprise',description:string,image?:{imageId:string;bounds?:DetectionBounds;attachmentId?:string}):void {
+    const d=this.dependencies;
+    d.drawRipple(place.lon,place.lat,[245,166,35],.7,2);d.drawPending(place.lon,place.lat);
+    d.setState({pendingFieldNote:{lon:place.lon,lat:place.lat,imageId:image?.imageId||null,title:place.name,placeId:place.id,initialDescription:description,destination,...(image?{bounds:image.bounds,attachmentId:image.attachmentId}:{})},fieldNotesListOpen:false,nearbyStripOpen:false});
+  }
+
   /** Capture the pending draft, clear its marker, and create the same manual-note shape and ID.
    * Keep two clock reads (ID and createdAt), the rounded random suffix and existing array append.
    * The state callback persists the captured array, refreshes map/viewer, optionally publishes,
@@ -70,7 +77,8 @@ export class FieldNoteDraft {
     const newNote: FieldNote = {
       id: `note_${d.now()}_${Math.round(d.random() * 1000)}`,
       source: pendingFieldNote.detectionId ? 'mapillary-detection' : 'manual', category, note,
-      ...(pendingFieldNote.detectionId ? {detectionId:pendingFieldNote.detectionId,title:pendingFieldNote.title} : {}),
+      ...(pendingFieldNote.detectionId ? {detectionId:pendingFieldNote.detectionId} : {}),
+      ...(pendingFieldNote.title?{title:pendingFieldNote.title}:{}),
       lon: pendingFieldNote.lon, lat: pendingFieldNote.lat, alt: pendingFieldNote.alt,
       imageId: pendingFieldNote.imageId, createdAt: d.now(),
     };

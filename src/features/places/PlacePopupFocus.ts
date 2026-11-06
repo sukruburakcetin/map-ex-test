@@ -19,7 +19,7 @@ export class PlacePopupFocus {
     if (session && session.view === view && this.inside(active, session)) return session.origin;
     return active && active !== document.body ? active : null;
   }
-  open(view: any, options: { content: HTMLElement; [key: string]: any }, origin: HTMLElement | null): void {
+  open(view: any, options: { content: HTMLElement; [key: string]: any }, origin: HTMLElement | null,onOpened?:()=>void): void {
     this.cancel();
     const session = { view, content: options.content, origin } as NonNullable<PlacePopupFocus['session']>;
     this.session = session;
@@ -36,6 +36,7 @@ export class PlacePopupFocus {
         };
         session.handle = popup.watch?.(['visible', 'content'], changed);
         changed();
+        if(this.session===session&&popup.visible!==false)onOpened?.();
       }).catch(() => { if (this.session === session) this.cancel(); });
     } catch { this.cancel(); }
   }

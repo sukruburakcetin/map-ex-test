@@ -34,17 +34,20 @@ export class ArcGISPlaces {
   private popupFocus = new PlacePopupFocus();
   private popupView: any = null;
   private popupContent: HTMLDivElement | null = null;
+  private selectionOrigin:'map'|'list'|'card'='map';
+  private notifiedHover:string|null=null;
   readonly selection: SelectedPlace;
   readonly controller: PlacesController;
   constructor(private host: {
-    presentation?: Presentation;
+    manualSearch?:boolean;hybridSearch?:boolean;presentation?: Presentation;
     id: string; url: string; modules: any; view(): any; geographic(extent: any): any;
-    list?(places: readonly Place[]): void; selected?(place: Place | null): void; busy(): boolean; pauseReason?(): string; status(state: PlacesState): void; explore(place: Place, radius: number, signal: AbortSignal): Promise<PlaceImagery[]>; openImagery(image: PlaceImagery): void;
+    list?(places: readonly Place[]): void; selected?(place: Place | null,origin?:'map'|'list'|'card'): void;hovered?(id:string|null):void; busy(): boolean; pauseReason?(): string; status(state: PlacesState): void; explore(place: Place, radius: number, signal: AbortSignal): Promise<PlaceImagery[]>; openImagery(image: PlaceImagery): void;
   }) {
     const url = placesServiceUrl(host.url);
     if (!url) throw new Error('Invalid Places service URL');
-    this.selection = new SelectedPlace({ id: host.id, modules: host.modules, view: host.view, changed: host.selected });
+    this.selection = new SelectedPlace({ id: host.id, modules: host.modules, view: host.view, changed: place=>host.selected?.(place,this.selectionOrigin) });
     this.controller = new PlacesController({
+      manualSearch:host.manualSearch,hybridSearch:host.hybridSearch,
       view: () => this.snapshot(), extent: () => this.published, busy: host.busy, pauseReason: host.pauseReason,
       query: async (bbox, group, signal) => {
         this.regroup();
@@ -83,7 +86,7 @@ export class ArcGISPlaces {
   private watchView(): void {
     this.handles.forEach(handle => handle.remove()); this.handles = [];
     const view = this.host.view();
-    if (view) this.handles.push(view.watch(['stationary', 'zoom', 'extent'], () => this.controller.sync()));
+    if (view) this.handles.push(view.watch(['stationary', 'zoom', 'extent'], () => { if(this.host.manualSearch&&view.stationary)this.regroup();this.controller.sync(); }));
   }
   rebindView(): void { this.clear(); this.selection.rebind(); this.watchView(); this.controller.sync(); }
   private visibility = () => this.controller.sync();
@@ -138,12 +141,15 @@ export class ArcGISPlaces {
   setHover(id: string | null): void {
     if (this.hovered?.id === id) return;
     if (this.hovered) { this.hovered.graphic.symbol = this.hovered.symbol; this.hovered = null; }
+    const notify=(value:string|null)=>{if(this.notifiedHover!==value){this.notifiedHover=value;this.host.hovered?.(value);}};
+    notify(null);
     if (!id || this.disposed || this.host.busy() || !this.graphics?.visible || this.ownerView !== this.host.view() || this.ownerView?.destroyed || id === this.selection.place?.id) return;
-    const graphic = this.graphics.graphics?.toArray?.().find((g: any) => g.attributes?.place_id === id);
+    const markerId=this.memberGroups.get(id)||id;
+    const graphic = this.graphics.graphics?.toArray?.().find((g: any) => g.attributes?.place_id === markerId);
     if (!graphic?.symbol || !Number.isFinite(graphic.symbol.width) || !Number.isFinite(graphic.symbol.height)) return;
     const original = graphic.symbol, symbol = original.clone ? original.clone() : { ...original };
     symbol.width += 3; symbol.height += 3;
-    this.hovered = { id, graphic, symbol: original }; graphic.symbol = symbol;
+    this.hovered = { id, graphic, symbol: original }; graphic.symbol = symbol;notify(id);
   }
   hoverLabel(place: Place): string {
     const group = this.groups.get(place.id);
@@ -178,7 +184,7 @@ export class ArcGISPlaces {
     }
     return nearest;
   }
-  open(results: any[], targetId?: string | null): boolean {
+  open(results: any[], targetId?: string | null,startImagery=false,originKind:'map'|'list'|'card'='map'): boolean {
     const view = this.host.view();
     const valid = !this.disposed && this.graphics?.visible && this.ownerView === view && !view?.destroyed;
     const group = valid ? this.groups.get(targetId || this.hit(results)?.id || '') : null;
@@ -187,7 +193,7 @@ export class ArcGISPlaces {
     if (this.disposed || !place || !view || view.destroyed) return false;
     const origin = this.popupFocus.capture(view);
     this.setHover(null);
-    this.selection.select(place);
+    this.selectionOrigin=originKind;this.selection.select(place);
     const content = document.createElement('div'); content.className = 'mly-place-popup'; this.l10n.bind(content,'dir',()=>this.l10n.locale==='ar'?'rtl':'ltr');
     const name = document.createElement('strong'); name.className = 'mly-place-name'; name.textContent = place.name; content.appendChild(name);
     for (const [index, text] of [place.category.replace(/_/g, ' '), place.address].entries()) if (text) { const line = document.createElement('p'); line.className = index === 0 ? 'mly-place-category' : 'mly-place-address'; line.textContent = text; content.appendChild(line); }
@@ -208,15 +214,15 @@ export class ArcGISPlaces {
         const found = await this.host.explore(place, radius, controller.signal);
         if (controller.signal.aborted || !active()) return;
         if (found.length) {
-          candidate = found[0]; this.l10n.bind(button,"textContent",()=>this.l10n.text("Suggested view · {value0}",{value0:String(placeImageryDirectionLabel(candidate, this.l10n))}));
-          this.l10n.bindAttribute(button,'aria-label',()=>this.l10n.text("Open suggested view: {value0}. {value1}",{value0:String(placeImageryDirectionLabel(candidate, this.l10n)),value1:String(placeImageryChoiceMeta(candidate, this.l10n))}));
-          this.l10n.bind(status,"textContent",()=>placeImageryChoiceMeta(candidate!, this.l10n)); status.className = 'mly-place-meta mly-place-choice-meta'; visibility.hidden = false;
+          const suggested=found[0];candidate = suggested; this.l10n.bind(button,"textContent",()=>this.l10n.text("Suggested view · {value0}",{value0:String(placeImageryDirectionLabel(suggested, this.l10n))}).replace(" · ","\n"));
+          this.l10n.bindAttribute(button,'aria-label',()=>this.l10n.text("Open suggested view: {value0}. {value1}",{value0:String(placeImageryDirectionLabel(suggested, this.l10n)),value1:String(placeImageryChoiceMeta(suggested, this.l10n))}));
+          this.l10n.bind(status,"textContent",()=>placeImageryChoiceMeta(suggested, this.l10n)); status.className = 'mly-place-meta mly-place-choice-meta'; this.l10n.bind(status,'title',()=>this.l10n.text('Approximate straight-line distance, not walking distance or visibility')); visibility.hidden = false;
           for (const image of found.slice(1, 3)) {
-            const option = document.createElement('button'); option.type = 'button'; this.l10n.bind(option,"textContent",()=>this.l10n.text("Open view · {value0}",{value0:String(placeImageryDirectionLabel(image, this.l10n))}));
+            const option = document.createElement('button'); option.type = 'button'; this.l10n.bind(option,"textContent",()=>this.l10n.text("Open view · {value0}",{value0:String(placeImageryDirectionLabel(image, this.l10n))}).replace(" · ","\n"));
             this.l10n.bindAttribute(option,'aria-label',()=>this.l10n.text("Open view: {value0}. {value1}",{value0:String(placeImageryDirectionLabel(image, this.l10n)),value1:String(placeImageryChoiceMeta(image, this.l10n))}));
             option.className = 'mly-place-open';
             option.onclick = () => { if (active()) this.host.openImagery(image); };
-            const detail = document.createElement('p'); this.l10n.bind(detail,"textContent",()=>placeImageryChoiceMeta(image, this.l10n)); detail.className = 'mly-place-meta mly-place-choice-meta';
+            const detail = document.createElement('p'); this.l10n.bind(detail,"textContent",()=>placeImageryChoiceMeta(image, this.l10n)); detail.className = 'mly-place-meta mly-place-choice-meta'; this.l10n.bind(detail,'title',()=>this.l10n.text('Approximate straight-line distance, not walking distance or visibility'));
             alternatives.appendChild(option); alternatives.appendChild(detail);
           }
         } else if (radius === 75) {
@@ -235,7 +241,7 @@ export class ArcGISPlaces {
     const source = document.createElement('p'); this.l10n.bind(source,"textContent",()=>this.l10n.text("Overture Maps{value0}. Imagery may be near this place rather than at its entrance.",{value0:String(place.release ? ' · ' + place.release : '')})); source.className = 'mly-place-source'; content.appendChild(source);
     const style = document.createElement('style'); style.textContent = PLACE_POPUP_CSS; content.appendChild(style);
     this.popupContent = content; this.popupView = view;
-    this.popupFocus.open(view, { title: this.l10n.text("Nearby place"), content, location: new this.host.modules.Point({ longitude: place.lon, latitude: place.lat, spatialReference: { wkid: 4326 } }) }, origin);
+    this.popupFocus.open(view, { title: this.l10n.text("Nearby place"), content, location: new this.host.modules.Point({ longitude: place.lon, latitude: place.lat, spatialReference: { wkid: 4326 } }) }, origin,()=>{if(startImagery&&active())button.click();});
     return true;
   }
   private openGroup(group: PlaceGroupMarker, origin: HTMLElement | null): boolean {

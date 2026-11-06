@@ -14,11 +14,15 @@ import { en } from '../i18n/messages';
 import { message } from '../i18n/core';
 import { LocaleContent, WidgetLocaleProvider } from '../i18n/WidgetLocale';
 import { rankPlaceImagery, facePlaceInPanorama, placeImageryBbox, PlaceImagery } from '../features/places/nearbyPlaceImagery';
+import { PlaceImageryCache } from '../features/places/PlaceImageryCache';
 import { ArcGISPlaces } from "../features/places/ArcGISPlaces";
-import { placePreferenceKey, readPlaceCategory, savePlaceCategory } from '../features/places/placePreferences';
+import { placePreferenceKey, readPlaceCategory, savePlaceCategory, readPlaceAutoUpdate, savePlaceAutoUpdate } from '../features/places/placePreferences';
 import { paddedPlacesExtent } from '../features/places/publishedPlacesExtent';
 import { placeCameraDistanceLabel } from '../features/places/placeListUtils';
 import { SelectedPlaceCard } from '../components/SelectedPlaceCard';
+import { PlaceNoteReview } from '../features/places/PlaceNoteReview';
+import type { PlaceNoteDestination, PlaceNoteOptions, PlaceNoteImageContext, PlaceContributionSeed, ExternalContributionSeed } from '../features/places/placeNote';
+import type { PlaceListOrigin } from '../features/places/placeListUtils';
 import { PlacesPanel } from "../components/PlacesPanel";
 import { PLACE_GROUPS, Place, PlaceGroup, placesServiceUrl } from "../features/places/placesModel";
 import { PlacesState } from "../features/places/PlacesController";
@@ -240,10 +244,13 @@ const PUBLIC_OSRM_BASE_URL = "https://router.project-osrm.org";
 // and temporary interaction information like clicks or loading flags.
 interface State {
   placesActive: boolean;
+  placesAutoUpdate:boolean;
+  placeNotePhase:'idle'|'capturing'|'picking';
   placesPanelOpen: boolean;
   placesGroup: PlaceGroup;
   placesStatus: PlacesState;
   selectedPlace: Place | null;
+  placesHoveredId:string|null;placesRevealRequest:number;
   placesShowLink: boolean;
   placesList: readonly Place[];
   placesCameraDistance: string | null;
@@ -386,7 +393,7 @@ interface State {
   viewerDetectionNote: DetectionNoteSelection | null;
   detectionNotePicking: boolean;
   detectionNoteCapturing:boolean;
-  detectionWorkspaceDraft: DetectionContributionSeed | null;
+  detectionWorkspaceDraft: ExternalContributionSeed | null;
   fieldNotesListOpen: boolean;
   isGeneratingRoute?: boolean;
   routeGenerationProgress?: { usedMinutes: number; budgetMinutes: number } | null;
@@ -452,12 +459,14 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _places: ArcGISPlaces | null = null;
   private _placesView: __esri.MapView | __esri.SceneView | null = null;
   private _placesUrl = '';
+  private _placesImageryCache:PlaceImageryCache|null=null;
   private _placesExploreAbort: AbortController | null = null;
   private placesPauseReason = (): string => {
     if (this.props.state === 'CLOSED') return this._owned("Open the widget to load nearby places.");
     if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return this._owned("Return to this tab to load nearby places.");
     if (this.state.isFullscreen) return this._owned("Return to the main map to load nearby places.");
     if (this.state.isLoading || this._imageryOpeningRequest != null) return this._owned("Places will update after the image finishes loading.");
+    if(this.state.placeNotePhase==='capturing'||this.state.placeNotePhase==='picking')return this._owned('Finish preparing the place note to update places.');
     if (this._userPaused === false) return this._owned("Pause image playback to update nearby places.");
     if (this._placesExploreAbort && !this._placesExploreAbort.signal.aborted) return this._owned("Finding imagery near the selected place…");
     return '';
@@ -465,34 +474,74 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private placesBusy = () => !!this.placesPauseReason();
   private syncPlaces = () => {
     const view = this.state.jimuMapView?.view;
+    if(this.props.state==='CLOSED')this._placeNoteReview?.cancel();
     const url = placesServiceUrl(this.props.config.placesServiceUrl);
     if (!this.state.placesActive || this.props.config.enablePlaces !== true || !url || !view?.ready || view.destroyed) {
-      this._places?.dispose(); this._places = null; this._placesView = null; this._placesUrl = '';
+      this._placeNoteReview?.cancel();this._placesImageryCache?.clear();this._places?.dispose(); this._places = null; this._placesView = null; this._placesUrl = '';
       if (this.state.selectedPlace || this.state.placesList?.length) this.setState({ selectedPlace: null, placesShowLink: false, placesList: [], placesCameraDistance: null });
       return;
     }
-    if (this._places && this._placesUrl !== url) { this._places.dispose(); this._places = null; this.setState({ selectedPlace: null, placesShowLink: false, placesList: [], placesCameraDistance: null }); }
-    if (this._places && this._placesView !== view) { this._placesView = view; this._places.rebindView(); }
+    if (this._places && this._placesUrl !== url) { this._placeNoteReview?.cancel();this._places.dispose(); this._places = null; this.setState({ selectedPlace: null, placesShowLink: false, placesList: [], placesCameraDistance: null }); }
+    if (this._places && this._placesView !== view) { this._placeNoteReview?.cancel(); this._placesView = view; this._places.rebindView(); }
     if (!this._places && this.ArcGISModules?.FeatureLayer) {
       this._placesView = view; this._placesUrl = url;
-      this._places = new ArcGISPlaces({ id: String(this.props.id), url, presentation:this._presentation, modules: this.ArcGISModules,
+      this._places = new ArcGISPlaces({ manualSearch:true,hybridSearch:this.state.placesAutoUpdate!==false,id: String(this.props.id), url, presentation:this._presentation, modules: this.ArcGISModules,
         view: () => this.state.jimuMapView?.view, geographic: extent => webMercatorUtils.webMercatorToGeographic(extent),
         list: placesList => this.setState({ placesList }),
-        selected: selectedPlace => {
+        hovered:placesHoveredId=>this.setState(previous=>previous.placesHoveredId===placesHoveredId?null:{placesHoveredId}),
+        selected: (selectedPlace,origin) => {
+          if(selectedPlace!==this.state.selectedPlace)this._placeNoteReview?.cancel();
           const frame = this._liveSequenceFrames.current;
           const placesCameraDistance = selectedPlace && frame ? placeCameraDistanceLabel(distanceMeters(frame.lat, frame.lon, selectedPlace.lat, selectedPlace.lon), this._presentation) : null;
-          this.setState({ selectedPlace, placesCameraDistance, ...(!selectedPlace ? { placesShowLink: false } : {}) });
+          this.setState(previous=>({ selectedPlace, placesCameraDistance, ...(origin==='map'&&selectedPlace?{placesRevealRequest:previous.placesRevealRequest+1}:{}),...(!selectedPlace ? { placesShowLink: false } : {}) }));
           if (selectedPlace && frame) this._places?.selection.updateCamera(frame.lon, frame.lat);
         }, busy: this.placesBusy, pauseReason: this.placesPauseReason, status: placesStatus => this.setState({ placesStatus }), explore: (place, radius, signal) => this.explorePlace(place, radius, signal), openImagery: image => { void this.openPlaceImagery(image); } });
       this._places.controller.setGroup(this.state.placesGroup); this._places.controller.setEnabled(true);
     }
     this._places?.controller.sync();
   };
+  private placesListOrigin():PlaceListOrigin|null {
+    const frame=this._liveSequenceFrames.current;
+    if(frame&&frame.id===String(this.state.imageId)&&Number.isFinite(frame.lon)&&Number.isFinite(frame.lat))return{lon:frame.lon,lat:frame.lat,kind:'image'};
+    const center=this.state.jimuMapView?.view?.center;
+    return center&&Number.isFinite(center.longitude)&&Number.isFinite(center.latitude)?{lon:center.longitude,lat:center.latitude,kind:'map'}:null;
+  }
+  private _placeNoteDisposed=false;
+  private _placeNoteReview=new PlaceNoteReview({
+    context:()=>({place:this.state.selectedPlace,view:this.state.jimuMapView?.view||null,imageId:this.state.imageId?String(this.state.imageId):null,enabled:!!this.state.placesActive&&this.props.state!=='CLOSED'&&!this._placeNoteDisposed&&!!this.state.jimuMapView?.view?.ready}),
+    blocked:destination=>{if(destination==='enterprise'&&!(this.props.config.sharedFieldNotesEnabled&&this.props.config.sharedFieldNotesUrl))return true;if(this.state.pendingFieldNote||this.state.detectionWorkspaceDraft||this._detectionWorkspaceMarkerOwner||this.state.detectionNoteCapturing){this.showToast(this._owned('Finish or cancel the current note draft first.'));return true;}this.dismissViewerDetection();this.state.jimuMapView?.view?.closePopup();return false;},
+    capture:async(image,signal)=>{const data=await captureDetectionCrop(image,this.loadDetectionPreview,signal),id=crypto.randomUUID();await storeDetectionCrop(id,data);return id;},
+    remove:deleteDetectionCrop,
+    draw:point=>this.drawPendingNoteGraphic(point.lon,point.lat),clear:()=>this.clearPendingNoteGraphic(),
+    phase:placeNotePhase=>{if(!this._placeNoteDisposed)this.setState({placeNotePhase},()=>this._places?.controller.sync());},error:message=>this.showToast(this._owned(message)),
+    pick:(picked,cancelled)=>{let stopped=false,release:(()=>void)|null=null;const key=(event:KeyboardEvent)=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();stop();cancelled();}};const cleanup=()=>window.removeEventListener('keydown',key,true);const stop=()=>{stopped=true;cleanup();release?.();release=null;};const begin=()=>{if(stopped)return;window.addEventListener('keydown',key,true);release=this.requestWorkspaceNoteLocation(point=>{cleanup();release=null;picked(point);},()=>{cleanup();release=null;cancelled();});};if(this.state.isFullscreen)void this.toggleFullscreen().then(begin,()=>{stop();cancelled();});else begin();return stop;},
+    open:(seed,destination)=>this.openPlaceFieldNote(seed,destination)
+  });
+  private cancelPlaceNotePreparation=()=>this._placeNoteReview?.cancel();
+  private getPlaceNoteImage=async():Promise<PlaceNoteImageContext|null>=>{
+    const viewer=this.mapillaryViewer,id=String(this.state.imageId||'');if(!viewer||!/^\d+$/.test(id))return null;
+    try{const image=await viewer.getImage();let center:any=[.5,.5];try{center=await viewer.getCenter();}catch{}if(viewer!==this.mapillaryViewer||String(this.state.imageId)!==id||String(image?.id)!==id)return null;
+      const pair:Array<number>=Array.isArray(center)&&center.length===2&&center.every(value=>Number.isFinite(value)&&value>=0&&value<=1)?center:[.5,.5];
+      const capturedAt=image.capturedAt||this._liveSequenceFrames.find(id)?.captured_at;
+      return{imageId:id,center:[pair[0],pair[1]],...(typeof capturedAt==='number'&&Number.isFinite(new Date(capturedAt).getTime())?{capturedAt}:{})};
+    }catch{return null;}
+  };
+  private createPlaceFieldNote=(destination:PlaceNoteDestination,options?:PlaceNoteOptions)=>{void this._placeNoteReview.begin(destination,options);};
+  private openPlaceFieldNote=(seed:PlaceContributionSeed,destination:PlaceNoteDestination)=>{
+    this._placesExploreAbort?.abort();this.state.jimuMapView?.view?.closePopup();
+    if(destination==='workspace'){this._placeWorkspaceCrop=seed.attachmentId||null;this._detectionWorkspaceMarkerOwner=seed.requestId;this._detectionWorkspaceImage=seed.attachmentId||null;this.drawPendingNoteGraphic(seed.lon,seed.lat);this.setState({detectionWorkspaceDraft:seed,fieldNotesListOpen:true,nearbyStripOpen:false});}
+    else{const place=this.state.selectedPlace;if(!place)throw Error('Place selection changed.');this._fieldNoteDraft.openPlace({...place,lon:seed.lon,lat:seed.lat},destination,seed.description,seed.imageId?{imageId:seed.imageId,bounds:seed.bounds,attachmentId:seed.attachmentId}:undefined);}
+  };
   private placesPreferenceKey = () => placePreferenceKey(this.props.id, typeof window !== 'undefined' ? window.location.pathname : '', this.props.config.placesServiceUrl);
   private togglePlaces = () => {
     if (!this.state.placesActive && (!this.state.jimuMapView?.view?.ready || !this.ArcGISModules?.FeatureLayer)) { this.showToast(this._t('appTheMapIsPreparingTryPlacesAgainShortly'), 3500); return; }
     const placesGroup = this.state.placesActive ? this.state.placesGroup : readPlaceCategory(() => window.localStorage, this.placesPreferenceKey(), this.state.placesGroup);
-    this.setState(previous => ({ placesActive: !previous.placesActive, placesPanelOpen: !previous.placesActive, placesGroup, ...(previous.placesActive ? { selectedPlace: null, placesShowLink: false, placesList: [], placesCameraDistance: null } : {}) }), this.syncPlaces);
+    const placesAutoUpdate=this.state.placesActive?this.state.placesAutoUpdate:readPlaceAutoUpdate(()=>window.localStorage,this.placesPreferenceKey(),true);
+    this.setState(previous => ({ placesAutoUpdate,placesActive: !previous.placesActive, placesPanelOpen: !previous.placesActive, placesGroup, ...(previous.placesActive ? { selectedPlace: null, placesShowLink: false, placesList: [], placesCameraDistance: null } : {}) }), this.syncPlaces);
+  };
+  private setPlacesAutoUpdate=(value:boolean)=>{
+    savePlaceAutoUpdate(()=>window.localStorage,this.placesPreferenceKey(),value);
+    this.setState({placesAutoUpdate:value},()=>this._places?.controller.setAutoUpdate(value));
   };
   private setPlacesGroup = (placesGroup: PlaceGroup) => {
     if (!PLACE_GROUPS.includes(placesGroup)) return;
@@ -527,13 +576,18 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const abort = () => controller.abort(); signal.addEventListener('abort', abort, { once: true });
     const timeout = setTimeout(abort, 12000);
     const request = this._selectionRequestId;
-    const current = () => !controller.signal.aborted && this.state.jimuMapView?.view === view && request === this._selectionRequestId;
+    const current = () => !controller.signal.aborted && !view.destroyed && this._placesExploreAbort===controller && this.state.jimuMapView?.view === view && request === this._selectionRequestId;
     this._places?.controller.sync();
     try {
       const bbox = placeImageryBbox(place, radius);
+      const cache=this._placesImageryCache||(this._placesImageryCache=new PlaceImageryCache());
+      cache.scope(view,this.accessToken,this.props?.config?.placesServiceUrl||'');
+      const cached=cache.get(place,radius);
+      if(cached!==undefined){if(!current())throw new DOMException('Cancelled','AbortError');return cached;}
       const data = await this.fetchMapillaryJson(`${GRAPH_API.BASE}/images?fields=id,sequence,geometry,computed_geometry,compass_angle,computed_compass_angle,is_pano,captured_at&bbox=${bbox.join(',')}&limit=40`, this.accessToken, controller.signal);
       if (!current()) throw new DOMException('Cancelled', 'AbortError');
-      return rankPlaceImagery(place, Array.isArray(data.data) ? data.data : [], radius, distanceMeters);
+      const images=rankPlaceImagery(place, Array.isArray(data.data) ? data.data : [], radius, distanceMeters);
+      cache.put(place,radius,images);return images;
     } finally {
       clearTimeout(timeout); signal.removeEventListener('abort', abort);
       if (this._placesExploreAbort === controller) { this._placesExploreAbort = null; this._places?.controller.sync(); }
@@ -589,10 +643,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _focusedViewerNote:FieldNote|null=null;
   private _detectionViewerMarkers:PanoramaDetectionLabels|null=null;
   private _detectionWorkspaceImage:string|null=null;
+  private _placeWorkspaceCrop:string|null=null;
   private _detectionNoteAfterFullscreen: (()=>void) | null = null;
   private _detectionWorkspaceMarkerOwner: string | null = null;
   private moveDetectionWorkspaceMarker = (requestId:string,point:{lon:number;lat:number}) => {if(this._detectionWorkspaceMarkerOwner===requestId&&validDetectionNoteLocation(point))this.drawPendingNoteGraphic(point.lon,point.lat);};
-  private finishDetectionWorkspaceMarker = (requestId:string) => {if(this._detectionWorkspaceMarkerOwner===requestId){this._detectionWorkspaceMarkerOwner=null;this.clearPendingNoteGraphic();this._detectionWorkspaceImage=null;}};
+  private finishDetectionWorkspaceMarker = (requestId:string) => {if(this._detectionWorkspaceMarkerOwner===requestId){this._detectionWorkspaceMarkerOwner=null;this.clearPendingNoteGraphic();this._detectionWorkspaceImage=null;const crop=this._placeWorkspaceCrop;this._placeWorkspaceCrop=null;if(crop)void deleteDetectionCrop(crop).catch(()=>{});}};
   private _detectionNotePickCancel: (()=>void) | null = null;
   private cancelDetectionNoteLocation = () => { if(this._pendingDetectionImageId){void deleteDetectionCrop(this._pendingDetectionImageId).catch(()=>{});this._pendingDetectionImageId=null;}if(this._detectionCropAbort)this.setState({detectionNoteCapturing:false});this._detectionCropAbort?.abort(); this._detectionCropAbort=null; this._detectionNoteAfterFullscreen=null; this._detectionNotePickCancel?.(); this._detectionNotePickCancel=null; };
   private dismissViewerDetection = () => { this.cancelDetectionNoteLocation(); if(!this.state.pendingFieldNote&&!this.state.detectionWorkspaceDraft&&!this._detectionWorkspaceMarkerOwner)this.clearPendingNoteGraphic(); this.setState({viewerDetectionNote:null,detectionNotePicking:false}); };
@@ -1460,7 +1515,7 @@ private syncMapLegendLayer() {
     objectsOptions: [{ value: DEFAULT_FILTER_LABELS.OBJECTS, label: DEFAULT_FILTER_LABELS.OBJECTS, iconUrl: null }],
     filtersLoaded: false,
     showIntro: true,
-    placesActive: false, placesPanelOpen: false, placesGroup: 'all', placesStatus: { kind: 'off', count: 0 }, selectedPlace: null, placesShowLink: false, placesList: [], placesCameraDistance: null,
+    placesActive: false, placesAutoUpdate:true,placeNotePhase:'idle',placesPanelOpen: false, placesGroup: 'all', placesStatus: { kind: 'off', count: 0 }, selectedPlace: null, placesHoveredId:null,placesRevealRequest:0,placesShowLink: false, placesList: [], placesCameraDistance: null,
     hasTimeTravel: false,
     showMinimap: true,
     detectionsActive: false,
@@ -1737,6 +1792,7 @@ private syncMapLegendLayer() {
         this.applyCustomCameraAngle();
       }
       const newId = String(event.image.id);
+      if(newId!==String(this.state.imageId))this._placeNoteReview?.cancel();
       this._stopRoutePreview?.();
       if(this.state.viewerDetectionNote && this.state.viewerDetectionNote.imageId!==newId){
         this.cancelDetectionNoteLocation();
@@ -10996,7 +11052,7 @@ private syncMapLegendLayer() {
    * to ensure proper 3D positioning, distance scaling, and alignment with Point Cloud data.
    */
   private detectionNoteReference(note:FieldNote) {
-    const saved=attachmentMetadata(note.note).reference;if(saved)return saved;
+    const saved=attachmentMetadata(note.note).reference;if(saved?.detectionId)return saved;
     if(note.source!=='mapillary-detection'||!note.detectionId||String(note.imageId)!==String(this.state.imageId)||this._detectionImageData?.imageId!==String(note.imageId))return null;
     const det=this._detectionImageData.data?.data?.find((item:any)=>String(item.id)===String(note.detectionId));
     const bounds=det?.geometry?detectionThumbnailBounds(decodeAndNormalizeGeometry(det.geometry)):undefined;
@@ -11698,8 +11754,13 @@ private stopSafePlayback = () => {
   // - Ensures all intervals, observers, and event listeners are removed
   // - to prevent memory leaks when widget is closed or reloaded.
   componentWillUnmount() {
+    this._placeNoteDisposed=true;this._placeNoteReview?.cancel();
+    const pendingPlaceCrop=this.state.pendingFieldNote?.placeId&&this.state.pendingFieldNote.attachmentId;
+    if(pendingPlaceCrop)void deleteDetectionCrop(pendingPlaceCrop).catch(()=>{});
+    if(this._placeWorkspaceCrop){void deleteDetectionCrop(this._placeWorkspaceCrop).catch(()=>{});this._placeWorkspaceCrop=null;}
     this._coverageHoverResume?.dispose(); this._coverageHoverResume = null; this._coverageHoverHandler = null;
     this._presentationHandle?.remove(); this._presentationHandle=null;
+    this._placesImageryCache?.clear();this._placesImageryCache=null;
     this._placesExploreAbort?.abort(); this._places?.dispose(); this._places = null;
     document.removeEventListener('visibilitychange', this._sequenceVisibilityChange);
     this._hoverTimingAbort?.abort();
@@ -14091,15 +14152,17 @@ private stopSafePlayback = () => {
           }}
         />
 
-        {this.state.placesActive && this.state.placesPanelOpen && <PlacesPanel onGoToArea={this.goToPlacesArea} group={this.state.placesGroup} status={this.state.placesStatus} places={this.state.placesList} onSelect={id => this._places?.open([], id)}
+        {this.state.placesActive && this.state.placesPanelOpen && <PlacesPanel autoUpdate={this.state.placesAutoUpdate} onAutoUpdate={this.setPlacesAutoUpdate} onSearch={()=>this._places?.controller.searchArea()} origin={this.placesListOrigin()} hoveredId={this.state.placesHoveredId} revealRequest={this.state.placesRevealRequest} onHover={id=>this._places?.setHover(id)} onGoToArea={this.goToPlacesArea} group={this.state.placesGroup} status={this.state.placesStatus} places={this.state.placesList} onSelect={id => this._places?.open([], id,false,'list')}
           selection={this.state.selectedPlace ? { place: this.state.selectedPlace, link: this.state.placesShowLink, cameraDistance: this.state.placesCameraDistance,
             onLink: value => { this.setState({ placesShowLink: value }); this._places?.selection.setLink(value); },
-            onBack: this.goToSelectedPlace, onDetails: () => this._places?.open([], this.state.selectedPlace?.id), onClear: () => this._places?.clearSelection() } : undefined}
+            enterpriseEnabled:!!(this.props.config.sharedFieldNotesEnabled&&this.props.config.sharedFieldNotesUrl),onNote:this.createPlaceFieldNote,currentImageId:this.state.imageId,onGetNoteImage:this.getPlaceNoteImage,onLoadNotePreview:this.loadDetectionPreview,notePhase:this.state.placeNotePhase,onCancelNote:this.cancelPlaceNotePreparation,onImagery:()=>this._places?.open([],this.state.selectedPlace?.id,true,'card'),
+            onBack: this.goToSelectedPlace, onDetails: () => this._places?.open([], this.state.selectedPlace?.id,false,'card'), onClear: () => this._places?.clearSelection() } : undefined}
           onGroup={this.setPlacesGroup} onRetry={() => this._places?.controller.retry()} onClose={() => this.setState({ placesPanelOpen: false })}/>}
 
         {this.state.placesActive && !this.state.placesPanelOpen && this.state.selectedPlace && <SelectedPlaceCard place={this.state.selectedPlace} link={this.state.placesShowLink} cameraDistance={this.state.placesCameraDistance}
           onLink={value => { this.setState({ placesShowLink: value }); this._places?.selection.setLink(value); }}
-          onBack={this.goToSelectedPlace} onDetails={() => this._places?.open([], this.state.selectedPlace?.id)} onClear={() => this._places?.clearSelection()}/>}
+          enterpriseEnabled={!!(this.props.config.sharedFieldNotesEnabled&&this.props.config.sharedFieldNotesUrl)} onNote={this.createPlaceFieldNote} currentImageId={this.state.imageId} onGetNoteImage={this.getPlaceNoteImage} onLoadNotePreview={this.loadDetectionPreview} notePhase={this.state.placeNotePhase} onCancelNote={this.cancelPlaceNotePreparation} onImagery={()=>this._places?.open([],this.state.selectedPlace?.id,true,'card')}
+          onBack={this.goToSelectedPlace} onDetails={() => this._places?.open([], this.state.selectedPlace?.id,false,'card')} onClear={() => this._places?.clearSelection()}/>}
 
         {/* Splash Screen */}
         <SplashScreen showIntro={this.state.showIntro} filtersLoaded={this.state.filtersLoaded} onDismiss={this.dismissIntro} />

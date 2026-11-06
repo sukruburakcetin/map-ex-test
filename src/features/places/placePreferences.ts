@@ -16,3 +16,13 @@ export function savePlaceCategory(storage: () => Store, key: string | null, cate
   if (!key || !allowed(category)) return;
   try { storage().setItem(key, category); } catch { /* In-memory selection still works when browser storage is blocked. */ }
 }
+
+/** Separate validated toggle, scoped by the same widget/app/service key as categories. */
+export function readPlaceAutoUpdate(storage:()=>Store,key:string|null,fallback=true):boolean {
+ if(!key)return fallback;
+ try{const value=storage().getItem(key+':auto-update:v1');return value==='true'?true:value==='false'?false:fallback;}catch{return fallback;}
+}
+export function savePlaceAutoUpdate(storage:()=>Store,key:string|null,value:boolean):void {
+ if(!key||typeof value!=='boolean')return;
+ try{storage().setItem(key+':auto-update:v1',String(value));}catch{/* Session-only when storage is blocked. */}
+}

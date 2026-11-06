@@ -1,0 +1,22 @@
+{
+  "installer": "places-imagery-cache",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "c6ba486dc474f5fbafec5702b37e323ce0c0d60ad657cafb3f1b41cdbc9dacd9",
+      "resultSha256": "0064b42807a089c88da150b85ec8fc66917af1f9ddfa9babc4bdb486f18cf141"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "ddf7487b630bc286167692ab2ed6da550e538b5ec54f7792c0992a5904f930df",
+      "resultSha256": "8e41ebfc2789dfe49d2a1198f500dff6cec638ce34b6cdc8232121ff160198a9"
+    },
+    {
+      "file": "src/features/places/PlaceImageryCache.ts",
+      "originalSha256": null,
+      "resultSha256": "d84fcd999b93e96298cfbbcc9ae1601d79bd18346e268084937162cfb62bd5db"
+    }
+  ]
+}
