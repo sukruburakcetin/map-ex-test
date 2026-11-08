@@ -1,0 +1,97 @@
+{
+  "installer": "overture-poi-tiles-pilot",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "8c44dfbaeb936a31853265083a6d64810a9f74dc70e17b70bccee550be384bd8",
+      "resultSha256": "8857fbe435f7a48d8782395f382fd222764a48c6db5fac5b0ba546c8ad3c7055"
+    },
+    {
+      "file": "src/components/PlacesPanel.tsx",
+      "originalSha256": "f8364c10e84542970c344f4d3a54075ce89e083b6f4d8bc0fafa605e320578aa",
+      "resultSha256": "3a97dfc475213de3a97dfe26d84ec1855e2badef81782a1a75beeb15c9bbfbc5"
+    },
+    {
+      "file": "src/i18n/runtimeMessages.ts",
+      "originalSha256": "a1e368473c0ad9f431b2cd87651922a319a04281b9c8fa3fba4242e0c247cba9",
+      "resultSha256": "7d42bf66d9ab6776f6dc3eed6387d59cedbc7a44751cd40031e11f39be1e22b6"
+    },
+    {
+      "file": "docs/localization/translations.csv",
+      "originalSha256": "f86f9b8ad4a3db582c6a3e0be9ec7f76e1584ecea6b7bba7420affc7a76dcb3f",
+      "resultSha256": "f5cb2e31f32bd38b0a729d2423a5a600d262db5f806c7ef93cc1ccab8195f5ee"
+    },
+    {
+      "file": "src/i18n/locales/ar.ts",
+      "originalSha256": "1fa8e0812cdc4d7752d2e3630020494bf2e7ba3633380a6139ec8c3d1888b92f",
+      "resultSha256": "d91686ee12f8830f78b3bfc7ca0635af23bac4538ec73b65c40c4d4e7286dceb"
+    },
+    {
+      "file": "src/i18n/locales/tr.ts",
+      "originalSha256": "e594d03728c0f8524809d8d880a7261eb1ffa8f2ed6cd3d892f27a2e57b9fd3e",
+      "resultSha256": "795c7882728d98449701d5dd2a991b714d2d7dd918ebde1ba8c11b2c5c581e67"
+    },
+    {
+      "file": "src/i18n/locales/es.ts",
+      "originalSha256": "7d50316c4521857269401ab682512bb5fea42e8c2b69f5cab8f2f378f7a94c37",
+      "resultSha256": "4cd03fa3ebead24f0d59fedc204f09b495d0c37958ffe34e118fdeaa55275e18"
+    },
+    {
+      "file": "src/i18n/locales/fr.ts",
+      "originalSha256": "17206c4724f7f659c3a5394f1c7e1904de48a14f93df3b12668464d520183de6",
+      "resultSha256": "5f47bdb054f3579e11250a8edc973ce46478954876e45e67b0b84439fbd13328"
+    },
+    {
+      "file": "src/i18n/locales/de.ts",
+      "originalSha256": "f9da781cd486154e510dae7ac3d45b3970e4ce4de2d9d2f39a3b2def9fd492ae",
+      "resultSha256": "bcfbc46f02b429241391ef44afbc9c2a4ab176dbd587ccb97b4459c0ba518ebd"
+    },
+    {
+      "file": "src/i18n/locales/pt-br.ts",
+      "originalSha256": "6ceb5283f9c66df6750fc89c21bd1e0e3d009f420776fbe143c98ad9e5d6b2d4",
+      "resultSha256": "6ef71be87c11ed3aa6f6facdb8d7e21077f26bc0d86eb0601706a8bb7c1b44f0"
+    },
+    {
+      "file": "src/i18n/locales/it.ts",
+      "originalSha256": "d277281c6fc42b82f6bb8a995175157cfe8893e5124fdce480825535a308b06c",
+      "resultSha256": "69e6dfb42528e2fd255e823c36b619d0ab33ddb7ce7b465b847f17b5a12884cb"
+    },
+    {
+      "file": "src/i18n/locales/ja.ts",
+      "originalSha256": "c12b9c3711e2afd1c032a76bf3303b770438a388374e91b9c0e0d65c9ce7a438",
+      "resultSha256": "a91a53753259e3faa65f09bcfb69c1aebdbdbd16ce3ed35b78a0f1cc53645441"
+    },
+    {
+      "file": "src/i18n/locales/ko.ts",
+      "originalSha256": "83750aa7e6bd0b7bdb4581ca5b3009e9a9486c6ad26172d79f4ab220ab248907",
+      "resultSha256": "82822caa757d3f50a7ddd49b5f794102444c4ec7761fe9393c11c7b8c678dc49"
+    },
+    {
+      "file": "src/i18n/locales/zh-cn.ts",
+      "originalSha256": "06622abb880e7cae5311302ecd88ce0cd191a9e21b9ba75256b909b1cd564f62",
+      "resultSha256": "bf2cb7b6546116f70a01715fca1c68e4b800097080411d1a510f146ff69832b9"
+    },
+    {
+      "file": "src/i18n/locales/zh-tw.ts",
+      "originalSha256": "0462efd675625ef092025db06e75f4ac09a98ea5501019cf8f0f835550ddbb57",
+      "resultSha256": "089c3ac6b6b4e719fea05bacd461dadf743d090e8177c9c41fd6516e51edfb51"
+    },
+    {
+      "file": "src/features/places/PlacesTilesPrototype.ts",
+      "originalSha256": "0a067833bc4c72f112741837be210e6819ab2aa880c7c861a2786657a601c93e",
+      "resultSha256": "0740dbd29f071b9a139dacbe295b6819dccdc977805d8e6a609761bd13a4837b"
+    },
+    {
+      "file": "tests/placesTilesPrototype.test.cjs",
+      "originalSha256": "e339aa95cb0cc2240035488425c31aaaec56e257e1d549c0adb1bffea8538720",
+      "resultSha256": "3865feb4bc64442eebf29ec50eb7348b0818fb39cbfc9212286b05f9395e7a93"
+    },
+    {
+      "file": "docs/OVERTURE-LOCAL-TEST.md",
+      "originalSha256": "2fdee1c32c0bb4b345b76f43e71ccda72f6dec2d7095ce10ae045032d280e088",
+      "resultSha256": "7b7519c3af17dbf5e09925df715e69649ef5b1aa98c1617a7afeab4296641b07"
+    }
+  ]
+}

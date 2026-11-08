@@ -1,0 +1,37 @@
+{
+  "installer": "overture-poi-tiles-pilot",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "tools/overture_places/README.md",
+      "originalSha256": "262e5f2ff8eb365d78d9ac85e4a231c4a3bd80d78185d5fb1637f668fcc024c4",
+      "resultSha256": "60c103353f6256c40b244ff1d89a4a120605ff1945cb8ef17074ee92f5744a32"
+    },
+    {
+      "file": "src/features/places/PlacesTilesPrototype.ts",
+      "originalSha256": "f1524097335b1e598936c6cd60d83e78fba76ed29522eecf5de3addac9d10d52",
+      "resultSha256": "97396b2baf408f6d3337c86181e9042b431eaa047dfdeff69da494e689b32445"
+    },
+    {
+      "file": "tests/placesTilesPrototype.test.cjs",
+      "originalSha256": "8ce0c00b5feb0ca19f13a5a8d3d6eb89dc34067917d5b11b30564d37ba295d63",
+      "resultSha256": "ecc1e6579294d5f377fe5a05e4762e0798e9b9e9ff1dce18e213029f59186e0d"
+    },
+    {
+      "file": "tools/overture_places/serve_places_local.py",
+      "originalSha256": "92faa9c71ced3792ac3db3aa833986246f13b8dce0e6e8ba5a8d5cfd2c4d91e5",
+      "resultSha256": "2e88b7e73d980f0f1c3baf9aa1c19bf216ee26727be55a8190d5de527bebfca1"
+    },
+    {
+      "file": "docs/OVERTURE-LOCAL-TEST.md",
+      "originalSha256": "79e04343c5fd1c3749c74c3ea86bc50382eac51459c64b69ae1f91c9c07d93e4",
+      "resultSha256": "8cccc705885bc1fc25b9ff80bfec0cd94f782aedf1b1092009292b1248e63219"
+    },
+    {
+      "file": "tests/overturePlacesLocal.test.py",
+      "originalSha256": "137d40f392f61363e29ef27b9e902075ee11c2d39f7a982c858d24067e4a69bd",
+      "resultSha256": "bf8b962a9c1eab7f7bfa0c2514e96fca0f95117233a997656b71e7a4c713f27d"
+    }
+  ]
+}

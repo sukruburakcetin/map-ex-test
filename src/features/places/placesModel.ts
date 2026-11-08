@@ -2,7 +2,7 @@
 export const PLACE_GROUPS = ['all', 'health', 'education', 'parks', 'landmarks', 'services'] as const;
 export type PlaceGroup = typeof PLACE_GROUPS[number];
 export type PlaceBbox = [number, number, number, number];
-export interface Place { id: string; name: string; category: string; group: string; confidence: number; lon: number; lat: number; address: string; website: string; release: string; }
+export interface Place { id: string; name: string; category: string; group: string; confidence: number | null; operatingStatus?: string | null; lon: number; lat: number; address: string; website: string; release: string; }
 export const PLACES_LIMITS = { minZoom: 15, maxFeatures: 200, debounceMs: 650, timeoutMs: 12000, cacheBytes: 512 * 1024, cacheEntries: 6, cacheTtlMs: 120000 } as const;
 export function placesServiceUrl(value: string | undefined): string | null {
   try {

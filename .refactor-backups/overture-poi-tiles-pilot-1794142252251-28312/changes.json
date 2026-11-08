@@ -1,0 +1,47 @@
+{
+  "installer": "overture-poi-tiles-pilot",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "73fbf784d2fcc4e87cc4b7745f3439586abe2033e56802194eafb1b3425d40f3",
+      "resultSha256": "5f7a7127dc851c66525ca95041d6bc242ff22bad3a409aed9a8f696c4616c334"
+    },
+    {
+      "file": "tools/overture_places/README.md",
+      "originalSha256": "01c7bf4fe9dbdf12de7410fe5fa92020065ea07491e8975c0834726a97befccb",
+      "resultSha256": "3b16e81eec4ea66a545018d2b54ecbe07b115891fafa9c0b77823325334c64dd"
+    },
+    {
+      "file": "src/features/places/PlacesTilesPrototype.ts",
+      "originalSha256": null,
+      "resultSha256": "7c59bc412302862b1d29710e36967d85c3f9da8a90c0f2e773d92fac66235b69"
+    },
+    {
+      "file": "tools/overture_places/export_all_places.py",
+      "originalSha256": null,
+      "resultSha256": "cf9898ff63d4552b6ca484079b19b9bf02f19fad906280446b1f7c5d428c23ba"
+    },
+    {
+      "file": "tools/overture_places/prepare_all_places_arcpy.py",
+      "originalSha256": null,
+      "resultSha256": "5f3b4e461b6cf24d2dadc8a9f1e03fe9ec38462e390a8beef251cf351517c0a1"
+    },
+    {
+      "file": "docs/OVERTURE-TILES-PROTOTYPE.md",
+      "originalSha256": null,
+      "resultSha256": "4e6ab7b2fb5db1f2f0864812b74277fbcd69a8e44b427e3383bfb962ca709297"
+    },
+    {
+      "file": "tests/overtureAllPlacesExport.test.py",
+      "originalSha256": null,
+      "resultSha256": "319beb13fd2d7479a4a84ac20f8c2f8e8b08b24020706bb65bbfffa32c1c1422"
+    },
+    {
+      "file": "tests/placesTilesPrototype.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "480fb7125f3f20d7f14e98c01dbb6af0b63116bb141cf7caab2764f06bd516a4"
+    }
+  ]
+}

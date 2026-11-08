@@ -190,7 +190,7 @@ test('category preferences are validated, scoped and safe when browser storage i
  const preferences=load('placePreferences'),data=new Map(),store={getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)},url='https://host/FeatureServer/0';const key=preferences.placePreferenceKey('w','/experience/0',url);assert(key);preferences.savePlaceCategory(()=>store,key,'parks');assert.equal(preferences.readPlaceCategory(()=>store,key),'parks');assert.notEqual(key,preferences.placePreferenceKey('w','/experience/1',url));assert.notEqual(key,preferences.placePreferenceKey('other','/experience/0',url));assert.notEqual(key,preferences.placePreferenceKey('w','/experience/0','https://host/FeatureServer/1'));assert.equal(preferences.placePreferenceKey('w','/experience/0',url+'?token=secret'),null);data.set(key,'<script>');assert.equal(preferences.readPlaceCategory(()=>store,key),'all');assert.equal(preferences.readPlaceCategory(()=>{throw Error('blocked')},key,'education'),'education');assert.doesNotThrow(()=>preferences.savePlaceCategory(()=>{throw Error('blocked')},key,'parks'));preferences.savePlaceCategory(()=>store,key,'all');assert.equal(data.get(key),'all');preferences.savePlaceCategory(()=>store,key,'invalid');assert.equal(data.get(key),'all');
 });
 test('actual widget restores category on explicit enable without restoring startup activation',()=>{
- const preferences=load('placePreferences'),memberNames=['placesPreferenceKey','togglePlaces','setPlacesGroup'],body=memberNames.map(name=>widget.members.find(m=>m.name?.getText(sf)===name).getText(sf)).join('\n');const Runtime=new Function('PLACE_GROUPS','placePreferenceKey','readPlaceCategory','savePlaceCategory',compile('class Runtime{'+body+'}\nreturn Runtime;'))(model.PLACE_GROUPS,preferences.placePreferenceKey,preferences.readPlaceCategory,preferences.savePlaceCategory);const oldWindow=global.window,data=new Map();let reads=0;global.window={location:{pathname:'/experience/0'},localStorage:{getItem:k=>{reads++;return data.get(k)||null;},setItem:(k,v)=>data.set(k,v)}};
+ const preferences=load('placePreferences'),memberNames=['placesPreferenceKey','togglePlaces','setPlacesGroup'],body=memberNames.map(name=>widget.members.find(m=>m.name?.getText(sf)===name).getText(sf)).join('\n');const Runtime=new Function('PLACE_GROUPS','placePreferenceKey','readPlaceCategory','savePlaceCategory','readPlaceAutoUpdate',compile('class Runtime{'+body+'}\nreturn Runtime;'))(model.PLACE_GROUPS,preferences.placePreferenceKey,preferences.readPlaceCategory,preferences.savePlaceCategory,preferences.readPlaceAutoUpdate);const oldWindow=global.window,data=new Map();let reads=0;global.window={location:{pathname:'/experience/0'},localStorage:{getItem:k=>{reads++;return data.get(k)||null;},setItem:(k,v)=>data.set(k,v)}};
  const make=()=>{const w=new Runtime();w.props={id:'w',config:{placesServiceUrl:'https://host/FeatureServer/0'}};w.state={placesActive:false,placesGroup:'all',jimuMapView:{view:{ready:true}}};w.ArcGISModules={FeatureLayer:class{}};w.syncPlaces=()=>{};w.setState=(patch,done)=>{Object.assign(w.state,typeof patch==='function'?patch(w.state):patch);done?.();};return w;};try{const first=make();assert.equal(reads,0);assert.equal(first.state.placesActive,false);first.setPlacesGroup('landmarks');const second=make();assert.equal(second.state.placesActive,false);assert.equal(second.state.placesGroup,'all');assert.equal(reads,0);second.togglePlaces();assert.equal(second.state.placesActive,true);assert.equal(second.state.placesGroup,'landmarks');second.togglePlaces();assert.equal(second.state.placesActive,false);}finally{global.window=oldWindow;}
 });
 test('imagery alternatives prefer distinct sequences and separated frames rather than filling near-duplicate slots',()=>{
@@ -282,16 +282,25 @@ test('place note provenance records supplied attributes without fabricating an i
  const {placeNoteDescription}=load('placeNote');const text=placeNoteDescription({id:'gers-1',name:'Library',category:'public_library',address:'Main St',website:'https://example.com',release:'2026-10'});
  for(const value of ['Library','gers-1','public library','Main St','https://example.com','2026-10'])assert(text.includes(value));assert(!text.includes('undefined'));
 });
-test('actual place action creates drafts at mapped coordinates for all destinations without automatic saving',()=>{
- const {placeNoteDescription}=load('placeNote');const method=widget.members.find(m=>m.name?.getText(sf)==='createPlaceFieldNote').getText(sf);
- const Runtime=new Function('placeNoteDescription',compile('class Runtime{'+method+'}\nreturn Runtime;'))(placeNoteDescription);
- const place={id:'gers-1',name:'Library',category:'library',lon:29,lat:41};const calls=[];const w=new Runtime();w.state={placesActive:true,selectedPlace:place,jimuMapView:{view:{closePopup(){calls.push('close');}}}};w.props={config:{sharedFieldNotesEnabled:true,sharedFieldNotesUrl:'https://host/FeatureServer/0'}};w.dismissViewerDetection=()=>{};w.drawPendingNoteGraphic=(...p)=>calls.push(p);w._fieldNoteDraft={openPlace:(...p)=>calls.push(p)};w.setState=p=>Object.assign(w.state,p);w._owned=t=>t;w.showToast=t=>calls.push(t);
- w.createPlaceFieldNote('local');assert.equal(calls.at(-1)[1],'local');assert.equal(calls.at(-1)[0],place);
- w.createPlaceFieldNote('enterprise');assert.equal(calls.at(-1)[1],'enterprise');
- w.createPlaceFieldNote('workspace');const seed=w.state.detectionWorkspaceDraft;assert.equal(seed.placeId,place.id);assert.equal(seed.lon,29);assert.equal(seed.lat,41);assert.equal(seed.imageId,null);assert.equal(seed.detectionId,undefined);assert.equal(w.state.fieldNotesListOpen,true);
- const count=calls.length;w.createPlaceFieldNote('local');assert.equal(calls.length,count+1);assert.match(calls.at(-1),/Finish or cancel/);
- w.state.detectionWorkspaceDraft=null;w._detectionWorkspaceMarkerOwner=null;w.props.config.sharedFieldNotesEnabled=false;const before=calls.length;w.createPlaceFieldNote('enterprise');assert.equal(calls.length,before);
+test('actual place action creates drafts at mapped coordinates for all destinations without automatic saving',async()=>{
+ const {PlaceNoteReview}=load('PlaceNoteReview');
+ const names=['_placeNoteDisposed','_placeNoteReview','createPlaceFieldNote','openPlaceFieldNote'];
+ const body=names.map(name=>widget.members.find(member=>member.name?.getText(sf)===name).getText(sf)).join('\n');
+ const Runtime=new Function('PlaceNoteReview','deleteDetectionCrop',compile('class Runtime{'+body+'}\nreturn Runtime;'))(PlaceNoteReview,async()=>{});
+ const place={id:'gers-1',name:'Library',category:'library',lon:29,lat:41};const opened=[],messages=[];const w=new Runtime();
+ w.state={placesActive:true,selectedPlace:place,jimuMapView:{view:{ready:true,closePopup(){}}}};
+ w.props={state:'OPENED',config:{sharedFieldNotesEnabled:true,sharedFieldNotesUrl:'https://host/FeatureServer/0'}};
+ w.dismissViewerDetection=()=>{};w.drawPendingNoteGraphic=()=>{};w.clearPendingNoteGraphic=()=>{};
+ w._fieldNoteDraft={openPlace:(...args)=>opened.push(args)};w.setState=(patch,done)=>{Object.assign(w.state,patch);done?.()};w._owned=t=>t;w.showToast=t=>messages.push(t);
+ try{
+  w.createPlaceFieldNote('local');await flush();assert.equal(opened.at(-1)[1],'local');assert.equal(opened.at(-1)[0].id,place.id);assert.equal(opened.at(-1)[0].lon,29);assert.equal(opened.at(-1)[0].lat,41);
+  w.createPlaceFieldNote('enterprise');await flush();assert.equal(opened.at(-1)[1],'enterprise');
+  w.createPlaceFieldNote('workspace');await flush();const seed=w.state.detectionWorkspaceDraft;assert.equal(seed.placeId,place.id);assert.equal(seed.lon,29);assert.equal(seed.lat,41);assert.equal(seed.imageId,null);assert.equal(seed.detectionId,undefined);assert.equal(w.state.fieldNotesListOpen,true);
+  const count=opened.length;w.createPlaceFieldNote('local');await flush();assert.equal(opened.length,count);assert.match(messages.at(-1),/Finish or cancel/);
+  w.state.detectionWorkspaceDraft=null;w._detectionWorkspaceMarkerOwner=null;w.props.config.sharedFieldNotesEnabled=false;w.createPlaceFieldNote('enterprise');await flush();assert.equal(opened.length,count);
+ }finally{w._placeNoteReview.cancel()}
 });
+
 test('imagery auto-start waits for owned popup readiness and ignores a cancelled opening',async()=>{
  const {PlacePopupFocus}=load('PlacePopupFocus');const focus=new PlacePopupFocus();let resolve,started=0;const content={};const view={openPopup:()=>new Promise(r=>resolve=r),popup:{content,visible:true}};
  focus.open(view,{content},null,()=>started++);assert.equal(started,0);resolve();await flush();assert.equal(started,1);

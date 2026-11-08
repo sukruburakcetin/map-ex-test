@@ -1,3 +1,4 @@
+import { PlaceHover } from './PlaceHover';
 import { Presentation, englishPresentation } from '../../i18n/PresentationText';
 import { PlacePopupFocus } from './PlacePopupFocus';
 import { groupOverlappingPlaces, placeCountSymbol, PlaceGroupMarker } from './overlappingPlaces';
@@ -14,7 +15,7 @@ export class ArcGISPlaces {
   private get l10n(): Presentation { return this.host.presentation || englishPresentation; }
   private service: any = null;
   private published: PlaceBbox | null = null;
-  get stats() { return { ...this.controller.stats, loaded: this.records.size, rendered: this.graphics?.graphics?.length ?? 0, overlapGroups: this.groups.size, cachedSymbols: this.iconSymbols.size + this.countSymbols.size, selection: this.selection.stats }; }
+  get stats() { return { ...this.controller.stats, loaded: this.records.size, rendered: this.graphics?.graphics?.length ?? 0, overlapGroups: this.groups.size, cachedSymbols: this.iconSymbols.size + this.countSymbols.size, selection: this.selection.stats, hoverGraphics: this.nativeHover?.stats.graphics ?? 0, externalChoices: this.externalChoices.size }; }
   get coverageExtent(): PlaceBbox | null { return this.published; }
   private graphics: any = null;
   private ownerView: any = null;
@@ -36,20 +37,33 @@ export class ArcGISPlaces {
   private popupContent: HTMLDivElement | null = null;
   private selectionOrigin:'map'|'list'|'card'='map';
   private notifiedHover:string|null=null;
+  private nativeHover: PlaceHover | null = null;
+  private nativeHoverPlace: Place | null = null;
+  private externalChoices = new Map<string, Place>();
   readonly selection: SelectedPlace;
   readonly controller: PlacesController;
   constructor(private host: {
+    externalSelection?: boolean;
+    queryExternal?(bbox: PlaceBbox, signal: AbortSignal): Promise<{ features: any[]; limited: boolean; outside?: boolean }>;
+    normalizeExternal?(features: any[], bbox: PlaceBbox): Place[];
+    externalVisible?(visible: boolean): void;
+    externalMapVisible?(): boolean;
+    listActive?(): boolean;
     manualSearch?:boolean;hybridSearch?:boolean;presentation?: Presentation;
     id: string; url: string; modules: any; view(): any; geographic(extent: any): any;
     list?(places: readonly Place[]): void; selected?(place: Place | null,origin?:'map'|'list'|'card'): void;hovered?(id:string|null):void; busy(): boolean; pauseReason?(): string; status(state: PlacesState): void; explore(place: Place, radius: number, signal: AbortSignal): Promise<PlaceImagery[]>; openImagery(image: PlaceImagery): void;
   }) {
     const url = placesServiceUrl(host.url);
-    if (!url) throw new Error('Invalid Places service URL');
+    if (!url && !host.externalSelection) throw new Error('Invalid Places service URL');
+    if (host.externalSelection) this.nativeHover = new PlaceHover({ id: host.id, modules: host.modules, view: host.view });
     this.selection = new SelectedPlace({ id: host.id, modules: host.modules, view: host.view, changed: place=>host.selected?.(place,this.selectionOrigin) });
     this.controller = new PlacesController({
-      manualSearch:host.manualSearch,hybridSearch:host.hybridSearch,
+      manualSearch:host.manualSearch,hybridSearch:host.hybridSearch,consumerActive:host.listActive,
       view: () => this.snapshot(), extent: () => this.published, busy: host.busy, pauseReason: host.pauseReason,
+      normalize: host.normalizeExternal,
       query: async (bbox, group, signal) => {
+        if (host.queryExternal) return host.queryExternal(bbox, signal);
+        if (host.externalSelection) throw new Error('External selection owner does not query a FeatureServer');
         this.regroup();
         if (!this.service) this.service = new host.modules.FeatureLayer({ url, outFields: FIELDS, popupEnabled: false });
         const service = this.service;
@@ -71,6 +85,7 @@ export class ArcGISPlaces {
       },
       display: (places, view) => this.display(places, view),
       visible: visible => {
+        host.externalVisible?.(visible);
         if (!visible) this.setHover(null);
         if (this.graphics) this.graphics.visible = visible; if (this.attribution) this.attribution.hidden = !visible;
         if (this.listVisible !== visible) { this.listVisible = visible; this.host.list?.(visible ? this.listedPlaces : []); }
@@ -86,8 +101,9 @@ export class ArcGISPlaces {
   private watchView(): void {
     this.handles.forEach(handle => handle.remove()); this.handles = [];
     const view = this.host.view();
-    if (view) this.handles.push(view.watch(['stationary', 'zoom', 'extent'], () => { if(this.host.manualSearch&&view.stationary)this.regroup();this.controller.sync(); }));
+    if (view) this.handles.push(view.watch(['stationary', 'zoom', 'extent'], () => { if (!view.stationary) this.setHover(null); if(this.host.manualSearch&&view.stationary)this.regroup();this.controller.sync(); }));
   }
+  setExternalExtent(bbox: PlaceBbox | null): void { this.published = bbox; }
   rebindView(): void { this.clear(); this.selection.rebind(); this.watchView(); this.controller.sync(); }
   private visibility = () => this.controller.sync();
   private snapshot(): PlacesView | null {
@@ -100,6 +116,11 @@ export class ArcGISPlaces {
   }
   private display(places: Place[], view: any): void {
     if (this.disposed || this.host.view() !== view || this.host.busy() || view.destroyed) return;
+    if (this.host.externalSelection) {
+      this.ownerView = view; this.records = new Map(places.map(place => [place.id, place])); this.listedPlaces = places;
+      if (this.listVisible) this.host.list?.(places);
+      return;
+    }
     if (this.ownerView !== view || !this.graphics) {
       this.clear(); this.ownerView = view;
       this.graphics = new this.host.modules.GraphicsLayer({ id: `overture-places-${this.host.id}`, title: 'Nearby places · Overture', listMode: 'hide', elevationInfo: { mode: 'on-the-ground' } });
@@ -137,11 +158,20 @@ export class ArcGISPlaces {
   }
   private groupPlace(group: PlaceGroupMarker): Place { return { ...group.anchor, id: group.id, name: `${group.members.length} places here` }; }
 
+  setExternalHover(place: Place | null): void { this.nativeHoverPlace = place; this.setHover(place?.id || null); }
   /** Reuse the existing marker; never mutate shared/cached symbols or selection. */
   setHover(id: string | null): void {
     if (this.hovered?.id === id) return;
     if (this.hovered) { this.hovered.graphic.symbol = this.hovered.symbol; this.hovered = null; }
     const notify=(value:string|null)=>{if(this.notifiedHover!==value){this.notifiedHover=value;this.host.hovered?.(value);}};
+    if (this.host.externalSelection) {
+      const place = id ? this.records.get(id) || (this.nativeHoverPlace?.id === id ? this.nativeHoverPlace : null) || this.externalChoices.get(id) || (this.selection.place?.id === id ? this.selection.place : null) : null;
+      if (!place || this.disposed || this.host.busy() || !(this.host.externalMapVisible?.() ?? this.listVisible) || this.host.view()?.stationary === false) {
+        this.nativeHover?.clear(); this.nativeHoverPlace = null; notify(null); return;
+      }
+      if (place.id === this.selection.place?.id) this.nativeHover?.clear(); else this.nativeHover?.show(place);
+      notify(place.id); return;
+    }
     notify(null);
     if (!id || this.disposed || this.host.busy() || !this.graphics?.visible || this.ownerView !== this.host.view() || this.ownerView?.destroyed || id === this.selection.place?.id) return;
     const markerId=this.memberGroups.get(id)||id;
@@ -151,10 +181,12 @@ export class ArcGISPlaces {
     symbol.width += 3; symbol.height += 3;
     this.hovered = { id, graphic, symbol: original }; graphic.symbol = symbol;notify(id);
   }
-  hoverLabel(place: Place): string {
+  hoverLabel(place: Place, nearbyCount = 0): string {
+    if (nearbyCount > 1) return this.l10n.text("{value0} places here · Click to choose", { value0: String(nearbyCount) });
     const group = this.groups.get(place.id);
     return group ? this.l10n.text("{value0} places here · Click to choose",{value0:String(group.members.length)}) : `${place.name} · ${place.category.replace(/_/g, ' ')}`;
   }
+  get hoverLayers(): any[] { return this.host.busy() ? [] : [this.hoverLayer, this.selection.layerForHit].filter(Boolean); }
   get hoverLayer(): any { return !this.host.busy() && this.graphics?.visible && this.records.size ? this.graphics : null; }
   hit(results: any[]): Place | null {
     const selected = this.selection.hit(results); if (selected) { const group = this.groups.get(this.memberGroups.get(selected.id) || ''); return group ? this.groupPlace(group) : selected; }
@@ -184,12 +216,27 @@ export class ArcGISPlaces {
     }
     return nearest;
   }
-  open(results: any[], targetId?: string | null,startImagery=false,originKind:'map'|'list'|'card'='map'): boolean {
+  openExternalChoices(places: readonly Place[]): boolean {
+    if (!this.host.externalSelection || this.disposed || !places.length || places.length > 32) return false;
+    if (places.length === 1) return this.openExternal(places[0]);
     const view = this.host.view();
-    const valid = !this.disposed && this.graphics?.visible && this.ownerView === view && !view?.destroyed;
-    const group = valid ? this.groups.get(targetId || this.hit(results)?.id || '') : null;
+    if (!view?.ready || view.destroyed) return false;
+    this.setHover(null); this.externalChoices = new Map(places.map(place => [place.id, place]));
+    if (this.externalChoices.size < 2) return this.openExternal(places[0]);
+    this.groups.clear(); this.memberGroups.clear(); this.ownerView = view;
+    const members = [...this.externalChoices.values()];
+    const group: PlaceGroupMarker = { id: `@places-group:tile:${members[0].id}`, anchor: members[0], members };
+    this.groups.set(group.id, group); for (const member of members) this.memberGroups.set(member.id, group.id);
+    return this.openGroup(group, this.popupFocus.capture(view));
+  }
+  openExternal(place: Place): boolean { return this.open([], place.id, false, 'map', place); }
+  open(results: any[], targetId?: string | null,startImagery=false,originKind:'map'|'list'|'card'='map',externalPlace?: Place): boolean {
+    const view = this.host.view();
+    const valid = !this.disposed && (this.graphics?.visible || this.host.externalSelection && (this.host.externalMapVisible?.() ?? this.listVisible)) && this.ownerView === view && !view?.destroyed;
+    const selectedGroup = this.selection.place ? this.memberGroups.get(this.selection.place.id) : null;
+    const group = valid || selectedGroup && selectedGroup === targetId ? this.groups.get(targetId || this.hit(results)?.id || '') : null;
     if (group) return this.openGroup(group, this.popupFocus.capture(view));
-    const place = (valid && targetId ? this.records.get(targetId) : null) || (this.selection.place?.id === targetId ? this.selection.place : null) || this.hit(results);
+    const place = externalPlace || (valid && targetId ? this.records.get(targetId) || this.externalChoices.get(targetId) : null) || (this.selection.place?.id === targetId ? this.selection.place : null) || this.hit(results);
     if (this.disposed || !place || !view || view.destroyed) return false;
     const origin = this.popupFocus.capture(view);
     this.setHover(null);
@@ -271,7 +318,7 @@ export class ArcGISPlaces {
         const detail = document.createElement('span'); detail.className = 'mly-place-group-category'; detail.textContent = category; text.appendChild(detail);
         if (selected) { const badge = document.createElement('span'); badge.className = 'mly-place-group-selected'; this.l10n.bind(badge,"textContent",()=>this.l10n.text("Selected")); text.appendChild(badge); }
         button.appendChild(text);
-        button.onclick = () => { if (active() && this.records.has(place.id)) this.open([], place.id); }; list.appendChild(button);
+        button.onclick = () => { if (active() && (this.records.has(place.id) || this.externalChoices.has(place.id))) { if (this.host.externalSelection) this.openExternal(place); else this.open([], place.id); } }; list.appendChild(button);
       }
       previous.disabled = page === 0; next.disabled = (page + 1) * 4 >= members.length; label.textContent = `${page + 1} / ${Math.ceil(members.length / 4)}`; controls.hidden = members.length <= 4;
       if (moveFocus) list.querySelector?.('button')?.focus({ preventScroll: true });
@@ -301,12 +348,13 @@ export class ArcGISPlaces {
     if (!this.controller?.stats.enabled) this.selection.clear(!this.disposed);
     if (this.attribution) { if (!this.ownerView?.destroyed) this.ownerView?.ui?.remove(this.attribution); this.attribution.remove(); this.attribution = null; }
     if (this.graphics) { if (!this.ownerView?.destroyed) this.ownerView?.map?.remove(this.graphics); if (!this.graphics.destroyed) this.graphics.destroy(); this.graphics = null; }
+    this.externalChoices.clear(); this.nativeHoverPlace = null; this.nativeHover?.clear();
     this.records.clear(); this.groupingKey = ''; this.groups.clear(); this.memberGroups.clear(); this.ownerView = null;
     if (this.listedPlaces.length) { this.listedPlaces = []; if (!this.disposed) this.host.list?.([]); }
   }
   dispose(): void {
     if (this.disposed) return;
-    this.disposed = true; this.controller.dispose(); this.selection.dispose(); this.handles.forEach(h => h.remove()); this.handles = [];
+    this.disposed = true; this.controller.dispose(); this.selection.dispose(); this.nativeHover?.dispose(); this.handles.forEach(h => h.remove()); this.handles = [];
     document.removeEventListener('visibilitychange', this.visibility);
     this.service?.destroy(); this.service = null; this.published = null; this.iconSymbols.clear(); this.countSymbols.clear();
   }

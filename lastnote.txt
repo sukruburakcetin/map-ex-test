@@ -1,0 +1,4 @@
+python tools/overture_places/serve_places_local.py --input places-all.geojsonl
+
+const poiTest = Object.values(window.__mlyPlacesTiles)[0];
+await poiTest.startLocal();

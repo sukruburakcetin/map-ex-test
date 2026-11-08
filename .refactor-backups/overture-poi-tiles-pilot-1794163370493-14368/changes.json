@@ -1,0 +1,67 @@
+{
+  "installer": "overture-poi-tiles-pilot",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "9fad902964579e3f9d001b7ee50e18e1c91509eee445d7a542d603bed15a1f24",
+      "resultSha256": "884e6a7200cc1027453814f3ae8378154a86111c29d05fd4d6844e5a227aed81"
+    },
+    {
+      "file": "tools/overture_places/README.md",
+      "originalSha256": "d23643a34f94f91c2b7eedf567c997390ec2d51016968afbc858b9bd57847380",
+      "resultSha256": "65348e636c29e934f5ebbc7773daf54f5e97e07215a4eb672b2162d8fb0df730"
+    },
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "946e1cef76290232c68944046c46574d89b7ef082d6e77891d103b55bfe20eab",
+      "resultSha256": "cd84de121b92c1959e441d5792a49a084e332159c7526585abfdc9d79631291e"
+    },
+    {
+      "file": "src/features/places/SelectedPlace.ts",
+      "originalSha256": "116896fa51e366dd5baf00b6f7f7f1fcecae4f2162f31fd2d4ac61152cc3e91b",
+      "resultSha256": "dbdb8e8f08a6f194eccee77aa37dca7af835f4e704d8f884b22e63eae6f6cbde"
+    },
+    {
+      "file": "src/features/places/PlacesTilesPrototype.ts",
+      "originalSha256": "6390d49695c8f04b0fa02b1ec6ce631ae6a6de1743c0a6fdbf2aa5c08ae71eb0",
+      "resultSha256": "ad38d7616163c6492eabae443a9380ffec73ef0108614c73ba0c29ecf6c14366"
+    },
+    {
+      "file": "tests/placesTilesPrototype.test.cjs",
+      "originalSha256": "83d417a141dc5b3c9b51ab4e9af5f2c6954cc60e76c2fa9819b602344146fa40",
+      "resultSha256": "bcc47eaabe156707e1284a6f030e5cb1a9d65b947f002419f8def83e74e71c31"
+    },
+    {
+      "file": "docs/OVERTURE-LOCAL-TEST.md",
+      "originalSha256": "3cd8cc6f96cb6e626a34a3a56ae92dff337bcd6225e3c6c2fe903f7bada6dccd",
+      "resultSha256": "4c2aa18e984f65af172789ba1228e9ff1b87a120c104b3d4d3cc02d0b34be579"
+    },
+    {
+      "file": "tests/tilePlaceIntegration.test.cjs",
+      "originalSha256": "404ddd5208f81487c88a85d7dc1a36ad9a47b750ac77621aaa86ca3ede26670f",
+      "resultSha256": "97cabec0c71d39c460e76ff5171a7adb349d260ac290c26ac6daae23a4664174"
+    },
+    {
+      "file": "docs/OVERTURE-POI-FEATURE-PARITY.md",
+      "originalSha256": "c3a8081eb465020fadfce145c4af51ff31eff38c4f307258a4b27ba1e29ee9b5",
+      "resultSha256": "4865ed09002764b09b46e7354b73c770d2868776277fe9d1c250679219a2afe4"
+    },
+    {
+      "file": "src/features/places/BoundedPlaceHover.ts",
+      "originalSha256": null,
+      "resultSha256": "5ad81f83b4f3784a4687183b53397c626039140a8e22a4adc87de1c629c4d4ce"
+    },
+    {
+      "file": "src/features/places/PlaceHover.ts",
+      "originalSha256": null,
+      "resultSha256": "eac85bb163ef616f3939f387fdf60d6c7a207c1deb10386c272ffcbf45e735eb"
+    },
+    {
+      "file": "tests/boundedPlaceHover.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "111375750c4fee94c7a052efa94a2f3742d66c68b2faf4b9169a84e454168cad"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "installer": "overture-poi-tiles-pilot",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/SelectedPlaceCard.tsx",
+      "originalSha256": "91af17ce6c62e09e22f72bb500b0520d874e6ae1f1b41e6f714f81a833e10f75",
+      "resultSha256": "a6495c3b24adb51e7950f31e03857edd5974111fbc9c6aeac7cf5c709752aa86"
+    },
+    {
+      "file": "src/components/PlacesPanel.tsx",
+      "originalSha256": "a731e648a52df0372eacf712d6c7ce4953fecc0779da0886c0b9cdd50cd4d069",
+      "resultSha256": "24d880a96ebb7860981001426e859252343e9859e86c27ee9d8e860ea00b61be"
+    },
+    {
+      "file": "docs/OVERTURE-LOCAL-TEST.md",
+      "originalSha256": "a0c6cc3020513414017d56ee557c2b9e6b152ee9bca9ee743e57970edf3903f9",
+      "resultSha256": "0ca49d8ce47fa66acc1025c159f78b733d6c103df552caa4ce49af97cb2216c9"
+    },
+    {
+      "file": "tests/placesPanelRendering.test.cjs",
+      "originalSha256": "98a1b5a3a29e0e455ad5f6e6ff5f556f5f98aca0cd7d93f1a22f128ec205b61f",
+      "resultSha256": "6066c292d032366b02947c38cdd78054cc5baa8fa801adc6d9cf9bdbfa06a7a2"
+    },
+    {
+      "file": "src/components/TileCategoryPicker.tsx",
+      "originalSha256": null,
+      "resultSha256": "69539d593a355dc3dcee5c529fe893a08bc7febc82c413f8e0a18ee13e4876b6"
+    },
+    {
+      "file": "tests/tileCategoryPicker.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "fd44fc3b6a96a35093c3edd661706c524345dd612367b1d539cff1525786f1da"
+    }
+  ]
+}

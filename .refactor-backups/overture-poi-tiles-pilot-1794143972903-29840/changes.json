@@ -1,0 +1,32 @@
+{
+  "installer": "overture-poi-tiles-pilot",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "docs/OVERTURE-TILES-PROTOTYPE.md",
+      "originalSha256": "13e06f73bff3af18df3411522979f784dfc77e67faf2ca173537ff3248120023",
+      "resultSha256": "48614a80224695d626dfed97a2fd8f3893b9ffbaa91f827a6c8a6d9af1afd3aa"
+    },
+    {
+      "file": "tools/overture_places/serve_places_local.py",
+      "originalSha256": "4d1dd692d0b0a7b56daeb3dc5968be62f9e3574d32d9fe15720949e86af64ece",
+      "resultSha256": "22e03a483c2b7fe64146954ab8e14988b8ff67f297df7795a9180202bea5fca0"
+    },
+    {
+      "file": "docs/OVERTURE-LOCAL-TEST.md",
+      "originalSha256": "f973885e62e6d6950909a2b9b787fbb59056a9d2500b44424b34202ba4053fa7",
+      "resultSha256": "757b0439743e46f92668906ada2a17dadcc20da0ef3f09a85361317979af44ff"
+    },
+    {
+      "file": "tests/overturePlacesLocal.test.py",
+      "originalSha256": "e0ae77e781bc09a8a63b57567a9a555b019a2958659b22933c8293106e22a725",
+      "resultSha256": "56cb58366872f0a5b7eff359bfe6b1f495299430fc824253c579b8a61e77889a"
+    },
+    {
+      "file": "tools/overture_places/places_sprite.py",
+      "originalSha256": null,
+      "resultSha256": "f9f8932e86bb7e84c5ebcbb50bff57043ac835c7a2fb8361e4b9c99e3fd67f2a"
+    }
+  ]
+}

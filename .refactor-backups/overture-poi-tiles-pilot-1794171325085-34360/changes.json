@@ -1,0 +1,82 @@
+{
+  "installer": "overture-poi-tiles-pilot",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/PlacesPanel.tsx",
+      "originalSha256": "24d880a96ebb7860981001426e859252343e9859e86c27ee9d8e860ea00b61be",
+      "resultSha256": "f8364c10e84542970c344f4d3a54075ce89e083b6f4d8bc0fafa605e320578aa"
+    },
+    {
+      "file": "src/i18n/runtimeMessages.ts",
+      "originalSha256": "7e2fd45ee58d767c3c2ed410d25c155976f2075d7365b0a8563e9f1551e08c62",
+      "resultSha256": "a1e368473c0ad9f431b2cd87651922a319a04281b9c8fa3fba4242e0c247cba9"
+    },
+    {
+      "file": "docs/localization/translations.csv",
+      "originalSha256": "6c0fbca7f6f825f88d2607de92e2678b6b32252a39045dbd57e5d1166ddb98de",
+      "resultSha256": "f86f9b8ad4a3db582c6a3e0be9ec7f76e1584ecea6b7bba7420affc7a76dcb3f"
+    },
+    {
+      "file": "src/i18n/locales/ar.ts",
+      "originalSha256": "efde85cd3bbb6cb091306332ca6c9d76f094b04b9612e5ca65edd4f16c3aad02",
+      "resultSha256": "1fa8e0812cdc4d7752d2e3630020494bf2e7ba3633380a6139ec8c3d1888b92f"
+    },
+    {
+      "file": "src/i18n/locales/tr.ts",
+      "originalSha256": "e8263f86851871cdf950e163a2b19246f63251f40d5dc50f7dbaddceff8bbc65",
+      "resultSha256": "e594d03728c0f8524809d8d880a7261eb1ffa8f2ed6cd3d892f27a2e57b9fd3e"
+    },
+    {
+      "file": "src/i18n/locales/es.ts",
+      "originalSha256": "4158e7993cfe00637644cf254512512c6a7e3054ab8be040c1fe163d7107af42",
+      "resultSha256": "7d50316c4521857269401ab682512bb5fea42e8c2b69f5cab8f2f378f7a94c37"
+    },
+    {
+      "file": "src/i18n/locales/fr.ts",
+      "originalSha256": "ebb7c9f6710ad1a37cbecf22f84d6f7cc5c873171a406fe31074f15b0fc574e0",
+      "resultSha256": "17206c4724f7f659c3a5394f1c7e1904de48a14f93df3b12668464d520183de6"
+    },
+    {
+      "file": "src/i18n/locales/de.ts",
+      "originalSha256": "c042549b5d161acd6a19b43b3ba46bbd676fe757acf6437a8fe3ab1fe772c52c",
+      "resultSha256": "f9da781cd486154e510dae7ac3d45b3970e4ce4de2d9d2f39a3b2def9fd492ae"
+    },
+    {
+      "file": "src/i18n/locales/pt-br.ts",
+      "originalSha256": "96ce101a72cba71c970b1361bca010e9e8203c9a06fcf1498a0fd4079511a23f",
+      "resultSha256": "6ceb5283f9c66df6750fc89c21bd1e0e3d009f420776fbe143c98ad9e5d6b2d4"
+    },
+    {
+      "file": "src/i18n/locales/it.ts",
+      "originalSha256": "b152fbc94904bc1e2ed45e8250f606f3210ceedfd8c0309fe4cd30856a4c15d2",
+      "resultSha256": "d277281c6fc42b82f6bb8a995175157cfe8893e5124fdce480825535a308b06c"
+    },
+    {
+      "file": "src/i18n/locales/ja.ts",
+      "originalSha256": "e3a3a90325be323a3ed9fe2128f8ca8a800b503215ea7a52913bfc9a9b4a5f67",
+      "resultSha256": "c12b9c3711e2afd1c032a76bf3303b770438a388374e91b9c0e0d65c9ce7a438"
+    },
+    {
+      "file": "src/i18n/locales/ko.ts",
+      "originalSha256": "d7e7e7892621b0c467e37d5d4b2f07a8ec41bebff22c019d8cd1cec59723d884",
+      "resultSha256": "83750aa7e6bd0b7bdb4581ca5b3009e9a9486c6ad26172d79f4ab220ab248907"
+    },
+    {
+      "file": "src/i18n/locales/zh-cn.ts",
+      "originalSha256": "a12fbceaac675e301c88a53dcc2450cdb376f5155350dee6d91056c4ed586371",
+      "resultSha256": "06622abb880e7cae5311302ecd88ce0cd191a9e21b9ba75256b909b1cd564f62"
+    },
+    {
+      "file": "src/i18n/locales/zh-tw.ts",
+      "originalSha256": "f8a4a6b531646ee9d5f0f94c99686cc6eb4729dd352156374f1f69226f8fa350",
+      "resultSha256": "0462efd675625ef092025db06e75f4ac09a98ea5501019cf8f0f835550ddbb57"
+    },
+    {
+      "file": "docs/OVERTURE-LOCAL-TEST.md",
+      "originalSha256": "0ca49d8ce47fa66acc1025c159f78b733d6c103df552caa4ce49af97cb2216c9",
+      "resultSha256": "2fdee1c32c0bb4b345b76f43e71ccda72f6dec2d7095ce10ae045032d280e088"
+    }
+  ]
+}

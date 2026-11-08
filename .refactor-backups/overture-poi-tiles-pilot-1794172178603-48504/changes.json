@@ -1,0 +1,97 @@
+{
+  "installer": "overture-poi-tiles-pilot",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/PlacesPanel.tsx",
+      "originalSha256": "3a97dfc475213de3a97dfe26d84ec1855e2badef81782a1a75beeb15c9bbfbc5",
+      "resultSha256": "ee219d80c95712200f8a00fbf93c480dfb90c989bdb5db3bff8159e610e0ab2a"
+    },
+    {
+      "file": "src/i18n/runtimeMessages.ts",
+      "originalSha256": "7d42bf66d9ab6776f6dc3eed6387d59cedbc7a44751cd40031e11f39be1e22b6",
+      "resultSha256": "14e81e376304ed5888f70a5a52451185e845c636701a6552f5f2a1a3c209fcc1"
+    },
+    {
+      "file": "docs/localization/translations.csv",
+      "originalSha256": "f5cb2e31f32bd38b0a729d2423a5a600d262db5f806c7ef93cc1ccab8195f5ee",
+      "resultSha256": "737a06de16d09587c3147fdb1531068048621e95358fc70670c38e571db2e646"
+    },
+    {
+      "file": "src/i18n/locales/ar.ts",
+      "originalSha256": "d91686ee12f8830f78b3bfc7ca0635af23bac4538ec73b65c40c4d4e7286dceb",
+      "resultSha256": "4eb5809109d51c6cb202f2626d0f6efab6d8cb582113139442fd2d7f0029ebd4"
+    },
+    {
+      "file": "src/i18n/locales/tr.ts",
+      "originalSha256": "795c7882728d98449701d5dd2a991b714d2d7dd918ebde1ba8c11b2c5c581e67",
+      "resultSha256": "b52edba48b6e90cc30e0be8633e7a042f77004b5211f05d66aebe3e403ec5f12"
+    },
+    {
+      "file": "src/i18n/locales/es.ts",
+      "originalSha256": "4cd03fa3ebead24f0d59fedc204f09b495d0c37958ffe34e118fdeaa55275e18",
+      "resultSha256": "5503218d400a8e72d9f8ac39723ea032fdf59de068bcf13a7e20e8615a510013"
+    },
+    {
+      "file": "src/i18n/locales/fr.ts",
+      "originalSha256": "5f47bdb054f3579e11250a8edc973ce46478954876e45e67b0b84439fbd13328",
+      "resultSha256": "770e383c6afe079ac09fdf1fc57bafcf1f0307dd7acdcdfcaa881224ec57b5d0"
+    },
+    {
+      "file": "src/i18n/locales/de.ts",
+      "originalSha256": "bcfbc46f02b429241391ef44afbc9c2a4ab176dbd587ccb97b4459c0ba518ebd",
+      "resultSha256": "e7b1e11ad7fc6dff73d6c14ff4b106a6c8848ecab57297fc4eb727a11b33bf1b"
+    },
+    {
+      "file": "src/i18n/locales/pt-br.ts",
+      "originalSha256": "6ef71be87c11ed3aa6f6facdb8d7e21077f26bc0d86eb0601706a8bb7c1b44f0",
+      "resultSha256": "ad0062bffd274dc9f38ad21f03089b2598facd6534cb6b43661c98957252a5c4"
+    },
+    {
+      "file": "src/i18n/locales/it.ts",
+      "originalSha256": "69e6dfb42528e2fd255e823c36b619d0ab33ddb7ce7b465b847f17b5a12884cb",
+      "resultSha256": "814bc2f7bfb117f3b4af75c75ce5d5e645eb5053eb7db47a98a531aa9f17f8f9"
+    },
+    {
+      "file": "src/i18n/locales/ja.ts",
+      "originalSha256": "a91a53753259e3faa65f09bcfb69c1aebdbdbd16ce3ed35b78a0f1cc53645441",
+      "resultSha256": "845165d1f8f5a38b6b9a1702a11a4c0a5f3217759c84eb6f7f04fc3bc8f91676"
+    },
+    {
+      "file": "src/i18n/locales/ko.ts",
+      "originalSha256": "82822caa757d3f50a7ddd49b5f794102444c4ec7761fe9393c11c7b8c678dc49",
+      "resultSha256": "3a085fee6f8b20dbf21986932a3d6aeac1172ad27f54dce6adf4c93f14c142b3"
+    },
+    {
+      "file": "src/i18n/locales/zh-cn.ts",
+      "originalSha256": "bf2cb7b6546116f70a01715fca1c68e4b800097080411d1a510f146ff69832b9",
+      "resultSha256": "d997a4bd5605b87a16ccde6a1d5d1dfe4de368c65c01191876eee56033d1ab03"
+    },
+    {
+      "file": "src/i18n/locales/zh-tw.ts",
+      "originalSha256": "089c3ac6b6b4e719fea05bacd461dadf743d090e8177c9c41fd6516e51edfb51",
+      "resultSha256": "f18c1765bc8819f8fcef69129695ddea5062cb26385c373eb91a6427281463d3"
+    },
+    {
+      "file": "docs/OVERTURE-LOCAL-TEST.md",
+      "originalSha256": "7b7519c3af17dbf5e09925df715e69649ef5b1aa98c1617a7afeab4296641b07",
+      "resultSha256": "4e8defa2ab07bfe5bb9c5d337d41a2ae4159e0615889c45dc5e01cf5339340f7"
+    },
+    {
+      "file": "tests/placesPanelRendering.test.cjs",
+      "originalSha256": "6066c292d032366b02947c38cdd78054cc5baa8fa801adc6d9cf9bdbfa06a7a2",
+      "resultSha256": "668fb7bb1db1e4d0c52f36137f6a7563b39e1da9c2b31fe300d58b80725178ef"
+    },
+    {
+      "file": "src/components/PlaceQualityControls.tsx",
+      "originalSha256": null,
+      "resultSha256": "95586b328b939eb789e51b1f997450f2eeb058c5c8b6899ebfb4873a306dfcea"
+    },
+    {
+      "file": "tests/placeQualityControls.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "3035c6a22b4148f913ff4c0feb6e08efb5b8354f25d116403d826db32e3c41ab"
+    }
+  ]
+}

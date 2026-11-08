@@ -6,11 +6,13 @@ export interface PlacesState { kind: 'off' | 'paused' | 'zoom' | 'loading' | 're
 export interface PlacesHost {
   manualSearch?:boolean;
   hybridSearch?:boolean;
+  consumerActive?(): boolean;
   view(): PlacesView | null;
   busy(): boolean;
   pauseReason?(): string;
   extent?(): PlaceBbox | null;
   query(bbox: PlaceBbox, group: PlaceGroup, signal: AbortSignal): Promise<{ features: any[]; limited: boolean; outside?: boolean }>;
+  normalize?(features: any[], bbox: PlaceBbox): Place[];
   display(places: Place[], view: object): void;
   visible(value: boolean): void;
   clear(): void;
@@ -34,6 +36,7 @@ export class PlacesController {
   private filterDirty=false;
   private hybridArea:PlaceSearchArea|null=null;
   private autoUpdate:boolean;
+  private consumerPaused = false;
   private displayedView: object | null = null;
   private requestedView: object | null = null;
   private pendingTimer: any = null;
@@ -47,7 +50,7 @@ export class PlacesController {
   get stats() { return { cacheBytes: this.bytes, entries: this.cache.size, active: !!this.physical, enabled: this.enabled }; }
   setEnabled(enabled: boolean): void {
     if (this.disposed || this.enabled === enabled) return;
-    this.enabled = enabled; this.invalidate(); this.desired = '';this.approved=null;
+    this.enabled = enabled; this.consumerPaused = false; this.invalidate(); this.desired = '';this.approved=null;
     if (!enabled) { this.hybridArea=null;this.loaded=null;this.lastReady=null;this.filterDirty=false;this.host.clear(); this.cache.clear(); this.bytes = 0; this.displayedView = null; this.requestedView = null; this.status({ kind: 'off', count: 0 }); }
     else this.sync();
   }
@@ -69,7 +72,7 @@ export class PlacesController {
     this.sync();
   }
   searchArea():void {
-    if(this.disposed||!this.enabled)return;
+    if(this.disposed||!this.enabled||this.host.consumerActive?.()===false)return;
     if(this.host.manualSearch)this.sync();
     const view=this.host.view();
     if(!view?.bbox||view.zoom+.0001<PLACES_LIMITS.minZoom||!view.stationary||this.host.busy()||outsidePublishedExtent(view.bbox,this.host.extent?.())){this.sync();return;}
@@ -80,6 +83,13 @@ export class PlacesController {
   retry(): void { if(this.host.manualSearch){this.searchArea();return;} if (this.disposed || !this.enabled) return; this.desired = ''; this.invalidate(); this.sync(); }
   sync(): void {
     if (this.disposed || !this.enabled) return;
+    // A tiled source can keep rendering while nobody is consuming its result list.
+    // Suspend only list work; retain loaded results, selection and renderer state.
+    if (this.host.consumerActive?.() === false) {
+      if (!this.consumerPaused) { this.invalidate(); this.desired = ''; this.approved = null; this.consumerPaused = true; }
+      return;
+    }
+    this.consumerPaused = false;
     const view = this.host.view();
     if (view?.bbox && outsidePublishedExtent(view.bbox, this.host.extent?.())) {
       this.invalidate(); this.desired = '';this.approved=null; this.host.visible(false); this.status({ kind: 'outside', count: 0 }); return;
@@ -145,7 +155,7 @@ export class PlacesController {
         const page = await this.host.query(bbox, 'all', controller.signal);
         if (controller.signal.aborted || !this.current(revision, token)) return;
         if (page.outside) { this.host.visible(false); this.status({ kind: 'outside', count: 0 }); return; }
-        const places = normalizePlaces(page.features, bbox, 'all');
+        const places = this.host.normalize ? this.host.normalize(page.features, bbox) : normalizePlaces(page.features, bbox, 'all');
         const bytes = placesBytes(places);
         if (bytes <= PLACES_LIMITS.cacheBytes) {
           const prior = this.cache.get(key); if (prior) { this.bytes -= prior.bytes; this.cache.delete(key); }

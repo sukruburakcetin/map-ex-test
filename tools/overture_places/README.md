@@ -52,3 +52,29 @@ Test one sample `/query` using the portal REST interface: geometry envelope, inS
 ## Refreshing data
 
 Prepare a new dated export and inspect it outside the application. Back up the hosted item and its sharing/settings before replacing its data through your normal Enterprise publishing process. Preserve field names and schema; GERS IDs link place identity across releases. Existing sessions retain at most six two-minute cache entries; reload after replacing a release. Test each updated release's category taxonomy and geographic coverage before production use.
+
+## Unfiltered vector tile experiment (Enterprise 12.1)
+
+The separate `export_all_places.py` and `prepare_all_places_arcpy.py` tools retain all POI categories, confidence values and operating statuses in a bounded test area. They do not change the curated pilot exporter above. See [the Enterprise 12.1 workflow](../../docs/OVERTURE-ENTERPRISE-12.1.md) for export, ArcGIS Pro import, tile/details publishing and acceptance checks.
+
+For home testing without ArcGIS Pro, use `serve_places_local.py` with the already generated GeoJSONL and manifest. See [local tile testing](../../docs/OVERTURE-LOCAL-TEST.md). It uses standard-library Python and your existing Experience Builder HTTPS certificate.
+
+The local style supports 28 shared sprite families. Edit `place_categories.py` to review visual classification; see `OVERTURE-EXPLORER-NOTICE.txt` for upstream mapping attribution. `/status` reports `icon_counts` so fallback coverage can be inspected without excluding POIs.
+
+`basic_category_icons.csv` maps all 298 published basic categories from release `2026-10-21.0` to the shared atlas. `/status` includes the top 20 `unmapped_categories` to distinguish unknown values from missing source categories. Review the CSV against future releases; it is not a live taxonomy subscription.
+
+The local harness supports an optional confidence control in the widget: All records, preset thresholds or a custom minimum. Tile and click queries use the same server filter before limits. All records remains the default and includes missing confidence. See the local testing guide; the confidence installer requires a widget rebuild/reload.
+
+The local status installer adds Hide permanently closed, independent of confidence. It hides only explicit `permanently_closed` records from tiles and picking. Unknown and temporary statuses remain eligible. Rebuild/reload the widget and restart the local server after applying it.
+
+The imagery installer connects tiled POI popups to the widget's existing bounded Mapillary search and viewer. Search starts only on explicit request, initially within 75 m and optionally 250 m; closing or replacing the popup cancels pending work. Rebuild/reload after applying `apply-overture-poi-imagery.cjs`.
+
+The shared-selection installer connects native tile clicks to the existing POI popup, selected card, camera link and configured note/imagery actions, and restores normal coverage click dispatch. The bounded results-list/area-search adapter remains a separate parity task. See `docs/OVERTURE-POI-FEATURE-PARITY.md` before changing the default renderer.
+
+The panel installer adds bounded local area queries (`/search`, max 200), reusing the existing Places panel, manual/automatic controller, category facets, statuses and source-area navigation. Tile/pick/list predicates are synchronized; list display creates no graphics collection. Rebuild/reload and restart Python after applying `apply-overture-poi-panel.cjs`. Hover/overlap parity remains pending.
+
+The hover/overlap installer connects map/list feedback using one reusable outline and an 80 ms, single-request hover lookup. Overlapping complete candidates use the existing paginated chooser, including candidates outside the loaded list. Coverage hover retains priority. Native clustering and exact rendered-symbol picking are not introduced. Rebuild/reload after applying `apply-overture-poi-hover-overlap.cjs`.
+
+The rendering installer separates native tile visibility from optional list queries. The panel starts closed; `/search` runs only while results are consumed. Closing it cancels list work without clearing selection or hiding tiles. Bounds remain for the offline pilot, bounded results and point picking; native bulk rendering uses viewport tiles. No backend protocol/export change is required.
+
+The category-panel installer exposes all 28 native icon families, with localized labels and matching list/chooser/selection icons. Tile, area, click and hover filters share the `family` parameter; quality filters are retained. The five-group hosted-feature mode is unchanged. Restart Python and rebuild/reload after applying `apply-overture-poi-category-panel.cjs`; existing exports remain valid.

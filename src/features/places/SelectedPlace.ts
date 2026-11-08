@@ -10,6 +10,7 @@ export class SelectedPlace {
   private line: any = null;
   private lineUnderlay: any = null;
   private distanceLabel: any = null;
+  get layerForHit(): any { return this.place && this.view === this.host.view() && !this.view?.destroyed ? this.layer : null; }
   get stats() { return { selected: !!this.place, linkEnabled: this.link, graphics: Number(!!this.ring) + Number(!!this.line) + Number(!!this.lineUnderlay) + Number(!!this.distanceLabel) }; }
   private camera: [number, number] | null = null;
   private link = false;

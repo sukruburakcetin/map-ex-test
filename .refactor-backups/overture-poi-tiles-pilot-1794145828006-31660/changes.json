@@ -1,0 +1,47 @@
+{
+  "installer": "overture-poi-tiles-pilot",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "bf5af492d25afa006e7d20bf6c1fa902489b761f22e7326e3c4ad84bbb2fbf6c",
+      "resultSha256": "50de485406d943e447e7ca0e8a781de957bc9013b830449ae75b8859365252c6"
+    },
+    {
+      "file": "tools/overture_places/README.md",
+      "originalSha256": "77359b597a8444890f5a0af117594662f145f02465b497a9636907a4df6234b7",
+      "resultSha256": "262e5f2ff8eb365d78d9ac85e4a231c4a3bd80d78185d5fb1637f668fcc024c4"
+    },
+    {
+      "file": "src/features/places/PlacesTilesPrototype.ts",
+      "originalSha256": "91e87c106890919d0a1fe86f0118c32c6539459e020bf8a1d30c6d145196c45c",
+      "resultSha256": "f1524097335b1e598936c6cd60d83e78fba76ed29522eecf5de3addac9d10d52"
+    },
+    {
+      "file": "docs/OVERTURE-TILES-PROTOTYPE.md",
+      "originalSha256": "48614a80224695d626dfed97a2fd8f3893b9ffbaa91f827a6c8a6d9af1afd3aa",
+      "resultSha256": "dd2f2e9748e7ea4d056a39bbb74f89ce096d0311e9e1db9f1073cb6b1620751e"
+    },
+    {
+      "file": "tests/placesTilesPrototype.test.cjs",
+      "originalSha256": "018924278a7249ddc08ada913a36af22ba795e897e81fc2ac8486789402e37fc",
+      "resultSha256": "8ce0c00b5feb0ca19f13a5a8d3d6eb89dc34067917d5b11b30564d37ba295d63"
+    },
+    {
+      "file": "tools/overture_places/serve_places_local.py",
+      "originalSha256": "074900b5970d8bcd95d320b1ddb1dcba78bc82a42fbedd69bb982345851e6b33",
+      "resultSha256": "92faa9c71ced3792ac3db3aa833986246f13b8dce0e6e8ba5a8d5cfd2c4d91e5"
+    },
+    {
+      "file": "docs/OVERTURE-LOCAL-TEST.md",
+      "originalSha256": "a7bde7cd55f525e3a424f0e7b85c31fda98eb0727f659717c97ce1a393bb4dca",
+      "resultSha256": "79e04343c5fd1c3749c74c3ea86bc50382eac51459c64b69ae1f91c9c07d93e4"
+    },
+    {
+      "file": "tests/overturePlacesLocal.test.py",
+      "originalSha256": "1b72f3948a56f2dc5df5135f24a0ff00f518bdbcbabc7dc06626f3feb64f5cdf",
+      "resultSha256": "137d40f392f61363e29ef27b9e902075ee11c2d39f7a982c858d24067e4a69bd"
+    }
+  ]
+}
