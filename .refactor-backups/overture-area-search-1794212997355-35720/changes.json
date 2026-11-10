@@ -1,0 +1,142 @@
+{
+  "installer": "overture-area-search",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "tools/overture_places/serve_places_local.py",
+      "originalSha256": "18789120e9eb581e5e7db3d4d1e88673f4af06e91976b2ae4fb00d1819ea3ed1",
+      "resultSha256": "bec246b1ce30d2ed476c481a8fb71f9aca478a1efb22c9e105d113ba2b9f28fb"
+    },
+    {
+      "file": "src/features/places/PlacesController.ts",
+      "originalSha256": "6022cb5c1def9310a13cde64c167f361b90ffedeeb800981ece8fb0e203f1ce8",
+      "resultSha256": "953f1cd6a8e90ee5197b84e9ecd0bd0a919ae47c57340fdba51ffa05864b347e"
+    },
+    {
+      "file": "src/features/places/PlacesTilesPrototype.ts",
+      "originalSha256": "231db8de95cb6922c9658e03f47176f777c823b05d1dc34f81ca4644d7f4937b",
+      "resultSha256": "3b2e39c6d3622df6c6e1d437f4a6da413925118eb13c9553ae460a39b46568cd"
+    },
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "7695ca39631c3df3a8839fc017723539dba70de3496bb6170cec2d34024a4c01",
+      "resultSha256": "95e11df34481e71e5192cdb68a7b1b123e98623bce82224e7c0f8d08154bcc8c"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "e8a23b46c30e1802362f3bce62a8420867303187065bbd7b1874f2a1e2ec46b0",
+      "resultSha256": "8173d8aad0c68ab58533e8832ca33e569ffb79f1ad8408da4e3b84e5cbf17395"
+    },
+    {
+      "file": "src/components/PlacesPanel.tsx",
+      "originalSha256": "2cca5f499704760472adedde66ab90cc2fa2c18a12e2785d2fa814505b4686b2",
+      "resultSha256": "0d34e102c693480ad17c9d39653dcf0d7b8772cdc31dd8181bbbb56d1c978b07"
+    },
+    {
+      "file": "src/components/LoadedPlacesList.tsx",
+      "originalSha256": "ba11f47d4907cf000aa397530a8dbb9d593099540f602e2fde085eeaada4db5b",
+      "resultSha256": "6ff3d8dbf8e4351611ab52ecceed8273d21c4b3ebd8f426000ebbe3a6b6613eb"
+    },
+    {
+      "file": "tests/placesTileParity.test.cjs",
+      "originalSha256": "563a92b3870d2cb8e13676b43f682e3b77ebd81f6d9dac8611fa377b27c424c8",
+      "resultSha256": "584dd32f6b150eaa5df81bac0f934b36e9fa4443570031b33fe2c0435dc27ec6"
+    },
+    {
+      "file": "tests/placesTilesPrototype.test.cjs",
+      "originalSha256": "a56520ba6ec414d231a98b48343288e13665090283af41cb9312937d5862e3fb",
+      "resultSha256": "b036ca74fad86fcfe4f8c8a668d5bf119a0783ccc33b7354dc9abbe1368714fe"
+    },
+    {
+      "file": "tests/placesPanelRendering.test.cjs",
+      "originalSha256": "de714ae0cad9802c1b5076424eacdbe76f70d09512b828c8f27cdc8bedf384ae",
+      "resultSha256": "bd31e8d910d80ffb445111d096f4a7553e3450094ae7ca02cec57bdeb9fe92fb"
+    },
+    {
+      "file": "tests/overturePlacesLocal.test.py",
+      "originalSha256": "63fb7d34f82ad01fc9f96495cd6786c3373f7d34ad117fa5cbd3fe0c435a2f14",
+      "resultSha256": "c4359a0cadbd72bf8f6342164966c301df5623c4851259f15919453955e31bfe"
+    },
+    {
+      "file": "src/i18n/runtimeMessages.ts",
+      "originalSha256": "95e214181cda8777d117c468b1a7b18b6ac086af9114dfa12a542f8b328518de",
+      "resultSha256": "5c24fa8e6ec23e5a6b510d090fe80d8d32b67545b22fac84a3b012eb56920b81"
+    },
+    {
+      "file": "docs/localization/translations.csv",
+      "originalSha256": "a078dbaf8ab8677e98afa79412698a1afe7afb68ba733ec5279f521ee250aa2d",
+      "resultSha256": "d104457e0d90f51eaa77437a529825255987ebd99c2dc3b08b90ca69da329d69"
+    },
+    {
+      "file": "src/i18n/locales/ar.ts",
+      "originalSha256": "da94b251e340bc412e2662c01ba5ecda1f709f38cf0ab32af19061a02d55efca",
+      "resultSha256": "03fe4e7d5fd3b55f7a85b325c60adb1804a396cb05951f918abd681c65975a91"
+    },
+    {
+      "file": "src/i18n/locales/de.ts",
+      "originalSha256": "0c496df5e9517549ae0621ea388523aeacabde851d8425d7c2c09aa9d21e2461",
+      "resultSha256": "52e465fad43d8cf1504f9f1caecad152cbacd8c7409d21e789e7af4fa4581e91"
+    },
+    {
+      "file": "src/i18n/locales/en-gb.ts",
+      "originalSha256": "2f29bfd67964410f9633a1573d54da3fcb5e3f3dfd24d371fc4c2a52913f7474",
+      "resultSha256": "ed753ea924625e5b8e344a5a2b6b0097edb8b05e53675dd1a33dea37d51af053"
+    },
+    {
+      "file": "src/i18n/locales/es.ts",
+      "originalSha256": "2e5465a2d6334fa9111e0e5070ce8d866f8a8308cd0282182081fabc6d4192f9",
+      "resultSha256": "1a9a4745e77055539bdc29b908c9e67b13c46aab6105e67414e562bc3f23e829"
+    },
+    {
+      "file": "src/i18n/locales/fr.ts",
+      "originalSha256": "1054d5bba28b082547e7ac6a28c05f054f2b1ec12167edaa415996b706feb18e",
+      "resultSha256": "bb29fa0369ac35a6fa0aed66f70b0730d0cd09603d250a334ca3155ac8309939"
+    },
+    {
+      "file": "src/i18n/locales/it.ts",
+      "originalSha256": "2eb39e50403e4bd2277bba7274337d1a67dfa678740b5b3d01126af5208ecf79",
+      "resultSha256": "72452f51b6fbaeefba55cc517496e227027ebe1a3574d6803ffb3eccb5d47fbe"
+    },
+    {
+      "file": "src/i18n/locales/ja.ts",
+      "originalSha256": "e055c43eaa53d803cf10d9c53eba8c9ac2361cde4fe373c7af4a05807517a530",
+      "resultSha256": "3ea3326ea0ad3f8b825b7b2cb67eff8d922534fc73ac835afa9ffb52e0d951c4"
+    },
+    {
+      "file": "src/i18n/locales/ko.ts",
+      "originalSha256": "4bedbf5cdd1e4383623c021145a63cfc0dbe6ae71e75d3f797da264732d71098",
+      "resultSha256": "6018d66a748328052f9caa3773284879d4c191a3b8d65fcb2d5c8797bbabb4ca"
+    },
+    {
+      "file": "src/i18n/locales/pt-br.ts",
+      "originalSha256": "eb2027bcf3bd537095072dc412803d34af656762b43ad884e72c30c6acb6af99",
+      "resultSha256": "ac623e77cb42f62700b132e9d34f7420c2ed8731631b8e8823e22701ae1f6da0"
+    },
+    {
+      "file": "src/i18n/locales/tr.ts",
+      "originalSha256": "3d8287db7f67b745bd6a7f17606211c367450f03b1d53ba21958616579e3035b",
+      "resultSha256": "1c26289bb79d93691a71629aed7632f1934fa3abd452f87059507605a2dfb5ff"
+    },
+    {
+      "file": "src/i18n/locales/zh-cn.ts",
+      "originalSha256": "777e244508d312debec2e523f030c058d5ca852e1f4e65a0b44964b6478de528",
+      "resultSha256": "f16f3414d5408f8b1009cb4809d0df6397506dff84e87ddae14647b8abf3590f"
+    },
+    {
+      "file": "src/i18n/locales/zh-tw.ts",
+      "originalSha256": "6cb2fc8062f89afa4bc13a3294779230f53a3d43d0c75371218dbcbd5545bf0a",
+      "resultSha256": "ea4ff530c3181c9331ce702aebdd5a6a472fce4c6e25248f30f706bf216a5675"
+    },
+    {
+      "file": "src/components/TileCategoryPicker.tsx",
+      "originalSha256": "40ad2cd49a7c1bec5222c112b13dd4e0cb601a34cdf630d15521f36655f0114a",
+      "resultSha256": "7e86397f105ac5615387fac62c61abeb93cdf62a5ac40c05a0cee3dec4a4d534"
+    },
+    {
+      "file": "tests/placesAreaSearchInput.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "d9fb0adf3048f64beab274f31a8acca1df276d50550235bf1e122131729623d9"
+    }
+  ]
+}

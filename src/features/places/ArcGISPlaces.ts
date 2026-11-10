@@ -1,3 +1,4 @@
+import type { PlaceListOrigin } from './placeListUtils';
 import { PlaceHover } from './PlaceHover';
 import { Presentation, englishPresentation } from '../../i18n/PresentationText';
 import { PlacePopupFocus } from './PlacePopupFocus';
@@ -44,7 +45,8 @@ export class ArcGISPlaces {
   readonly controller: PlacesController;
   constructor(private host: {
     externalSelection?: boolean;
-    queryExternal?(bbox: PlaceBbox, signal: AbortSignal): Promise<{ features: any[]; limited: boolean; outside?: boolean }>;
+    searchOrigin?():PlaceListOrigin|null;
+    queryExternal?(bbox: PlaceBbox, signal: AbortSignal,origin?:PlaceListOrigin|null,offset?:number,text?:string): Promise<{ features: any[]; limited: boolean; outside?: boolean }>;
     normalizeExternal?(features: any[], bbox: PlaceBbox): Place[];
     externalVisible?(visible: boolean): void;
     externalMapVisible?(): boolean;
@@ -58,11 +60,11 @@ export class ArcGISPlaces {
     if (host.externalSelection) this.nativeHover = new PlaceHover({ id: host.id, modules: host.modules, view: host.view });
     this.selection = new SelectedPlace({ id: host.id, modules: host.modules, view: host.view, changed: place=>host.selected?.(place,this.selectionOrigin) });
     this.controller = new PlacesController({
-      manualSearch:host.manualSearch,hybridSearch:host.hybridSearch,consumerActive:host.listActive,
+      paged:!!host.queryExternal,manualSearch:host.manualSearch,hybridSearch:host.hybridSearch,consumerActive:host.listActive,searchOrigin:host.searchOrigin,
       view: () => this.snapshot(), extent: () => this.published, busy: host.busy, pauseReason: host.pauseReason,
       normalize: host.normalizeExternal,
-      query: async (bbox, group, signal) => {
-        if (host.queryExternal) return host.queryExternal(bbox, signal);
+      query: async (bbox, group, signal,origin,offset,text) => {
+        if (host.queryExternal) return host.queryExternal(bbox, signal,origin,offset,text);
         if (host.externalSelection) throw new Error('External selection owner does not query a FeatureServer');
         this.regroup();
         if (!this.service) this.service = new host.modules.FeatureLayer({ url, outFields: FIELDS, popupEnabled: false });
@@ -103,6 +105,7 @@ export class ArcGISPlaces {
     const view = this.host.view();
     if (view) this.handles.push(view.watch(['stationary', 'zoom', 'extent'], () => { if (!view.stationary) this.setHover(null); if(this.host.manualSearch&&view.stationary)this.regroup();this.controller.sync(); }));
   }
+  resetExternalResults():void {if(this.popupContent?.querySelector?.('.mly-place-group-row'))this.closeDetails();this.setHover(null);this.records.clear();this.listedPlaces=[];this.externalChoices.clear();this.groups.clear();this.memberGroups.clear();this.host.list?.([]);this.controller.resetResults();}
   setExternalExtent(bbox: PlaceBbox | null): void { this.published = bbox; }
   rebindView(): void { this.clear(); this.selection.rebind(); this.watchView(); this.controller.sync(); }
   private visibility = () => this.controller.sync();
@@ -117,6 +120,7 @@ export class ArcGISPlaces {
   private display(places: Place[], view: any): void {
     if (this.disposed || this.host.view() !== view || this.host.busy() || view.destroyed) return;
     if (this.host.externalSelection) {
+      this.setHover(null);
       this.ownerView = view; this.records = new Map(places.map(place => [place.id, place])); this.listedPlaces = places;
       if (this.listVisible) this.host.list?.(places);
       return;
@@ -244,6 +248,8 @@ export class ArcGISPlaces {
     const content = document.createElement('div'); content.className = 'mly-place-popup'; this.l10n.bind(content,'dir',()=>this.l10n.locale==='ar'?'rtl':'ltr');
     const name = document.createElement('strong'); name.className = 'mly-place-name'; name.textContent = place.name; content.appendChild(name);
     for (const [index, text] of [place.category.replace(/_/g, ' '), place.address].entries()) if (text) { const line = document.createElement('p'); line.className = index === 0 ? 'mly-place-category' : 'mly-place-address'; line.textContent = text; content.appendChild(line); }
+    const confidence=document.createElement('p');this.l10n.bind(confidence,'textContent',()=>this.l10n.text('Confidence')+': '+(typeof place.confidence==='number'?String(place.confidence):this.l10n.text('Not provided')));content.appendChild(confidence);
+    const operating=document.createElement('p');this.l10n.bind(operating,'textContent',()=>this.l10n.text('Operating status')+': '+this.l10n.text(place.operatingStatus==='open'?'Open':place.operatingStatus==='temporarily_closed'?'Temporarily closed':place.operatingStatus==='permanently_closed'?'Permanently closed':place.operatingStatus||'Not provided'));content.appendChild(operating);
     if (place.website) { const link = document.createElement('a'); link.className = 'mly-place-website'; this.l10n.bind(link,"textContent",()=>this.l10n.text("Website")); link.href = place.website; link.target = '_blank'; link.rel = 'noopener noreferrer'; content.appendChild(link); }
     this.searchAbort?.abort(); this.searchAbort = null;
     const button = document.createElement('button'); button.type = 'button'; this.l10n.bind(button,"textContent",()=>this.l10n.text("Find imagery within 75 m")); button.className = 'mly-place-open mly-place-open-primary'; content.appendChild(button);

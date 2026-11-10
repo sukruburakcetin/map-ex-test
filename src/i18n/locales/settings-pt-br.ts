@@ -150,6 +150,15 @@ const ptBR: SettingsMessages = {
   "thePortalSConfiguredRouteServiceWillBeDiscovered": "O serviço de rotas configurado no portal será identificado durante o uso.",
   "customRoutingService": "Serviço de rotas personalizado",
   "routeServiceUrlConfigured": "URL do serviço de rotas configurada.",
-  "routeServiceUrlRequired": "⚠ A URL do serviço de rotas é obrigatória."
+  "routeServiceUrlRequired": "⚠ A URL do serviço de rotas é obrigatória.",
+  "placesVectorServiceTitle": "Locais próximos · Overture",
+  "placesApiServiceUrl": "URL do serviço de locais",
+  "placesApiUrlInvalid": "Insira uma URL base de serviço HTTPS sem credenciais, parâmetros de consulta ou fragmento.",
+  "placesApiMigration": "Insira uma URL do serviço de locais para explorar locais próximos.",
+  "placesApiTest": "Testar conexão",
+  "placesApiTesting": "Verificando serviço…",
+  "placesApiConnected": "Conectado",
+  "placesApiFailed": "Falha na conexão. Verifique a URL, o certificado HTTPS, CORS e a compatibilidade do serviço.",
+  "placesApiUrlHelp": "Insira a URL base do serviço de locais. Ele fornece blocos vetoriais, seleção e pesquisa. Os usuários ativam Locais quando necessário.",
 };
 export default ptBR;

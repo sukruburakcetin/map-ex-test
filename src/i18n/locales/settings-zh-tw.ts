@@ -150,6 +150,15 @@ const zhTW: SettingsMessages = {
   "thePortalSConfiguredRouteServiceWillBeDiscovered": "將在執行時發現入口網站設定的路線服務。",
   "customRoutingService": "自訂路線服務",
   "routeServiceUrlConfigured": "已設定路線服務 網址。",
-  "routeServiceUrlRequired": "⚠ 需要路線服務 網址。"
+  "routeServiceUrlRequired": "⚠ 需要路線服務 網址。",
+  "placesVectorServiceTitle": "附近地點 · Overture",
+  "placesApiServiceUrl": "地點服務 URL",
+  "placesApiUrlInvalid": "請輸入不含認證資訊、查詢參數或片段的 HTTPS 服務基礎 URL。",
+  "placesApiMigration": "輸入地點服務 URL 以探索附近地點。",
+  "placesApiTest": "測試連線",
+  "placesApiTesting": "正在檢查服務…",
+  "placesApiConnected": "已連線",
+  "placesApiFailed": "連線失敗。請檢查 URL、HTTPS 憑證、CORS 和服務相容性。",
+  "placesApiUrlHelp": "輸入地點服務的基礎 URL。它提供向量圖磚、地點選取和搜尋。使用者可依需要啟用地點。",
 };
 export default zhTW;

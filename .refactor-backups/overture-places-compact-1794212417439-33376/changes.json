@@ -1,0 +1,92 @@
+{
+  "installer": "overture-places-compact",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/PlacesPanel.tsx",
+      "originalSha256": "1b2ca3fafd68a11ecc60b736167bdfe70f3ba75c2b7a4eac925547642c91552b",
+      "resultSha256": "2cca5f499704760472adedde66ab90cc2fa2c18a12e2785d2fa814505b4686b2"
+    },
+    {
+      "file": "src/components/LoadedPlacesList.tsx",
+      "originalSha256": "1ac461298706713e477a53923593886f5049d185e1106bc8fac80ed9c962f2c3",
+      "resultSha256": "ba11f47d4907cf000aa397530a8dbb9d593099540f602e2fde085eeaada4db5b"
+    },
+    {
+      "file": "tests/placesPanelRendering.test.cjs",
+      "originalSha256": "ebf8b96381e15ef2cc4bf3b3a7bb6858b4a6647f6bb77d67a3050c6720f75d09",
+      "resultSha256": "de714ae0cad9802c1b5076424eacdbe76f70d09512b828c8f27cdc8bedf384ae"
+    },
+    {
+      "file": "src/i18n/runtimeMessages.ts",
+      "originalSha256": "7a23f51783eb46ac364e1bc4f517306035fa738bf1b3bab7492750bb00f4207a",
+      "resultSha256": "95e214181cda8777d117c468b1a7b18b6ac086af9114dfa12a542f8b328518de"
+    },
+    {
+      "file": "docs/localization/translations.csv",
+      "originalSha256": "a4220af86a8a9c5cefbf2b80f7d25b0196e7b64ef3e017a533a27a6f5389a994",
+      "resultSha256": "a078dbaf8ab8677e98afa79412698a1afe7afb68ba733ec5279f521ee250aa2d"
+    },
+    {
+      "file": "src/i18n/locales/ar.ts",
+      "originalSha256": "1365e74bf26e43be3035d2368b8b39278a42973257f906deacd8bd8d53b25ceb",
+      "resultSha256": "da94b251e340bc412e2662c01ba5ecda1f709f38cf0ab32af19061a02d55efca"
+    },
+    {
+      "file": "src/i18n/locales/de.ts",
+      "originalSha256": "b08baee1b3ee48876e24008bb364927cdc8ced76f6fe98149bc687348b1edcd5",
+      "resultSha256": "0c496df5e9517549ae0621ea388523aeacabde851d8425d7c2c09aa9d21e2461"
+    },
+    {
+      "file": "src/i18n/locales/en-gb.ts",
+      "originalSha256": "bf25a35ce87266f2e6268aade43c3246e9249608364e2be90d5935b80756b99e",
+      "resultSha256": "2f29bfd67964410f9633a1573d54da3fcb5e3f3dfd24d371fc4c2a52913f7474"
+    },
+    {
+      "file": "src/i18n/locales/es.ts",
+      "originalSha256": "b587b13b7243eea1ce323638e62204c7afa99fd8a82317d920f59aa028ca6d4d",
+      "resultSha256": "2e5465a2d6334fa9111e0e5070ce8d866f8a8308cd0282182081fabc6d4192f9"
+    },
+    {
+      "file": "src/i18n/locales/fr.ts",
+      "originalSha256": "db6158f42dd2fb022e773e8ca9dc62617f24364e616d3427377a491149d1bf6b",
+      "resultSha256": "1054d5bba28b082547e7ac6a28c05f054f2b1ec12167edaa415996b706feb18e"
+    },
+    {
+      "file": "src/i18n/locales/it.ts",
+      "originalSha256": "e1abe31304b86159d3cd113c50d21dafd1e6ad4c1aba7ded1b5a6e5937cf5e1a",
+      "resultSha256": "2eb39e50403e4bd2277bba7274337d1a67dfa678740b5b3d01126af5208ecf79"
+    },
+    {
+      "file": "src/i18n/locales/ja.ts",
+      "originalSha256": "cff52e7f77bf93d02454fb93150b9fa2515cfa1c17c007abae9fc851d6098379",
+      "resultSha256": "e055c43eaa53d803cf10d9c53eba8c9ac2361cde4fe373c7af4a05807517a530"
+    },
+    {
+      "file": "src/i18n/locales/ko.ts",
+      "originalSha256": "651b9cb2623708ca1ec4e846d5f612a7607c6c9f060e98ddbef661cc674a0446",
+      "resultSha256": "4bedbf5cdd1e4383623c021145a63cfc0dbe6ae71e75d3f797da264732d71098"
+    },
+    {
+      "file": "src/i18n/locales/pt-br.ts",
+      "originalSha256": "3f19d77a2d903c9ffa1cca998eaedf121ee3a864d2c092fe0505d5beaf2911da",
+      "resultSha256": "eb2027bcf3bd537095072dc412803d34af656762b43ad884e72c30c6acb6af99"
+    },
+    {
+      "file": "src/i18n/locales/tr.ts",
+      "originalSha256": "fc7a0ef03c90203e5469a84fad5ebfe492cfb40196189e6e74949cb82aed7e98",
+      "resultSha256": "3d8287db7f67b745bd6a7f17606211c367450f03b1d53ba21958616579e3035b"
+    },
+    {
+      "file": "src/i18n/locales/zh-cn.ts",
+      "originalSha256": "7c49be56e4b1b83c08c8d150920ed818eb7134a0ef377175d2379eedb16159a6",
+      "resultSha256": "777e244508d312debec2e523f030c058d5ca852e1f4e65a0b44964b6478de528"
+    },
+    {
+      "file": "src/i18n/locales/zh-tw.ts",
+      "originalSha256": "c977c008f4587c001ed3c5b469a5c1bea7974b0cabae7444040a26281c3cfe6a",
+      "resultSha256": "6cb2fc8062f89afa4bc13a3294779230f53a3d43d0c75371218dbcbd5545bf0a"
+    }
+  ]
+}

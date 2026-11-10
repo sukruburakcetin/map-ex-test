@@ -1,0 +1,12 @@
+{
+  "installer": "overture-locate-spacing",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/LoadedPlacesList.tsx",
+      "originalSha256": "6b6bc5db2baebbacf3711bc021cf50364a3507d9c6002e14d073491f6897b137",
+      "resultSha256": "f687b07010d9c5fb9b615247661f2ad9e1b7f40c6a7f8f213b7f2d666108a198"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "installer": "overture-footer-alignment",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/LoadedPlacesList.tsx",
+      "originalSha256": "f687b07010d9c5fb9b615247661f2ad9e1b7f40c6a7f8f213b7f2d666108a198",
+      "resultSha256": "88cb1a0b5841fba6838cf527f85274f52b367d7b6622b085190cf66c6958eaba"
+    },
+    {
+      "file": "src/components/PlacesPanel.tsx",
+      "originalSha256": "a2fee05ec0ae1ccdf919d0e2e74c55f22c8e19be8c1a6bb76fcf1dc6841782d1",
+      "resultSha256": "4f1b49afd0a8fee58c338748c5499393af092bb8f29f31bd5ad71544e30f8c9a"
+    }
+  ]
+}

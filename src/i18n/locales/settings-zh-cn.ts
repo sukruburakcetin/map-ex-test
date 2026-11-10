@@ -150,6 +150,15 @@ const zhCN: SettingsMessages = {
   "thePortalSConfiguredRouteServiceWillBeDiscovered": "将在运行时发现门户配置的路线服务。",
   "customRoutingService": "自定义路线服务",
   "routeServiceUrlConfigured": "已配置路线服务 URL。",
-  "routeServiceUrlRequired": "⚠ 需要路线服务 URL。"
+  "routeServiceUrlRequired": "⚠ 需要路线服务 URL。",
+  "placesVectorServiceTitle": "附近地点 · Overture",
+  "placesApiServiceUrl": "地点服务 URL",
+  "placesApiUrlInvalid": "请输入不含凭据、查询参数或片段的 HTTPS 服务基础 URL。",
+  "placesApiMigration": "输入地点服务 URL 以探索附近地点。",
+  "placesApiTest": "测试连接",
+  "placesApiTesting": "正在检查服务…",
+  "placesApiConnected": "已连接",
+  "placesApiFailed": "连接失败。请检查 URL、HTTPS 证书、CORS 和服务兼容性。",
+  "placesApiUrlHelp": "输入地点服务的基础 URL。它提供矢量瓦片、地点选择和搜索。用户可按需启用地点。",
 };
 export default zhCN;

@@ -3,7 +3,10 @@ const ts=require(process.env.MAPILLARY_TYPESCRIPT||'typescript'),m={exports:{}};
 const hoverModule={exports:{}},categoryModule={exports:{}};
 new Function('exports',ts.transpileModule(fs.readFileSync(require('node:path').join(__dirname,'../src/features/places/tileCategories.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText)(categoryModule.exports);
 new Function('exports',ts.transpileModule(fs.readFileSync(require('node:path').join(__dirname,'../src/features/places/BoundedPlaceHover.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText)(hoverModule.exports);
-new Function('exports','require',ts.transpileModule(fs.readFileSync(require('node:path').join(__dirname,'../src/features/places/PlacesTilesPrototype.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText)(m.exports,name=>name.endsWith('tileCategories')?categoryModule.exports:hoverModule.exports);
+const apiModule={exports:{}};
+new Function('exports','require',ts.transpileModule(fs.readFileSync(require('node:path').join(__dirname,'../src/features/places/placesApi.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText)(apiModule.exports,()=>categoryModule.exports);
+new Function('exports','require',ts.transpileModule(fs.readFileSync(require('node:path').join(__dirname,'../src/features/places/PlacesTilesPrototype.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText)(m.exports,name=>name.endsWith('placesApi')?apiModule.exports:name.endsWith('tileCategories')?categoryModule.exports:hoverModule.exports);
+
 function setup(query){
  const events=[],chosen=[];let watcher;
  class Tiles{load(){return Promise.resolve()}destroy(){events.push('destroy-tiles')}}
@@ -51,8 +54,8 @@ test('local adapter posts a bounded geometry query and constructs SDK Points',as
   await h.p.pick({x:0,y:0});assert(payload.geometry);assert.deepEqual(h.chosen,['local']);h.p.stop();
  }finally{global.fetch=originalFetch}
 });
-test('local adapter rejects non-loopback endpoints',async()=>{
- const h=setup(async()=>({features:[]}));await assert.rejects(h.p.start('https://example.org/style.json','https://example.org/query',true),/loopback/);
+test('API adapter supports remote HTTPS and rejects mixed origins',async()=>{
+ const h=setup(async()=>({features:[]}));h.p.host.sharedClicks=true;await h.p.start('https://example.org/style.json','https://example.org/query',true);assert.equal(h.p.visible,true);h.p.stop();await assert.rejects(h.p.start('https://example.org/style.json','https://other.example/query',true),/same origin/);
 });
 test('quality control changes tile and query URLs together, validates input and removes its UI',async()=>{
  const saved=global.document;
@@ -95,7 +98,7 @@ test('shared dispatcher can cancel an obsolete tile pick without destroying the 
 });
 test('area adapter and group changes preserve quality filters and invalidate the source lifecycle',async()=>{
  const saved=global.fetch,requests=[],ready=[];let changing=0;
- global.fetch=async(url,options={})=>{requests.push({url:new URL(url),options});return{ok:true,json:async()=>new URL(url).pathname==='/status'?{bbox:[-87,39,-85,41],category_filter_version:1,supported_icon_families:categoryModule.exports.TILE_CATEGORIES.map(([id])=>id)}:{features:[{attributes:{gers_id:'area',confidence:null},geometry:{x:-86,y:40}}],exceededTransferLimit:false}}};
+ global.fetch=async(url,options={})=>{requests.push({url:new URL(url),options});return{ok:true,json:async()=>new URL(url).pathname==='/status'?{bbox:[-87,39,-85,41],category_filter_version:1,paging_version:1,text_search_version:1,scale_display_version:1,supported_icon_families:categoryModule.exports.TILE_CATEGORIES.map(([id])=>id)}:{features:[{attributes:{gers_id:'area',confidence:null},geometry:{x:-86,y:40}}],exceededTransferLimit:false}}};
  try{
   const h=setup(async()=>({features:[]}));h.p.host.sourceReady=bbox=>ready.push(bbox);h.p.host.sourceChanging=()=>changing++;
   await h.p.start('https://localhost:3444/style.json?min_confidence=0.75&hide_closed=1','https://localhost:3444/query?min_confidence=0.75&hide_closed=1',true);
@@ -127,7 +130,7 @@ test('native rendering and picking use tile zoom limits independently of result-
 });
 test('all modern families validate and family changes replace legacy groups without dropping quality filters',async()=>{
  const saved=global.fetch,requests=[];
- global.fetch=async(url,options={})=>{requests.push(new URL(url));return{ok:true,json:async()=>new URL(url).pathname==='/status'?{bbox:[-87,39,-85,41],category_filter_version:1,supported_icon_families:categoryModule.exports.TILE_CATEGORIES.map(([id])=>id)}:{features:[]}}};
+ global.fetch=async(url,options={})=>{requests.push(new URL(url));return{ok:true,json:async()=>new URL(url).pathname==='/status'?{bbox:[-87,39,-85,41],category_filter_version:1,paging_version:1,text_search_version:1,scale_display_version:1,supported_icon_families:categoryModule.exports.TILE_CATEGORIES.map(([id])=>id)}:{features:[]}}};
  try{const h=setup(async()=>({features:[]}));h.p.host.sourceReady=()=>{};
  await h.p.start('https://localhost:3444/style.json?group=education&min_confidence=0.75&hide_closed=1','https://localhost:3444/query?group=education&min_confidence=0.75&hide_closed=1',true);
  await h.p.setFamily('restaurant');await h.p.queryArea([-87,39,-85,41],new AbortController().signal);const request=requests.at(-1);assert.equal(request.searchParams.get('family'),'restaurant');assert.equal(request.searchParams.has('group'),false);assert.equal(request.searchParams.get('min_confidence'),'0.75');assert.equal(request.searchParams.get('hide_closed'),'1');
@@ -136,7 +139,7 @@ test('all modern families validate and family changes replace legacy groups with
 });
 test('widget metadata handshake rejects a stale server rather than silently ignoring category filters',async()=>{
  const saved=global.fetch;global.fetch=async()=>({ok:true,json:async()=>({bbox:[-87,39,-85,41]})});
- try{const h=setup(async()=>({features:[]}));h.p.host.sourceReady=()=>{};await assert.rejects(h.p.start('https://localhost:3444/style.json','https://localhost:3444/query',true),/Restart the updated/);assert(!h.events.includes('add'))}finally{global.fetch=saved}
+ try{const h=setup(async()=>({features:[]}));h.p.host.sourceReady=()=>{};await assert.rejects(h.p.start('https://localhost:3444/style.json','https://localhost:3444/query',true),/Incompatible Places service/);assert(!h.events.includes('add'))}finally{global.fetch=saved}
 });
 
 test('panel quality changes preserve family and apply equally to tiles, clicks and area results',async()=>{
@@ -159,3 +162,45 @@ test('panel quality changes preserve family and apply equally to tiles, clicks a
  global.fetch=async(url,options)=>{payload=JSON.parse(options.body);return{ok:true,json:async()=>({features:[]})}};
  try{await h.p.start('https://localhost:3444/style.json','https://localhost:3444/query',true);await h.p.queryArea([-87,39,-85,41],new AbortController().signal,{lon:-86.13,lat:39.77});assert.deepEqual(payload.origin,{lon:-86.13,lat:39.77});}finally{h.p.stop();global.fetch=original}
  });
+
+test('replacement retains the committed source until preparation succeeds and preserves selection',async()=>{
+ const h=setup(async()=>({features:[]}));h.p.host.sharedClicks=true;
+ const changes=[],loading=[];h.p.host.sourceChanging=preserve=>changes.push(preserve);h.p.host.loading=active=>loading.push(active);
+ await h.p.start('https://localhost:3444/style.json','https://localhost:3444/query',true);
+ const original=h.p.layer;let release;h.p.host.modules.VectorTileLayer=class{load(){return new Promise(r=>release=r)}destroy(){}};
+ const pending=h.p.setFamily('cafe');assert.equal(h.p.layer,original);assert.equal(h.p.changing,true);assert.equal(h.events.includes('remove'),false);
+ release();await pending;assert.notEqual(h.p.layer,original);assert.equal(changes.at(-1),true);assert.equal(h.p.changing,false);assert.equal(loading.at(-1),false);h.p.stop();
+});
+test('failed filter preparation retains working tiles and the committed filter',async()=>{
+ const h=setup(async()=>({features:[]}));h.p.host.sharedClicks=true;await h.p.start('https://localhost:3444/style.json','https://localhost:3444/query',true);
+ const original=h.p.layer,source=h.p.source;h.p.host.modules.VectorTileLayer=class{load(){return Promise.reject(Error('offline'))}destroy(){}};
+ await assert.rejects(h.p.setFamily('cafe'),/offline/);assert.equal(h.p.layer,original);assert.equal(h.p.source,source);assert.equal(h.p.visible,true);assert.equal(h.p.changing,false);assert.equal(h.errors.at(-1).code,'filter');h.p.stop();
+});
+test('a superseded replacement cannot overwrite a newer filter',async()=>{
+ const h=setup(async()=>({features:[]}));h.p.host.sharedClicks=true;await h.p.start('https://localhost:3444/style.json','https://localhost:3444/query',true);
+ const releases=[],destroyed=[];h.p.host.modules.VectorTileLayer=class{constructor(p){this.url=p.url}load(){return new Promise(r=>releases.push(r))}destroy(){destroyed.push(this.url)}};
+ const first=h.p.setFamily('cafe'),second=h.p.setFamily('education');releases[1]();await second;releases[0]();await first;
+ assert.equal(new URL(h.p.source.style).searchParams.get('family'),'education');assert(destroyed.some(url=>url.includes('family=cafe')));h.p.stop();
+});
+test('complete results at both exact caps remain usable; truncation is explicit',async()=>{
+ const h=setup(async()=>({features:Array.from({length:32},(_,i)=>({attributes:{gers_id:String(i)},geometry:{x:1,y:1}})),exceededTransferLimit:false}));
+ await start(h);const hit=await h.p.resolve({x:0,y:0});assert.equal(hit.candidates.length,32);assert.equal(h.errors.length,0);h.p.stop();
+ const saved=global.fetch;global.fetch=async()=>({ok:true,json:async()=>({features:Array.from({length:200},()=>({})),exceededTransferLimit:false})});
+ try{await h.p.start('https://localhost:3444/style.json','https://localhost:3444/query',true);assert.equal((await h.p.queryArea([0,0,1,1],new AbortController().signal)).limited,false);h.p.stop()}finally{global.fetch=saved}
+});
+test('selection eligibility follows committed family, confidence and closure filters',async()=>{
+ const h=setup(async()=>({features:[]}));h.p.host.sharedClicks=true;await h.p.start('https://localhost:3444/style.json?family=cafe&min_confidence=0.75&hide_closed=1','https://localhost:3444/query?family=cafe&min_confidence=0.75&hide_closed=1',true);
+ const place={group:'cafe',confidence:.8,operatingStatus:'open'};assert.equal(h.p.matches(place),true);for(const changed of [{group:'education'},{confidence:null},{confidence:.5},{operatingStatus:'permanently_closed'}])assert.equal(h.p.matches({...place,...changed}),false);assert.equal(h.p.matches({...place,operatingStatus:null}),true);h.p.stop();
+});
+test('native query carries rendering zoom and paging carries offset with the frozen origin',async()=>{
+ const saved=global.fetch,requests=[];global.fetch=async(url,options)=>{requests.push({url:new URL(url),payload:JSON.parse(options.body)});return{ok:true,json:async()=>({features:[],exceededTransferLimit:false,offset:requests.at(-1).payload.offset})}};
+ try{const h=setup(async()=>({features:[]}));h.p.host.view.zoom=14.8;h.p.host.sharedClicks=true;await h.p.start('https://localhost:3444/style.json','https://localhost:3444/query',true);
+ await h.p.resolve({x:0,y:0});assert.equal(requests.at(-1).payload.zoom,14);
+ await h.p.queryArea([0,0,1,1],new AbortController().signal,{lon:.2,lat:.3},200);assert.equal(requests.at(-1).payload.offset,200);assert.deepEqual(requests.at(-1).payload.origin,{lon:.2,lat:.3});
+ await assert.rejects(h.p.queryArea([0,0,1,1],new AbortController().signal,null,1),/offset/);h.p.stop();}finally{global.fetch=saved}
+});
+
+test('configured widget instances use distinct tile-layer IDs',async()=>{
+ const a=setup(async()=>({features:[]})),b=setup(async()=>({features:[]})),ids=[];class Layer{constructor(properties){ids.push(properties.id)}async load(){}destroy(){}}
+ a.p.host.id='widget A';b.p.host.id='widget B';a.p.host.modules.VectorTileLayer=b.p.host.modules.VectorTileLayer=Layer;await start(a);await start(b);assert.notEqual(ids[0],ids[1]);a.p.stop();b.p.stop();
+});

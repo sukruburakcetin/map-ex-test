@@ -1,0 +1,22 @@
+{
+  "installer": "overture-note-action-key-fix",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/SelectedPlaceCard.tsx",
+      "originalSha256": "3c1abec3f20c6fbd1811a316f73ada21775ea9843c8e347f83002571b3fdba1a",
+      "resultSha256": "85af24158aa41cd4c403b37a8cbfc4003eae75d265f112ce4c0bbfa9c7c16d66"
+    },
+    {
+      "file": "tests/selectedPlaceCompact.test.cjs",
+      "originalSha256": "15b7dbd80dcdd04ffbeb57ca1253f1867e302ad7ae815c34d32662db0fc2114e",
+      "resultSha256": "ebf1a8d0ab45196aa85110f50bd56a5b2ed1d16eadf994dc832fb91de88ceac8"
+    },
+    {
+      "file": "tests/placesNoteActionIdentity.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "713abb7d059c106b84281a1e0ee27a5280c2034e45e06e5c952b2e389f343bbb"
+    }
+  ]
+}

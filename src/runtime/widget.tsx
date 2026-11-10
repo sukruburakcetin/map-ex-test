@@ -1,3 +1,4 @@
+import { placesApiUrl, placesApiEndpoints } from '../features/places/placesApi';
 import { nearestLoadedFrame } from '../features/coverage/nearestLoadedFrame';
 import { coverageClickHitTest } from '../features/coverage/coverageClickDispatch';
 import { CoverageTouchHover } from '../features/coverage/CoverageTouchHover';
@@ -19,7 +20,7 @@ import { ArcGISPlaces } from "../features/places/ArcGISPlaces";
 import { PlacesTilesPrototype } from "../features/places/PlacesTilesPrototype";
 import { isTileCategory, TileCategoryId } from '../features/places/tileCategories';
 import { tilePlace, normalizeTilePlaces } from "../features/places/tilePlace";
-import { placePreferenceKey, readPlaceCategory, savePlaceCategory, readPlaceAutoUpdate, savePlaceAutoUpdate } from '../features/places/placePreferences';
+import { tilePlacePreferenceKey,readTilePlacePreferences,saveTilePlacePreferences } from '../features/places/placePreferences';
 import { paddedPlacesExtent } from '../features/places/publishedPlacesExtent';
 import { placeCameraDistanceLabel } from '../features/places/placeListUtils';
 import { SelectedPlaceCard } from '../components/SelectedPlaceCard';
@@ -27,7 +28,7 @@ import { PlaceNoteReview } from '../features/places/PlaceNoteReview';
 import type { PlaceNoteDestination, PlaceNoteOptions, PlaceNoteImageContext, PlaceContributionSeed, ExternalContributionSeed } from '../features/places/placeNote';
 import type { PlaceListOrigin } from '../features/places/placeListUtils';
 import { PlacesPanel } from "../components/PlacesPanel";
-import { PLACE_GROUPS, Place, PlaceGroup, placesServiceUrl } from "../features/places/placesModel";
+import { Place, PlaceGroup } from "../features/places/placesModel";
 import { PlacesState } from "../features/places/PlacesController";
 import { fetchCoverageRoads } from "../features/coverage/fetchCoverageRoads";
 import { FullscreenControls } from "../components/FullscreenControls";
@@ -252,6 +253,7 @@ interface State {
   placesPanelOpen: boolean;
   placesGroup: PlaceGroup;
   placesTileCategory: TileCategoryId;
+  placesSourceLoading:boolean;
   placesStatus: PlacesState;
   selectedPlace: Place | null;
   placesHoveredId:string|null;placesRevealRequest:number;
@@ -466,9 +468,12 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _placesTilesPrototype: PlacesTilesPrototype | null = null;
   private _placesTilesControl: any = null;
   private _placesTilesView: any = null;
+  private _placesTilesPreferenceKey:string|null=null;
   private _placesTilesOwner: ArcGISPlaces | null = null;
   private _placesTilesRestore: { active: boolean; panelOpen: boolean } | null = null;
   private _placesTilesStartRevision = 0;
+  private _placesConfiguredUrl:string|null=null;
+  private _placesConfiguredRequest:{url:string;view:any}|null=null;
   private selectedPlaceChanged = (selectedPlace: Place | null, origin: 'map'|'list'|'card' = 'map') => {
     if(selectedPlace!==this.state.selectedPlace)this._placeNoteReview?.cancel();
     const frame = this._liveSequenceFrames.current;
@@ -479,57 +484,65 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private installPlacesTilesPrototype() {
     const root = ((window as any).__mlyPlacesTiles ||= {});
     const control = {
-      start: async (styleUrl: string, detailsUrl: string, local = false) => {
+      start: async (styleUrl: string, detailsUrl: string, api = false,preferences?:ReturnType<typeof readTilePlacePreferences>,configuredBase?:string) => {
         const revision = ++this._placesTilesStartRevision;
+        if(configuredBase)this._placesConfiguredUrl=configuredBase;else{this._placesConfiguredUrl=null;this._placesConfiguredRequest=null;}
         this._placesTilesPrototype?.stop(); this._placesTilesPrototype = null;
         const view = this.state.jimuMapView?.view;
         if (!view?.ready || view.destroyed) throw new Error('Open a ready map first');
+        this.setState({placesSourceLoading:true,placesStatus:{kind:'loading',count:0}});
         await this.ensureArcGISModules();
         if (revision !== this._placesTilesStartRevision || view !== this.state.jimuMapView?.view || view.destroyed) return;
-        this._placesTilesRestore ||= { active: this.state.placesActive, panelOpen: this.state.placesPanelOpen };
+        if(configuredBase)this._placesTilesRestore=null;else this._placesTilesRestore ||= { active: this.state.placesActive, panelOpen: this.state.placesPanelOpen };
         this._placeNoteReview?.cancel(); this._places?.dispose();
-        let prototype: PlacesTilesPrototype;
-        const owner = new ArcGISPlaces({ externalSelection: true, manualSearch: true, hybridSearch: this.state.placesAutoUpdate !== false, id: String(this.props.id), url: '',
+        this._placesTilesPreferenceKey=api?tilePlacePreferenceKey(this.props.id,window.location.pathname,styleUrl):null;
+        const autoUpdate=preferences?.autoUpdate??(this.state.placesAutoUpdate!==false);
+        let prototype: PlacesTilesPrototype;let sourceErrorReported=false;
+        const owner = new ArcGISPlaces({ externalSelection: true, manualSearch: true, hybridSearch: autoUpdate, id: String(this.props.id), url: '',
           presentation: this._presentation, modules: this.ArcGISModules, view: () => this.state.jimuMapView?.view,
           geographic: extent => webMercatorUtils.webMercatorToGeographic(extent),
-          queryExternal: local ? (bbox, signal) => prototype.queryArea(bbox, signal, this.placesListOrigin()) : undefined,
-          normalizeExternal: local ? normalizeTilePlaces : undefined,
+          searchOrigin:api?()=>this.placesListOrigin():undefined,
+          queryExternal: api ? (bbox, signal,origin,offset,text) => prototype.queryArea(bbox, signal,origin,offset,text) : undefined,
+          normalizeExternal: api ? normalizeTilePlaces : undefined,
           externalMapVisible: () => prototype?.visible === true,
-          listActive: local ? () => this.state.placesPanelOpen : undefined,
+          listActive: api ? () => this.state.placesPanelOpen&&!prototype?.changing : undefined,
           list: placesList => this.setState({ placesList }),
           hovered: placesHoveredId => this.setState(previous => previous.placesHoveredId === placesHoveredId ? null : { placesHoveredId }),
           selected: this.selectedPlaceChanged, busy: this.placesBusy, pauseReason: this.placesPauseReason,
           status: placesStatus => this.setState({ placesStatus }), explore: (place, radius, signal) => this.explorePlace(place, radius, signal),
           openImagery: image => { void this.openPlaceImagery(image); } });
         this._places = this._placesTilesOwner = owner; this._placesView = view; this._placesUrl = '';
-        prototype = new PlacesTilesPrototype({ view, modules: this.ArcGISModules, sharedClicks: true, busy: this.placesBusy,
-          sourceChanging: () => owner.controller.setEnabled(false),
-          sourceReady: local ? bbox => {
+        prototype = new PlacesTilesPrototype({ id:String(this.props.id),view, modules: this.ArcGISModules, sharedClicks: true, busy: this.placesBusy,
+          sourceChanging: preserve => {if(preserve)owner.resetExternalResults();else owner.controller.setEnabled(false);},
+          loading:placesSourceLoading=>this.setState({placesSourceLoading},()=>owner.controller.sync()),
+          sourceReady: api ? bbox => {
             owner.setExternalExtent(bbox); owner.controller.setGroup('all');
-            owner.controller.setAutoUpdate(this.state.placesAutoUpdate !== false); owner.controller.setEnabled(true); owner.controller.searchArea();
+            owner.controller.setEnabled(true); owner.controller.searchArea();
           } : undefined,
           selected: (attributes, location) => { const place = tilePlace(attributes, location); if (place) owner.openExternal(place); },
-          clearSelected: () => { this._mapClickRevision = (this._mapClickRevision ?? 0) + 1; owner.clearSelection(); }, error: error => console.warn('[Overture tile prototype]', error) });
+          clearSelected: () => { this._mapClickRevision = (this._mapClickRevision ?? 0) + 1; owner.clearSelection(); }, error: error => {sourceErrorReported=true;console.warn('[Overture Places]',error);const code=(error as any)?.code;this.showToast(this._t(code==='dense'?'uiPoiDensePick':code==='filter'?'uiPoiFilterFailed':code==='source'?'uiPoiSourceFailed':'uiPoiPickFailed'),4500);} });
         this._placesTilesView = view; this._placesTilesPrototype = prototype;
-        this.setState({ placesActive: true, placesPanelOpen: false, selectedPlace: null, placesShowLink: false, placesList: [], placesCameraDistance: null });
-        if (local) {
+        this.setState({ placesActive: true, placesAutoUpdate:autoUpdate,placesTileCategory:(preferences?.family||this.state.placesTileCategory) as TileCategoryId,placesPanelOpen: configuredBase?this.state.placesPanelOpen:false, selectedPlace: null, placesShowLink: false, placesList: [], placesCameraDistance: null });
+        if (api) {
           const style = new URL(styleUrl), details = new URL(detailsUrl);
-          const family = this.state.placesTileCategory || 'all';
+          const family = preferences?.family||this.state.placesTileCategory||'all';
           for (const url of [style, details]) { url.searchParams.delete('group'); if (family === 'all') url.searchParams.delete('family'); else url.searchParams.set('family', family); }
+          if(preferences)for(const url of [style,details]){if(preferences.minimum===null)url.searchParams.delete('min_confidence');else url.searchParams.set('min_confidence',String(preferences.minimum));if(preferences.hideClosed)url.searchParams.set('hide_closed','1');else url.searchParams.delete('hide_closed');}
           styleUrl = style.toString(); detailsUrl = details.toString();
         }
-        try { await prototype.start(styleUrl, detailsUrl, local); }
-        catch (error) { if (revision === this._placesTilesStartRevision) control.stop(); throw error; }
+        try { await prototype.start(styleUrl, detailsUrl, api); }
+        catch (error) { if (revision === this._placesTilesStartRevision){control.stop();if(!sourceErrorReported)this.showToast(this._t('uiPoiSourceFailed'),4500);} throw error; }
       },
-      startLocal: (base = 'https://localhost:3444') => control.start(`${base.replace(/\/$/, '')}/style.json`, `${base.replace(/\/$/, '')}/query`, true),
-      stop: () => {
-        ++this._placesTilesStartRevision;
+      startService: (base:string) => {const endpoints=placesApiEndpoints(base),preferences=readTilePlacePreferences(()=>window.localStorage,tilePlacePreferenceKey(this.props.id,window.location.pathname,endpoints.base));return control.start(endpoints.style,endpoints.query,true,preferences,endpoints.base);},
+      startLocal: (base = 'https://localhost:3444') => {const url=base.replace(/\/$/,'');const preferences=readTilePlacePreferences(()=>window.localStorage,tilePlacePreferenceKey(this.props.id,window.location.pathname,url));return control.start(`${url}/style.json`,`${url}/query`,true,preferences);},
+      stop: (keepEnabled=false) => {
+        ++this._placesTilesStartRevision;this._placesConfiguredUrl=null;this._placesConfiguredRequest=null;
         this._placesTilesPrototype?.stop(); this._placesTilesPrototype = null; this._placesTilesView = null;
         this._placeNoteReview?.cancel(); this._placesTilesOwner?.dispose();
         if (this._places === this._placesTilesOwner) { this._places = null; this._placesView = null; this._placesUrl = ''; }
-        this._placesTilesOwner = null;
+        this._placesTilesOwner = null;this._placesTilesPreferenceKey=null;
         const restore = this._placesTilesRestore; this._placesTilesRestore = null;
-        if (restore) this.setState({ placesActive: restore.active, placesPanelOpen: restore.panelOpen, selectedPlace: null, placesShowLink: false, placesList: [], placesCameraDistance: null }, this.syncPlaces);
+        this.setState({placesSourceLoading:false,placesActive:keepEnabled?true:restore?.active||false,placesPanelOpen:keepEnabled?this.state.placesPanelOpen:restore?.panelOpen||false,selectedPlace:null,placesShowLink:false,placesList:[],placesCameraDistance:null},keepEnabled?undefined:this.syncPlaces);
       },
     };
     root[String(this.props.id)] = this._placesTilesControl = control;
@@ -549,28 +562,29 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   };
   private placesBusy = () => !!this.placesPauseReason();
   private syncPlaces = () => {
-    const view = this.state.jimuMapView?.view;
-    if (this._placesTilesPrototype && (this._placesTilesView !== view || this.props.state === 'CLOSED')) { this._placesTilesControl?.stop(); return; }
-    if (this._placesTilesPrototype && this._places === this._placesTilesOwner) { this._places?.controller.sync(); return; }
-    if(this.props.state==='CLOSED')this._placeNoteReview?.cancel();
-    const url = placesServiceUrl(this.props.config.placesServiceUrl);
-    if (!this.state.placesActive || this.props.config.enablePlaces !== true || !url || !view?.ready || view.destroyed) {
-      this._placeNoteReview?.cancel();this._placesImageryCache?.clear();this._places?.dispose(); this._places = null; this._placesView = null; this._placesUrl = '';
-      if (this.state.selectedPlace || this.state.placesList?.length) this.setState({ selectedPlace: null, placesShowLink: false, placesList: [], placesCameraDistance: null });
+    const view=this.state.jimuMapView?.view;
+    // Explicit console diagnostics remain independent of saved app configuration.
+    if(this._placesTilesPrototype&&!this._placesConfiguredUrl&&!this._placesConfiguredRequest){
+      if(this._placesTilesView!==view||this.props.state==='CLOSED'||this._places!==this._placesTilesOwner)this._placesTilesControl?.stop();else this._places?.controller.sync();return;
+    }
+    const url=placesApiUrl(this.props.config.placesApiUrl);
+    if(!this.state.placesActive||this.props.config.enablePlaces!==true||!url||this.props.state==='CLOSED'){
+      if(this._placesTilesPrototype||this._placesConfiguredRequest||this._placesConfiguredUrl)this._placesTilesControl?.stop();
+      if(this.state.placesActive&&(this.props.config.enablePlaces!==true||!url))this.setState({placesActive:false,placesPanelOpen:false});
       return;
     }
-    if (this._places && this._placesUrl !== url) { this._placeNoteReview?.cancel();this._places.dispose(); this._places = null; this.setState({ selectedPlace: null, placesShowLink: false, placesList: [], placesCameraDistance: null }); }
-    if (this._places && this._placesView !== view) { this._placeNoteReview?.cancel(); this._placesView = view; this._places.rebindView(); }
-    if (!this._places && this.ArcGISModules?.FeatureLayer) {
-      this._placesView = view; this._placesUrl = url;
-      this._places = new ArcGISPlaces({ manualSearch:true,hybridSearch:this.state.placesAutoUpdate!==false,id: String(this.props.id), url, presentation:this._presentation, modules: this.ArcGISModules,
-        view: () => this.state.jimuMapView?.view, geographic: extent => webMercatorUtils.webMercatorToGeographic(extent),
-        list: placesList => this.setState({ placesList }),
-        hovered:placesHoveredId=>this.setState(previous=>previous.placesHoveredId===placesHoveredId?null:{placesHoveredId}),
-        selected: this.selectedPlaceChanged, busy: this.placesBusy, pauseReason: this.placesPauseReason, status: placesStatus => this.setState({ placesStatus }), explore: (place, radius, signal) => this.explorePlace(place, radius, signal), openImagery: image => { void this.openPlaceImagery(image); } });
-      this._places.controller.setGroup(this.state.placesGroup); this._places.controller.setEnabled(true);
-    }
-    this._places?.controller.sync();
+    if(!view?.ready||view.destroyed){if(this._placesTilesPrototype||this._placesConfiguredRequest)this._placesTilesControl?.stop(true);return;}
+    if(this._placesConfiguredRequest?.url===url&&this._placesConfiguredRequest.view===view)return;
+    if(this._placesTilesPrototype&&this._placesConfiguredUrl===url&&this._placesTilesView===view&&this._places&&this._places===this._placesTilesOwner){this._places?.controller.sync();return;}
+    if(!this._placesTilesControl)return;
+    if(this._placesTilesPrototype||this._placesConfiguredRequest)this._placesTilesControl.stop(true);
+    const request={url,view};this._placesConfiguredRequest=request;this._placesConfiguredUrl=url;
+    void this._placesTilesControl.startService(url).then(()=>{
+      if(this._placesConfiguredRequest!==request)return;this._placesConfiguredRequest=null;this.syncPlaces();
+    }).catch(error=>{
+      if(this._placesConfiguredRequest!==request)return;this._placesConfiguredRequest=null;this._placesTilesControl?.stop();
+      console.warn('[Overture Places]',error);this.showToast(this._t('uiPoiSourceFailed'),4500);
+    });
   };
   private placesListOrigin():PlaceListOrigin|null {
     const frame=this._liveSequenceFrames.current;
@@ -604,36 +618,28 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     if(destination==='workspace'){this._placeWorkspaceCrop=seed.attachmentId||null;this._detectionWorkspaceMarkerOwner=seed.requestId;this._detectionWorkspaceImage=seed.attachmentId||null;this.drawPendingNoteGraphic(seed.lon,seed.lat);this.setState({detectionWorkspaceDraft:seed,fieldNotesListOpen:true,nearbyStripOpen:false});}
     else{const place=this.state.selectedPlace;if(!place)throw Error('Place selection changed.');this._fieldNoteDraft.openPlace({...place,lon:seed.lon,lat:seed.lat},destination,seed.description,seed.imageId?{imageId:seed.imageId,bounds:seed.bounds,attachmentId:seed.attachmentId}:undefined);}
   };
-  private placesPreferenceKey = () => placePreferenceKey(this.props.id, typeof window !== 'undefined' ? window.location.pathname : '', this.props.config.placesServiceUrl);
   private togglePlaces = () => {
-    if (this._placesTilesPrototype) { this._placesTilesControl?.stop(); return; }
-    if (!this.state.placesActive && (!this.state.jimuMapView?.view?.ready || !this.ArcGISModules?.FeatureLayer)) { this.showToast(this._t('appTheMapIsPreparingTryPlacesAgainShortly'), 3500); return; }
-    const placesGroup = this.state.placesActive ? this.state.placesGroup : readPlaceCategory(() => window.localStorage, this.placesPreferenceKey(), this.state.placesGroup);
-    const placesAutoUpdate=this.state.placesActive?this.state.placesAutoUpdate:readPlaceAutoUpdate(()=>window.localStorage,this.placesPreferenceKey(),true);
-    this.setState(previous => ({ placesAutoUpdate,placesActive: !previous.placesActive, placesPanelOpen: !previous.placesActive, placesGroup, ...(previous.placesActive ? { selectedPlace: null, placesShowLink: false, placesList: [], placesCameraDistance: null } : {}) }), this.syncPlaces);
+    if(this.state.placesActive||this._placesTilesPrototype||this._placesConfiguredRequest){this._placesTilesControl?.stop();return;}
+    const url=placesApiUrl(this.props.config.placesApiUrl);
+    if(!url){this.showToast(this._t('uiPoiServiceSetup'),5000);return;}
+    if(!this.state.jimuMapView?.view?.ready||!this._placesTilesControl){this.showToast(this._t('appTheMapIsPreparingTryPlacesAgainShortly'),3500);return;}
+    const preferences=readTilePlacePreferences(()=>window.localStorage,tilePlacePreferenceKey(this.props.id,window.location.pathname,url));
+    this.setState({placesActive:true,placesPanelOpen:true,placesAutoUpdate:preferences.autoUpdate,placesTileCategory:preferences.family as TileCategoryId},this.syncPlaces);
   };
+  private savePlacesTilePreferences=()=>{const p=this._placesTilesPrototype;if(!p?.supportsFamilyFilter)return;saveTilePlacePreferences(()=>window.localStorage,this._placesTilesPreferenceKey,{family:this.state.placesTileCategory,autoUpdate:this.state.placesAutoUpdate,...p.quality});};
+  private checkPlacesTileSelection=()=>{const p=this._placesTilesPrototype,place=this.state.selectedPlace;if(p&&place&&!p.matches(place)){this._places?.clearSelection();this.showToast(this._t('uiPoiSelectionExcluded'),3500);}};
   private setPlacesAutoUpdate=(value:boolean)=>{
-    savePlaceAutoUpdate(()=>window.localStorage,this.placesPreferenceKey(),value);
-    this.setState({placesAutoUpdate:value},()=>this._places?.controller.setAutoUpdate(value));
+    this.setState({placesAutoUpdate:value},()=>{this._places?.controller.setAutoUpdate(value);this.savePlacesTilePreferences();});
   };
   private setPlacesTileQuality = (minimum: number | null, hideClosed: boolean) => {
-    void this._placesTilesPrototype?.setQuality(minimum, hideClosed).catch(error => console.warn('[Overture quality]', error));
+    const p=this._placesTilesPrototype;if(!p)return;const task=p.setQuality(minimum,hideClosed),version=p.version;
+    void task.then(()=>{if(this._placesTilesPrototype===p&&p.version===version){this.checkPlacesTileSelection();this.savePlacesTilePreferences();}}).catch(error=>console.warn('[Overture quality]',error));
   };
   private setPlacesTileCategory = (family: string) => {
-    if (!isTileCategory(family)) return;
-    this.setState({ placesTileCategory: family }, () => {
-      void this._placesTilesPrototype?.setFamily(family).catch(error => console.warn('[Overture category]', error));
-    });
+    if(!isTileCategory(family))return;const p=this._placesTilesPrototype;if(!p)return;const task=p.setFamily(family),version=p.version;
+    void task.then(()=>{if(this._placesTilesPrototype===p&&p.version===version)this.setState({placesTileCategory:family},()=>{this.checkPlacesTileSelection();this.savePlacesTilePreferences();});}).catch(error=>console.warn('[Overture category]',error));
   };
-  private setPlacesGroup = (placesGroup: PlaceGroup) => {
-    if (this._placesTilesPrototype) { this.setPlacesTileCategory(placesGroup); return; }
-    if (!PLACE_GROUPS.includes(placesGroup)) return;
-    savePlaceCategory(() => window.localStorage, this.placesPreferenceKey(), placesGroup);
-    this.setState({ placesGroup }, () => {
-      if (this._placesTilesPrototype) void this._placesTilesPrototype.setGroup(placesGroup).catch(error => console.warn('[Overture place group]', error));
-      else this._places?.controller.setGroup(placesGroup);
-    });
-  };
+  private setPlacesGroup = (group:PlaceGroup) => {if(this._placesTilesPrototype)this.setPlacesTileCategory(group);};
   private goToPlacesArea = () => {
     const view = this.state.jimuMapView?.view, bounds = this._places?.coverageExtent;
     if (!view?.ready || view.destroyed || !bounds || !this.ArcGISModules?.Point) return;
@@ -641,11 +647,16 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const Point = this.ArcGISModules.Point;
     this.navigateMapView(view, { target: [new Point({ longitude: west, latitude: south, spatialReference: { wkid: 4326 } }), new Point({ longitude: east, latitude: north, spatialReference: { wkid: 4326 } })] }, { animate: false });
   };
-  private goToSelectedPlace = () => {
-    const place = this.state.selectedPlace, view = this.state.jimuMapView?.view;
-    if (!this.state.placesActive || !place || !view?.ready || view.destroyed || !this.ArcGISModules?.Point || !Number.isFinite(place.lon) || !Number.isFinite(place.lat) || Math.abs(place.lon) > 180 || Math.abs(place.lat) > 85.051129) return;
-    const center = new this.ArcGISModules.Point({ longitude: place.lon, latitude: place.lat, spatialReference: { wkid: 4326 } });
-    this.navigateMapView(view, { center, zoom: Number.isFinite(view.zoom) ? Math.max(view.zoom, 16) : 16 }, { animate: false });
+  private goToSelectedPlace = () => this.centerPlaceOnMap(this.state.selectedPlace);
+  private showListedPlaceOnMap = (id:string) => {
+    const place=this.state.placesList.find(value=>value.id===id);
+    if(place&&this._places?.open([],id,false,'list'))this.centerPlaceOnMap(place);
+  };
+  private centerPlaceOnMap = (place:Place|null) => {
+    const view=this.state.jimuMapView?.view;
+    if(!this.state.placesActive||!place||!view?.ready||view.destroyed||!this.ArcGISModules?.Point||!Number.isFinite(place.lon)||!Number.isFinite(place.lat)||Math.abs(place.lon)>180||Math.abs(place.lat)>85.051129)return;
+    const target=new this.ArcGISModules.Point({longitude:place.lon,latitude:place.lat,spatialReference:{wkid:4326}});
+    this.navigateMapView(view,{target,zoom:Number.isFinite(view.zoom)?Math.max(view.zoom,16):16},{animate:false});
   };
   private updatePlacesCamera(lon: number, lat: number): void {
     this._places?.selection.updateCamera(lon, lat);
@@ -667,7 +678,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     try {
       const bbox = placeImageryBbox(place, radius);
       const cache=this._placesImageryCache||(this._placesImageryCache=new PlaceImageryCache());
-      cache.scope(view,this.accessToken,this.props?.config?.placesServiceUrl||'');
+      cache.scope(view,this.accessToken,this.props?.config?.placesApiUrl||'');
       const cached=cache.get(place,radius);
       if(cached!==undefined){if(!current())throw new DOMException('Cancelled','AbortError');return cached;}
       const data = await this.fetchMapillaryJson(`${GRAPH_API.BASE}/images?fields=id,sequence,geometry,computed_geometry,compass_angle,computed_compass_angle,is_pano,captured_at&bbox=${bbox.join(',')}&limit=40`, this.accessToken, controller.signal);
@@ -1601,7 +1612,7 @@ private syncMapLegendLayer() {
     objectsOptions: [{ value: DEFAULT_FILTER_LABELS.OBJECTS, label: DEFAULT_FILTER_LABELS.OBJECTS, iconUrl: null }],
     filtersLoaded: false,
     showIntro: true,
-    placesActive: false, placesAutoUpdate:true,placeNotePhase:'idle',placesPanelOpen: false, placesGroup: 'all', placesTileCategory: 'all', placesStatus: { kind: 'off', count: 0 }, selectedPlace: null, placesHoveredId:null,placesRevealRequest:0,placesShowLink: false, placesList: [], placesCameraDistance: null,
+    placesActive: false, placesAutoUpdate:true,placeNotePhase:'idle',placesPanelOpen: false, placesGroup: 'all', placesTileCategory: 'all', placesSourceLoading:false,placesStatus: { kind: 'off', count: 0 }, selectedPlace: null, placesHoveredId:null,placesRevealRequest:0,placesShowLink: false, placesList: [], placesCameraDistance: null,
     hasTimeTravel: false,
     showMinimap: true,
     detectionsActive: false,
@@ -11620,7 +11631,7 @@ private stopSafePlayback = () => {
       this.cancelCoverageAnalysis();
       this.showToast(this._t('appAnalysisStoppedBecauseItsMapAreaOrFiltersChanged'), 5000);
     }
-    if (prevProps.config.enablePlaces !== this.props.config.enablePlaces || prevProps.config.placesServiceUrl !== this.props.config.placesServiceUrl || prevProps.state !== this.props.state ||
+    if (prevProps.config.enablePlaces !== this.props.config.enablePlaces || prevProps.config.placesApiUrl !== this.props.config.placesApiUrl || prevProps.state !== this.props.state ||
       prevState.jimuMapView?.view !== this.state.jimuMapView?.view || prevState.isLoading !== this.state.isLoading || prevState.isFullscreen !== this.state.isFullscreen ||
       (!!this._placesTilesPrototype && prevState.placesPanelOpen !== this.state.placesPanelOpen)) this.syncPlaces();
     if (prevState.isLoading !== this.state.isLoading) this._backgroundRequests?.setPaused(!!this.state.isLoading || this._imageryOpeningRequest != null);
@@ -11842,7 +11853,7 @@ private stopSafePlayback = () => {
   // - Ensures all intervals, observers, and event listeners are removed
   // - to prevent memory leaks when widget is closed or reloaded.
   componentWillUnmount() {
-    ++this._placesTilesStartRevision;
+    ++this._placesTilesStartRevision;this._placesConfiguredRequest=null;this._placesConfiguredUrl=null;
     this._placesTilesPrototype?.stop(); this._placesTilesPrototype = null;
     const tilesControls = (window as any).__mlyPlacesTiles;
     if (tilesControls?.[String(this.props.id)] === this._placesTilesControl) delete tilesControls[String(this.props.id)];
@@ -12472,6 +12483,12 @@ private stopSafePlayback = () => {
           catch (error) { if ((error as any)?.name !== 'AbortError') console.warn('[Overture tile pick]', error); }
           if (!clickCurrent()) return;
           if (this._placesTilesPrototype === tilePlacesAtClick && this._places === placesOwnerAtClick && tileHit) {
+            if(tileHit.attributes?.cluster_count>1){
+              evt.stopPropagation();
+              if(view.zoom>=19)this.showToast(this._t('uiPoiClusterDense'),3500);
+              else void view.goTo({target:tileHit.geometry,zoom:Math.min(19,Math.max(15,Math.floor(view.zoom)+2))}).catch(()=>{});
+              return;
+            }
             const candidates: Place[] = (tileHit.candidates || [tileHit]).map((candidate: any) => tilePlace(candidate.attributes, candidate.geometry)).filter((place: Place | null): place is Place => !!place);
             if (candidates.length && this._places?.openExternalChoices(candidates)) { evt.stopPropagation(); return; }
           }
@@ -14275,7 +14292,7 @@ private stopSafePlayback = () => {
           }}
         />
 
-        {this.state.placesActive && this.state.placesPanelOpen && <PlacesPanel tileQuality={this._placesTilesPrototype?.quality} onTileQuality={this._placesTilesPrototype?.supportsFamilyFilter ? this.setPlacesTileQuality : undefined} tileSource={!!this._placesTilesPrototype} tileFamily={this._placesTilesPrototype?.supportsFamilyFilter ? this.state.placesTileCategory : 'all'} onTileFamily={this._placesTilesPrototype?.supportsFamilyFilter ? this.setPlacesTileCategory : undefined} autoUpdate={this.state.placesAutoUpdate} onAutoUpdate={this.setPlacesAutoUpdate} onSearch={()=>this._places?.controller.searchArea()} origin={this.placesListOrigin()} hoveredId={this.state.placesHoveredId} revealRequest={this.state.placesRevealRequest} onHover={id=>this._places?.setHover(id)} onGoToArea={this.goToPlacesArea} group={this.state.placesGroup} status={this.state.placesStatus} places={this.state.placesList} onSelect={id => this._places?.open([], id,false,'list')}
+        {this.state.placesActive && this.state.placesPanelOpen && <PlacesPanel onShowOnMap={this.showListedPlaceOnMap} onAreaSearch={this._placesTilesPrototype?text=>this._places?.controller.setSearchText(text):undefined} onLoadMore={()=>this._places?.controller.loadMore()} onPreviousResults={()=>this._places?.controller.previousPage()} tileLoading={this.state.placesSourceLoading} tileQuality={this._placesTilesPrototype?.quality} onTileQuality={this._placesTilesPrototype?.supportsFamilyFilter ? this.setPlacesTileQuality : undefined} tileSource={!!this._placesTilesPrototype||!!this._placesConfiguredRequest||!!this._placesConfiguredUrl} tileFamily={this._placesTilesPrototype?.supportsFamilyFilter ? this.state.placesTileCategory : 'all'} onTileFamily={this._placesTilesPrototype?.supportsFamilyFilter ? this.setPlacesTileCategory : undefined} autoUpdate={this.state.placesAutoUpdate} onAutoUpdate={this.setPlacesAutoUpdate} onSearch={()=>this._places?.controller.searchArea()} origin={this._placesTilesPrototype?this.state.placesStatus.resultOrigin||null:this.placesListOrigin()} hoveredId={this.state.placesHoveredId} revealRequest={this.state.placesRevealRequest} onHover={id=>this._places?.setHover(id)} onGoToArea={this.goToPlacesArea} group={this.state.placesGroup} status={this.state.placesStatus} places={this.state.placesList} onSelect={id => this._places?.open([], id,false,'list')}
           selection={this.state.selectedPlace ? { place: this.state.selectedPlace, link: this.state.placesShowLink, cameraDistance: this.state.placesCameraDistance,
             onLink: value => { this.setState({ placesShowLink: value }); this._places?.selection.setLink(value); },
             enterpriseEnabled:!!(this.props.config.sharedFieldNotesEnabled&&this.props.config.sharedFieldNotesUrl),onNote:this.createPlaceFieldNote,currentImageId:this.state.imageId,onGetNoteImage:this.getPlaceNoteImage,onLoadNotePreview:this.loadDetectionPreview,notePhase:this.state.placeNotePhase,onCancelNote:this.cancelPlaceNotePreparation,onImagery:()=>this._places?.open([],this.state.selectedPlace?.id,true,'card'),
@@ -14295,7 +14312,7 @@ private stopSafePlayback = () => {
           signSpritesStatus={this.state.signSpritesStatus} objectSpritesStatus={this.state.objectSpritesStatus}
           hideTurboFilter={this.props.config.hideTurboFilter}
           enablePlaces={this.props.config.enablePlaces === true || !!this._placesTilesPrototype}
-          placesAvailable={!!this._placesTilesPrototype || !!placesServiceUrl(this.props.config.placesServiceUrl)}
+          placesAvailable={!!this._placesTilesPrototype || !!placesApiUrl(this.props.config.placesApiUrl) || !!this.props.config.placesServiceUrl}
           placesActive={this.state.placesActive} placesPanelOpen={this.state.placesPanelOpen}
           onTogglePlaces={this.togglePlaces} onTogglePlacesPanel={() => this.setState(previous => ({ placesPanelOpen: !previous.placesPanelOpen }))}
           enableTrafficSigns={this.props.config.enableTrafficSigns}

@@ -150,6 +150,15 @@ const ko: SettingsMessages = {
   "thePortalSConfiguredRouteServiceWillBeDiscovered": "포털에 설정된 경로 서비스는 실행 중 확인됩니다.",
   "customRoutingService": "사용자 지정 경로 서비스",
   "routeServiceUrlConfigured": "경로 서비스 URL이 설정되었습니다.",
-  "routeServiceUrlRequired": "⚠ 경로 서비스 URL이 필요합니다."
+  "routeServiceUrlRequired": "⚠ 경로 서비스 URL이 필요합니다.",
+  "placesVectorServiceTitle": "주변 장소 · Overture",
+  "placesApiServiceUrl": "장소 서비스 URL",
+  "placesApiUrlInvalid": "자격 증명, 쿼리 매개변수 또는 프래그먼트가 없는 HTTPS 서비스 기본 URL을 입력하세요.",
+  "placesApiMigration": "주변 장소를 탐색하려면 장소 서비스 URL을 입력하세요.",
+  "placesApiTest": "연결 테스트",
+  "placesApiTesting": "서비스 확인 중…",
+  "placesApiConnected": "연결됨",
+  "placesApiFailed": "연결에 실패했습니다. URL, HTTPS 인증서, CORS 및 서비스 호환성을 확인하세요.",
+  "placesApiUrlHelp": "장소 서비스의 기본 URL을 입력하세요. 벡터 타일, 장소 선택 및 검색을 제공합니다. 사용자는 필요할 때 장소를 활성화합니다.",
 };
 export default ko;

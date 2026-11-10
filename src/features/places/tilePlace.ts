@@ -2,7 +2,7 @@ import { isTileCategory } from './tileCategories';
 import { Place, PlaceBbox, PLACES_LIMITS, placesWebsite } from './placesModel';
 /** Normalize one externally selected place, never a bulk graphics collection. */
 export function tilePlace(attributes: any, point: any): Place | null {
-  if (!attributes || !point) return null;
+  if (!attributes || !point || attributes.cluster_count > 1) return null;
   const lon = Number(point.longitude ?? point.x), lat = Number(point.latitude ?? point.y);
   const id = typeof attributes.gers_id === 'string' ? attributes.gers_id.trim() : '';
   if (!id || !Number.isFinite(lon) || !Number.isFinite(lat) || Math.abs(lon) > 180 || Math.abs(lat) > 85.051129) return null;

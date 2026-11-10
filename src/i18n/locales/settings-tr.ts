@@ -149,6 +149,15 @@ const tr: SettingsMessages = {
  "thePortalSConfiguredRouteServiceWillBeDiscovered": "Portalda yapılandırılmış rota servisi çalışma zamanında bulunur.",
  "customRoutingService": "Özel rota oluşturma servisi",
  "routeServiceUrlConfigured": "Rota servisi URL’si yapılandırıldı.",
- "routeServiceUrlRequired": "⚠ Rota servisi URL’si gerekli."
+ "routeServiceUrlRequired": "⚠ Rota servisi URL’si gerekli.",
+  "placesVectorServiceTitle": "Yakındaki Yerler · Overture",
+  "placesApiServiceUrl": "Yerler hizmeti adresi",
+  "placesApiUrlInvalid": "Kimlik bilgisi, sorgu parametresi veya bölüm içermeyen bir temel HTTPS hizmet adresi girin.",
+  "placesApiMigration": "Yakındaki yerleri keşfetmek için Yerler hizmeti adresini girin.",
+  "placesApiTest": "Bağlantıyı test et",
+  "placesApiTesting": "Hizmet kontrol ediliyor…",
+  "placesApiConnected": "Bağlandı",
+  "placesApiFailed": "Bağlantı başarısız. Adresi, HTTPS sertifikasını, CORS ve hizmet uyumluluğunu kontrol edin.",
+  "placesApiUrlHelp": "Yerler hizmetinin temel adresini girin. Vektör karoları, yer seçimi ve arama sağlar. Kullanıcılar gerektiğinde Yerler’i açar.",
 };
 export default tr;

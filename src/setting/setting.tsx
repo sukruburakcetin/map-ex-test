@@ -8,8 +8,8 @@ import { React, jsx } from "jimu-core";
 import { AllWidgetSettingProps } from "jimu-for-builder";
 import { SettingSection, SettingRow } from "jimu-ui/advanced/setting-components";
 import { MapWidgetSelector } from "jimu-ui/advanced/setting-components";
-import { Switch, TextInput, NumericInput, Select, Option } from "jimu-ui";
-import { placesServiceUrl } from "../features/places/placesModel";
+import { Switch, TextInput, NumericInput, Select, Option, Button } from "jimu-ui";
+import { placesApiUrl, testPlacesApi } from "../features/places/placesApi";
 import { IMConfig } from "../config";
 import { organizationFilterId } from "../utils/organizationFilter";
 import { FIELD_NOTE_CATEGORIES } from "../components/types";
@@ -19,6 +19,25 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
   declare context: React.ContextType<typeof SettingsLocaleContext>;
   state = {
     newCategoryText: "",
+    placesTestStatus:'idle' as 'idle'|'checking'|'ok'|'error',
+    placesTestInfo:'',
+  };
+
+  private placesTestAbort:AbortController|null=null;
+  componentWillUnmount(){this.placesTestAbort?.abort();}
+  componentDidUpdate(previous:AllWidgetSettingProps<IMConfig>){if(previous.config.placesApiUrl!==this.props.config.placesApiUrl){this.placesTestAbort?.abort();this.setState({placesTestStatus:'idle',placesTestInfo:''});}}
+  onPlacesApiChange=(event:React.ChangeEvent<HTMLInputElement>)=>{
+    this.placesTestAbort?.abort();this.setState({placesTestStatus:'idle',placesTestInfo:''});
+    this.props.onSettingChange({id:this.props.id,config:this.props.config.set('placesApiUrl',event.target.value)});
+  };
+  testPlacesConnection=async()=>{
+    const url=placesApiUrl(this.props.config.placesApiUrl);if(!url)return;
+    this.placesTestAbort?.abort();const controller=this.placesTestAbort=new AbortController();this.setState({placesTestStatus:'checking',placesTestInfo:''});
+    try{const result=await testPlacesApi(url,controller.signal);if(controller.signal.aborted||placesApiUrl(this.props.config.placesApiUrl)!==url)return;
+      const details=[result.count===null?'':new Intl.NumberFormat(this.context.locale).format(result.count),result.release].filter(Boolean).join(' · ');
+      this.setState({placesTestStatus:'ok',placesTestInfo:details});
+    }catch{if(!controller.signal.aborted&&placesApiUrl(this.props.config.placesApiUrl)===url)this.setState({placesTestStatus:'error',placesTestInfo:''});}
+    finally{if(this.placesTestAbort===controller)this.placesTestAbort=null;}
   };
 
   onMapWidgetSelected = (useMapWidgetIds: string[]) => {
@@ -591,11 +610,14 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
           </SettingRow>
         </SettingSection>
 
-        <SettingSection title={t('nearbyPlacesOverturePilot')}>
-          <SettingRow label={t('offerPlacesLayer')}><Switch checked={config.enablePlaces === true} onChange={evt => this.props.onSettingChange({ id: this.props.id, config: config.set("enablePlaces", evt.target.checked) })}/></SettingRow>
-          <SettingRow flow="wrap" label={t('placesFeatureserverLayerUrl')}><TextInput value={config.placesServiceUrl || ""} placeholder="https://…/FeatureServer/0" onChange={event => this.props.onSettingChange({ id: this.props.id, config: config.set("placesServiceUrl", event.target.value) })}/></SettingRow>
-          {!!config.placesServiceUrl && !placesServiceUrl(config.placesServiceUrl) && <p role="status"> {t('useAnHttpsFeatureserverLayerUrlWithoutQueryParameters')} </p>}
-          <p style={{ fontSize: 12, opacity: .8 }}> {t('requiresAPublishedPilotLayerPreparedWithToolsOverture')} </p>
+        <SettingSection title={t('placesVectorServiceTitle')}>
+          <SettingRow label={t('offerPlacesLayer')}><Switch checked={config.enablePlaces===true} onChange={event=>this.props.onSettingChange({id:this.props.id,config:config.set('enablePlaces',event.target.checked)})}/></SettingRow>
+          <SettingRow flow="wrap" label={t('placesApiServiceUrl')}><TextInput value={config.placesApiUrl||''} placeholder="https://maps.example.com/places" onChange={this.onPlacesApiChange}/></SettingRow>
+          {!!config.placesApiUrl&&!placesApiUrl(config.placesApiUrl)&&<p role="status">{t('placesApiUrlInvalid')}</p>}
+          <SettingRow><Button onClick={this.testPlacesConnection} disabled={!placesApiUrl(config.placesApiUrl)||this.state.placesTestStatus==='checking'}>{t(this.state.placesTestStatus==='checking'?'placesApiTesting':'placesApiTest')}</Button></SettingRow>
+          {this.state.placesTestStatus==='ok'&&<p role="status">{t('placesApiConnected')}{this.state.placesTestInfo?' · '+this.state.placesTestInfo:''}</p>}
+          {this.state.placesTestStatus==='error'&&<p role="alert">{t('placesApiFailed')}</p>}
+          <p style={{fontSize:12,opacity:.8}}>{t('placesApiUrlHelp')}</p>
         </SettingSection>
 
         <SettingSection title={t('featureDetectionLayers')}>

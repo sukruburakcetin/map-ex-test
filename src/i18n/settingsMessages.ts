@@ -149,7 +149,16 @@ export const settingsEn = {
  "thePortalSConfiguredRouteServiceWillBeDiscovered": "The portal's configured route service will be discovered at runtime.",
  "customRoutingService": "Custom routing service",
  "routeServiceUrlConfigured": "Route service URL configured.",
- "routeServiceUrlRequired": "⚠ Route service URL required."
+ "routeServiceUrlRequired": "⚠ Route service URL required.",
+  "placesVectorServiceTitle": "Nearby Places · Overture",
+  "placesApiServiceUrl": "Places service URL",
+  "placesApiUrlInvalid": "Enter a base HTTPS service URL without credentials, query parameters or a fragment.",
+  "placesApiMigration": "Enter a Places service URL to explore nearby places.",
+  "placesApiTest": "Test connection",
+  "placesApiTesting": "Checking service…",
+  "placesApiConnected": "Connected",
+  "placesApiFailed": "Connection failed. Check the URL, HTTPS certificate, CORS and service compatibility.",
+  "placesApiUrlHelp": "Enter the base URL of the Places service. It supplies vector tiles, picking and search. Viewers enable Places when needed.",
 } as const;
 export type SettingsKey = keyof typeof settingsEn;
 export type SettingsMessages = { [K in SettingsKey]: string };

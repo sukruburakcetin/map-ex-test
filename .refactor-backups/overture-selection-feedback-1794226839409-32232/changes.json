@@ -1,0 +1,117 @@
+{
+  "installer": "overture-selection-feedback",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/LoadedPlacesList.tsx",
+      "originalSha256": "715b7028125a15057a200d8d61655e2b9617913c93b02699e42d8984cb4d8c4e",
+      "resultSha256": "ae0065b84bb1ec4703b08f564e30a120c71c521fcb6d9fd6cf212a8208d8a1e0"
+    },
+    {
+      "file": "src/components/PlacesPanel.tsx",
+      "originalSha256": "5189fba478b49fb34dffa5742d823474752a7b984435c83bcd18a330d15750ea",
+      "resultSha256": "a2fee05ec0ae1ccdf919d0e2e74c55f22c8e19be8c1a6bb76fcf1dc6841782d1"
+    },
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "95e11df34481e71e5192cdb68a7b1b123e98623bce82224e7c0f8d08154bcc8c",
+      "resultSha256": "47a1490fbab51f357a42cba944cf4e7ed6a57f36b81ef0e6e836870f8b87ba45"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "8173d8aad0c68ab58533e8832ca33e569ffb79f1ad8408da4e3b84e5cbf17395",
+      "resultSha256": "2d762302ae63acab4ec3576eef7e5d82a49a848c52f8747d140c9dddcd8d5db2"
+    },
+    {
+      "file": "tests/placesPanelRendering.test.cjs",
+      "originalSha256": "a4d42f419d68e0a80c6ae31c612317ea1b84accbf2e8f24bcbb2aecbb917a1b9",
+      "resultSha256": "505fd2e1a975430a08edc83c540231fc3f20159dafa5566cd8709ebb238f0aae"
+    },
+    {
+      "file": "tests/tilePlaceIntegration.test.cjs",
+      "originalSha256": "f30e2c4e061360ca83895b50b17cb8dd9fe439dcd41a4a4892402cc1955cc149",
+      "resultSha256": "d528732a0777b14dc26618acfa4d39705c01fd0349eecfb235dd9804b3ae76ff"
+    },
+    {
+      "file": "src/i18n/runtimeMessages.ts",
+      "originalSha256": "f1066a772f32428c502d4d44712639f6d08056026d1cd0379834aa98337ecf49",
+      "resultSha256": "1854464254d7a88f0552cb4a20c608580e48c96f8c5f1cc3289ca6c8993bddcd"
+    },
+    {
+      "file": "docs/localization/translations.csv",
+      "originalSha256": "5bf4c6bbc372c85d20d4410d48c858613d315883f05b870c082c69fc898a2892",
+      "resultSha256": "246e4c260416ba86b7d93485fc02634e7bf0f7fa4c06c5fd95df7621dc476394"
+    },
+    {
+      "file": "src/i18n/locales/ar.ts",
+      "originalSha256": "68524c429427206b889a53042d93f4feab8f70b1db8eea2663e0c2e2f11cd869",
+      "resultSha256": "576df096924c7dc0661cd97d858311409ae7cfc93e536d36f137ad410baf5e63"
+    },
+    {
+      "file": "src/i18n/locales/de.ts",
+      "originalSha256": "f76fd81b02720b9f11329f07c5151c4300d61ed20e7ed8efc3ba3805d139606d",
+      "resultSha256": "4d174db9665a734053fd8fb13df1a748e08481de149127dc62430e15e511cb05"
+    },
+    {
+      "file": "src/i18n/locales/en-gb.ts",
+      "originalSha256": "1374b7bd1ecad06da50dd86cc4229d57c405cd501010d4a33f9e484ff4148771",
+      "resultSha256": "0b959b377819d10ae1e3f8232705c385436eb46f9ed8537002fcfe5b83a3c392"
+    },
+    {
+      "file": "src/i18n/locales/es.ts",
+      "originalSha256": "16f8e4a270df50c42a0f0cb3523e6196283d57f98f71e49222bfaa71ea8650f5",
+      "resultSha256": "fac86ec5713b6350f3a7a4ec58e3426d0d1ba674b998f978377e02fdf640e159"
+    },
+    {
+      "file": "src/i18n/locales/fr.ts",
+      "originalSha256": "4d058a7858f474c40633a724d519a5b6e30a921390aaba189b683f0843334c32",
+      "resultSha256": "11402e795edca0912dd6c19ee871933706e59e5fdd24b4a05d580e3b36e6dd10"
+    },
+    {
+      "file": "src/i18n/locales/it.ts",
+      "originalSha256": "6f30db9b1bf94eb194e9d2e1be4d518c48d4dd0c66e7beb483a7e5e7e9f546a9",
+      "resultSha256": "7bfed922f8f9aefbb10f0353fe6ca3f09c27fccb0524068a8066f319d97cd8f3"
+    },
+    {
+      "file": "src/i18n/locales/ja.ts",
+      "originalSha256": "f6838f1da9ed5a2c14dc38a9b6a275dc7dca202d139f11c696552b59ad56cd72",
+      "resultSha256": "dfe808aa7fa917edbadae334f3602190a591005a86c7a331ac578044820c0e4b"
+    },
+    {
+      "file": "src/i18n/locales/ko.ts",
+      "originalSha256": "b8f2ad349aaee1c444fc15dffbdad826c9053dbcb659e56a812ddac094f28e10",
+      "resultSha256": "6c2501f867b364e79d28fbfd4dfdb275a767003516d09c5bac52aaec06342c9c"
+    },
+    {
+      "file": "src/i18n/locales/pt-br.ts",
+      "originalSha256": "9e1e442669f0d661c470afd04bcb16350f50663d60b01e3e3ef84872de8adcf3",
+      "resultSha256": "1cf632b78d3f8df3b76be9081da6cfe39cdd15e90209885c30d4298d52d3c64b"
+    },
+    {
+      "file": "src/i18n/locales/tr.ts",
+      "originalSha256": "bee6a4e0a0c8a940158db659dd7f963b5728f0bdd849a32ab04bcba6624817f7",
+      "resultSha256": "cc7e2111699b8ca6bdd92b658faf3fe6d88f53fd57796587cc8eda66063aba75"
+    },
+    {
+      "file": "src/i18n/locales/zh-cn.ts",
+      "originalSha256": "153c42ea329b712d0a74540e58387c46f75b274c4d85e692400f89ee18b0c615",
+      "resultSha256": "a6890f593942bb9672428f797cd279e1666f8bdd791428125be2a00da12bbb8d"
+    },
+    {
+      "file": "src/i18n/locales/zh-tw.ts",
+      "originalSha256": "d223dc7be63646e31e9852b64880e7ecd2d4380330dc99e341d9f97b59f11619",
+      "resultSha256": "c31889739da76e62f00fe23dfeb6af17cc53a13a21976608a091edabf49006ec"
+    },
+    {
+      "file": "tests/overturePlaces.test.cjs",
+      "originalSha256": "7efee0a1f37a625a1e4dd62b30cdd0824497d437f4ab1619c7a92a34f7d11531",
+      "resultSha256": "2c280a4e0a820a8d9adcb019d1690cc74812d62ae16ba8189ffaf243982e9bf3"
+    },
+    {
+      "file": "tests/placesSelectionReveal.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "a8ebe963eec6b8be8ac6f3d5b6c33ca668eb1489f30b13cb05645d050adf5213"
+    }
+  ]
+}

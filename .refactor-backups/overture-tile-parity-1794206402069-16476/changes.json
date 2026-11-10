@@ -1,0 +1,132 @@
+{
+  "installer": "overture-tile-parity",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/features/places/PlacesController.ts",
+      "originalSha256": "4c4fc5989215d5c9125ea7f34dbd3dc52ec9b3f714f7c2a66b9fae9e92d445ce",
+      "resultSha256": "1369b2075735c32ffcc539b07c9f0f67e8a3ae0980c831ae1650f9a11b73c3d6"
+    },
+    {
+      "file": "src/features/places/PlacesTilesPrototype.ts",
+      "originalSha256": "42385cd40b0a0bec5adeb1211d26233fee2f7fdf40954e4bec6f2db8ef3764ec",
+      "resultSha256": "275f11ede67602f9a1ab4d4cdc4150043fcbab667f849e135be5e67f99dd8d3f"
+    },
+    {
+      "file": "src/features/places/ArcGISPlaces.ts",
+      "originalSha256": "510f95e693ca6a4b1e79354ce85c41dd09f64f5e010469e31676eaea299b29e6",
+      "resultSha256": "9610482513c2f3926ae60a6323240e2ce8243aaa9805d2b8ad0b2ae8326ace9e"
+    },
+    {
+      "file": "src/features/places/placePreferences.ts",
+      "originalSha256": "41a4c278a43e524740a14ef9bbabe05cb8b7967feb2f91e638195684ec690998",
+      "resultSha256": "d1fd3893177334135e0f29d3f747c796a2c9dece83b0e693275b871443e586a1"
+    },
+    {
+      "file": "src/components/PlacesPanel.tsx",
+      "originalSha256": "ee219d80c95712200f8a00fbf93c480dfb90c989bdb5db3bff8159e610e0ab2a",
+      "resultSha256": "192fef5026170c67acf6ce9369ce45ed8e2eb227c010637f40e82521207bfa21"
+    },
+    {
+      "file": "src/components/LoadedPlacesList.tsx",
+      "originalSha256": "a5521b38f9bd7a1064f95900f7b8733786afe6de6f2e30c4a615d441df63540b",
+      "resultSha256": "1ac461298706713e477a53923593886f5049d185e1106bc8fac80ed9c962f2c3"
+    },
+    {
+      "file": "src/components/SelectedPlaceCard.tsx",
+      "originalSha256": "a6495c3b24adb51e7950f31e03857edd5974111fbc9c6aeac7cf5c709752aa86",
+      "resultSha256": "906d9c1facc465b7d97c42c9a1969464278847be743f2fa3c9f962024e7d6527"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "3f0097ae3d8c9af88f24ec2cc08b068c54a870ff7d2ab08ba33c43ce26316c31",
+      "resultSha256": "776626cb9f329c2c3d9ed6adc70765ab201c98e0e95bc841d4836a1b3121c65d"
+    },
+    {
+      "file": "src/i18n/runtimeMessages.ts",
+      "originalSha256": "14e81e376304ed5888f70a5a52451185e845c636701a6552f5f2a1a3c209fcc1",
+      "resultSha256": "f86c2342650cecc9facb42df75ce3f096ab28017b3750d924e8f754be9ab420c"
+    },
+    {
+      "file": "docs/localization/translations.csv",
+      "originalSha256": "737a06de16d09587c3147fdb1531068048621e95358fc70670c38e571db2e646",
+      "resultSha256": "c73abeecf61f1abfbac24819c68dc51210d660f2aba90b1d61dd6db5bf85404a"
+    },
+    {
+      "file": "src/i18n/locales/ar.ts",
+      "originalSha256": "4eb5809109d51c6cb202f2626d0f6efab6d8cb582113139442fd2d7f0029ebd4",
+      "resultSha256": "98e89b735196aa40cf74a54d2345ed8404f290dd1fc72eaa4389e78fbe6b12a6"
+    },
+    {
+      "file": "src/i18n/locales/de.ts",
+      "originalSha256": "e7b1e11ad7fc6dff73d6c14ff4b106a6c8848ecab57297fc4eb727a11b33bf1b",
+      "resultSha256": "4dead1dbdaf59e63233af0937906ecdbdbd0b0d5d14a4ff12b79aafa3b143d1d"
+    },
+    {
+      "file": "src/i18n/locales/en-gb.ts",
+      "originalSha256": "c8afd1c5c1c3861eaeaa51ccb4d93f704988973a82e79c59ab099023671384f5",
+      "resultSha256": "a6d9e79310e85913450ffc2bdc5bafe004943b986f77e9f248a80343767f906f"
+    },
+    {
+      "file": "src/i18n/locales/es.ts",
+      "originalSha256": "5503218d400a8e72d9f8ac39723ea032fdf59de068bcf13a7e20e8615a510013",
+      "resultSha256": "a6aa79fd87df0a28d3231eeced3a6c9ca7d3e375969235d5987990aca7a18016"
+    },
+    {
+      "file": "src/i18n/locales/fr.ts",
+      "originalSha256": "770e383c6afe079ac09fdf1fc57bafcf1f0307dd7acdcdfcaa881224ec57b5d0",
+      "resultSha256": "ab7a43683a29f8c77a42d81831bd4ada36644dd8c3c351d9de2ad5672c2048e0"
+    },
+    {
+      "file": "src/i18n/locales/it.ts",
+      "originalSha256": "814bc2f7bfb117f3b4af75c75ce5d5e645eb5053eb7db47a98a531aa9f17f8f9",
+      "resultSha256": "57c6d2f85e934258a9f329deaee713f39bb4c75010387cdf1904a579a9dbaba1"
+    },
+    {
+      "file": "src/i18n/locales/ja.ts",
+      "originalSha256": "845165d1f8f5a38b6b9a1702a11a4c0a5f3217759c84eb6f7f04fc3bc8f91676",
+      "resultSha256": "aa37399236b85da1e3bd09f702969b8db774f9e5611292c4d382f055c528cbf8"
+    },
+    {
+      "file": "src/i18n/locales/ko.ts",
+      "originalSha256": "3a085fee6f8b20dbf21986932a3d6aeac1172ad27f54dce6adf4c93f14c142b3",
+      "resultSha256": "6f9717f53677525cd2690461816bc187289f66ce4618a8aa8783f7a77c04ec4a"
+    },
+    {
+      "file": "src/i18n/locales/pt-br.ts",
+      "originalSha256": "ad0062bffd274dc9f38ad21f03089b2598facd6534cb6b43661c98957252a5c4",
+      "resultSha256": "af4fed64ae57c830a9490f9a9e70045e87790b1081de569d9b3736c3d5a2996c"
+    },
+    {
+      "file": "src/i18n/locales/tr.ts",
+      "originalSha256": "b52edba48b6e90cc30e0be8633e7a042f77004b5211f05d66aebe3e403ec5f12",
+      "resultSha256": "eeab055643c78df64de4c447a4934a523f24dfdb796b0b2ffc09982e25a5bc09"
+    },
+    {
+      "file": "src/i18n/locales/zh-cn.ts",
+      "originalSha256": "d997a4bd5605b87a16ccde6a1d5d1dfe4de368c65c01191876eee56033d1ab03",
+      "resultSha256": "7af20718dacc44cd3fdaa359b72ddda6c0693c139c195865f2344f68a930f35b"
+    },
+    {
+      "file": "src/i18n/locales/zh-tw.ts",
+      "originalSha256": "f18c1765bc8819f8fcef69129695ddea5062cb26385c373eb91a6427281463d3",
+      "resultSha256": "0729a61ccc952621a75bdcecc19df8621240c43a0637f036fde22739f80c37ec"
+    },
+    {
+      "file": "tests/placesTilesPrototype.test.cjs",
+      "originalSha256": "044e599ff6569df996579d197c4d3f72f9335786ff15a6358866011029accd3a",
+      "resultSha256": "5df9cb4c4b8a10764ebbf900cb50bbbe271e3e85c801c850b054ba27068d5622"
+    },
+    {
+      "file": "tests/placesPanelRendering.test.cjs",
+      "originalSha256": "288a22eb97585570b6459b2eaa343a980df09286cdb7dcd0326df455ad5f55a9",
+      "resultSha256": "395dd9dbc73d17e3dcb5bfb12867c7348aaa3a005299f620ac9a876128c5d0db"
+    },
+    {
+      "file": "tests/placesTileParity.test.cjs",
+      "originalSha256": null,
+      "resultSha256": "e329c20b5c92766e0920e2f30d7ed8b97e1c4f915979dd0584b0e2bbf0bc3b7a"
+    }
+  ]
+}

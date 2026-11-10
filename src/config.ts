@@ -10,8 +10,10 @@ export interface Config {
   /** Translation pilot: app locale by default; viewer preference can be disabled. */
   widgetLanguage?: 'auto' | 'en' | 'en-GB' | 'ar' | 'tr' | 'es' | 'fr' | 'de' | 'pt-BR' | 'it' | 'ja' | 'ko' | 'zh-CN' | 'zh-TW';
   allowUserLanguageChoice?: boolean;
-  /** Optional externally published Overture Places pilot; no requests until users enable it. */
+  /** Optional Overture vector-tile service; no requests until the viewer enables Places. */
   enablePlaces?: boolean;
+  placesApiUrl?: string;
+  /** Compatibility metadata; the Places service connection is configured through placesApiUrl. */
   placesServiceUrl?: string;
   /**
    * Mapillary API access token used to authenticate requests to the Mapillary services.

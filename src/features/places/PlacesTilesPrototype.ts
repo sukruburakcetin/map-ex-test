@@ -1,9 +1,14 @@
-import { isTileCategory, TILE_CATEGORIES } from './tileCategories';
+import { placesApiSibling, validatePlacesApiMetadata } from './placesApi';
+import { isTileCategory } from './tileCategories';
+import type { Place } from './placesModel';
 import { BoundedPlaceHover } from './BoundedPlaceHover';
-/** Opt-in feasibility harness. Native tiles draw POIs; only a bounded click query reaches JS.
+/** Native vector-tile adapter. Native tiles draw POIs; only a bounded click query reaches JS.
  * Picking is proximity-based, not proof that a collision-hidden tile symbol was rendered.
  */
+export class PlaceTilesError extends Error { constructor(public code:'dense'|'pick'|'filter'|'source',message:string){super(message);this.name='PlaceTilesError';} }
 export class PlacesTilesPrototype {
+  private replacing=false;
+  get changing():boolean{return this.replacing;}
   private layer: any;
   private service: any;
   private click: any;
@@ -11,59 +16,65 @@ export class PlacesTilesPrototype {
   private controls: HTMLDivElement | null = null;
   private abort: AbortController | null = null;
   private revision = 0;
-  private source: { style: string; details: string; local: boolean } | null = null;
+  private source: { style: string; details: string; api: boolean } | null = null;
   private sourceAbort: AbortController | null = null;
   private hover = new BoundedPlaceHover<any>((screen, signal) => this.lookup(screen, signal, this.revision, false));
-  constructor(private host: { view: any; modules: any; sourceChanging?(): void; sourceReady?(bbox: [number, number, number, number] | null): void; sharedClicks?: boolean; busy?(): boolean; selected(attributes: any, point: any): void; clearSelected?(): void; error(error: unknown): void }) {}
+  constructor(private host: { id?:string;view: any; modules: any; sourceChanging?(preserveSelection?:boolean): void;loading?(active:boolean):void; sourceReady?(bbox: [number, number, number, number] | null): void; sharedClicks?: boolean; busy?(): boolean; selected(attributes: any, point: any): void; clearSelected?(): void; error(error: unknown): void }) {}
 
-  get supportsFamilyFilter(): boolean { return this.source?.local === true; }
+  get supportsFamilyFilter(): boolean { return this.source?.api === true; }
   get version(): number { return this.revision; }
   get visible(): boolean {
     return !!this.layer && this.layer.visible !== false && !this.host.view.destroyed &&
-      !(this.source?.local && Number.isFinite(this.host.view.zoom) && this.host.view.zoom < 12);
+      !(this.source?.api && Number.isFinite(this.host.view.zoom) && this.host.view.zoom < 12);
   }
 
-  async start(styleUrl: string, detailsUrl: string, local = false): Promise<void> {
-    this.stop();
+  async start(styleUrl: string, detailsUrl: string, api = false, replace = false): Promise<void> {
     for (const value of [styleUrl, detailsUrl]) {
       const url = new URL(value);
       if (url.protocol !== 'https:' || url.username || url.password) throw new Error('Use HTTPS endpoints without embedded credentials');
     }
-    if (local && (!['localhost', '127.0.0.1'].includes(new URL(detailsUrl).hostname) || new URL(styleUrl).origin !== new URL(detailsUrl).origin)) throw new Error('Local test endpoints must use the same loopback origin');
-    if (!local && !/\/FeatureServer\/\d+\/?$/.test(new URL(detailsUrl).pathname)) throw new Error('Expected a FeatureServer layer URL');
-    this.source = { style: styleUrl, details: detailsUrl, local };
+    if (api && (new URL(styleUrl).origin!==new URL(detailsUrl).origin||!new URL(detailsUrl).pathname.endsWith('/query'))) throw new Error('Places tile and query endpoints must use the same origin and a query endpoint');
+    if (!api && !/\/FeatureServer\/\d+\/?$/.test(new URL(detailsUrl).pathname)) throw new Error('Expected a FeatureServer layer URL');
+    if (!this.host.view?.ready || this.host.view.destroyed) throw new Error('Open a ready map first');
+    if(!replace)this.stop();else{++this.revision;this.cancelPick();this.sourceAbort?.abort();}
+    this.replacing=replace;this.host.loading?.(true);
+    const source = { style: styleUrl, details: detailsUrl, api };
     const sourceAbort = this.sourceAbort = new AbortController();
     const { view, modules } = this.host, revision = this.revision;
-    if (!view?.ready || view.destroyed) throw new Error('Open a ready map first');
-    const layer = this.layer = new modules.VectorTileLayer({ url: styleUrl, id: 'overture-tiles-prototype', title: 'Overture POIs · prototype', listMode: 'hide' });
-    const service = this.service = local ? {
+    const baseId=this.host.id?'overture-places-'+encodeURIComponent(this.host.id):'overture-tiles-prototype';
+    const layer = new modules.VectorTileLayer({ url: styleUrl, id: replace ? `${baseId}-${revision}` : baseId, title: 'Overture Places', listMode: 'hide' });
+    const service = api ? {
       fields: [{ name: 'gers_id' }], load: async () => {}, destroy: () => {},
       queryFeatures: async (query: any, options: any) => {
-        const response = await fetch(detailsUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ geometry: query.geometry }), signal: options.signal });
-        if (!response.ok) throw new Error(`Local POI query failed (${response.status})`);
+        const response = await fetch(detailsUrl, { method: 'POST', credentials:'omit', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ geometry: query.geometry,...(Number.isFinite(view.zoom)?{zoom:Math.max(12,Math.min(19,Math.floor(view.zoom)))}:{}) }), signal: options.signal });
+        if (!response.ok) throw new Error(`Places query failed (${response.status})`);
         const result = await response.json();
-        if (!Array.isArray(result.features) || result.features.length > 32) throw new Error('Local POI query exceeded candidate limit');
+        if (!Array.isArray(result.features) || result.features.length > 32) throw new Error('Places query exceeded candidate limit');
         return { ...result, features: result.features.map((feature: any) => ({ ...feature, geometry: new modules.Point(feature.geometry) })) };
       },
     } : new modules.FeatureLayer({ url: detailsUrl, popupEnabled: false });
     try {
       let bounds: [number, number, number, number] | null = null;
-      const metadata = local && this.host.sourceReady ? (async () => {
-        const endpoint = new URL(detailsUrl); endpoint.pathname = '/status';
-        const response = await fetch(endpoint.toString(), { signal: sourceAbort.signal });
-        if (!response.ok) throw new Error('Local POI metadata could not load');
-        const result = await response.json(), bbox = result.bbox;
-        if (result.category_filter_version !== 1 || !Array.isArray(result.supported_icon_families) || TILE_CATEGORIES.some(([id]) => !result.supported_icon_families.includes(id))) throw new Error('Restart the updated local POI server to enable all category filters');
-        if (!Array.isArray(bbox) || bbox.length !== 4 || !bbox.every(Number.isFinite) || bbox[0] >= bbox[2] || bbox[1] >= bbox[3] || bbox[0] < -180 || bbox[2] > 180 || bbox[1] < -85.051129 || bbox[3] > 85.051129) throw new Error('Local POI extent is invalid');
-        bounds = bbox as [number, number, number, number];
+      const metadata = api && this.host.sourceReady ? (async () => {
+        const endpoint = new URL(placesApiSibling(detailsUrl,'status'));
+        const response = await fetch(endpoint.toString(), { signal: sourceAbort.signal,credentials:'omit' });
+        if (!response.ok) throw new Error('Places metadata could not load');
+        bounds=validatePlacesApiMetadata(await response.json()).bbox;
       })() : Promise.resolve();
-      await Promise.all([layer.load(), service.load(), metadata]);
-      if (revision !== this.revision || view.destroyed) return;
+      await Promise.all([layer.load({signal:sourceAbort.signal}), service.load({signal:sourceAbort.signal}), metadata]);
+      if (revision !== this.revision || view.destroyed || sourceAbort.signal.aborted) {layer.destroy();service.destroy();return;}
       if (!service.fields?.some((field: any) => field.name === 'gers_id')) throw new Error('Details service must expose gers_id');
+      const priorLayer=this.layer,priorService=this.service;
       view.map.add(layer);
-      if (local) this.host.sourceReady?.(bounds);
-      if (local && !this.host.sharedClicks) this.addQualityControls(styleUrl, detailsUrl);
+      this.movement?.remove();this.movement=null;this.click?.remove();this.click=null;
+      if(this.controls){view.ui?.remove(this.controls);this.controls.remove();this.controls=null;}
+      this.layer=layer;this.service=service;this.source=source;
+      if(priorLayer){view.map.remove(priorLayer);priorLayer.destroy();}priorService?.destroy();
+      this.replacing=false;
+      if(replace)this.host.sourceChanging?.(true);
+      if (api) this.host.sourceReady?.(bounds);
+      if (api && !this.host.sharedClicks) this.addQualityControls(styleUrl, detailsUrl);
       this.movement = view.watch('stationary', (stationary: boolean) => {
         if (!stationary) { this.abort?.abort(); this.hover.clear(); }
       });
@@ -72,25 +83,29 @@ export class PlacesTilesPrototype {
         event.stopPropagation();
         void this.pick(event).catch(error => { if (error?.name !== 'AbortError') this.host.error(error); });
       });
-    } catch (error) { if (revision === this.revision) this.stop(); throw error; }
+    } catch (error) {
+      if(this.layer!==layer){layer.destroy();service.destroy();}
+      if(revision===this.revision){this.replacing=false;if(!replace)this.stop();this.host.error(new PlaceTilesError(replace?'filter':'source',String((error as Error)?.message||error)));}
+      throw error;
+    } finally {if(revision===this.revision){this.replacing=false;this.host.loading?.(false);}}
   }
 
   setVisible(visible: boolean): void { if (this.layer) this.layer.visible = visible; }
   async setGroup(group: string): Promise<void> {
     if (!['all', 'health', 'education', 'parks', 'landmarks', 'services'].includes(group)) throw new Error('Invalid place group');
     const source = this.source;
-    if (!source?.local) return;
+    if (!source?.api) return;
     const style = new URL(source.style), details = new URL(source.details);
     for (const url of [style, details]) { url.searchParams.delete('family'); if (group === 'all') url.searchParams.delete('group'); else url.searchParams.set('group', group); }
-    await this.start(style.toString(), details.toString(), true);
+    await this.start(style.toString(), details.toString(), true, true);
   }
   async setFamily(family: string): Promise<void> {
     if (!isTileCategory(family)) throw new Error('Invalid icon family');
     const source = this.source;
-    if (!source?.local) return;
+    if (!source?.api) return;
     const style = new URL(source.style), details = new URL(source.details);
     for (const url of [style, details]) { url.searchParams.delete('group'); if (family === 'all') url.searchParams.delete('family'); else url.searchParams.set('family', family); }
-    await this.start(style.toString(), details.toString(), true);
+    await this.start(style.toString(), details.toString(), true, true);
   }
   get quality(): { minimum: number | null; hideClosed: boolean } {
     const params = this.source ? new URL(this.source.style).searchParams : new URLSearchParams();
@@ -100,24 +115,26 @@ export class PlacesTilesPrototype {
   async setQuality(minimum: number | null, hideClosed: boolean): Promise<void> {
     if (minimum !== null && (!Number.isFinite(minimum) || minimum < 0 || minimum > 1)) throw new Error('Invalid confidence threshold');
     const source = this.source;
-    if (!source?.local) return;
+    if (!source?.api) return;
     const style = new URL(source.style), details = new URL(source.details);
     for (const url of [style, details]) {
       if (minimum === null) url.searchParams.delete('min_confidence'); else url.searchParams.set('min_confidence', String(minimum));
       if (hideClosed) url.searchParams.set('hide_closed', '1'); else url.searchParams.delete('hide_closed');
     }
-    await this.start(style.toString(), details.toString(), true);
+    await this.start(style.toString(), details.toString(), true, true);
   }
-  async queryArea(bbox: readonly number[], signal: AbortSignal, origin?: { lon: number; lat: number } | null): Promise<{ features: any[]; limited: boolean }> {
+  async queryArea(bbox: readonly number[], signal: AbortSignal, origin?: { lon: number; lat: number } | null,offset=0,text=''): Promise<{ features: any[]; limited: boolean;offset:number }> {
+    if(!Number.isSafeInteger(offset)||offset<0||offset>100000||offset%200)throw new Error('Invalid page offset');
     const source = this.source;
-    if (!source?.local) throw new Error('The local area-query adapter is unavailable');
-    const endpoint = new URL(source.details); endpoint.pathname = '/search';
-    const response = await fetch(endpoint.toString(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal,
-      body: JSON.stringify({ origin: origin || undefined, geometry: { xmin: bbox[0], ymin: bbox[1], xmax: bbox[2], ymax: bbox[3], spatialReference: { wkid: 4326 } } }) });
-    if (!response.ok) throw new Error(`Local area query failed (${response.status})`);
+    if (!source?.api) throw new Error('The Places area-query adapter is unavailable');
+    const endpoint = new URL(placesApiSibling(source.details,'search'));
+    const response = await fetch(endpoint.toString(), { method: 'POST', credentials:'omit', headers: { 'Content-Type': 'application/json' }, signal,
+      body: JSON.stringify({ offset, text, origin: origin || undefined, geometry: { xmin: bbox[0], ymin: bbox[1], xmax: bbox[2], ymax: bbox[3], spatialReference: { wkid: 4326 } } }) });
+    if (!response.ok) throw new Error(`Places area query failed (${response.status})`);
     const result = await response.json();
-    if (!Array.isArray(result.features) || result.features.length > 200) throw new Error('Local area query exceeded its limit');
-    return { features: result.features, limited: !!result.exceededTransferLimit || result.features.length >= 200 };
+    if (!Array.isArray(result.features) || result.features.length > 200) throw new Error('Places area query exceeded its limit');
+    if(result.offset!==undefined&&result.offset!==offset)throw new Error('Places area query returned the wrong page');
+    return { features: result.features, limited: !!result.exceededTransferLimit,offset };
   }
 
   private addQualityControls(styleUrl: string, detailsUrl: string): void {
@@ -156,6 +173,12 @@ export class PlacesTilesPrototype {
     view.ui?.add(controls, 'top-right');
   }
 
+  matches(place:Place):boolean {
+    if(!this.source?.api)return true;
+    const p=new URL(this.source.style).searchParams,family=p.get('family')||'all',group=p.get('group')||'all',quality=this.quality;
+    return (family==='all'||place.group===family)&&(group==='all'||place.group===group)&&
+      (quality.minimum===null||place.confidence!==null&&place.confidence>=quality.minimum)&&(!quality.hideClosed||place.operatingStatus!=='permanently_closed');
+  }
   cancelHover(): void { this.hover.clear(); }
   resolveHover(screen: { x: number; y: number }, signal: AbortSignal): Promise<any | null> {
     if (!this.visible || this.host.busy?.()) return Promise.resolve(null);
@@ -169,7 +192,7 @@ export class PlacesTilesPrototype {
   async resolve(screen: { x: number; y: number }): Promise<any | null> {
     this.cancelPick();
     const controller = this.abort = new AbortController();
-    return this.lookup(screen, controller.signal, this.revision);
+    try{return await this.lookup(screen, controller.signal, this.revision);}catch(error){if(!controller.signal.aborted)this.host.error(new PlaceTilesError('pick',String((error as Error)?.message||error)));throw error;}
   }
   private async lookup(screen: { x: number; y: number }, signal: AbortSignal, revision: number, reportDense = true): Promise<any | null> {
     const { view } = this.host;
@@ -177,7 +200,8 @@ export class PlacesTilesPrototype {
     const point = view.toMap(screen);
     if (!point) return null;
     // Derive a map-space search envelope from screen pixels; works in MapView and SceneView.
-    const corners = [[-12,-12],[12,-12],[12,12],[-12,12]].map(([x,y]) => view.toMap({ x: screen.x+x, y: screen.y+y }));
+    const radius=this.source?.api?24:12;
+    const corners = [[-radius,-radius],[radius,-radius],[radius,radius],[-radius,radius]].map(([x,y]) => view.toMap({ x: screen.x+x, y: screen.y+y }));
     if (corners.some(p => !p || !Number.isFinite(p.x) || !Number.isFinite(p.y))) return null;
     const geometry = { type: 'extent', xmin: Math.min(...corners.map(p=>p.x)), ymin: Math.min(...corners.map(p=>p.y)), xmax: Math.max(...corners.map(p=>p.x)), ymax: Math.max(...corners.map(p=>p.y)), spatialReference: point.spatialReference };
     const controller = new AbortController();
@@ -189,21 +213,23 @@ export class PlacesTilesPrototype {
     finally { clearTimeout(timeout); signal.removeEventListener('abort', cancel); }
     if (controller.signal.aborted || revision !== this.revision || view.destroyed || !view.stationary || this.host.busy?.()) return null;
     // Never claim a nearest result when the server truncated the candidates.
-    if (page.exceededTransferLimit || page.features?.length >= 32) { if (reportDense) this.host.error(new Error('Too many nearby candidates; zoom in to select a place')); return null; }
-    let nearest: any = null, distance = 12 * 12;
+    if (page.exceededTransferLimit || page.features?.length > 32) { if (reportDense) this.host.error(new PlaceTilesError('dense','Too many nearby candidates; zoom in to select a place')); return null; }
+    let nearest: any = null, distance = radius * radius;
     const nearby: any[] = [];
     for (const feature of page.features || []) {
       if (!feature.attributes?.gers_id || !feature.geometry) continue;
       const pixel = view.toScreen(feature.geometry);
       if (!pixel || !Number.isFinite(pixel.x) || !Number.isFinite(pixel.y)) continue;
       const squared = (pixel.x-screen.x)**2 + (pixel.y-screen.y)**2;
-      if (squared <= 12 * 12) nearby.push(feature);
+      if(squared>(feature.attributes.cluster_count>1?24*24:12*12))continue;
+      nearby.push(feature);
       if (squared < distance) { distance = squared; nearest = feature; }
     }
     return nearest ? { attributes: nearest.attributes, geometry: nearest.geometry, candidates: nearby } : null;
   }
 
   stop(): void {
+    this.replacing=false;this.host.loading?.(false);
     ++this.revision;
     this.hover.clear();
     this.sourceAbort?.abort(); this.sourceAbort = null; this.source = null;

@@ -19,6 +19,15 @@ const overrides: Partial<SettingsMessages> = {
   "usesTheRouteServiceConfiguredByTheCurrentArcgis": "Uses the route service configured by the current ArcGIS Online or Enterprise portal. Compatibility depends on the organisation's network configuration.",
   "organizationRoute": "Organisation Route",
   "makeSureThisServiceSupportsTheRoutingBehaviorRequired": "Make sure this service supports the routing behaviour required by Capture Route before publishing.",
-  "organizationRouting": "Organisation routing"
+  "organizationRouting": "Organisation routing",
+  "placesVectorServiceTitle": "Nearby Places · Overture",
+  "placesApiServiceUrl": "Places service URL",
+  "placesApiUrlInvalid": "Enter a base HTTPS service URL without credentials, query parameters or a fragment.",
+  "placesApiMigration": "Enter a Places service URL to explore nearby places.",
+  "placesApiTest": "Test connection",
+  "placesApiTesting": "Checking service…",
+  "placesApiConnected": "Connected",
+  "placesApiFailed": "Connection failed. Check the URL, HTTPS certificate, CORS and service compatibility.",
+  "placesApiUrlHelp": "Enter the base URL of the Places service. It supplies vector tiles, picking and search. Viewers enable Places when needed.",
 };
 export default overrides;

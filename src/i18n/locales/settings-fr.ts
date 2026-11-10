@@ -150,6 +150,15 @@ const fr: SettingsMessages = {
   "thePortalSConfiguredRouteServiceWillBeDiscovered": "Le service d’itinéraire configuré sur le portail sera découvert pendant l’utilisation.",
   "customRoutingService": "Service d’itinéraire personnalisé",
   "routeServiceUrlConfigured": "URL du service d’itinéraire configurée.",
-  "routeServiceUrlRequired": "⚠ URL du service d’itinéraire requise."
+  "routeServiceUrlRequired": "⚠ URL du service d’itinéraire requise.",
+  "placesVectorServiceTitle": "Lieux à proximité · Overture",
+  "placesApiServiceUrl": "URL du service de lieux",
+  "placesApiUrlInvalid": "Saisissez une URL de base de service HTTPS sans identifiants, paramètres de requête ni fragment.",
+  "placesApiMigration": "Saisissez une URL du service de lieux pour explorer les lieux à proximité.",
+  "placesApiTest": "Tester la connexion",
+  "placesApiTesting": "Vérification du service…",
+  "placesApiConnected": "Connecté",
+  "placesApiFailed": "Échec de connexion. Vérifiez l’URL, le certificat HTTPS, CORS et la compatibilité du service.",
+  "placesApiUrlHelp": "Saisissez l’URL de base du service de lieux. Il fournit les tuiles vectorielles, la sélection et la recherche. Les utilisateurs activent les lieux au besoin.",
 };
 export default fr;

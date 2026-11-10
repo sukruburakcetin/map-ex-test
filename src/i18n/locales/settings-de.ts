@@ -150,6 +150,15 @@ const de: SettingsMessages = {
   "thePortalSConfiguredRouteServiceWillBeDiscovered": "Der im Portal konfigurierte Routendienst wird während der Nutzung ermittelt.",
   "customRoutingService": "Benutzerdefinierter Routendienst",
   "routeServiceUrlConfigured": "URL des Routendienstes konfiguriert.",
-  "routeServiceUrlRequired": "⚠ URL des Routendienstes erforderlich."
+  "routeServiceUrlRequired": "⚠ URL des Routendienstes erforderlich.",
+  "placesVectorServiceTitle": "Orte in der Nähe · Overture",
+  "placesApiServiceUrl": "URL des Ortsdienstes",
+  "placesApiUrlInvalid": "Geben Sie eine HTTPS-Basisdienst-URL ohne Zugangsdaten, Abfrageparameter oder Fragment ein.",
+  "placesApiMigration": "Geben Sie eine Ortsdienst-URL ein, um Orte in der Nähe zu erkunden.",
+  "placesApiTest": "Verbindung testen",
+  "placesApiTesting": "Dienst wird geprüft…",
+  "placesApiConnected": "Verbunden",
+  "placesApiFailed": "Verbindung fehlgeschlagen. Prüfen Sie URL, HTTPS-Zertifikat, CORS und Dienstkompatibilität.",
+  "placesApiUrlHelp": "Geben Sie die Basis-URL des Ortsdienstes ein. Er liefert Vektorkacheln, Auswahl und Suche. Nutzer aktivieren Orte bei Bedarf.",
 };
 export default de;

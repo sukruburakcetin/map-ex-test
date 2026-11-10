@@ -1,0 +1,172 @@
+{
+  "installer": "overture-places-wording",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/setting/setting.tsx",
+      "originalSha256": "3458e570050b6c834fd33320e4136fafea6653f821361184e279db1007928c3c",
+      "resultSha256": "71211594bde633c95a7f4b4afdae9a5bcb8c65ffa5f2b64800931bddbc2a2bc0"
+    },
+    {
+      "file": "src/runtime/widget.tsx",
+      "originalSha256": "54cfc68e15651a981958012cad7a2ef33cdfaf1b56c1ce88e27499703fb99b3d",
+      "resultSha256": "a5e352c756facc1ef931a477afdbf78eab31fd872dd074246dfb7fb9bb7036e8"
+    },
+    {
+      "file": "src/config.ts",
+      "originalSha256": "51000d2715053020d6b29505e31e563c9e868016fd78f223c4eba1872fb98814",
+      "resultSha256": "1d674ac564404e9271dd9c4f1572035482c552ae1e5f70470a56c5f5b2185fdd"
+    },
+    {
+      "file": "src/i18n/runtimeMessages.ts",
+      "originalSha256": "9ba17037a7b4542769154ff804497e37f85656368ea944543535ffe8d1f4df34",
+      "resultSha256": "a0cf1d78f68b0b39aa77ed8144e992a0285ea76d4ac32c5f6b98d5eb817a2bbc"
+    },
+    {
+      "file": "src/i18n/settingsMessages.ts",
+      "originalSha256": "95c24c58c5c133481cdd5c20d6c5dfb6058b8fcbf54912b7fa88a14c18cbc1a6",
+      "resultSha256": "9c36182bc973258bf8e1437a76828a8c418830499a906680355f7c10b79ed1fb"
+    },
+    {
+      "file": "docs/localization/translations.csv",
+      "originalSha256": "ebb7924bf57107569d3ab62ae89151fac431e43b592e29b164a7182337ea0f5d",
+      "resultSha256": "53a787921e6a0ad6b7cd9f001cd647421e5a37b686fa0b23887bd8b0f5b6ffd8"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES-SERVICE.md",
+      "originalSha256": "211d31425040deba606dc3951f5027fe30ca54039ab56681f76212e4b4c82258",
+      "resultSha256": "f1e0609310df10d0f44b17c476b28dba63a9700eee37940bdf1ba63499cc4ed3"
+    },
+    {
+      "file": "docs/OVERTURE-PLACES.md",
+      "originalSha256": "28fffeeb7a05a64c16fbabc9d31398fb4722782cbdb2748c313a6400c1e0e3f7",
+      "resultSha256": "a2706eaeedb535cf4bb0ca0008b199f1c331eea6d916876ae3939a4583452c35"
+    },
+    {
+      "file": "tests/placesConfiguredRuntime.test.cjs",
+      "originalSha256": "878cea139407065f49d9c70b77daa55b317f1664d718e5da5779942595b31978",
+      "resultSha256": "e0664a0c9646be3719e70d1674a97925ff1e5405e1051d0ac8ae14bd181968b4"
+    },
+    {
+      "file": "src/i18n/locales/ar.ts",
+      "originalSha256": "369067df07982aab0888d9a98611187bed310cd33dffa4cbca5748d5291fe286",
+      "resultSha256": "3b56b71060a2405b8e72848bf80eb7b4ceef405139d3c7ddc3cdd34b37e8f444"
+    },
+    {
+      "file": "src/i18n/locales/de.ts",
+      "originalSha256": "6cc5047b58777caa8a2f0c4e72639a6b86cf74953d157fa635e3c7d8ccd8e1d3",
+      "resultSha256": "0263e5c9ab4353959465c4e683b8d75f5765ecac8a1b8ce5088dec7a14f110f2"
+    },
+    {
+      "file": "src/i18n/locales/en-gb.ts",
+      "originalSha256": "73a7969938ee2912c74f09b7f1b912e68de8fb0b9a9a77c769f44a6b7f8bf3d0",
+      "resultSha256": "d7193a74537ea09d5aa99372711c3fc64d431b30d504c858f7a43d82f337fae8"
+    },
+    {
+      "file": "src/i18n/locales/es.ts",
+      "originalSha256": "2e71fc083d6c8f6e8b813c33095f6da3d74d0d0285497489f171af696e0f1fde",
+      "resultSha256": "c72f89bd38cb0169ae3f0b9dc09c2bd137e1c2c51e589fb3852284369566fbaa"
+    },
+    {
+      "file": "src/i18n/locales/fr.ts",
+      "originalSha256": "97ff58389da012c0c3cc8c2631eae18d1ca7b7532e2a0007ee122555aaa10c3f",
+      "resultSha256": "ebe07449d14804ccaf893c58cc5c8ab1b0b186a1446baebd508969ecf490a127"
+    },
+    {
+      "file": "src/i18n/locales/it.ts",
+      "originalSha256": "6c74075b58ceca763b5fad02d72411c7e64c4c58369e00ba07c83b41b32ea2af",
+      "resultSha256": "84ad19edc4255f14b0415eea30d6e606ccee737eeba4aa3f60b6dd67e32a1998"
+    },
+    {
+      "file": "src/i18n/locales/ja.ts",
+      "originalSha256": "69d90ccc7e59fdc8d8dc763f2538b467cedfeabcb95e35649ccadf2638113e16",
+      "resultSha256": "8e85c383ffd65119f4feb7831f4664d1c7e186a8667b3412738cc0c76e5c0348"
+    },
+    {
+      "file": "src/i18n/locales/ko.ts",
+      "originalSha256": "cd0b07c1d8b2fe2e2246ecb783a521dff5c35918d2fa9b2927f950489da3023b",
+      "resultSha256": "d73ae4cf607212dc527c2ebd2809d76638157e40879fde84013db4708401bc8c"
+    },
+    {
+      "file": "src/i18n/locales/pt-br.ts",
+      "originalSha256": "9c5033473336a156592b3c7ea5412bac1b4509f43b0f846321ac51a3ed94d873",
+      "resultSha256": "22b650b229fe65c84fe56fda65a957ce46116475c63752eaa3fa4ee3f2463063"
+    },
+    {
+      "file": "src/i18n/locales/settings-ar.ts",
+      "originalSha256": "f806eef02c5d71d210b5c59e2d8c9a2249e071efbec2ba2c7ea03d40545aef59",
+      "resultSha256": "27e2775c1d6c02537ce1b0bb660878b99512513bdbde467d18bd4179331dd5c0"
+    },
+    {
+      "file": "src/i18n/locales/settings-de.ts",
+      "originalSha256": "627ccdab681a62066eed31e1e0c9935f9fc04e761cf5230fba36a3a2aab3733b",
+      "resultSha256": "64ef675a344f10eec3f8d47585d5a40f3fbfb427f74b532c61bc6eab403ef1e2"
+    },
+    {
+      "file": "src/i18n/locales/settings-en-gb.ts",
+      "originalSha256": "893641120a9f620d69489e5612ff10d4e5502ce2fff25a515abde10198472b7f",
+      "resultSha256": "8ba8bb6c8e04ec7c1315c03fc61a6adbd9a14f11728a8e89b2ae068ac0043d69"
+    },
+    {
+      "file": "src/i18n/locales/settings-es.ts",
+      "originalSha256": "28ce283739758fe3b1cd5fd88e3bee28f1bcf7fadb0a25f90cc7f41315da7f03",
+      "resultSha256": "545ffa90dbf5986fe2f7d7e33590c8dd01acf0b1a121d34ba681e119eeac3b5c"
+    },
+    {
+      "file": "src/i18n/locales/settings-fr.ts",
+      "originalSha256": "95e67ca96b19a3d853b4630ceeee9a350ffd66a23f99f8de23792487ff3df047",
+      "resultSha256": "5968e6d6a636933ff0ff42db3993e68972aa54709957b98f0f6d2321820fc6f7"
+    },
+    {
+      "file": "src/i18n/locales/settings-it.ts",
+      "originalSha256": "05618014beabc0a15b17b5f6574240f1ac58418cf682e079eca2fe4d4f184961",
+      "resultSha256": "3587e3021bc0bc7a19f560a708918a9f0f7420f2de507bbccf8f4fdf38d2bf25"
+    },
+    {
+      "file": "src/i18n/locales/settings-ja.ts",
+      "originalSha256": "aac2b10d1f03cb9ebf34201597f733bd589c1be8d78b5ece1b5ea6c920ce2fc5",
+      "resultSha256": "8511962d800c9dd3b3f1384bbecfae15e297b18e13f674c347dc7cba8f7b0239"
+    },
+    {
+      "file": "src/i18n/locales/settings-ko.ts",
+      "originalSha256": "3cb2264be67578ee55150193da1e923d35e743e402be5fe7e0b746703eb0f201",
+      "resultSha256": "1056aa6068961562018f0b2598c6b38f8a5ddd7dfd3519c3ea95c301d8aba75f"
+    },
+    {
+      "file": "src/i18n/locales/settings-pt-br.ts",
+      "originalSha256": "4a6a25cd34252c87aab18bd65134a262774130a41a6a65a3b042477f31407ada",
+      "resultSha256": "f4f225ed36ab7a91b9239e2cd4b87a1eb48e70e64b54450e81f6ccec097268ec"
+    },
+    {
+      "file": "src/i18n/locales/settings-tr.ts",
+      "originalSha256": "5d2d61a5ed31ab78a16a0c7c62ca6df5425c39768f8d7c636348f62b1145b4f7",
+      "resultSha256": "8abafdb92ba5139e7da9da83bb787aeebb4c5f6edef82859906ba92a63da869f"
+    },
+    {
+      "file": "src/i18n/locales/settings-zh-cn.ts",
+      "originalSha256": "3ad1f72d03cdcf406e547a9efd0578625cc95b52d445de4b2f25912d0688b0e8",
+      "resultSha256": "64a058a95ea579bc5f2c43ec807289b01291e47f7edc8bb31377ee705f769435"
+    },
+    {
+      "file": "src/i18n/locales/settings-zh-tw.ts",
+      "originalSha256": "78dd2a748d4c5a6af49acb429d569f0eb464e69c93a68a3a9dc355845cb2fb71",
+      "resultSha256": "4a6deea943e82da050cfe5cc58b664980074a3ca18474f92424e3fdf1d09b0de"
+    },
+    {
+      "file": "src/i18n/locales/tr.ts",
+      "originalSha256": "040a2b4805f73661bdda969b4cc8a256179ea087f374f4243531dba93c419819",
+      "resultSha256": "44285b514662ec66ba62fdb2c9dc4a8924736c1478f69fc7870f58528c05897e"
+    },
+    {
+      "file": "src/i18n/locales/zh-cn.ts",
+      "originalSha256": "52a0b67766a7dc1cb7d2b8c3f4a96b59d5cf422c47baa3b63c5b4764f7ca3d61",
+      "resultSha256": "e982e26066353bf2d20aac66c1779992caabd6d1413f625cef3680b7b4611081"
+    },
+    {
+      "file": "src/i18n/locales/zh-tw.ts",
+      "originalSha256": "7c6eb8f47302a4928518209bfaa25dc76aa2a78bfc8ebff93ba9260b110ea523",
+      "resultSha256": "7e8695ed6ea2a6f34807009734f5e19491bfbc4ab8118da2185b717b9f9a6178"
+    }
+  ]
+}

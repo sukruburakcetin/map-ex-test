@@ -1,0 +1,17 @@
+{
+  "installer": "overture-locate-icon",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/LoadedPlacesList.tsx",
+      "originalSha256": "ae0065b84bb1ec4703b08f564e30a120c71c521fcb6d9fd6cf212a8208d8a1e0",
+      "resultSha256": "6b6bc5db2baebbacf3711bc021cf50364a3507d9c6002e14d073491f6897b137"
+    },
+    {
+      "file": "src/components/SelectedPlaceCard.tsx",
+      "originalSha256": "45daaccc83f69127c85a8c5133f0702208627485777cd1011f8aa0635115a27a",
+      "resultSha256": "654f4efe0525862e674b069abf964e82f3f545fd3e2f3715d9f291a858b27ba7"
+    }
+  ]
+}

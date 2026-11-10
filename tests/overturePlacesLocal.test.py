@@ -44,6 +44,14 @@ class LocalServerTest(unittest.TestCase):
             result=dataset.query(geometry,.75,True,limit=200,family='restaurant',origin={'lon':29.003,'lat':41})
             self.assertTrue(result['exceededTransferLimit'])
             self.assertEqual([f['attributes']['gers_id'] for f in result['features']],[f'p{i:03}' for i in range(249,49,-1)])
+            second=dataset.query(geometry,.75,True,limit=200,family='restaurant',origin={'lon':29.003,'lat':41},offset=200)
+            self.assertEqual(second['offset'],200);self.assertIsNone(second['nextOffset']);self.assertFalse(second['exceededTransferLimit'])
+            self.assertEqual(len(second['features']),50)
+            self.assertEqual(len({f['attributes']['gers_id'] for f in result['features']+second['features']}),250)
+            self.assertEqual(result['nextOffset'],200)
+            for offset in [-200,1,200.0,True,100200]:
+                with self.assertRaises(ValueError):dataset.query(geometry,limit=200,offset=offset)
+            with self.assertRaises(ValueError):dataset.query(geometry,limit=32,offset=200)
             result=dataset.query(geometry,.75,True,limit=200,family='restaurant',origin={'lon':29,'lat':41})
             self.assertEqual([f['attributes']['gers_id'] for f in result['features']],[f'p{i:03}' for i in range(200)])
             for origin in [{'lon':float('nan'),'lat':41},{'lon':181,'lat':41},{'lon':29},[29],True]:
@@ -69,6 +77,10 @@ class LocalServerTest(unittest.TestCase):
             base='http://127.0.0.1:'+str(server.server_port)
             with urllib.request.urlopen(base+'/style.json') as response:
                 style=json.load(response);self.assertEqual(style['layers'][0]['type'],'symbol')
+                self.assertEqual(style['sources']['places']['maxzoom'],19)
+                self.assertEqual(style['layers'][-1]['minzoom'],17)
+                self.assertIn('{range}',style['glyphs'])
+                self.assertEqual(style['layers'][1]['filter'],['>','count',1])
                 self.assertEqual(style['layers'][0]['layout']['icon-image'],'{icon_group}')
                 self.assertEqual(response.headers['Access-Control-Allow-Origin'],'https://localhost:3001')
             with urllib.request.urlopen(base+'/style.json?min_confidence=0.75') as response:
@@ -78,7 +90,7 @@ class LocalServerTest(unittest.TestCase):
             with urllib.request.urlopen(base+'/style.json?group=education&hide_closed=1&min_confidence=0.75') as response:
                 url=json.load(response)['sources']['places']['tiles'][0];self.assertIn('group=education',url)
             with urllib.request.urlopen(base+'/status') as response:
-                metadata=json.load(response);self.assertEqual(metadata['category_filter_version'],1);self.assertEqual(len(metadata['supported_icon_families']),28)
+                metadata=json.load(response);self.assertEqual(metadata['paging_version'],1);self.assertEqual(metadata['scale_display_version'],1);self.assertEqual(metadata['category_filter_version'],1);self.assertEqual(len(metadata['supported_icon_families']),28)
             with urllib.request.urlopen(base+'/style.json?family=restaurant&hide_closed=1&min_confidence=0.75') as response:
                 url=json.load(response)['sources']['places']['tiles'][0];self.assertIn('family=restaurant',url);self.assertIn('hide_closed=1',url)
             with urllib.request.urlopen(base+'/sprites/places@2x.json') as response:
@@ -97,6 +109,19 @@ class LocalServerTest(unittest.TestCase):
                 self.assertEqual(json.load(response)['features'],[])
             with urllib.request.urlopen(urllib.request.Request(base+'/query?min_confidence=0.75',data=data,headers={'Content-Type':'application/json'})) as response:
                 self.assertEqual(json.load(response)['features'],[])
+        finally:server.shutdown();server.server_close();thread.join()
+
+    def test_prefixed_service_routes_and_advertised_urls(self):
+        server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(self.dataset,'https://localhost:3444/places','https://app.example'))
+        thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        try:
+            base='http://127.0.0.1:'+str(server.server_port)
+            with urllib.request.urlopen(base+'/places/status') as response:
+                data=json.load(response);self.assertEqual(data['style'],'https://localhost:3444/places/style.json');self.assertEqual(data['search'],'https://localhost:3444/places/search');self.assertEqual(response.headers['Access-Control-Allow-Origin'],'https://app.example')
+            with urllib.request.urlopen(base+'/places/style.json?family=restaurant') as response:
+                style=json.load(response);self.assertIn('/places/tiles/',style['sources']['places']['tiles'][0]);self.assertEqual(style['sprite'],'https://localhost:3444/places/sprites/places')
+            body=json.dumps({'geometry':{'xmin':28.99,'ymin':40.99,'xmax':29.01,'ymax':41.01,'spatialReference':{'wkid':4326}},'offset':0,'text':''}).encode()
+            with urllib.request.urlopen(urllib.request.Request(base+'/places/search',data=body,headers={'Content-Type':'application/json'})) as response:self.assertEqual(len(json.load(response)['features']),40)
         finally:server.shutdown();server.server_close();thread.join()
 
 class SpriteTest(unittest.TestCase):
@@ -242,6 +267,82 @@ class IconFamilyQueryTest(unittest.TestCase):
             self.assertEqual(dataset.query(geometry,family='cafe')['features'],[])
             x,y=project(29,41);args=(16,int(x*65536),int(y*65536))
             self.assertNotEqual(dataset.tile(*args,family='restaurant'),dataset.tile(*args,family='other'))
+        finally:case.tearDown()
+
+class ScaleDisplayTest(unittest.TestCase):
+    def test_dense_tiles_summarize_all_matches_then_split_at_street_scale(self):
+        case=LocalServerTest();case.setUp()
+        try:
+            case.dataset.db.close()
+            # Put 6,001 distinct points inside one global overview grid cell.
+            px,py=project(29,41);cell=1/(2**12*8);left=math.floor(px/cell)*cell;top=math.floor(py/cell)*cell
+            records=[]
+            for i in range(6001):
+                x=left+cell*(.1+.8*i/6000);y=top+cell*.5
+                lon=x*360-180;lat=math.degrees(math.atan(math.sinh(math.pi*(1-2*y))))
+                records.append({'geometry':{'coordinates':[lon,lat]},'properties':{'gers_id':str(i),'place_name':'Place '+str(i),'category':'restaurant','confidence':.9,'data_release':'2026-10-21.0'}})
+            case.source.write_text('\n'.join(json.dumps(r) for r in records))
+            manifest=json.loads(case.source.with_suffix('.manifest.json').read_text());manifest['feature_count']=len(records);case.source.with_suffix('.manifest.json').write_text(json.dumps(manifest));case.dataset=Dataset(case.source)
+            overview=case.dataset.tile_records(12,int(px*4096),int(py*4096));self.assertEqual(sum(r[4] for r in overview),6001);self.assertEqual(len(overview),1)
+            self.assertEqual(len(case.dataset.tile_records(12,int(px*4096),int(py*4096),family='cafe')),0)
+            self.assertEqual(len(case.dataset.tile_records(12,int(px*4096),int(py*4096),min_confidence=.95)),0)
+            encoded=case.dataset.tile(12,int(px*4096),int(py*4096));self.assertIn(b'count',encoded)
+            def fields(data):
+                position=0
+                def number():
+                    nonlocal position
+                    value=shift=0
+                    while True:
+                        byte=data[position];position+=1;value|=(byte&127)<<shift
+                        if byte<128:return value
+                        shift+=7
+                result=[]
+                while position<len(data):
+                    tag=number()
+                    if tag&7==0:value=number()
+                    else:
+                        self.assertEqual(tag&7,2);length=number();value=data[position:position+length];position+=length
+                    result.append((tag>>3,value))
+                return result
+            layer=fields(fields(encoded)[0][1]);values=[fields(v) for k,v in layer if k==4]
+            self.assertEqual(values[2],[(5,6001)])  # MVT count is a numeric attribute, not just a label.
+
+            street=[]
+            for x in range(int(left*65536),int((left+cell)*65536)):
+                street.extend(case.dataset.tile_records(16,x,int((top+cell*.5)*65536)))
+            self.assertEqual(len(street),6001);self.assertTrue(all(r[4]==1 for r in street));self.assertTrue(all(r[5] for r in street))
+            cluster=overview[0];lon=cluster[1]*360-180;lat=math.degrees(math.atan(math.sinh(math.pi*(1-2*cluster[2]))))
+            geometry={'xmin':lon-.0001,'ymin':lat-.0001,'xmax':lon+.0001,'ymax':lat+.0001,'spatialReference':{'wkid':4326}}
+            hit=case.dataset.cluster_query(geometry,12);self.assertEqual(hit['features'][0]['attributes']['cluster_count'],6001)
+            # A hidden member far from the summary must not act as an individual icon.
+            lon,lat=records[0]['geometry']['coordinates'];geometry.update(xmin=lon-.000001,xmax=lon+.000001,ymin=lat-.000001,ymax=lat+.000001)
+            self.assertEqual(case.dataset.cluster_query(geometry,12)['features'],[])
+        finally:case.tearDown()
+
+class FullAreaTextSearchTest(unittest.TestCase):
+    def test_search_finds_places_beyond_the_first_200_before_pagination(self):
+        case=LocalServerTest();case.setUp()
+        try:
+            case.dataset.db.close();records=[]
+            for i in range(1800):
+                records.append({'geometry':{'coordinates':[29.,41.]},'properties':{'gers_id':f'p{i:04}','place_name':'Generic '+str(i),'category':'restaurant','address':'Main Road','confidence':.9,'data_release':'2026-10-21.0'}})
+            records[-1]['properties']['place_name']='Café Hidden Oak'
+            records[-2]['properties'].update(place_name='100% Real',category='pharmacy')
+            case.source.write_text('\n'.join(json.dumps(r) for r in records));manifest=json.loads(case.source.with_suffix('.manifest.json').read_text());manifest['feature_count']=1800;case.source.with_suffix('.manifest.json').write_text(json.dumps(manifest));case.dataset=Dataset(case.source)
+            geometry={'xmin':28.99,'ymin':40.99,'xmax':29.01,'ymax':41.01,'spatialReference':{'wkid':4326}}
+            page=case.dataset.query(geometry,limit=200);self.assertNotIn('p1799',[r['attributes']['gers_id'] for r in page['features']])
+            found=case.dataset.query(geometry,limit=200,search='CAFE hidden');self.assertEqual([r['attributes']['gers_id'] for r in found['features']],['p1799']);self.assertFalse(found['exceededTransferLimit'])
+            self.assertEqual(case.dataset.query(geometry,limit=200,search='%')['features'][0]['attributes']['gers_id'],'p1798')
+            self.assertEqual(len(case.dataset.query(geometry,limit=200,search='%')['features']),1)
+            self.assertEqual(case.dataset.query(geometry,limit=200,family='cafe',search='hidden')['features'],[])
+            self.assertEqual(case.dataset.query(geometry,limit=200,search="' OR 1=1 --")['features'],[])
+            ids=[]
+            for offset in range(0,1800,200):
+                result=case.dataset.query(geometry,limit=200,offset=offset,search='Main Road');ids.extend(r['attributes']['gers_id'] for r in result['features'])
+            self.assertEqual(len(set(ids)),1800);self.assertFalse(result['exceededTransferLimit'])
+            self.assertEqual(len(case.dataset.query(geometry,limit=200,search='pharmacy')['features']),1)
+            for bad in [None,123,[],True,'x'*121]:
+                with self.assertRaises(ValueError):case.dataset.query(geometry,limit=200,search=bad)
         finally:case.tearDown()
 
 if __name__=='__main__':unittest.main()

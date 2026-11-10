@@ -150,6 +150,15 @@ const ar: SettingsMessages = {
   "thePortalSConfiguredRouteServiceWillBeDiscovered": "سيتم اكتشاف خدمة المسار المكونة للبوابة الإلكترونية في وقت التشغيل.",
   "customRoutingService": "خدمة مسارات مخصّصة",
   "routeServiceUrlConfigured": "تم إعداد عنوان URL لخدمة المسارات.",
-  "routeServiceUrlRequired": "⚠ يلزم إدخال عنوان URL لخدمة المسارات."
+  "routeServiceUrlRequired": "⚠ يلزم إدخال عنوان URL لخدمة المسارات.",
+  "placesVectorServiceTitle": "الأماكن القريبة · Overture",
+  "placesApiServiceUrl": "عنوان خدمة الأماكن",
+  "placesApiUrlInvalid": "أدخل عنوان خدمة HTTPS أساسيًا دون بيانات اعتماد أو معلمات استعلام أو جزء.",
+  "placesApiMigration": "أدخل عنوان خدمة الأماكن لاستكشاف الأماكن القريبة.",
+  "placesApiTest": "اختبار الاتصال",
+  "placesApiTesting": "جارٍ فحص الخدمة…",
+  "placesApiConnected": "متصل",
+  "placesApiFailed": "فشل الاتصال. تحقق من العنوان وشهادة HTTPS وCORS وتوافق الخدمة.",
+  "placesApiUrlHelp": "أدخل عنوان خدمة الأماكن الأساسي. توفر مربعات متجهية وتحديد الأماكن والبحث. يفعّل المستخدم الأماكن عند الحاجة.",
 };
 export default ar;

@@ -150,6 +150,15 @@ const it: SettingsMessages = {
   "thePortalSConfiguredRouteServiceWillBeDiscovered": "Il servizio di percorsi configurato nel portale verrà individuato durante l’uso.",
   "customRoutingService": "Servizio di percorsi personalizzato",
   "routeServiceUrlConfigured": "URL del servizio di percorsi configurato.",
-  "routeServiceUrlRequired": "⚠ URL del servizio di percorsi richiesto."
+  "routeServiceUrlRequired": "⚠ URL del servizio di percorsi richiesto.",
+  "placesVectorServiceTitle": "Luoghi vicini · Overture",
+  "placesApiServiceUrl": "URL del servizio dei luoghi",
+  "placesApiUrlInvalid": "Inserisci un URL base di servizio HTTPS senza credenziali, parametri di query o frammenti.",
+  "placesApiMigration": "Inserisci un URL del servizio dei luoghi per esplorare i luoghi vicini.",
+  "placesApiTest": "Prova connessione",
+  "placesApiTesting": "Verifica del servizio…",
+  "placesApiConnected": "Connesso",
+  "placesApiFailed": "Connessione non riuscita. Controlla URL, certificato HTTPS, CORS e compatibilità del servizio.",
+  "placesApiUrlHelp": "Inserisci l’URL base del servizio dei luoghi. Fornisce tasselli vettoriali, selezione e ricerca. Gli utenti attivano i luoghi quando necessario.",
 };
 export default it;

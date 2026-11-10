@@ -1,0 +1,27 @@
+{
+  "installer": "overture-mobile-layout",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/PlacesPanel.tsx",
+      "originalSha256": "0d34e102c693480ad17c9d39653dcf0d7b8772cdc31dd8181bbbb56d1c978b07",
+      "resultSha256": "feae028240d2e43ef77873bf3cf3ff06d37323ad3d3c79d78ce6642443fdba60"
+    },
+    {
+      "file": "src/components/LoadedPlacesList.tsx",
+      "originalSha256": "6ff3d8dbf8e4351611ab52ecceed8273d21c4b3ebd8f426000ebbe3a6b6613eb",
+      "resultSha256": "715b7028125a15057a200d8d61655e2b9617913c93b02699e42d8984cb4d8c4e"
+    },
+    {
+      "file": "tests/placesPanelRendering.test.cjs",
+      "originalSha256": "bd31e8d910d80ffb445111d096f4a7553e3450094ae7ca02cec57bdeb9fe92fb",
+      "resultSha256": "140f7a4d291fca0dfff8d822d45223dbbe03cb076171c227613631fd19990976"
+    },
+    {
+      "file": "tests/placesAreaSearchInput.test.cjs",
+      "originalSha256": "d9fb0adf3048f64beab274f31a8acca1df276d50550235bf1e122131729623d9",
+      "resultSha256": "b9b347c69063629ed9c8982e819bdf827c981ab312541ce4f3162128e02864ef"
+    }
+  ]
+}

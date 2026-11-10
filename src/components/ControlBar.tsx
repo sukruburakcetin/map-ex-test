@@ -41,7 +41,7 @@ export const ControlBar: React.FC<ControlBarProps> = (props) => {
         {props.enableMapillaryObjects !== false && layer("objects", !!props.objectsActive, props.showObjectsFilterBox, props.onToggleObjects, props.onToggleObjectsFilter)}
         {props.enablePlaces && <div className="mly-rail-group" role="group" aria-label={t('uiNearbyPlaces')}>
             <button type="button" className="mly-rail-button" title={props.placesAvailable ? t('uiNearbyPlaces') : t('uiNearbyPlacesUnavailable')}
-                aria-label={t('uiNearbyPlaces')} aria-pressed={!!props.placesActive} disabled={!props.placesAvailable} onClick={props.onTogglePlaces}>
+                aria-label={t('uiNearbyPlaces')} aria-pressed={!!props.placesActive} disabled={!props.placesAvailable} onClick={props.onTogglePlaces} data-mly-places-toggle="true">
                 {!placesIconFailed?<img src="https://avatars.githubusercontent.com/u/120673461?s=280&v=4" alt="" aria-hidden="true" width="22" height="22" referrerPolicy="no-referrer" onError={()=>setPlacesIconFailed(true)} style={{display:'block',objectFit:'contain',borderRadius:3}}/>:<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 22s8-8 8-13a8 8 0 0 0-16 0c0 5 8 13 8 13Z"/><circle cx="12" cy="9" r="2.5"/></svg>}
                 {props.placesActive && <span className="mly-rail-check" aria-hidden="true">✓</span>}
             </button>

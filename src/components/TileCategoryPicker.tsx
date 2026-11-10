@@ -44,7 +44,7 @@ export const TileCategoryPicker: React.FC<{ value: string; onChange?(value: stri
     <span>{t('uiPlaceCategory')}</span>
     <button ref={button} type="button" disabled={!props.onChange} aria-label={`${t('uiPlaceCategory')}: ${selected}`} aria-expanded={open} aria-haspopup="listbox" aria-controls={open ? `${id}-list` : undefined}
       onClick={event => { event.stopPropagation(); open ? close() : start(); }} onKeyDown={event => { if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); event.stopPropagation(); start(event.key === 'ArrowUp'); } }}
-      style={{ width:'100%',minHeight:34,display:'flex',alignItems:'center',gap:6,marginTop:4,padding:'6px 8px',background:'#213c2e',color:'inherit',border:'1px solid #72947d',borderRadius:4,font:'inherit',cursor:props.onChange?'pointer':'default',opacity:props.onChange?1:.55 }}>
+      style={{ width:'100%',minHeight:30,boxSizing:'border-box',lineHeight:1.2,display:'flex',alignItems:'center',gap:6,marginTop:4,padding:'4px 6px',background:'#213c2e',color:'inherit',border:'1px solid #72947d',borderRadius:4,font:'inherit',cursor:props.onChange?'pointer':'default',opacity:props.onChange?1:.55 }}>
       <span title={selected} style={{ flex:1,minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',textAlign:'start' }}>{selected}</span><span aria-hidden="true">▾</span>
     </button>
     {open && <div onWheel={event=>event.stopPropagation()} style={{ marginTop:4,padding:4,border:'1px solid #506b5a',borderRadius:5,background:'#142b22' }}>

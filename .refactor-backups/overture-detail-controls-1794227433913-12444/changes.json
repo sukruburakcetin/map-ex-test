@@ -1,0 +1,12 @@
+{
+  "installer": "overture-detail-controls",
+  "uninstall": false,
+  "completed": true,
+  "changes": [
+    {
+      "file": "src/components/SelectedPlaceCard.tsx",
+      "originalSha256": "85af24158aa41cd4c403b37a8cbfc4003eae75d265f112ce4c0bbfa9c7c16d66",
+      "resultSha256": "45daaccc83f69127c85a8c5133f0702208627485777cd1011f8aa0635115a27a"
+    }
+  ]
+}

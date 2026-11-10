@@ -150,6 +150,15 @@ const ja: SettingsMessages = {
   "thePortalSConfiguredRouteServiceWillBeDiscovered": "ポータルで設定されているルートサービスを実行時に検出します。",
   "customRoutingService": "カスタムルートサービス",
   "routeServiceUrlConfigured": "ルートサービスのURLが設定されています。",
-  "routeServiceUrlRequired": "⚠ ルートサービスのURLが必要です。"
+  "routeServiceUrlRequired": "⚠ ルートサービスのURLが必要です。",
+  "placesVectorServiceTitle": "周辺の場所 · Overture",
+  "placesApiServiceUrl": "場所サービスのURL",
+  "placesApiUrlInvalid": "認証情報、クエリパラメーター、フラグメントを含まないHTTPSサービスのベースURLを入力してください。",
+  "placesApiMigration": "周辺の場所を探索するには場所サービスのURLを入力してください。",
+  "placesApiTest": "接続テスト",
+  "placesApiTesting": "サービスを確認中…",
+  "placesApiConnected": "接続済み",
+  "placesApiFailed": "接続に失敗しました。URL、HTTPS証明書、CORS、サービスの互換性を確認してください。",
+  "placesApiUrlHelp": "場所サービスのベースURLを入力します。ベクトルタイル、場所の選択、検索を提供します。ユーザーは必要に応じて場所を有効にします。",
 };
 export default ja;
