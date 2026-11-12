@@ -52,11 +52,9 @@ const ja: SettingsMessages = {
   "hideShareButton": "共有ボタンを非表示",
   "hideLockMapRotationButton3d": "マップ回転ロックボタンを非表示（3D）",
   "hideCenterMapButton": "マップのセンタリングボタンを非表示",
-  "nearbyPlacesOverturePilot": "近くの場所 · Overture試験版",
+
   "offerPlacesLayer": "場所レイヤーを提供",
-  "placesFeatureserverLayerUrl": "場所のFeatureServerレイヤーURL",
-  "useAnHttpsFeatureserverLayerUrlWithoutQueryParameters": "クエリパラメーターや認証情報を含まない、HTTPSのFeatureServerレイヤーURLを使用してください。",
-  "requiresAPublishedPilotLayerPreparedWithToolsOverture": "tools/overture_placesで準備した公開済みの試験用レイヤーが必要です。ユーザー向けには初期状態でオフです。1ビューあたり最大200件の場所を表示します。docs/OVERTURE-PLACES.mdを参照してください。",
+
   "featureDetectionLayers": "フィーチャ検出レイヤー",
   "enableTrafficSigns": "交通標識を有効化",
   "enableMapillaryObjects": "Mapillaryオブジェクトを有効化",
@@ -154,11 +152,18 @@ const ja: SettingsMessages = {
   "placesVectorServiceTitle": "周辺の場所 · Overture",
   "placesApiServiceUrl": "場所サービスのURL",
   "placesApiUrlInvalid": "認証情報、クエリパラメーター、フラグメントを含まないHTTPSサービスのベースURLを入力してください。",
-  "placesApiMigration": "周辺の場所を探索するには場所サービスのURLを入力してください。",
+
   "placesApiTest": "接続テスト",
   "placesApiTesting": "サービスを確認中…",
   "placesApiConnected": "接続済み",
   "placesApiFailed": "接続に失敗しました。URL、HTTPS証明書、CORS、サービスの互換性を確認してください。",
   "placesApiUrlHelp": "場所サービスのベースURLを入力します。ベクトルタイル、場所の選択、検索を提供します。ユーザーは必要に応じて場所を有効にします。",
+  "placesPortalSource": "ArcGIS Portal（推奨）",
+  "placesExternalSource": "外部の場所サービス",
+  "placesPortalTilesUrl": "ベクター タイル サービスの URL",
+  "placesPortalQueryUrl": "場所検索レイヤーの URL",
+  "placesPortalHelp": "地図はベクター タイルで描画します。検索サービスは件数を制限したレコードのみを返し、地図のレイヤーとして追加されません。両サービスは場所の公開ガイドに従って設定してください。",
+  "placesPortalUrlsInvalid": "認証情報や URL パラメーターを含まない HTTPS の VectorTileServer と FeatureServer/レイヤーの URL を入力してください。",
+
 };
 export default ja;

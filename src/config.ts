@@ -13,8 +13,10 @@ export interface Config {
   /** Optional Overture vector-tile service; no requests until the viewer enables Places. */
   enablePlaces?: boolean;
   placesApiUrl?: string;
-  /** Compatibility metadata; the Places service connection is configured through placesApiUrl. */
-  placesServiceUrl?: string;
+  /** New apps default to Portal; existing external service URLs keep their source. */
+  placesSource?: 'portal' | 'external';
+  placesPortalTilesUrl?: string;
+  placesPortalQueryUrl?: string;
   /**
    * Mapillary API access token used to authenticate requests to the Mapillary services.
    * Required for loading imagery, vector tiles, and related Mapillary data.

@@ -1,10 +1,11 @@
+import { normalizeTilePlaces } from './tilePlace';
 import { distanceMeters } from '../../utils/geoUtils';
 import type { PlaceListOrigin } from './placeListUtils';
 import { significantPlaceMovement, PlaceSearchArea } from './placeSearchMovement';
 import { outsidePublishedExtent } from './publishedPlacesExtent';
-import { Place, PlaceBbox, PlaceGroup, PLACE_GROUPS, PLACES_LIMITS, normalizePlaces, placesBytes } from './placesModel';
+import { Place, PlaceBbox, PLACES_LIMITS, placesBytes } from './placesModel';
 export interface PlacesView { token: object; bbox: PlaceBbox | null; zoom: number; stationary: boolean; }
-export interface PlacesState { kind: 'off' | 'paused' | 'zoom' | 'loading' | 'ready' | 'error' | 'outside' | 'search'; canSearch?:boolean; count: number; limited?: boolean; reason?: string; loadedCounts?: Partial<Record<PlaceGroup, number>>;resultOrigin?:PlaceListOrigin|null;pageOffset?:number;pageLoading?:boolean;pageError?:boolean;searchText?:string; }
+export interface PlacesState { kind: 'off' | 'paused' | 'zoom' | 'loading' | 'ready' | 'error' | 'outside' | 'search'; canSearch?:boolean; count: number; limited?: boolean; reason?: string;resultOrigin?:PlaceListOrigin|null;pageOffset?:number;pageLoading?:boolean;pageError?:boolean;searchText?:string; }
 export interface PlacesHost {
   manualSearch?:boolean;
   hybridSearch?:boolean;
@@ -14,7 +15,7 @@ export interface PlacesHost {
   busy(): boolean;
   pauseReason?(): string;
   extent?(): PlaceBbox | null;
-  query(bbox: PlaceBbox, group: PlaceGroup, signal: AbortSignal,origin?:PlaceListOrigin|null,offset?:number,text?:string): Promise<{ features: any[]; limited: boolean; outside?: boolean }>;
+  query(bbox: PlaceBbox, signal: AbortSignal,origin?:PlaceListOrigin|null,offset?:number,text?:string): Promise<{ features: any[]; limited: boolean; outside?: boolean }>;
   paged?:boolean;
   normalize?(features: any[], bbox: PlaceBbox): Place[];
   display(places: Place[], view: object): void;
@@ -29,9 +30,9 @@ export interface PlacesHost {
 }
 /** Default-off, one physical request, bounded cache and no polling or animation loop. */
 export class PlacesController {
+  private get minimumZoom():number { return this.host.paged ? 12 : PLACES_LIMITS.minZoom; }
   private enabled = false;
   private disposed = false;
-  private group: PlaceGroup = 'all';
   private revision = 0;
   private desired = '';
   private searchText='';
@@ -39,7 +40,6 @@ export class PlacesController {
   private loaded:{places:Place[];token:object;limited:boolean}|null=null;
   private lastReady:PlacesState|null=null;
   private pageContext:{key:string;bbox:PlaceBbox;token:object;origin?:PlaceListOrigin|null;offset:number}|null=null;
-  private filterDirty=false;
   private hybridArea:PlaceSearchArea|null=null;
   private autoUpdate:boolean;
   private consumerPaused = false;
@@ -58,18 +58,8 @@ export class PlacesController {
   setEnabled(enabled: boolean): void {
     if (this.disposed || this.enabled === enabled) return;
     this.enabled = enabled; this.consumerPaused = false; this.invalidate(); this.desired = '';this.approved=null;
-    if (!enabled) { this.lastOrigin=null;this.hybridArea=null;this.loaded=null;this.lastReady=null;this.pageContext=null;this.filterDirty=false;this.host.clear(); this.cache.clear(); this.bytes = 0; this.displayedView = null; this.requestedView = null; this.status({ kind: 'off', count: 0 }); }
+    if (!enabled) { this.lastOrigin=null;this.hybridArea=null;this.loaded=null;this.lastReady=null;this.pageContext=null;this.host.clear(); this.cache.clear(); this.bytes = 0; this.displayedView = null; this.requestedView = null; this.status({ kind: 'off', count: 0 }); }
     else this.sync();
-  }
-  setGroup(group: PlaceGroup): void {
-    if (this.disposed || !PLACE_GROUPS.includes(group) || this.group === group) return;
-    this.group = group;
-    if(this.host.manualSearch){this.filterDirty=true;this.sync();return;}
-    if (this.enabled) {
-      const view = this.host.view(), cached = this.cache.get(this.desired);
-      if (view?.bbox && view.zoom + .0001 >= PLACES_LIMITS.minZoom && this.desired === JSON.stringify(view.bbox.map(n => n.toFixed(6))) && view.token === this.displayedView && cached && view.stationary && !this.host.busy()) { this.show(cached.places, view.token, cached.limited); return; }
-      this.sync();
-    }
   }
   setAutoUpdate(value:boolean):void {
     if(this.disposed||this.autoUpdate===value)return;
@@ -82,7 +72,7 @@ export class PlacesController {
     if(this.disposed||!this.enabled||this.host.consumerActive?.()===false)return;
     if(this.host.manualSearch)this.sync();
     const view=this.host.view();
-    if(!view?.bbox||view.zoom+.0001<PLACES_LIMITS.minZoom||!view.stationary||this.host.busy()||outsidePublishedExtent(view.bbox,this.host.extent?.())){this.sync();return;}
+    if(!view?.bbox||view.zoom+.0001<this.minimumZoom||!view.stationary||this.host.busy()||outsidePublishedExtent(view.bbox,this.host.extent?.())){this.sync();return;}
     // One explicit intent for this map and extent; movement consumes it.
     if(this.approved&&this.desired&&this.physical&&this.abort&&!this.abort.signal.aborted)return;
     this.invalidate();this.desired='';this.approved={key:this.searchKey(view),token:view.token};this.sync();
@@ -95,7 +85,7 @@ export class PlacesController {
   previousPage():void {if(this.pageContext&&this.pageContext.offset>0)this.loadPage(Math.max(0,this.pageContext.offset-200));}
   private loadPage(offset:number):void {
     const p=this.pageContext,v=this.host.view();
-    if(!this.host.paged||!p||!v?.bbox||!this.enabled||this.disposed||this.physical||this.pendingTimer!==null||this.pendingIdle!==null||this.host.consumerActive?.()===false||this.host.busy()||!v.stationary||v.zoom<PLACES_LIMITS.minZoom||p.token!==v.token||p.key!==this.searchKey(v)||offset>100000)return;
+    if(!this.host.paged||!p||!v?.bbox||!this.enabled||this.disposed||this.physical||this.pendingTimer!==null||this.pendingIdle!==null||this.host.consumerActive?.()===false||this.host.busy()||!v.stationary||v.zoom<this.minimumZoom||p.token!==v.token||p.key!==this.searchKey(v)||offset>100000)return;
     this.invalidate();this.desired=p.key;this.requestedView=p.token;this.approved={key:p.key,token:p.token};
     this.start(p.key,p.bbox,p.token,this.revision,p.origin,offset,true);
   }
@@ -113,7 +103,7 @@ export class PlacesController {
     if (view?.bbox && outsidePublishedExtent(view.bbox, this.host.extent?.())) {
       this.invalidate(); this.desired = '';this.approved=null; this.host.visible(false); this.status({ kind: 'outside', count: 0 }); return;
     }
-    if (!view?.bbox || view.zoom + .0001 < PLACES_LIMITS.minZoom) {
+    if (!view?.bbox || view.zoom + .0001 < this.minimumZoom) {
       this.invalidate(); this.desired = '';this.approved=null; this.host.visible(false); this.status({ kind: 'zoom', count: 0 }); return;
     }
     if (this.displayedView && this.displayedView !== view.token) { this.invalidate(); this.desired = ''; this.host.clear(); this.displayedView = null;this.loaded=null;this.lastReady=null;this.pageContext=null;this.approved=null; }
@@ -121,13 +111,6 @@ export class PlacesController {
     if(this.host.manualSearch){
       const key=this.searchKey(view);
       const available=view.stationary&&!this.host.busy();
-      if(this.filterDirty&&available&&this.loaded?.token===view.token){
-        this.filterDirty=false;this.show(this.loaded.places,view.token,this.loaded.limited);
-        if(this.desired&&this.approved?.key===key&&this.approved.token===view.token){
-          if(this.physical&&this.abort&&!this.abort.signal.aborted)this.status({kind:'loading',count:0});
-          else if(this.pendingTimer!==null||this.pendingIdle!==null)this.status({kind:'paused',count:0,reason:'Preparing nearby places…'});
-        }
-      }
       if(this.autoUpdate&&available&&(!this.approved||this.approved.key!==key||this.approved.token!==view.token)&&
         (significantPlaceMovement(this.hybridArea,{bbox:view.bbox,zoom:view.zoom,token:view.token})||this.originMoved())){
         this.approved={key,token:view.token,automatic:true};
@@ -172,10 +155,10 @@ export class PlacesController {
     const timeout = this.host.timer(() => { if (this.current(revision, token)) {this.rememberArea(bbox,token,origin);this.status(paging?{...this.lastReady!,pageLoading:false,pageError:true}:{ kind: 'error', count: 0 });} controller.abort(); }, PLACES_LIMITS.timeoutMs);
     const task = (async () => {
       try {
-        const page = await this.host.query(bbox, 'all', controller.signal,origin,offset,text);
+        const page = await this.host.query(bbox, controller.signal,origin,offset,text);
         if (controller.signal.aborted || !this.current(revision, token)) return;
         if (page.outside) { this.host.visible(false); this.status({ kind: 'outside', count: 0 }); return; }
-        const places = this.host.normalize ? this.host.normalize(page.features, bbox) : normalizePlaces(page.features, bbox, 'all');
+        const places = this.host.normalize ? this.host.normalize(page.features, bbox) : normalizeTilePlaces(page.features, bbox);
         const bytes = placesBytes(places);
         if (offset===0 && bytes <= PLACES_LIMITS.cacheBytes) {
           const prior = this.cache.get(key); if (prior) { this.bytes -= prior.bytes; this.cache.delete(key); }
@@ -205,12 +188,8 @@ export class PlacesController {
   }
   private show(places: Place[], token: object, limited: boolean,origin:PlaceListOrigin|null|undefined=this.lastReady?.resultOrigin): void {
     this.loaded={places,token,limited};
-    const loadedCounts: Partial<Record<PlaceGroup, number>> = { all: places.length };
-    for (const group of PLACE_GROUPS) if (group !== 'all') loadedCounts[group] = 0;
-    for (const place of places) loadedCounts[place.group as PlaceGroup] = (loadedCounts[place.group as PlaceGroup] || 0) + 1;
-    const filtered = this.group === 'all' ? places : places.filter(place => place.group === this.group);
-    this.host.display(filtered, token);
-    this.lastReady={kind:'ready',count:filtered.length,limited,loadedCounts,...(this.host.paged?{pageOffset:this.pageContext?.offset||0,pageLoading:false,pageError:false,searchText:this.searchText}:{}),...(this.host.searchOrigin?{resultOrigin:origin?{...origin}:null}:{})};this.status(this.lastReady);
+    this.host.display(places, token);
+    this.lastReady={kind:'ready',count:places.length,limited,...(this.host.paged?{pageOffset:this.pageContext?.offset||0,pageLoading:false,pageError:false,searchText:this.searchText}:{}),...(this.host.searchOrigin?{resultOrigin:origin?{...origin}:null}:{})};this.status(this.lastReady);
   }
   private readOrigin():PlaceListOrigin|null {
     const p=this.host.searchOrigin?.();return p&&Number.isFinite(p.lon)&&Number.isFinite(p.lat)&&Math.abs(p.lon)<=180&&Math.abs(p.lat)<=90?{lon:p.lon,lat:p.lat,kind:p.kind}:null;

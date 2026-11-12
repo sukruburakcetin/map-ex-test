@@ -1157,6 +1157,6 @@ const tr: Messages = {
   "uiPoiRestoreCount": "Yerler · {count}",
   "uiPoiSelectedNotInPage": "Seçili yer bu sonuç sayfasında veya aramada değil. Ayrıntıları erişilebilir durumda.",
   "uiPoiServiceSetup": "Bu uygulama için Yerler yapılandırılmamış.",
-  "uiPoiFeatureMigration": "Bu uygulama için Yerler yapılandırılmamış.",
+
 };
 export default tr;

@@ -1,0 +1,14 @@
+{
+  "schema": "mapillary-places-area-v1",
+  "name": "test",
+  "bbox": [
+    -85.39043804636661,
+    34.97439450821549,
+    -85.23557399588498,
+    35.10759591378935
+  ],
+  "source": "portal",
+  "release": "latest",
+  "output_directory": "places-data/test/portal",
+  "max_features": 25000
+}

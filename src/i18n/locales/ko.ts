@@ -1157,6 +1157,6 @@ const ko: Messages = {
   "uiPoiRestoreCount": "장소 · {count}",
   "uiPoiSelectedNotInPage": "선택한 장소가 현재 결과 페이지 또는 검색에 포함되어 있지 않습니다. 상세 정보는 계속 볼 수 있습니다.",
   "uiPoiServiceSetup": "이 앱에는 장소가 설정되어 있지 않습니다.",
-  "uiPoiFeatureMigration": "이 앱에는 장소가 설정되어 있지 않습니다.",
+
 };
 export default ko;

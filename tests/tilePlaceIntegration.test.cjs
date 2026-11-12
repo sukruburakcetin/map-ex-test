@@ -1,7 +1,7 @@
 const fs=require('node:fs'),path=require('node:path'),test=require('node:test'),assert=require('node:assert/strict'),ts=require(process.env.MAPILLARY_TYPESCRIPT||'typescript');
 const root=path.resolve(__dirname,'..'),cache=new Map();
 function load(relative){const file=path.resolve(root,relative),m={exports:{}};if(cache.has(file))return cache.get(file);cache.set(file,m.exports);new Function('require','module','exports',ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText)(id=>load(path.relative(root,path.resolve(path.dirname(file),id+'.ts'))),m,m.exports);return m.exports;}
-const {tilePlace}=load('src/features/places/tilePlace.ts'),{ArcGISPlaces}=load('src/features/places/ArcGISPlaces.ts');
+const {tilePlace}=load('src/features/places/tilePlace.ts'),{PlacesCoordinator}=load('src/features/places/PlacesCoordinator.ts');
 test('one selected tile record preserves missing confidence and validates coordinates and URLs',()=>{
  const point={longitude:-86.13,latitude:39.775};let place=tilePlace({gers_id:'id',confidence:null,category:null,website:'javascript:bad()'},point);
  assert.equal(place.confidence,null);assert.equal(place.website,'');assert.equal(place.name,'id');assert.equal(place.group,'other');
@@ -17,10 +17,10 @@ test('tile selection uses the foundation popup and selection overlay without a s
  class Graphic extends Value{constructor(props){super(props);created++}}
  class Layer extends Value{constructor(props){super(props);this.items=[];this.graphics={length:0,reorder(){}}}addMany(items){this.items.push(...items);this.graphics.length=this.items.length}destroy(){this.destroyed=true}}
  const view={ready:true,stationary:true,map:{add:layer=>layers.push(layer),remove:layer=>layers.splice(layers.indexOf(layer),1)},watch(){return{remove(){}}},openPopup(options){this.popup={...options,visible:true}},closePopup(){this.popup=null},toScreen(){return{x:10,y:10}}};
- const owner=new ArcGISPlaces({externalSelection:true,id:'tiles',url:'',view:()=>view,modules:{GraphicsLayer:Layer,Graphic,Point:Value,FeatureLayer:class{constructor(){services++}}},geographic:x=>x,busy:()=>false,status(){},selected:place=>changed.push(place),explore:async()=>{queries++;return[]},openImagery(){}});
+ const owner=new PlacesCoordinator({id:'tiles',view:()=>view,modules:{GraphicsLayer:Layer,Graphic,Point:Value,FeatureLayer:class{constructor(){services++}}},geographic:x=>x,busy:()=>false,status(){},selected:place=>changed.push(place),explore:async()=>{queries++;return[]},openImagery(){}});
  try{
   const place=tilePlace({gers_id:'poi',place_name:'Selected place',category:'cafe',confidence:null},{x:-86.13,y:39.775});
-  assert(owner.openExternal(place));assert.equal(owner.selection.place.id,'poi');assert.equal(view.popup.title,'Nearby place');assert.equal(queries,0);assert.equal(services,0);assert.equal(created,1);assert.equal(layers.length,1);
+  assert(owner.openPlace(place));assert.equal(owner.selection.place.id,'poi');assert.equal(view.popup.title,'Nearby place');assert.equal(queries,0);assert.equal(services,0);assert.equal(created,1);assert.equal(layers.length,1);
   assert.equal(owner.stats.loaded,0);assert.equal(owner.stats.rendered,0);assert.equal(owner.stats.cacheBytes,0);assert.equal(owner.hoverLayers.length,1);assert.equal(owner.hit([{layer:layers[0],graphic:owner.selection.ring}]).id,'poi');
   assert(owner.open([],place.id,false,'card'));assert.equal(created,1);assert.equal(changed.at(-1).id,'poi');
   owner.selection.updateCamera(-86.12,39.77);owner.selection.setLink(true);assert.equal(owner.selection.stats.graphics,4);assert.equal(layers.length,1);
@@ -33,11 +33,11 @@ const compiled=ts.transpileModule('return '+callback.getText(sf),{compilerOption
 const {coverageClickHitTest}=load('src/features/coverage/coverageClickDispatch.ts');
 function dispatch(resolve){
  let opened=0,coverage=0,stopped=0,cancelled=0;
- const owner={screenTarget:()=>null,openExternalChoices:places=>{opened++;assert.equal(places[0].id,'poi');return true}};
+ const owner={screenTarget:()=>null,openChoices:places=>{opened++;assert.equal(places[0].id,'poi');return true}};
  const tiles={resolve,cancelPick(){cancelled++}};
  const route={graphic:{__isSequenceOverlay:true,geometry:{type:'point'},attributes:{sequenceId:'sequence',image_id:'image'}}};
  const view={destroyed:false,toMap:()=>({longitude:1,latitude:1}),hitTest:async()=>({results:[route]})};
- const w={_fieldNoteMap:{clearHighlight(){},hasPickTargets:false,noteForGraphic(){return null}},props:{state:'OPENED'},state:{jimuMapView:{view},turboModeActive:true,placesActive:true},_places:owner,_placesTilesOwner:owner,_placesTilesPrototype:tiles,
+ const w={_fieldNoteMap:{clearHighlight(){},hasPickTargets:false,noteForGraphic(){return null}},props:{state:'OPENED'},state:{jimuMapView:{view},turboModeActive:true,placesActive:true},_places:owner,_placesTilesOwner:owner,_placesVectorLayer:tiles,
  _coverageSelectionTargets:{snapshot:()=>null},coverageSelectionContext:()=>({}),_sharedNotesLayer:null,_pointCloudHits:{route:()=>false},setState(){},showPlacesHit:()=>false,placesBusy:()=>false,loadSequenceById:async()=>{coverage++}};
  const handler=new Function('view','TURBO_LIMITS','coverageClickHitTest','tilePlace',compiled).call(w,view,{pickRadiusPx:10},coverageClickHitTest,tilePlace);
  return{handler,w,event:{x:10,y:10,stopPropagation(){stopped++}},get stats(){return{opened,coverage,stopped,cancelled}}};
@@ -61,7 +61,7 @@ test('native area records populate the existing list without graphics and retain
  class Layer extends Value{constructor(p){super(p);this.graphics={length:0,reorder(){}}}addMany(items){this.graphics.length+=items.length}destroy(){}}
  const view={ready:true,stationary:true,watch(){return{remove(){}}},map:{add:layer=>layers.push(layer),remove(){}},openPopup(options){this.popup={...options,visible:true}},closePopup(){this.popup=null}};
  const rows=Array.from({length:250},(_,i)=>({attributes:{gers_id:'p'+i,place_name:'Place '+i,place_group:'education',confidence:i===0?.1:null},geometry:{x:.5,y:.5}}));
- const owner=new ArcGISPlaces({externalSelection:true,id:'area',url:'',view:()=>view,modules:{Graphic,GraphicsLayer:Layer,Point:Value,FeatureLayer:class{constructor(){services++}}},queryExternal:async()=>({features:rows.slice(0,200),limited:true}),normalizeExternal:normalizeTilePlaces,externalVisible:v=>visibility.push(v),geographic:x=>x,busy:()=>false,status(){},list:places=>listed.push(places),explore:async()=>[],openImagery(){}});
+ const owner=new PlacesCoordinator({id:'area',view:()=>view,modules:{Graphic,GraphicsLayer:Layer,Point:Value,FeatureLayer:class{constructor(){services++}}},queryArea:async()=>({features:rows.slice(0,200),limited:true}),normalize:normalizeTilePlaces,mapVisibleChanged:v=>visibility.push(v),geographic:x=>x,busy:()=>false,status(){},list:places=>listed.push(places),explore:async()=>[],openImagery(){}});
  try{
   const page=await owner.controller.host.query([0,0,1,1],'all',new AbortController().signal);const normalized=owner.controller.host.normalize(page.features,[0,0,1,1]);owner.display(normalized,view);
   assert.equal(normalized.length,200);assert.equal(normalized[0].confidence,.1);assert.equal(normalized[1].confidence,null);assert.equal(listed.at(-1).length,200);assert.equal(graphics,0);assert.equal(services,0);assert.equal(layers.length,0);assert.equal(owner.stats.loaded,200);assert.equal(owner.stats.rendered,0);
@@ -73,7 +73,7 @@ test('native area records populate the existing list without graphics and retain
 test('native-source normalization preserves manual area intent and automatic-update preferences',async()=>{
  const {PlacesController}=load('src/features/places/PlacesController.ts'),{normalizeTilePlaces}=load('src/features/places/tilePlace.ts');
  let now=0,id=0;const timers=new Map(),idle=new Map(),calls=[],shown=[];const view={token:{},bbox:[0,0,1,1],zoom:16,stationary:true};
- const host={manualSearch:true,hybridSearch:false,view:()=>view,busy:()=>false,query:(bbox,group,signal)=>new Promise(resolve=>calls.push({bbox,signal,resolve})),normalize:normalizeTilePlaces,display:places=>shown.push(places),visible(){},clear(){},status(){},timer:(work,ms)=>{const key=++id;timers.set(key,{work,at:now+ms});return key},cancelTimer:key=>timers.delete(key),idle:work=>{const key=++id;idle.set(key,work);return key},cancelIdle:key=>idle.delete(key),now:()=>now};
+ const host={manualSearch:true,hybridSearch:false,view:()=>view,busy:()=>false,query:(bbox,signal)=>new Promise(resolve=>calls.push({bbox,signal,resolve})),normalize:normalizeTilePlaces,display:places=>shown.push(places),visible(){},clear(){},status(){},timer:(work,ms)=>{const key=++id;timers.set(key,{work,at:now+ms});return key},cancelTimer:key=>timers.delete(key),idle:work=>{const key=++id;idle.set(key,work);return key},cancelIdle:key=>idle.delete(key),now:()=>now};
  const controller=new PlacesController(host),flush=()=>new Promise(resolve=>setImmediate(resolve));
  const advance=async()=>{now+=650;for(const[key,timer]of [...timers])if(timer.at<=now){timers.delete(key);timer.work()}for(const[key,work]of [...idle]){idle.delete(key);work()}await flush()};
  try{
@@ -92,18 +92,18 @@ test('map/list hover uses one outline and the existing chooser handles unloaded 
  class Value{constructor(p){Object.assign(this,p)}}class Graphic extends Value{constructor(p){super(p);graphics++}}
  class Layer extends Value{constructor(p){super(p);this.graphics={length:0,reorder(){}}}addMany(items){this.graphics.length+=items.length}destroy(){}}
  const view={ready:true,stationary:true,watch(){return{remove(){}}},map:{add:l=>layers.push(l),remove:l=>layers.splice(layers.indexOf(l),1)},openPopup(options){this.popup={...options,visible:true}},closePopup(){this.popup=null},toScreen:()=>({x:10,y:10})};
- const owner=new ArcGISPlaces({externalSelection:true,id:'hover',url:'',view:()=>view,externalMapVisible:()=>true,modules:{Graphic,GraphicsLayer:Layer,Point:Value},geographic:x=>x,busy:()=>false,status(){},hovered:id=>hovered.push(id),explore:async()=>{queries++;return[]},openImagery(){}});
+ const owner=new PlacesCoordinator({id:'hover',view:()=>view,mapVisible:()=>true,modules:{Graphic,GraphicsLayer:Layer,Point:Value},geographic:x=>x,busy:()=>false,status(){},hovered:id=>hovered.push(id),explore:async()=>{queries++;return[]},openImagery(){}});
  const place=id=>({id,name:'Place '+id,category:'cafe',group:'other',confidence:null,lon:-86.13,lat:39.775,address:'',website:'',release:'2026-10-21.0'});
  try{
   owner.display([place('loaded-1'),place('loaded-2')],view);owner.setHover('loaded-1');for(let i=0;i<30;i++)owner.setHover('loaded-1');
   assert.equal(graphics,1);assert.equal(owner.stats.hoverGraphics,1);assert.deepEqual(hovered,['loaded-1']);owner.setHover('loaded-2');assert.equal(graphics,1);assert.equal(hovered.at(-1),'loaded-2');
-  owner.setHover(null);owner.setExternalHover(place('outside-list'));assert.equal(graphics,1);assert.equal(hovered.at(-1),'outside-list');
-  const members=Array.from({length:6},(_,i)=>place('choice-'+i));assert(owner.openExternalChoices(members));assert.equal(owner.stats.externalChoices,6);assert.equal(owner.stats.rendered,0);assert.equal(queries,0);assert.equal(view.popup.title,'Nearby places');
+  owner.setHover(null);owner.setMapHover(place('outside-list'));assert.equal(graphics,1);assert.equal(hovered.at(-1),'outside-list');
+  const members=Array.from({length:6},(_,i)=>place('choice-'+i));assert(owner.openChoices(members));assert.equal(owner.stats.choices,6);assert.equal(owner.stats.rendered,0);assert.equal(queries,0);assert.equal(view.popup.title,'Nearby places');
   let list=view.popup.content.children[2],controls=view.popup.content.children[3];assert.equal(list.children.length,4);controls.children[2].onclick();assert.equal(list.children.length,2);list.children[0].onclick();assert.equal(owner.selection.place.id,'choice-4');assert.equal(graphics,2);
-  owner.setExternalHover(place('stale-preview'));owner.display([place('new-page')],view);assert.equal(owner.selection.place.id,'choice-4');assert.equal(owner.nativeHover.stats.visible,false);assert.equal(hovered.at(-1),null);
-  owner.controller.host.visible(false);owner.setExternalHover(place('map-only'));assert.equal(hovered.at(-1),'map-only');assert.equal(graphics,2);const target=owner.screenTarget({x:10,y:10});assert(target.startsWith('@places-group:tile:'));assert(owner.open([],target));list=view.popup.content.children[2];list.children[1].onclick();assert.equal(owner.selection.place.id,'choice-5');assert.equal(graphics,2);
-  assert(!owner.openExternalChoices(Array.from({length:33},(_,i)=>place('x'+i))));assert.equal(owner.stats.externalChoices,6);
-  owner.clear();assert.equal(owner.stats.externalChoices,0);
+  owner.setMapHover(place('stale-preview'));owner.display([place('new-page')],view);assert.equal(owner.selection.place.id,'choice-4');assert.equal(owner.nativeHover.stats.visible,false);assert.equal(hovered.at(-1),null);
+  owner.controller.host.visible(false);owner.setMapHover(place('map-only'));assert.equal(hovered.at(-1),'map-only');assert.equal(graphics,2);const target=owner.screenTarget({x:10,y:10});assert(target.startsWith('@places-group:tile:'));assert(owner.open([],target));list=view.popup.content.children[2];list.children[1].onclick();assert.equal(owner.selection.place.id,'choice-5');assert.equal(graphics,2);
+  assert(!owner.openChoices(Array.from({length:33},(_,i)=>place('x'+i))));assert.equal(owner.stats.choices,6);
+  owner.clear();assert.equal(owner.stats.choices,0);
  }finally{owner.dispose();assert.equal(layers.length,0);global.document=savedDocument;global.window=savedWindow}
 });
 const hoverStart=widget.indexOf('          let place = this._places?.hit(hit.results);'),hoverEnd=widget.indexOf('          if (place && !hoverController.signal.aborted)',hoverStart);
@@ -111,15 +111,15 @@ assert(hoverStart>=0&&hoverEnd>hoverStart);
 const hoverCompiled=ts.transpileModule('return async () => {'+widget.slice(hoverStart,hoverEnd)+'; return { place, nativeNearbyCount }; }',{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText;
 function hoverDispatch(coverage,resolveHover){
  const changes=[],view={};let requests=0;
- const owner={hit:()=>null,setExternalHover:place=>changes.push(place?.id||null)};
+ const owner={hit:()=>null,setMapHover:place=>changes.push(place?.id||null)};
  const source={version:1,resolveHover:(...args)=>{requests++;return resolveHover(...args)}};
- const w={_places:owner,_placesTilesOwner:owner,_placesTilesPrototype:source,state:{jimuMapView:{view}},placesBusy:()=>false};
+ const w={_places:owner,_placesTilesOwner:owner,_placesVectorLayer:source,state:{jimuMapView:{view}},placesBusy:()=>false};
  const run=new Function('view','coverage','hoverController','screenPoint','hit','tilePlace',hoverCompiled).call(w,view,coverage,new AbortController(),{x:0,y:0},{results:[]},tilePlace);
  return{run,w,source,changes,get requests(){return requests}};
 }
 test('actual hover pipeline keeps coverage preview authoritative and rejects ownership changes',async()=>{
  const coverageOwner=hoverDispatch(Promise.resolve({image:'coverage'}),async()=>{throw Error('Must not query POIs')});await coverageOwner.run();assert.equal(coverageOwner.requests,0);
- let release;const stopped=hoverDispatch(new Promise(resolve=>release=resolve),async()=>null);const pending=stopped.run();stopped.w._placesTilesPrototype=null;release(null);assert.equal(await pending,undefined);assert.equal(stopped.requests,0);assert.deepEqual(stopped.changes,[]);
+ let release;const stopped=hoverDispatch(new Promise(resolve=>release=resolve),async()=>null);const pending=stopped.run();stopped.w._placesVectorLayer=null;release(null);assert.equal(await pending,undefined);assert.equal(stopped.requests,0);assert.deepEqual(stopped.changes,[]);
  let finish;const changed=hoverDispatch(Promise.resolve(null),()=>new Promise(resolve=>finish=resolve));const query=changed.run();await new Promise(resolve=>setImmediate(resolve));changed.source.version++;finish({attributes:{gers_id:'old'},geometry:{x:-86,y:40}});assert.equal(await query,undefined);assert.deepEqual(changed.changes,[]);
 });
 test('actual hover pipeline forwards the hovered identity and overlap count',async()=>{
@@ -129,7 +129,7 @@ test('closed result panel makes no area requests, preserves selection/results an
  const {PlacesController}=load('src/features/places/PlacesController.ts'),{normalizeTilePlaces}=load('src/features/places/tilePlace.ts');
  let now=0,id=0,open=false,clears=0,visibility=0;const timers=new Map(),idle=new Map(),calls=[],shown=[];
  const view={token:{},bbox:[0,0,1,1],zoom:16,stationary:true};
- const host={manualSearch:true,hybridSearch:true,consumerActive:()=>open,view:()=>view,busy:()=>false,query:(bbox,group,signal)=>new Promise(resolve=>calls.push({bbox,signal,resolve})),normalize:normalizeTilePlaces,display:places=>shown.push(places),visible(){visibility++},clear(){clears++},status(){},timer:(work,ms)=>{const key=++id;timers.set(key,{work,at:now+ms});return key},cancelTimer:key=>timers.delete(key),idle:work=>{const key=++id;idle.set(key,work);return key},cancelIdle:key=>idle.delete(key),now:()=>now};
+ const host={manualSearch:true,hybridSearch:true,consumerActive:()=>open,view:()=>view,busy:()=>false,query:(bbox,signal)=>new Promise(resolve=>calls.push({bbox,signal,resolve})),normalize:normalizeTilePlaces,display:places=>shown.push(places),visible(){visibility++},clear(){clears++},status(){},timer:(work,ms)=>{const key=++id;timers.set(key,{work,at:now+ms});return key},cancelTimer:key=>timers.delete(key),idle:work=>{const key=++id;idle.set(key,work);return key},cancelIdle:key=>idle.delete(key),now:()=>now};
  const controller=new PlacesController(host),flush=()=>new Promise(resolve=>setImmediate(resolve));
  const advance=async()=>{now+=650;for(const[key,timer]of [...timers])if(timer.at<=now){timers.delete(key);timer.work()}for(const[key,work]of [...idle]){idle.delete(key);work()}await flush()};
  try{

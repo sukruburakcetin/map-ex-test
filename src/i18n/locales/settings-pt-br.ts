@@ -52,11 +52,9 @@ const ptBR: SettingsMessages = {
   "hideShareButton": "Ocultar Botão de Compartilhamento",
   "hideLockMapRotationButton3d": "Ocultar Botão de Bloqueio de Rotação do Mapa (3D)",
   "hideCenterMapButton": "Ocultar Botão de Centralização do Mapa",
-  "nearbyPlacesOverturePilot": "Locais Próximos · Piloto do Overture",
+
   "offerPlacesLayer": "Oferecer Camada de Locais",
-  "placesFeatureserverLayerUrl": "URL da Camada FeatureServer de Locais",
-  "useAnHttpsFeatureserverLayerUrlWithoutQueryParameters": "Use uma URL HTTPS de camada FeatureServer sem parâmetros de consulta nem credenciais.",
-  "requiresAPublishedPilotLayerPreparedWithToolsOverture": "Requer uma camada piloto publicada preparada com tools/overture_places. Começa desativada para os usuários; máximo de 200 locais por vista. Consulte docs/OVERTURE-PLACES.md.",
+
   "featureDetectionLayers": "Camadas de Detecção de Feições",
   "enableTrafficSigns": "Ativar Sinalização de Trânsito",
   "enableMapillaryObjects": "Ativar Objetos do Mapillary",
@@ -154,11 +152,18 @@ const ptBR: SettingsMessages = {
   "placesVectorServiceTitle": "Locais próximos · Overture",
   "placesApiServiceUrl": "URL do serviço de locais",
   "placesApiUrlInvalid": "Insira uma URL base de serviço HTTPS sem credenciais, parâmetros de consulta ou fragmento.",
-  "placesApiMigration": "Insira uma URL do serviço de locais para explorar locais próximos.",
+
   "placesApiTest": "Testar conexão",
   "placesApiTesting": "Verificando serviço…",
   "placesApiConnected": "Conectado",
   "placesApiFailed": "Falha na conexão. Verifique a URL, o certificado HTTPS, CORS e a compatibilidade do serviço.",
   "placesApiUrlHelp": "Insira a URL base do serviço de locais. Ele fornece blocos vetoriais, seleção e pesquisa. Os usuários ativam Locais quando necessário.",
+  "placesPortalSource": "ArcGIS Portal (recomendado)",
+  "placesExternalSource": "Serviço externo de lugares",
+  "placesPortalTilesUrl": "URL do serviço de blocos vetoriais",
+  "placesPortalQueryUrl": "URL da camada de consulta de lugares",
+  "placesPortalHelp": "Os blocos vetoriais desenham o mapa. O serviço de consulta fornece lotes limitados e não é adicionado como camada ao mapa. Ambos devem seguir o guia de publicação de lugares.",
+  "placesPortalUrlsInvalid": "Insira URLs HTTPS de VectorTileServer e FeatureServer/camada sem credenciais ou parâmetros.",
+
 };
 export default ptBR;

@@ -6,14 +6,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import math
 from pathlib import Path
-import sqlite3
 import ssl
+import sqlite3
 import threading
 import unicodedata
 from urllib.parse import urlparse,parse_qs,urlencode
 from places_sprite import make_sprite,GROUPS
-from place_categories import icon_group
 from collections import Counter
+from places_store import connection, populate, open_database
 
 
 def confidence_filter(value):
@@ -34,11 +34,9 @@ def request_filters(query):
     threshold=confidence_filter(params.get('min_confidence',[None])[0])
     closed=params.get('hide_closed',['0'])[0]
     if closed not in ('0','1'):raise ValueError('hide_closed must be 0 or 1')
-    group=params.get('group',['all'])[0]
-    if group not in ('all','health','education','parks','landmarks','services'):raise ValueError('Invalid place group')
     family=params.get('family',['all'])[0]
     if family!='all' and family not in GROUPS:raise ValueError('Invalid icon family')
-    return threshold,closed=='1',group,family
+    return threshold,closed=='1',family
 
 
 def varint(value):
@@ -79,9 +77,15 @@ def project(lon, lat):
 
 
 def query_extent(geometry):
-    wkid = geometry.get('spatialReference',{}).get('latestWkid') or geometry.get('spatialReference',{}).get('wkid')
-    xmin,ymin,xmax,ymax = [float(geometry[k]) for k in ['xmin','ymin','xmax','ymax']]
-    if not all(math.isfinite(n) for n in [xmin,ymin,xmax,ymax]) or xmin>=xmax or ymin>=ymax:
+    if not isinstance(geometry,dict) or not isinstance(geometry.get('spatialReference'),dict):
+        raise ValueError('Expected an extent with spatialReference')
+    reference=geometry['spatialReference']
+    wkid=reference.get('latestWkid') or reference.get('wkid')
+    coordinates=[geometry[k] for k in ['xmin','ymin','xmax','ymax']]
+    if any(type(n) not in (int,float) or not math.isfinite(n) for n in coordinates):
+        raise ValueError('Extent coordinates must be finite numbers')
+    xmin,ymin,xmax,ymax=coordinates
+    if xmin>=xmax or ymin>=ymax:
         raise ValueError('Invalid extent')
     if wkid == 4326:
         west,north = project(xmin,ymin);east,south = project(xmax,ymax)
@@ -95,65 +99,43 @@ def query_extent(geometry):
 
 
 class Dataset:
-    def __init__(self, source):
+    def __init__(self, source=None, *, database=None):
         self.lock = threading.Lock()
-        self.db = sqlite3.connect(':memory:', check_same_thread=False)
-        # Great-circle distance ordering stays in SQLite, before the bounded response.
-        def proximity(lon,lat,origin_lon,origin_lat):
-            dlat=math.radians(lat-origin_lat);dlon=math.radians(lon-origin_lon)
-            return math.sin(dlat/2)**2+math.cos(math.radians(lat))*math.cos(math.radians(origin_lat))*math.sin(dlon/2)**2
-        self.db.create_function('proximity',4,proximity,deterministic=True)
-        self.db.execute('CREATE TABLE places (id INTEGER PRIMARY KEY, gers TEXT UNIQUE, x REAL, y REAL, lon REAL, lat REAL, properties TEXT, icon_group TEXT, confidence REAL, operating_status TEXT, place_group TEXT, search_text TEXT)')
-        self.db.execute('CREATE VIRTUAL TABLE spatial USING rtree(id,minx,maxx,miny,maxy)')
-        manifest = json.loads(source.with_suffix('.manifest.json').read_text(encoding='utf-8'))
-        if manifest.get('schema') != 'overture-places-all-pilot-v1':
-            raise ValueError('Expected export_all_places.py output and matching manifest')
-        self.icon_counts=Counter()
-        self.unmapped_categories=Counter()
-        with source.open(encoding='utf-8') as stream:
-            count = 0
-            for count, line in enumerate(stream, 1):
-                if count > 100000:
-                    raise ValueError('Local harness is limited to 100,000 POIs')
-                feature = json.loads(line)
-                lon, lat = feature['geometry']['coordinates']
-                x, y = project(lon,lat)
-                properties = feature['properties']
-                if not properties.get('gers_id') or properties.get('data_release') != manifest['release']:
-                    raise ValueError('Missing ID or mismatched release')
-                group=icon_group(properties.get('category'))
-                self.icon_counts[group]+=1
-                if group=='other':self.unmapped_categories[properties.get('category') or '(missing category)']+=1
-                confidence=confidence_filter(properties.get('confidence'))
-                place_group=group if group in ('health','education','parks','landmarks','services') else 'services' if group in ('bank','grocery','convenience','fuel') else 'other'
-                search_text= ''.join(c for c in unicodedata.normalize('NFKD',' '.join(str(properties.get(k) or '') for k in ('place_name','category','address')).replace('_',' ').casefold()) if not unicodedata.combining(c))
-                self.db.execute('INSERT INTO places VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', (count,properties['gers_id'],x,y,lon,lat,json.dumps(properties,allow_nan=False),group,confidence,properties.get('operating_status'),place_group,search_text))
-                self.db.execute('INSERT INTO spatial VALUES (?,?,?,?,?)', (count,x,x,y,y))
-        if not count or count != manifest['feature_count']:
-            raise ValueError('Empty data or manifest count mismatch')
-        self.count, self.manifest = count, manifest
-        self.db.execute('CREATE INDEX places_icon_family ON places(icon_group)')
-        self.db.commit()
+        if database is not None:
+            self.db, metadata = open_database(database)
+        else:
+            self.db = connection()
+            try:
+                metadata = populate(self.db, source)
+            except Exception:
+                self.db.close()
+                raise
+        self.source_sha256 = metadata['source_sha256']
+        self.imported_utc = metadata['imported_utc']
+        self.count = metadata['count']
+        self.manifest = metadata['manifest']
+        self.icon_counts = Counter(metadata['icon_counts'])
+        self.unmapped_categories = Counter(metadata['unmapped_categories'])
+        self.storage = 'sqlite' if database is not None else 'memory'
 
-    def rows(self, west, south, east, north, limit, min_confidence=None, hide_closed=False,group='all',family='all',origin=None,offset=0,search=''):
-        if group not in ('all','health','education','parks','landmarks','services'):raise ValueError('Invalid place group')
+    def rows(self, west, south, east, north, limit, min_confidence=None, hide_closed=False,family='all',origin=None,offset=0,search=''):
         if family!='all' and family not in GROUPS:raise ValueError('Invalid icon family')
         term=normalize_search(search)
         threshold=confidence_filter(min_confidence)
         ordering = ' ORDER BY proximity(p.lon,p.lat,?,?),p.gers' if origin is not None else ''
         with self.lock:
-            return self.db.execute('''SELECT p.gers,p.x,p.y,p.lon,p.lat,p.properties,p.icon_group,p.place_group FROM spatial s
+            return self.db.execute('''SELECT p.gers,p.x,p.y,p.lon,p.lat,p.properties,p.icon_group FROM spatial s
                 JOIN places p ON p.id=s.id WHERE s.minx<=? AND s.maxx>=? AND s.miny<=? AND s.maxy>=?
                 AND p.x BETWEEN ? AND ? AND p.y BETWEEN ? AND ?
                 AND (? IS NULL OR p.confidence>=?)
                 AND (?=0 OR p.operating_status IS NULL OR p.operating_status<>'permanently_closed')
-                AND (?='all' OR p.place_group=?) AND (?='all' OR p.icon_group=?) AND (?='' OR instr(p.search_text,?)>0)''' + ordering + ' LIMIT ? OFFSET ?',
-                (east,west,north,south,west,east,south,north,threshold,threshold,int(hide_closed),group,group,family,family,term,term)+ (tuple(origin) if origin is not None else ()) + (limit,offset)).fetchall()
+                AND (?='all' OR p.icon_group=?) AND (?='' OR instr(p.search_text,?)>0)''' + ordering + ' LIMIT ? OFFSET ?',
+                (east,west,north,south,west,east,south,north,threshold,threshold,int(hide_closed),family,family,term,term)+ (tuple(origin) if origin is not None else ()) + (limit,offset)).fetchall()
 
     @lru_cache(maxsize=64)
-    def tile_records(self,z,x,y,min_confidence=None,hide_closed=False,group='all',family='all'):
+    def tile_records(self,z,x,y,min_confidence=None,hide_closed=False,family='all'):
         scale=2**z
-        rows=self.rows(x/scale,y/scale,(x+1)/scale,(y+1)/scale,5001,min_confidence,hide_closed,group,family) if z>=15 else ()
+        rows=self.rows(x/scale,y/scale,(x+1)/scale,(y+1)/scale,5001,min_confidence,hide_closed,family) if z>=15 else ()
         if z>=15 and len(rows)<=5000:
             return tuple((r[0],r[1],r[2],r[6],1,str(json.loads(r[5]).get('place_name') or '')[:80]) for r in rows if x/scale<=r[1]<(x+1)/scale and y/scale<=r[2]<(y+1)/scale)
         # Aggregate ALL filtered matches in SQL, never a truncated point sample.
@@ -168,35 +150,35 @@ class Dataset:
                 AND p.x>=? AND p.x<? AND p.y>=? AND p.y<?
                 AND (? IS NULL OR p.confidence>=?)
                 AND (?=0 OR p.operating_status IS NULL OR p.operating_status<>'permanently_closed')
-                AND (?='all' OR p.place_group=?) AND (?='all' OR p.icon_group=?)
+                AND (?='all' OR p.icon_group=?)
                 GROUP BY cast(p.x*? AS INTEGER),cast(p.y*? AS INTEGER)
-                ORDER BY 2,3''',((x+1)/scale,x/scale,(y+1)/scale,y/scale,x/scale,(x+1)/scale,y/scale,(y+1)/scale,threshold,threshold,int(hide_closed),group,group,family,family,cells,cells)).fetchall()
+                ORDER BY 2,3''',((x+1)/scale,x/scale,(y+1)/scale,y/scale,x/scale,(x+1)/scale,y/scale,(y+1)/scale,threshold,threshold,int(hide_closed),family,family,cells,cells)).fetchall()
         return tuple((r[0] if r[3]==1 else 'cluster:'+str(z)+':'+str(int(r[1]*cells))+':'+str(int(r[2]*cells)),r[1],r[2],r[4],r[3],str(json.loads(r[5]).get('place_name') or '')[:80] if r[3]==1 else '') for r in result)
 
     @lru_cache(maxsize=64)
-    def tile(self,z,x,y,min_confidence=None,hide_closed=False,group='all',family='all'):
+    def tile(self,z,x,y,min_confidence=None,hide_closed=False,family='all'):
         scale=2**z
-        return tile_bytes([(r[0],round((r[1]*scale-x)*4096),round((r[2]*scale-y)*4096),r[3],r[4],r[5]) for r in self.tile_records(z,x,y,min_confidence,hide_closed,group,family)])
+        return tile_bytes([(r[0],round((r[1]*scale-x)*4096),round((r[2]*scale-y)*4096),r[3],r[4],r[5]) for r in self.tile_records(z,x,y,min_confidence,hide_closed,family)])
 
-    def cluster_query(self,geometry,zoom,min_confidence=None,hide_closed=False,group='all',family='all'):
-        if isinstance(zoom,bool) or not isinstance(zoom,int) or not 12<=zoom<=19:raise ValueError('Invalid tile zoom')
+    def cluster_query(self,geometry,zoom,min_confidence=None,hide_closed=False,family='all'):
+        if isinstance(zoom,bool) or not isinstance(zoom,int) or not 12<=zoom<=22:raise ValueError('Invalid tile zoom')
         west,south,east,north=query_extent(geometry)
         scale=2**zoom;xs=range(max(0,int(west*scale)),min(scale,int(east*scale)+1));ys=range(max(0,int(south*scale)),min(scale,int(north*scale)+1))
         if len(xs)*len(ys)>16:raise ValueError('Pick area is too large; zoom closer')
         features=[]
         for x in xs:
             for y in ys:
-                for identifier,px,py,icon,count,name in self.tile_records(zoom,x,y,min_confidence,hide_closed,group,family):
+                for identifier,px,py,icon,count,name in self.tile_records(zoom,x,y,min_confidence,hide_closed,family):
                     if not west<=px<=east or not south<=py<=north:continue
                     if count==1:
-                        with self.lock:row=self.db.execute('SELECT properties,place_group FROM places WHERE gers=?',(identifier,)).fetchone()
-                        attributes={**json.loads(row[0]),'place_group':row[1],'icon_group':icon}
+                        with self.lock:row=self.db.execute('SELECT properties FROM places WHERE gers=?',(identifier,)).fetchone()
+                        attributes={**json.loads(row[0]),'icon_group':icon}
                     else:attributes={'gers_id':identifier,'cluster_count':count}
                     features.append({'attributes':attributes,'geometry':{'x':px*360-180,'y':math.degrees(math.atan(math.sinh(math.pi*(1-2*py)))),'spatialReference':{'wkid':4326}}})
                     if len(features)>32:return {'features':features[:32],'exceededTransferLimit':True}
         return {'features':features,'exceededTransferLimit':False}
 
-    def query(self,geometry,min_confidence=None,hide_closed=False,group='all',limit=32,family='all',origin=None,offset=0,search=''):
+    def query(self,geometry,min_confidence=None,hide_closed=False,limit=32,family='all',origin=None,offset=0,search=''):
         term=normalize_search(search)
         if limit==32 and term:raise ValueError('Text search is only supported for area results')
         if limit not in (32,200):raise ValueError('Invalid query limit')
@@ -213,12 +195,14 @@ class Dataset:
             if len(origin)!=2 or any(isinstance(v,bool) or not isinstance(v,(float,int)) or not math.isfinite(v) for v in origin) or not -180<=origin[0]<=180 or not -90<=origin[1]<=90:
                 raise ValueError('Invalid search origin')
         else:origin=None  # Keep click candidate/truncation semantics unchanged.
-        rows = self.rows(west,south,east,north,limit+1,min_confidence,hide_closed,group,family,origin,offset,search)
+        rows = self.rows(west,south,east,north,limit+1,min_confidence,hide_closed,family,origin,offset,search)
         return {'offset':offset,'nextOffset':offset+limit if len(rows)>limit else None,'exceededTransferLimit':len(rows)>limit,'features':[
-            {'attributes':{**json.loads(row[5]),'place_group':row[7],'icon_group':row[6]},'geometry':{'x':row[3],'y':row[4],'spatialReference':{'wkid':4326}}} for row in rows[:limit]]}
+            {'attributes':{**json.loads(row[5]),'icon_group':row[6]},'geometry':{'x':row[3],'y':row[4],'spatialReference':{'wkid':4326}}} for row in rows[:limit]]}
 
 
 def make_handler(dataset,base,origin):
+    origins=(origin,) if isinstance(origin,str) else tuple(origin)
+    if not origins:raise ValueError('At least one app origin is required')
     prefix=urlparse(base).path.rstrip('/')
     def service_route(path):return (path[len(prefix):] or '/') if prefix and (path==prefix or path.startswith(prefix+'/')) else path
     sprite_png,sprite_metadata=make_sprite()
@@ -229,7 +213,10 @@ def make_handler(dataset,base,origin):
             self.send_response(status)
             self.send_header('Content-Type',kind)
             self.send_header('Content-Length',str(len(body)))
-            self.send_header('Access-Control-Allow-Origin',origin)
+            requested=self.headers.get('Origin')
+            allowed=requested if requested in origins else origins[0] if len(origins)==1 else None
+            if allowed:self.send_header('Access-Control-Allow-Origin',allowed)
+            self.send_header('Vary','Origin')
             self.send_header('Access-Control-Allow-Methods','GET, POST, OPTIONS')
             self.send_header('Access-Control-Allow-Headers','Content-Type')
             self.send_header('Access-Control-Allow-Private-Network','true')
@@ -240,17 +227,16 @@ def make_handler(dataset,base,origin):
 
         def do_GET(self):
             parsed=urlparse(self.path);route=service_route(parsed.path)
-            try:threshold,hide_closed,group,family=request_filters(parsed.query)
+            try:threshold,hide_closed,family=request_filters(parsed.query)
             except ValueError as error:return self.reply(400,{'error':str(error)})
             params={}
             if threshold is not None:params['min_confidence']=threshold
             if hide_closed:params['hide_closed']='1'
-            if group!='all':params['group']=group
             if family!='all':params['family']=family
             suffix='?'+urlencode(params) if params else ''
             if route=='/style.json':
-                self.reply(200,{'version':8,'name':'Local Overture POI test','glyphs':'https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer/resources/fonts/{fontstack}/{range}.pbf','sprite':base+'/sprites/places','sources':{'places':{
-                    'type':'vector','tiles':[base+'/tiles/{z}/{x}/{y}.pbf'+suffix],'minzoom':12,'maxzoom':19,
+                self.reply(200,{'version':8,'name':'Overture Places','glyphs':'https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer/resources/fonts/{fontstack}/{range}.pbf','sprite':base+'/sprites/places','sources':{'places':{
+                    'type':'vector','tiles':[base+'/tiles/{z}/{x}/{y}.pbf'+suffix],'minzoom':12,'maxzoom':22,
                     'attribution':'Overture Maps · '+dataset.manifest['release']}},'layers':[{
                     'id':'places','type':'symbol','source':'places','source-layer':'places','minzoom':12,
                     'filter':['==','count',1],
@@ -266,15 +252,21 @@ def make_handler(dataset,base,origin):
             elif route=='/sprites/places.png':self.reply(200,sprite_png,'image/png')
             elif route=='/sprites/places@2x.json':self.reply(200,sprite_metadata_2x)
             elif route=='/sprites/places@2x.png':self.reply(200,sprite_png_2x,'image/png')
+            elif route=='/health':
+                try:
+                    with dataset.lock:dataset.db.execute('SELECT id FROM places LIMIT 1').fetchone()
+                except sqlite3.Error:return self.reply(503,{'ready':False})
+                self.reply(200,{'ready':True,'storage':dataset.storage,'release':dataset.manifest['release']})
             elif route in ['/','/status']:
-                self.reply(200,{'ready':True,'paging_version':1,'text_search_version':1,'scale_display_version':1,'category_filter_version':1,'supported_icon_families':list(GROUPS),'count':dataset.count,'min_confidence':threshold,'hide_closed':hide_closed,'group':group,'family':family,'release':dataset.manifest['release'],
+                self.reply(200,{'ready':True,'storage':dataset.storage,'storage_schema_version':1,'paging_version':1,'text_search_version':1,'scale_display_version':1,'category_filter_version':1,'supported_icon_families':list(GROUPS),'count':dataset.count,'min_confidence':threshold,'hide_closed':hide_closed,'family':family,'release':dataset.manifest['release'],
                     'bbox':dataset.manifest['bbox'],'icon_counts':dict(dataset.icon_counts),'unmapped_categories':dict(dataset.unmapped_categories.most_common(20)),'style':base+'/style.json','query':base+'/query','search':base+'/search'})
             elif route.startswith('/tiles/'):
                 try:
                     parts=route.split('/');z,x,y=int(parts[2]),int(parts[3]),int(parts[4].removesuffix('.pbf'))
-                    if len(parts)!=5 or not 12<=z<=19 or not 0<=x<2**z or not 0<=y<2**z: raise ValueError('Invalid tile')
-                    self.reply(200,dataset.tile(z,x,y,threshold,hide_closed,group,family),'application/x-protobuf')
+                    if len(parts)!=5 or not 12<=z<=22 or not 0<=x<2**z or not 0<=y<2**z: raise ValueError('Invalid tile')
+                    self.reply(200,dataset.tile(z,x,y,threshold,hide_closed,family),'application/x-protobuf')
                 except (ValueError,IndexError) as error:self.reply(400,{'error':str(error)})
+                except sqlite3.Error:self.reply(503,{'error':'Dataset unavailable'})
             else:self.reply(404,{'error':'Not found'})
 
         def do_POST(self):
@@ -284,12 +276,14 @@ def make_handler(dataset,base,origin):
                 size=int(self.headers.get('Content-Length','0'))
                 if not 0<size<=8192:raise ValueError('Invalid request size')
                 payload=json.loads(self.rfile.read(size))
-                threshold,hide_closed,group,family=request_filters(urlparse(self.path).query)
+                if not isinstance(payload,dict) or not isinstance(payload.get('geometry'),dict):raise ValueError('Expected a JSON object with geometry')
+                threshold,hide_closed,family=request_filters(urlparse(self.path).query)
                 if route=='/query' and payload.get('zoom') is not None:
-                    result=dataset.cluster_query(payload['geometry'],payload['zoom'],threshold,hide_closed,group,family)
-                else:result=dataset.query(payload['geometry'],threshold,hide_closed,group,200 if route=='/search' else 32,family,payload.get('origin'),payload.get('offset',0),payload.get('text',''))
+                    result=dataset.cluster_query(payload['geometry'],payload['zoom'],threshold,hide_closed,family)
+                else:result=dataset.query(payload['geometry'],threshold,hide_closed,200 if route=='/search' else 32,family,payload.get('origin'),payload.get('offset',0),payload.get('text',''))
                 self.reply(200,result)
             except (ValueError,KeyError,TypeError) as error:self.reply(400,{'error':str(error)})
+            except sqlite3.Error:self.reply(503,{'error':'Dataset unavailable'})
     return Handler
 
 

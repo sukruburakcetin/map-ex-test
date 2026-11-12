@@ -52,11 +52,9 @@ const zhTW: SettingsMessages = {
   "hideShareButton": "隱藏共用按鈕",
   "hideLockMapRotationButton3d": "隱藏地圖旋轉鎖定按鈕（3D）",
   "hideCenterMapButton": "隱藏地圖居中按鈕",
-  "nearbyPlacesOverturePilot": "附近地點 · Overture 試用",
+
   "offerPlacesLayer": "提供地點圖層",
-  "placesFeatureserverLayerUrl": "地點 FeatureServer 圖層 網址",
-  "useAnHttpsFeatureserverLayerUrlWithoutQueryParameters": "請使用不含查詢參數或認證資訊的 HTTPS FeatureServer 圖層網址。",
-  "requiresAPublishedPilotLayerPreparedWithToolsOverture": "需要使用 tools/overture_places 準備並發佈的試用圖層。使用者預設為關閉；每個視圖最多顯示 200 個地點。請參閱 docs/OVERTURE-PLACES.md。",
+
   "featureDetectionLayers": "圖徵偵測圖層",
   "enableTrafficSigns": "啟用交通標誌",
   "enableMapillaryObjects": "啟用 Mapillary 物件",
@@ -154,11 +152,18 @@ const zhTW: SettingsMessages = {
   "placesVectorServiceTitle": "附近地點 · Overture",
   "placesApiServiceUrl": "地點服務 URL",
   "placesApiUrlInvalid": "請輸入不含認證資訊、查詢參數或片段的 HTTPS 服務基礎 URL。",
-  "placesApiMigration": "輸入地點服務 URL 以探索附近地點。",
+
   "placesApiTest": "測試連線",
   "placesApiTesting": "正在檢查服務…",
   "placesApiConnected": "已連線",
   "placesApiFailed": "連線失敗。請檢查 URL、HTTPS 憑證、CORS 和服務相容性。",
   "placesApiUrlHelp": "輸入地點服務的基礎 URL。它提供向量圖磚、地點選取和搜尋。使用者可依需要啟用地點。",
+  "placesPortalSource": "ArcGIS Portal（建議）",
+  "placesExternalSource": "外部地點服務",
+  "placesPortalTilesUrl": "向量圖磚服務 URL",
+  "placesPortalQueryUrl": "地點查詢圖層 URL",
+  "placesPortalHelp": "使用向量圖磚繪製地圖。查詢服務僅傳回有限筆記錄，不會作為圖層加入地圖。兩項服務均須遵循地點發布指南。",
+  "placesPortalUrlsInvalid": "請輸入不含認證或 URL 參數的 HTTPS VectorTileServer 和 FeatureServer/圖層 URL。",
+
 };
 export default zhTW;

@@ -1157,6 +1157,6 @@ const de: Messages = {
   "uiPoiRestoreCount": "Orte · {count}",
   "uiPoiSelectedNotInPage": "Der ausgewählte Ort gehört nicht zu dieser Ergebnisseite oder Suche. Seine Details bleiben verfügbar.",
   "uiPoiServiceSetup": "Orte sind für diese App nicht konfiguriert.",
-  "uiPoiFeatureMigration": "Orte sind für diese App nicht konfiguriert.",
+
 };
 export default de;

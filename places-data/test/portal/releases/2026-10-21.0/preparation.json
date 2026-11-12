@@ -1,0 +1,28 @@
+{
+  "schema": "mapillary-places-prepared-v1",
+  "status": "prepared_not_published",
+  "release": "2026-10-21.0",
+  "prepared_utc": "2026-11-12T08:01:49.359106+00:00",
+  "area": {
+    "name": "test",
+    "bbox": [
+      -85.39043804636661,
+      34.97439450821549,
+      -85.23557399588498,
+      35.10759591378935
+    ]
+  },
+  "source_mode": "portal",
+  "source_file": "places.geojson",
+  "source_sha256": "eabd24246f01990213df9a0fc47048ccfe9bf5e6672e79bef7aa77798a468b11",
+  "feature_count": 10740,
+  "baseline_release": null,
+  "changes": {
+    "added": 10740,
+    "removed": 0,
+    "changed": 0,
+    "unchanged": 0
+  },
+  "database": null,
+  "database_sha256": null
+}

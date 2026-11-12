@@ -52,11 +52,9 @@ const es: SettingsMessages = {
   "hideShareButton": "Ocultar Botón de Compartir",
   "hideLockMapRotationButton3d": "Ocultar Botón de Bloqueo de Rotación del Mapa (3D)",
   "hideCenterMapButton": "Ocultar Botón de Centrar Mapa",
-  "nearbyPlacesOverturePilot": "Lugares Cercanos · Piloto de Overture",
+
   "offerPlacesLayer": "Ofrecer Capa de Lugares",
-  "placesFeatureserverLayerUrl": "URL de Capa FeatureServer de Lugares",
-  "useAnHttpsFeatureserverLayerUrlWithoutQueryParameters": "Usa una URL HTTPS de capa FeatureServer sin parámetros de consulta ni credenciales.",
-  "requiresAPublishedPilotLayerPreparedWithToolsOverture": "Requiere una capa piloto publicada preparada con tools/overture_places. Desactivada inicialmente para los usuarios; máximo 200 lugares por vista. Consulta docs/OVERTURE-PLACES.md.",
+
   "featureDetectionLayers": "Capas de Detección de Entidades",
   "enableTrafficSigns": "Activar Señales de Tráfico",
   "enableMapillaryObjects": "Activar Objetos de Mapillary",
@@ -154,11 +152,18 @@ const es: SettingsMessages = {
   "placesVectorServiceTitle": "Lugares cercanos · Overture",
   "placesApiServiceUrl": "URL del servicio de lugares",
   "placesApiUrlInvalid": "Introduce una URL base de servicio HTTPS sin credenciales, parámetros de consulta ni fragmento.",
-  "placesApiMigration": "Introduce una URL del servicio de lugares para explorar lugares cercanos.",
+
   "placesApiTest": "Probar conexión",
   "placesApiTesting": "Comprobando servicio…",
   "placesApiConnected": "Conectado",
   "placesApiFailed": "Error de conexión. Comprueba la URL, el certificado HTTPS, CORS y la compatibilidad del servicio.",
   "placesApiUrlHelp": "Introduce la URL base del servicio de lugares. Proporciona teselas vectoriales, selección y búsqueda. Los usuarios activan Lugares cuando lo necesitan.",
+  "placesPortalSource": "ArcGIS Portal (recomendado)",
+  "placesExternalSource": "Servicio externo de lugares",
+  "placesPortalTilesUrl": "URL del servicio de teselas vectoriales",
+  "placesPortalQueryUrl": "URL de la capa de consulta de lugares",
+  "placesPortalHelp": "Las teselas vectoriales dibujan el mapa. Las consultas devuelven registros limitados; no se añade una capa al mapa. Ambos servicios deben seguir la guía de publicación de lugares.",
+  "placesPortalUrlsInvalid": "Introduzca URL HTTPS de VectorTileServer y FeatureServer/capa sin credenciales ni parámetros.",
+
 };
 export default es;

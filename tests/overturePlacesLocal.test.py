@@ -77,18 +77,21 @@ class LocalServerTest(unittest.TestCase):
             base='http://127.0.0.1:'+str(server.server_port)
             with urllib.request.urlopen(base+'/style.json') as response:
                 style=json.load(response);self.assertEqual(style['layers'][0]['type'],'symbol')
-                self.assertEqual(style['sources']['places']['maxzoom'],19)
+                self.assertEqual(style['sources']['places']['maxzoom'],22)
                 self.assertEqual(style['layers'][-1]['minzoom'],17)
                 self.assertIn('{range}',style['glyphs'])
                 self.assertEqual(style['layers'][1]['filter'],['>','count',1])
                 self.assertEqual(style['layers'][0]['layout']['icon-image'],'{icon_group}')
+                px,py=project(29,41)
+                with urllib.request.urlopen(base+'/tiles/22/'+str(int(px*2**22))+'/'+str(int(py*2**22))+'.pbf') as tile_response:
+                    self.assertEqual(tile_response.status,200);self.assertIn(b'gers_id',tile_response.read())
                 self.assertEqual(response.headers['Access-Control-Allow-Origin'],'https://localhost:3001')
             with urllib.request.urlopen(base+'/style.json?min_confidence=0.75') as response:
                 filtered=json.load(response);self.assertTrue(filtered['sources']['places']['tiles'][0].endswith('?min_confidence=0.75'))
             with urllib.request.urlopen(base+'/style.json?min_confidence=0.75&hide_closed=1') as response:
                 url=json.load(response)['sources']['places']['tiles'][0];self.assertIn('min_confidence=0.75',url);self.assertIn('hide_closed=1',url)
-            with urllib.request.urlopen(base+'/style.json?group=education&hide_closed=1&min_confidence=0.75') as response:
-                url=json.load(response)['sources']['places']['tiles'][0];self.assertIn('group=education',url)
+            with urllib.request.urlopen(base+'/style.json?family=education&hide_closed=1&min_confidence=0.75') as response:
+                url=json.load(response)['sources']['places']['tiles'][0];self.assertIn('family=education',url)
             with urllib.request.urlopen(base+'/status') as response:
                 metadata=json.load(response);self.assertEqual(metadata['paging_version'],1);self.assertEqual(metadata['scale_display_version'],1);self.assertEqual(metadata['category_filter_version'],1);self.assertEqual(len(metadata['supported_icon_families']),28)
             with urllib.request.urlopen(base+'/style.json?family=restaurant&hide_closed=1&min_confidence=0.75') as response:
@@ -216,13 +219,13 @@ class OperatingStatusTest(unittest.TestCase):
         finally:case.tearDown()
     def test_validates_request_filters(self):
         from serve_places_local import request_filters
-        self.assertEqual(request_filters(''),(None,False,'all','all'))
-        self.assertEqual(request_filters('min_confidence=0.75&hide_closed=1'),(.75,True,'all','all'))
+        self.assertEqual(request_filters(''),(None,False,'all'))
+        self.assertEqual(request_filters('min_confidence=0.75&hide_closed=1'),(.75,True,'all'))
         for value in ['true','false','2','']:
             with self.assertRaises(ValueError):request_filters('hide_closed='+value)
 
 class AreaQueryTest(unittest.TestCase):
-    def test_area_cap_and_server_group_filter_before_limit(self):
+    def test_area_cap_and_server_family_filter_before_limit(self):
         case=LocalServerTest();case.setUp()
         try:
             case.dataset.db.close()
@@ -237,18 +240,18 @@ class AreaQueryTest(unittest.TestCase):
             geometry={'xmin':28.99,'ymin':40.99,'xmax':29.01,'ymax':41.01,'spatialReference':{'wkid':4326}}
             all_results=case.dataset.query(geometry,limit=200)
             self.assertEqual(len(all_results['features']),200);self.assertTrue(all_results['exceededTransferLimit'])
-            selected=case.dataset.query(geometry,.75,True,'education',200)
+            selected=case.dataset.query(geometry,.75,True,limit=200,family='education')
             self.assertEqual(len(selected['features']),1);self.assertFalse(selected['exceededTransferLimit'])
             self.assertEqual(selected['features'][0]['attributes']['gers_id'],'259')
-            self.assertEqual(selected['features'][0]['attributes']['place_group'],'education')
-            self.assertEqual(case.dataset.query(geometry,group='health',limit=200)['features'],[])
+            self.assertEqual(selected['features'][0]['attributes']['icon_group'],'education')
+            self.assertEqual(case.dataset.query(geometry,family='health',limit=200)['features'],[])
         finally:case.tearDown()
 
 class IconFamilyQueryTest(unittest.TestCase):
     def test_every_family_is_accepted_and_unknown_values_rejected(self):
         from serve_places_local import request_filters
         from places_sprite import GROUPS
-        for family in GROUPS:self.assertEqual(request_filters('family='+family)[3],family)
+        for family in GROUPS:self.assertEqual(request_filters('family='+family)[2],family)
         import re
         contract=(Path(__file__).resolve().parents[1]/'src/features/places/tileCategories.ts').read_text()
         ids=set(re.findall(r"\[\s*'([^']+)'\s*,\s*'uiPoi[^']+'\s*\]",contract))
@@ -261,7 +264,7 @@ class IconFamilyQueryTest(unittest.TestCase):
             with dataset.lock:
                 dataset.db.execute("UPDATE places SET icon_group='restaurant', confidence=0.9 WHERE id=40")
             geometry={'xmin':28.99,'ymin':40.99,'xmax':29.01,'ymax':41.01,'spatialReference':{'wkid':4326}}
-            result=dataset.query(geometry,.75,False,'all',200,'restaurant')
+            result=dataset.query(geometry,.75,False,limit=200,family='restaurant')
             self.assertEqual(len(result['features']),1);self.assertEqual(result['features'][0]['attributes']['icon_group'],'restaurant')
             self.assertEqual(len(dataset.query(geometry,limit=32,family='restaurant')['features']),1)
             self.assertEqual(dataset.query(geometry,family='cafe')['features'],[])
@@ -280,7 +283,7 @@ class ScaleDisplayTest(unittest.TestCase):
             for i in range(6001):
                 x=left+cell*(.1+.8*i/6000);y=top+cell*.5
                 lon=x*360-180;lat=math.degrees(math.atan(math.sinh(math.pi*(1-2*y))))
-                records.append({'geometry':{'coordinates':[lon,lat]},'properties':{'gers_id':str(i),'place_name':'Place '+str(i),'category':'restaurant','confidence':.9,'data_release':'2026-10-21.0'}})
+                records.append({'type':'Feature','geometry':{'type':'Point','coordinates':[lon,lat]},'properties':{'gers_id':str(i),'place_name':'Place '+str(i),'category':'restaurant','confidence':.9,'data_release':'2026-10-21.0'}})
             case.source.write_text('\n'.join(json.dumps(r) for r in records))
             manifest=json.loads(case.source.with_suffix('.manifest.json').read_text());manifest['feature_count']=len(records);case.source.with_suffix('.manifest.json').write_text(json.dumps(manifest));case.dataset=Dataset(case.source)
             overview=case.dataset.tile_records(12,int(px*4096),int(py*4096));self.assertEqual(sum(r[4] for r in overview),6001);self.assertEqual(len(overview),1)
@@ -325,7 +328,7 @@ class FullAreaTextSearchTest(unittest.TestCase):
         try:
             case.dataset.db.close();records=[]
             for i in range(1800):
-                records.append({'geometry':{'coordinates':[29.,41.]},'properties':{'gers_id':f'p{i:04}','place_name':'Generic '+str(i),'category':'restaurant','address':'Main Road','confidence':.9,'data_release':'2026-10-21.0'}})
+                records.append({'type':'Feature','geometry':{'type':'Point','coordinates':[29.,41.]},'properties':{'gers_id':f'p{i:04}','place_name':'Generic '+str(i),'category':'restaurant','address':'Main Road','confidence':.9,'data_release':'2026-10-21.0'}})
             records[-1]['properties']['place_name']='Café Hidden Oak'
             records[-2]['properties'].update(place_name='100% Real',category='pharmacy')
             case.source.write_text('\n'.join(json.dumps(r) for r in records));manifest=json.loads(case.source.with_suffix('.manifest.json').read_text());manifest['feature_count']=1800;case.source.with_suffix('.manifest.json').write_text(json.dumps(manifest));case.dataset=Dataset(case.source)

@@ -1,4 +1,4 @@
-/** Component fixtures, not a deployed-app test. See docs/localization/QUALITY-v6.115.md for setup and limits. */
+/** Component fixtures, not a deployed-app test. See docs/history/localization-review.md for setup and limits. */
 const path=require('node:path'),os=require('node:os');
 const toolPaths=process.env.MAPILLARY_BROWSER_TOOLS?[process.env.MAPILLARY_BROWSER_TOOLS]:[process.cwd()];
 const esbuild=require(require.resolve('esbuild',{paths:toolPaths})),{chromium}=require(require.resolve('playwright-core',{paths:toolPaths})),http=require('node:http'),fs=require('node:fs'),assert=require('node:assert/strict');

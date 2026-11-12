@@ -1,0 +1,19 @@
+{
+  "schema": "overture-places-all-pilot-v1",
+  "release": "2026-10-21.0",
+  "bbox": [
+    -86.16,
+    39.75,
+    -86.1,
+    39.8
+  ],
+  "feature_count": 7089,
+  "category_filter": null,
+  "confidence_filter": null,
+  "operating_status_filter": null,
+  "deduplication": false,
+  "created_utc": "2026-11-08T12:53:44.872025+00:00",
+  "source": "s3://overturemaps-us-west-2/release/2026-10-21.0/theme=places/type=place/*",
+  "attribution": "https://docs.overturemaps.org/attribution/",
+  "format": "geojsonl"
+}

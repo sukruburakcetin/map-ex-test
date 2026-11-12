@@ -1,0 +1,8 @@
+{
+  "schema": "mapillary-places-portal-preparation-v1",
+  "release": "2026-10-21.0",
+  "feature_count": 10740,
+  "package": "places-portal-overview.vtpk",
+  "package_sha256": "54299699fd38e25d0780aa982d4f3116faeee045abb9543aea99356f2b1b0c80",
+  "portal_publishing_tested": false
+}

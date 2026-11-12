@@ -1157,6 +1157,6 @@ const zhTW: Messages = {
   "uiPoiRestoreCount": "地點 · {count}",
   "uiPoiSelectedNotInPage": "所選地點不在目前的結果頁或搜尋中。仍可查看其詳細資料。",
   "uiPoiServiceSetup": "此應用程式尚未設定地點。",
-  "uiPoiFeatureMigration": "此應用程式尚未設定地點。",
+
 };
 export default zhTW;

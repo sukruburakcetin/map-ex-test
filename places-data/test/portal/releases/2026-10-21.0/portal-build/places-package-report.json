@@ -1,0 +1,82 @@
+{
+  "kind": "places-native-package-build",
+  "version": 1,
+  "purpose": "full-source-native-build",
+  "sampling": {
+    "inputRecords": 10740,
+    "sampleRecords": 10740,
+    "fullSource": true
+  },
+  "portalPublishingTested": false,
+  "completeDatasetValidation": false,
+  "state": "inspection-complete",
+  "arcgisProVersion": "3.6",
+  "mapSpatialReferenceWkid": 3857,
+  "packageInputSpatialReferenceWkid": 3857,
+  "tilesInspected": 8,
+  "bundlesInspected": 2,
+  "sourceLayers": {
+    "places": {
+      "features": 302,
+      "fields": {
+        "_name": 302,
+        "_symbol": 302
+      },
+      "matchingExpectedRecords": 0,
+      "requiredFieldsSeen": {
+        "gers_id": false,
+        "place_name": false,
+        "icon_group": false,
+        "confidence": false,
+        "operating_status": false
+      }
+    }
+  },
+  "styles": [
+    {
+      "member": "p12/resources/styles/root.json",
+      "sourceLayers": [
+        "places"
+      ]
+    }
+  ],
+  "issues": [],
+  "bundleCount": 2,
+  "hasSeparateBundleIndexes": false,
+  "tileScheme": {
+    "rows": 512,
+    "cols": 512,
+    "dpi": 96,
+    "wkid": 3857,
+    "levels": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    ]
+  },
+  "bundleLayouts": {
+    "pro-3.6-populated-count": 2
+  },
+  "tileEntriesSeen": 275,
+  "tilesSkippedBySampling": 267,
+  "sampleBudgetReached": true,
+  "expectedRecordCount": 10740,
+  "uniqueMatchingExpectedRecords": 0,
+  "sampleContainsRequiredFields": false,
+  "nextStep": "Review retained fields and package layout before building the full dataset or publishing"
+}

@@ -85,6 +85,6 @@ const overrides: Partial<Messages> = {
   "uiPoiRestoreCount": "Places · {count}",
   "uiPoiSelectedNotInPage": "The selected place is outside this results page or search. Its details remain available.",
   "uiPoiServiceSetup": "Places is not configured for this app.",
-  "uiPoiFeatureMigration": "Places is not configured for this app.",
+
 };
 export default overrides;

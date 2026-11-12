@@ -51,11 +51,9 @@ export const settingsEn = {
  "hideShareButton": "Hide Share Button",
  "hideLockMapRotationButton3d": "Hide Lock Map Rotation Button (3D)",
  "hideCenterMapButton": "Hide Center Map Button",
- "nearbyPlacesOverturePilot": "Nearby Places · Overture Pilot",
+
  "offerPlacesLayer": "Offer Places Layer",
- "placesFeatureserverLayerUrl": "Places FeatureServer Layer URL",
- "useAnHttpsFeatureserverLayerUrlWithoutQueryParameters": "Use an HTTPS FeatureServer layer URL without query parameters or credentials.",
- "requiresAPublishedPilotLayerPreparedWithToolsOverture": "Requires a published pilot layer prepared with tools/overture_places. Starts off for users; maximum 200 places per view. See docs/OVERTURE-PLACES.md.",
+
  "featureDetectionLayers": "Feature Detection Layers",
  "enableTrafficSigns": "Enable Traffic Signs",
  "enableMapillaryObjects": "Enable Mapillary Objects",
@@ -153,12 +151,19 @@ export const settingsEn = {
   "placesVectorServiceTitle": "Nearby Places · Overture",
   "placesApiServiceUrl": "Places service URL",
   "placesApiUrlInvalid": "Enter a base HTTPS service URL without credentials, query parameters or a fragment.",
-  "placesApiMigration": "Enter a Places service URL to explore nearby places.",
+
   "placesApiTest": "Test connection",
   "placesApiTesting": "Checking service…",
   "placesApiConnected": "Connected",
   "placesApiFailed": "Connection failed. Check the URL, HTTPS certificate, CORS and service compatibility.",
   "placesApiUrlHelp": "Enter the base URL of the Places service. It supplies vector tiles, picking and search. Viewers enable Places when needed.",
+
+  "placesPortalSource": "ArcGIS Portal (recommended)",
+  "placesExternalSource": "External Places service",
+  "placesPortalTilesUrl": "Vector tile service URL",
+  "placesPortalQueryUrl": "Place query layer URL",
+  "placesPortalHelp": "Vector tiles draw the map. The query service supplies bounded records only; it is not added as a map layer. Both services must follow the Places publishing guide.",
+  "placesPortalUrlsInvalid": "Enter HTTPS VectorTileServer and FeatureServer/layer URLs without credentials or URL parameters.",
 } as const;
 export type SettingsKey = keyof typeof settingsEn;
 export type SettingsMessages = { [K in SettingsKey]: string };

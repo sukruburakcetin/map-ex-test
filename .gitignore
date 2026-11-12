@@ -1,0 +1,21 @@
+# Local development and generated data
+.refactor-backups/
+__pycache__/
+*.py[cod]
+.venv*/
+node_modules/
+*.tsbuildinfo
+/data/
+*.geojsonl
+*.geojsonl.tmp
+*.manifest.json
+!examples/places/*.geojsonl
+!examples/places/*.manifest.json
+
+# Local Places service configuration and databases
+/places-service.json
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.import

@@ -23,7 +23,7 @@ const overrides: Partial<SettingsMessages> = {
   "placesVectorServiceTitle": "Nearby Places · Overture",
   "placesApiServiceUrl": "Places service URL",
   "placesApiUrlInvalid": "Enter a base HTTPS service URL without credentials, query parameters or a fragment.",
-  "placesApiMigration": "Enter a Places service URL to explore nearby places.",
+
   "placesApiTest": "Test connection",
   "placesApiTesting": "Checking service…",
   "placesApiConnected": "Connected",

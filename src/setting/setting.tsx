@@ -1,3 +1,8 @@
+import { createPlacesAreaPreview } from '../features/places/placesAreaPreview';
+import { placesSourceKey, placesSourceKind } from '../features/places/placesSource';
+import { PortalPlacesSource, PortalPlacesConfigurationError } from '../features/places/PortalPlacesSource';
+import { placesAreaProfile, placesAreaExtent, activePlacesAreaView, placesAreaSlug } from '../features/places/placesAreaProfile';
+import { MapViewManager, loadArcGISJSAPIModules } from 'jimu-arcgis';
 import { directionOf, preferenceOf } from '../i18n/core';
 import { languageName } from '../i18n/startupMessages';
 /** @jsx jsx */
@@ -9,7 +14,7 @@ import { AllWidgetSettingProps } from "jimu-for-builder";
 import { SettingSection, SettingRow } from "jimu-ui/advanced/setting-components";
 import { MapWidgetSelector } from "jimu-ui/advanced/setting-components";
 import { Switch, TextInput, NumericInput, Select, Option, Button } from "jimu-ui";
-import { placesApiUrl, testPlacesApi } from "../features/places/placesApi";
+import { testPlacesApi } from "../features/places/placesApi";
 import { IMConfig } from "../config";
 import { organizationFilterId } from "../utils/organizationFilter";
 import { FIELD_NOTE_CATEGORIES } from "../components/types";
@@ -19,25 +24,90 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
   declare context: React.ContextType<typeof SettingsLocaleContext>;
   state = {
     newCategoryText: "",
+    placesAreaName:'My operating area',placesAreaProfile:null as ReturnType<typeof placesAreaProfile>|null,placesAreaBusy:false,placesAreaError:'',
     placesTestStatus:'idle' as 'idle'|'checking'|'ok'|'error',
     placesTestInfo:'',
   };
 
   private placesTestAbort:AbortController|null=null;
-  componentWillUnmount(){this.placesTestAbort?.abort();}
-  componentDidUpdate(previous:AllWidgetSettingProps<IMConfig>){if(previous.config.placesApiUrl!==this.props.config.placesApiUrl){this.placesTestAbort?.abort();this.setState({placesTestStatus:'idle',placesTestInfo:''});}}
+  componentWillUnmount(){const pending=this.placesTestAbort;this.placesTestAbort=null;pending?.abort();this.clearPlacesArea();}
+  componentDidUpdate(previous:AllWidgetSettingProps<IMConfig>){if(JSON.stringify(previous.useMapWidgetIds||[])!==JSON.stringify(this.props.useMapWidgetIds||[])){this.clearPlacesArea();this.setState({placesAreaProfile:null,placesAreaBusy:false,placesAreaError:''});}if(placesSourceKey(previous.config)!==placesSourceKey(this.props.config) || placesSourceKind(previous.config)!==placesSourceKind(this.props.config)){this.placesTestAbort?.abort();this.setState({placesTestStatus:'idle',placesTestInfo:''});}}
+  private placesAreaPreview:ReturnType<typeof createPlacesAreaPreview>|null=null;
+  private placesAreaView:any=null;
+  private placesAreaRevision=0;
+  private clearPlacesArea=()=>{
+    this.placesAreaRevision++;
+    this.placesAreaPreview?.destroy();this.placesAreaPreview=null;this.placesAreaView=null;
+  };
+  private showPlacesArea=()=>{
+    if(!this.placesAreaPreview||this.placesAreaView?.destroyed)return;
+    const state=this.placesAreaPreview.refresh();
+    this.setState({placesAreaError:state==='unavailable'?'The area was captured, but its boundary cannot be drawn on this map.':''});
+  };
+  private capturePlacesArea=async()=>{
+    this.clearPlacesArea();const revision=this.placesAreaRevision;
+    this.setState({placesAreaProfile:null,placesAreaBusy:true,placesAreaError:''});
+    try{
+      const mapId=this.props.useMapWidgetIds?.[0];
+      if(!mapId)throw Error('Frame the area in a ready 2D map, then try again.');
+      const group=MapViewManager.getInstance().getJimuMapViewGroup(mapId);
+      const view=activePlacesAreaView(group);
+      if(!view?.ready||view.destroyed||view.type!=='2d'||!view.stationary||!view.extent)throw Error('Frame the area in a ready 2D map, then try again.');
+      const extent=view.extent.clone?view.extent.clone():{...view.extent};
+      const modules=await loadArcGISJSAPIModules(['esri/geometry/support/webMercatorUtils']);
+      if(revision!==this.placesAreaRevision||view.destroyed||activePlacesAreaView(MapViewManager.getInstance().getJimuMapViewGroup(mapId))!==view)return;
+      const geographic=modules[0]?.default||modules[0];
+      const bbox=placesAreaExtent({ready:view.ready,destroyed:view.destroyed,type:view.type,stationary:view.stationary,extent},geographic.webMercatorToGeographic);
+      const profile=placesAreaProfile(this.state.placesAreaName,bbox,placesSourceKind(this.props.config));
+      this.placesAreaView=view;
+      const owned=(source:string)=>this.context.owned(source);
+      this.placesAreaPreview=createPlacesAreaPreview(view,extent,{labels:{visible:owned('Saved area'),inside:owned('Inside saved area'),outside:owned('Saved area is outside this view'),unavailable:owned('Boundary preview unavailable')},onState:state=>{
+        if(revision===this.placesAreaRevision)this.setState({placesAreaError:state==='unavailable'?'The area was captured, but its boundary cannot be drawn on this map.':''});
+      }});
+      this.setState({placesAreaProfile:profile});
+      this.showPlacesArea();
+    }catch(error){
+      if(revision===this.placesAreaRevision){const message=error instanceof Error?error.message:'';
+        const allowed=['Frame the area in a ready 2D map, then try again.','Use a WGS84 or Web Mercator map to select the area.','Give the area a name of up to 80 characters.','Choose a smaller area within one side of the date line.','The map area is invalid.'];
+        this.setState({placesAreaError:allowed.includes(message)?message:'The map area could not be selected. Try again when the map is ready.'});}
+    }finally{if(revision===this.placesAreaRevision)this.setState({placesAreaBusy:false});}
+  };
+  private downloadPlacesArea=()=>{
+    if(!this.state.placesAreaProfile)return;
+    try{
+      const profile=placesAreaProfile(this.state.placesAreaName,this.state.placesAreaProfile.bbox,placesSourceKind(this.props.config));
+      const url=URL.createObjectURL(new Blob([JSON.stringify(profile,null,2)],{type:'application/json;charset=utf-8'}));
+      const anchor=document.createElement('a');anchor.href=url;anchor.download=placesAreaSlug(profile.name)+'.places-area.json';anchor.style.display='none';document.body.appendChild(anchor);anchor.click();anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }catch(_error){this.setState({placesAreaError:'Give the area a name of up to 80 characters.'});}
+  };
+
   onPlacesApiChange=(event:React.ChangeEvent<HTMLInputElement>)=>{
     this.placesTestAbort?.abort();this.setState({placesTestStatus:'idle',placesTestInfo:''});
     this.props.onSettingChange({id:this.props.id,config:this.props.config.set('placesApiUrl',event.target.value)});
   };
+  onPlacesSourceSetting=(key:'placesSource'|'placesPortalTilesUrl'|'placesPortalQueryUrl',value:string)=>{
+    this.placesTestAbort?.abort();this.setState({placesTestStatus:'idle',placesTestInfo:''});
+    this.props.onSettingChange({id:this.props.id,config:this.props.config.set(key,value)});
+  };
   testPlacesConnection=async()=>{
-    const url=placesApiUrl(this.props.config.placesApiUrl);if(!url)return;
+    const url=placesSourceKey(this.props.config);if(!url)return;
     this.placesTestAbort?.abort();const controller=this.placesTestAbort=new AbortController();this.setState({placesTestStatus:'checking',placesTestInfo:''});
-    try{const result=await testPlacesApi(url,controller.signal);if(controller.signal.aborted||placesApiUrl(this.props.config.placesApiUrl)!==url)return;
+    const timeout=setTimeout(()=>controller.abort(),30000);
+    let layer:any=null;
+    try{
+      let result;
+      if(placesSourceKind(this.props.config)==='portal'){
+        const [request,VectorTileLayer]=await loadArcGISJSAPIModules(['esri/request','esri/layers/VectorTileLayer']);
+        if(controller.signal.aborted||placesSourceKey(this.props.config)!==url)return;
+        const portal=new PortalPlacesSource(this.props.config.placesPortalTilesUrl!,this.props.config.placesPortalQueryUrl!,request);
+        layer=new VectorTileLayer({url:portal.tilesUrl});
+        result=await portal.test(layer,controller.signal);
+      }else result=await testPlacesApi(url,controller.signal);
+      if(controller.signal.aborted||placesSourceKey(this.props.config)!==url)return;
       const details=[result.count===null?'':new Intl.NumberFormat(this.context.locale).format(result.count),result.release].filter(Boolean).join(' · ');
       this.setState({placesTestStatus:'ok',placesTestInfo:details});
-    }catch{if(!controller.signal.aborted&&placesApiUrl(this.props.config.placesApiUrl)===url)this.setState({placesTestStatus:'error',placesTestInfo:''});}
-    finally{if(this.placesTestAbort===controller)this.placesTestAbort=null;}
+    }catch(error){if(!controller.signal.aborted&&placesSourceKey(this.props.config)===url)this.setState({placesTestStatus:'error',placesTestInfo:error instanceof PortalPlacesConfigurationError?error.message:''});}
+    finally{clearTimeout(timeout);if(controller.signal.aborted&&this.placesTestAbort===controller)this.setState(previous=>previous.placesTestStatus==='checking'?{placesTestStatus:'error',placesTestInfo:''}:null);layer?.destroy();if(this.placesTestAbort===controller)this.placesTestAbort=null;}
   };
 
   onMapWidgetSelected = (useMapWidgetIds: string[]) => {
@@ -612,12 +682,35 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
 
         <SettingSection title={t('placesVectorServiceTitle')}>
           <SettingRow label={t('offerPlacesLayer')}><Switch checked={config.enablePlaces===true} onChange={event=>this.props.onSettingChange({id:this.props.id,config:config.set('enablePlaces',event.target.checked)})}/></SettingRow>
-          <SettingRow flow="wrap" label={t('placesApiServiceUrl')}><TextInput value={config.placesApiUrl||''} placeholder="https://maps.example.com/places" onChange={this.onPlacesApiChange}/></SettingRow>
-          {!!config.placesApiUrl&&!placesApiUrl(config.placesApiUrl)&&<p role="status">{t('placesApiUrlInvalid')}</p>}
-          <SettingRow><Button onClick={this.testPlacesConnection} disabled={!placesApiUrl(config.placesApiUrl)||this.state.placesTestStatus==='checking'}>{t(this.state.placesTestStatus==='checking'?'placesApiTesting':'placesApiTest')}</Button></SettingRow>
+          <SettingRow flow="wrap" label={t('source')}><Select value={placesSourceKind(config)} onChange={event=>this.onPlacesSourceSetting('placesSource',event.target.value)}>
+            <Option value="portal">{t('placesPortalSource')}</Option><Option value="external">{t('placesExternalSource')}</Option>
+          </Select></SettingRow>
+          {placesSourceKind(config)==='portal'?<div>
+            <SettingRow flow="wrap" label={t('placesPortalTilesUrl')}><TextInput value={config.placesPortalTilesUrl||''} placeholder="https://portal.example.com/server/rest/services/Hosted/Places/VectorTileServer" onChange={event=>this.onPlacesSourceSetting('placesPortalTilesUrl',event.target.value)}/></SettingRow>
+            <SettingRow flow="wrap" label={t('placesPortalQueryUrl')}><TextInput value={config.placesPortalQueryUrl||''} placeholder="https://portal.example.com/server/rest/services/Hosted/Places/FeatureServer/0" onChange={event=>this.onPlacesSourceSetting('placesPortalQueryUrl',event.target.value)}/></SettingRow>
+            <p style={{fontSize:12,opacity:.8}}>{t('placesPortalHelp')}</p>
+          </div>:<div>
+            <SettingRow flow="wrap" label={t('placesApiServiceUrl')}><TextInput value={config.placesApiUrl||''} placeholder="https://maps.example.com/places" onChange={this.onPlacesApiChange}/></SettingRow>
+            <p style={{fontSize:12,opacity:.8}}>{t('placesApiUrlHelp')}</p>
+          </div>}
+          {!placesSourceKey(config)&&(config.placesApiUrl||config.placesPortalTilesUrl||config.placesPortalQueryUrl)&&<p role="status">{t(placesSourceKind(config)==='portal'?'placesPortalUrlsInvalid':'placesApiUrlInvalid')}</p>}
+          <SettingRow><Button onClick={this.testPlacesConnection} disabled={!placesSourceKey(config)||this.state.placesTestStatus==='checking'}>{t(this.state.placesTestStatus==='checking'?'placesApiTesting':'placesApiTest')}</Button></SettingRow>
           {this.state.placesTestStatus==='ok'&&<p role="status">{t('placesApiConnected')}{this.state.placesTestInfo?' · '+this.state.placesTestInfo:''}</p>}
-          {this.state.placesTestStatus==='error'&&<p role="alert">{t('placesApiFailed')}</p>}
-          <p style={{fontSize:12,opacity:.8}}>{t('placesApiUrlHelp')}</p>
+          {this.state.placesTestStatus==='error'&&<p role="alert">{t('placesApiFailed')}{this.state.placesTestInfo?' '+this.state.placesTestInfo:''}</p>}
+          <details style={{marginTop:12}} onToggle={event=>{if(!(event.currentTarget as HTMLDetailsElement).open){this.clearPlacesArea();this.setState({placesAreaProfile:null,placesAreaError:'',placesAreaBusy:false});}}}>
+            <summary><OwnedMessage source="Data preparation"/></summary>
+            <p style={{fontSize:12}}><OwnedMessage source="Frame your area in the 2D map, highlight it, then save its profile. Reuse the profile to download newer Overture releases."/></p>
+            <SettingRow flow="wrap" label={this.context.owned('Area name')}><TextInput value={this.state.placesAreaName} maxLength={80} onChange={event=>this.setState({placesAreaName:event.target.value})}/></SettingRow>
+            <Button size="sm" disabled={this.state.placesAreaBusy} onClick={this.capturePlacesArea}><OwnedMessage source={this.state.placesAreaBusy?'Selecting area…':'Use this map area'}/></Button>
+            {this.state.placesAreaProfile&&<div style={{fontSize:12,marginTop:8}}>
+              <p><OwnedMessage source="Review the saved boundary before saving. These actions keep the map position and zoom unchanged."/></p>
+              <output style={{display:'block',overflowWrap:'anywhere',marginBottom:8}} aria-label={this.context.owned('Rectangle coordinates')}>{this.state.placesAreaProfile.bbox.map(n=>n.toFixed(5)).join(', ')}</output>
+              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}><Button size="sm" onClick={this.showPlacesArea}><OwnedMessage source="Show saved area"/></Button><Button size="sm" disabled={!this.state.placesAreaName.trim()} onClick={this.downloadPlacesArea}><OwnedMessage source="Save area profile"/></Button></div>
+            </div>}
+            {this.state.placesAreaError&&<p role="alert" style={{fontSize:12}}><OwnedMessage source={this.state.placesAreaError}/></p>}
+            <p style={{fontSize:12,opacity:.8}}><OwnedMessage source="Keep the profile in a stable working folder and follow the area-maintenance guide. Preparing a newer dataset does not change the published experience."/></p>
+          </details>
+
         </SettingSection>
 
         <SettingSection title={t('featureDetectionLayers')}>

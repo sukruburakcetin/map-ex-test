@@ -51,11 +51,9 @@ const tr: SettingsMessages = {
  "hideShareButton": "Paylaş Düğmesini Gizle",
  "hideLockMapRotationButton3d": "Harita Dönüşünü Kilitleme Düğmesini Gizle (3B)",
  "hideCenterMapButton": "Haritayı Ortala Düğmesini Gizle",
- "nearbyPlacesOverturePilot": "Yakındaki Yerler · Overture Pilotu",
+
  "offerPlacesLayer": "Yerler Katmanını Kullanıma Sun",
- "placesFeatureserverLayerUrl": "Yerler FeatureServer Katmanının URL’si",
- "useAnHttpsFeatureserverLayerUrlWithoutQueryParameters": "Sorgu parametresi veya kimlik bilgisi içermeyen bir HTTPS FeatureServer katman URL’si kullanın.",
- "requiresAPublishedPilotLayerPreparedWithToolsOverture": "tools/overture_places ile hazırlanmış ve yayımlanmış bir pilot katman gerektirir. Kullanıcılarda başlangıçta kapalıdır; görünüm başına en fazla 200 yer gösterilir. Bkz. docs/OVERTURE-PLACES.md.",
+
  "featureDetectionLayers": "Nesne Tespiti Katmanları",
  "enableTrafficSigns": "Trafik İşaretlerini Etkinleştir",
  "enableMapillaryObjects": "Mapillary Nesnelerini Etkinleştir",
@@ -153,11 +151,18 @@ const tr: SettingsMessages = {
   "placesVectorServiceTitle": "Yakındaki Yerler · Overture",
   "placesApiServiceUrl": "Yerler hizmeti adresi",
   "placesApiUrlInvalid": "Kimlik bilgisi, sorgu parametresi veya bölüm içermeyen bir temel HTTPS hizmet adresi girin.",
-  "placesApiMigration": "Yakındaki yerleri keşfetmek için Yerler hizmeti adresini girin.",
+
   "placesApiTest": "Bağlantıyı test et",
   "placesApiTesting": "Hizmet kontrol ediliyor…",
   "placesApiConnected": "Bağlandı",
   "placesApiFailed": "Bağlantı başarısız. Adresi, HTTPS sertifikasını, CORS ve hizmet uyumluluğunu kontrol edin.",
   "placesApiUrlHelp": "Yerler hizmetinin temel adresini girin. Vektör karoları, yer seçimi ve arama sağlar. Kullanıcılar gerektiğinde Yerler’i açar.",
+  "placesPortalSource": "ArcGIS Portal (önerilen)",
+  "placesExternalSource": "Harici Yerler servisi",
+  "placesPortalTilesUrl": "Vektör döşeme servisi URL’si",
+  "placesPortalQueryUrl": "Yer sorgu katmanı URL’si",
+  "placesPortalHelp": "Haritayı vektör döşemeler çizer. Sorgu servisi yalnızca sınırlı kayıtlar sağlar; haritaya katman olarak eklenmez. İki servis de Yerler yayınlama kılavuzuna uymalıdır.",
+  "placesPortalUrlsInvalid": "Kimlik bilgisi veya URL parametresi içermeyen HTTPS VectorTileServer ve FeatureServer/katman URL’lerini girin.",
+
 };
 export default tr;

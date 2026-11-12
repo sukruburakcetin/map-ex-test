@@ -17,7 +17,7 @@ An ownership boundary is an engineering arrangement, not a promise of zero legal
 
 ## Upgrade an existing installation
 
-1. Apply the compatible collaboration terminology widget update and rebuild/reload first.
+1. Build and deploy the current widget source and reload the application.
 2. In the existing operator project, run `migrations/002-collaboration-creator.sql` once as project administrator. It preserves workspace/note/member data, migrates the trusted legacy `workspace_teacher` capability only when no `workspace_creator` decision already exists, and removes the legacy key. An explicit `workspace_creator=false` remains false.
 3. Reconnect/sign in to receive updated app metadata. The client accepts the old trusted capability while an operator schedules migration, but the new key takes precedence, including explicit denial. User-editable profile metadata never grants rights.
 4. Do not rerun `schema.sql` over existing tables. That file is for fresh projects; the migration can be repeated safely.
@@ -78,18 +78,18 @@ Removing the widget feature does not delete the operator's database. Backend ret
 
 Use at least two accounts: a workspace creator and a contributor. Confirm an unrelated third account cannot read the workspace; a Reader cannot publish; a Contributor cannot edit another author's note; revoked invitations fail; and a removed member loses access. Check account recovery, rate limits, backups, host CORS/CSP and a real provider session. The supplied tests run SQL against an embedded PostgreSQL engine and browser requests against controlled service fixtures; they are not a certification of a deployed Supabase project.
 
-The widget uninstaller restores local files only; it does not reverse a backend migration. After migrating the capability key, keep a compatible widget version. A rollback to the older educator-specific client may no longer show workspace-creation controls after sign-in. Review provider backups and version compatibility before any manual backend rollback; no automatic downgrade or data deletion is included.
+Rolling back widget source does not reverse a backend migration. After migrating the capability key, keep a compatible widget version. A rollback to the older educator-specific client may no longer show workspace-creation controls after sign-in. Review provider backups and version compatibility before any manual backend rollback; no automatic downgrade or data deletion is included.
 
 ## Upgrade 003: general workspace contributions
 
 Existing projects run `migrations/003-workspace-contributions.sql` manually after 002. It preserves existing notes, category names, risks, authors and invites; seeds colored definitions from existing categories; adds owner-only category management and membership-protected search/statistics. New projects use the updated full schema once. Apply the matching widget contribution update and rebuild. No backend migration is run by a widget installer.
 
-See `docs/WORKSPACE-CONTRIBUTIONS.md` for testing and operator guidance. Loaded results/maps page by 50; full-workspace totals and search come from the service. New assignments use active owner-defined categories, not predefined risk options. UI rollback keeps the additive backend rules in place; it does not remove data or constraints.
+See `tools/community-notes/guides/contributions.md` for testing and operator guidance. Loaded results/maps page by 50; full-workspace totals and search come from the service. New assignments use active owner-defined categories, not predefined risk options. UI rollback keeps the additive backend rules in place; it does not remove data or constraints.
 
 ## Upgrade 004: workspace display names
 
-Run `migrations/004-workspace-display-names.sql` manually after 003, then install/rebuild the matching widget update. Existing members choose their alias in the workspace; new joins/creation collect one atomically. The updated fresh schema already includes 004. Alias rows are operator-managed display data; immutable author IDs and role authorization stay unchanged. Removing membership revokes access but keeps historical display labels; operator retention/account-deletion procedures should account for the profile table. See `docs/WORKSPACE-DISPLAY-NAMES.md` for complete rollout and rollback behavior.
+Run `migrations/004-workspace-display-names.sql` manually after 003, then install/rebuild the matching widget update. Existing members choose their alias in the workspace; new joins/creation collect one atomically. The updated fresh schema already includes 004. Alias rows are operator-managed display data; immutable author IDs and role authorization stay unchanged. Removing membership revokes access but keeps historical display labels; operator retention/account-deletion procedures should account for the profile table. See `tools/community-notes/guides/display-names.md` for complete rollout and rollback behavior.
 
 ## Upgrade 005: direct contribution titles
 
-Existing projects run `migrations/005-direct-contributions.sql` manually after 004 before installing the matching client update. It adds `title` with a blank default and extends the existing membership/alias-aware search RPC. Existing authorship, categories, risks, note versions and ID-based RLS remain unchanged. The fresh schema already includes 005. UI rollback leaves the additive title data intact and legacy clients can still publish without a title. See `docs/DIRECT-WORKSPACE-CONTRIBUTIONS.md` for the direct map-pick flow and tests.
+Existing projects run `migrations/005-direct-contributions.sql` manually after 004 before installing the matching client update. It adds `title` with a blank default and extends the existing membership/alias-aware search RPC. Existing authorship, categories, risks, note versions and ID-based RLS remain unchanged. The fresh schema already includes 005. UI rollback leaves the additive title data intact and legacy clients can still publish without a title. See `tools/community-notes/guides/direct-contributions.md` for the direct map-pick flow and tests.

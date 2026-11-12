@@ -52,11 +52,9 @@ const fr: SettingsMessages = {
   "hideShareButton": "Masquer le Bouton de Partage",
   "hideLockMapRotationButton3d": "Masquer le Bouton de Verrouillage de Rotation de la Carte (3D)",
   "hideCenterMapButton": "Masquer le Bouton de Centrage de la Carte",
-  "nearbyPlacesOverturePilot": "Lieux à Proximité · Pilote Overture",
+
   "offerPlacesLayer": "Proposer la Couche de Lieux",
-  "placesFeatureserverLayerUrl": "URL de la Couche FeatureServer de Lieux",
-  "useAnHttpsFeatureserverLayerUrlWithoutQueryParameters": "Utilisez une URL HTTPS de couche FeatureServer sans paramètres de requête ni identifiants.",
-  "requiresAPublishedPilotLayerPreparedWithToolsOverture": "Nécessite une couche pilote publiée préparée avec tools/overture_places. Désactivée initialement pour les utilisateurs ; maximum 200 lieux par vue. Consultez docs/OVERTURE-PLACES.md.",
+
   "featureDetectionLayers": "Couches de Détection d’Entités",
   "enableTrafficSigns": "Activer les Panneaux de Signalisation",
   "enableMapillaryObjects": "Activer les Objets Mapillary",
@@ -154,11 +152,18 @@ const fr: SettingsMessages = {
   "placesVectorServiceTitle": "Lieux à proximité · Overture",
   "placesApiServiceUrl": "URL du service de lieux",
   "placesApiUrlInvalid": "Saisissez une URL de base de service HTTPS sans identifiants, paramètres de requête ni fragment.",
-  "placesApiMigration": "Saisissez une URL du service de lieux pour explorer les lieux à proximité.",
+
   "placesApiTest": "Tester la connexion",
   "placesApiTesting": "Vérification du service…",
   "placesApiConnected": "Connecté",
   "placesApiFailed": "Échec de connexion. Vérifiez l’URL, le certificat HTTPS, CORS et la compatibilité du service.",
   "placesApiUrlHelp": "Saisissez l’URL de base du service de lieux. Il fournit les tuiles vectorielles, la sélection et la recherche. Les utilisateurs activent les lieux au besoin.",
+  "placesPortalSource": "ArcGIS Portal (recommandé)",
+  "placesExternalSource": "Service de lieux externe",
+  "placesPortalTilesUrl": "URL du service de tuiles vectorielles",
+  "placesPortalQueryUrl": "URL de la couche de requête des lieux",
+  "placesPortalHelp": "Les tuiles vectorielles dessinent la carte. Le service de requête fournit des lots limités sans ajout de couche à la carte. Les deux services doivent suivre le guide de publication des lieux.",
+  "placesPortalUrlsInvalid": "Saisissez des URL HTTPS VectorTileServer et FeatureServer/couche sans identifiants ni paramètres.",
+
 };
 export default fr;

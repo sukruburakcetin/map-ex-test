@@ -52,11 +52,9 @@ const zhCN: SettingsMessages = {
   "hideShareButton": "隐藏共享按钮",
   "hideLockMapRotationButton3d": "隐藏地图旋转锁定按钮（3D）",
   "hideCenterMapButton": "隐藏地图居中按钮",
-  "nearbyPlacesOverturePilot": "附近地点 · Overture 试用",
+
   "offerPlacesLayer": "提供地点图层",
-  "placesFeatureserverLayerUrl": "地点 FeatureServer 图层 URL",
-  "useAnHttpsFeatureserverLayerUrlWithoutQueryParameters": "请使用不含查询参数或凭据的 HTTPS FeatureServer 图层 URL。",
-  "requiresAPublishedPilotLayerPreparedWithToolsOverture": "需要使用 tools/overture_places 准备并发布的试用图层。对用户默认关闭；每个视图最多显示 200 个地点。请参阅 docs/OVERTURE-PLACES.md。",
+
   "featureDetectionLayers": "要素检测图层",
   "enableTrafficSigns": "启用交通标志",
   "enableMapillaryObjects": "启用 Mapillary 对象",
@@ -154,11 +152,18 @@ const zhCN: SettingsMessages = {
   "placesVectorServiceTitle": "附近地点 · Overture",
   "placesApiServiceUrl": "地点服务 URL",
   "placesApiUrlInvalid": "请输入不含凭据、查询参数或片段的 HTTPS 服务基础 URL。",
-  "placesApiMigration": "输入地点服务 URL 以探索附近地点。",
+
   "placesApiTest": "测试连接",
   "placesApiTesting": "正在检查服务…",
   "placesApiConnected": "已连接",
   "placesApiFailed": "连接失败。请检查 URL、HTTPS 证书、CORS 和服务兼容性。",
   "placesApiUrlHelp": "输入地点服务的基础 URL。它提供矢量瓦片、地点选择和搜索。用户可按需启用地点。",
+  "placesPortalSource": "ArcGIS Portal（推荐）",
+  "placesExternalSource": "外部地点服务",
+  "placesPortalTilesUrl": "矢量切片服务 URL",
+  "placesPortalQueryUrl": "地点查询图层 URL",
+  "placesPortalHelp": "使用矢量切片绘制地图。查询服务仅返回有限记录，不会作为图层添加到地图。两项服务均须遵循地点发布指南。",
+  "placesPortalUrlsInvalid": "请输入不含凭据或 URL 参数的 HTTPS VectorTileServer 和 FeatureServer/图层 URL。",
+
 };
 export default zhCN;

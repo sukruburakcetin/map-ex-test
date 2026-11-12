@@ -1,0 +1,11 @@
+{
+  "database": "data/places-2026-10-21.sqlite",
+  "public_url": "https://localhost:3444",
+  "host": "127.0.0.1",
+  "port": 3444,
+  "origins": ["https://localhost:3001"],
+  "tls": {
+    "cert": "C:/Users/server/cert/server/server.cert",
+    "key": "C:/Users/server/cert/server/server.key"
+  }
+}

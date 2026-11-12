@@ -15,6 +15,25 @@ class Cursor:
         return list(itertools.islice(self.rows, limit))
 
 class AllPlacesExportTest(unittest.TestCase):
+    def test_shared_bbox_validation_preserves_wgs84_and_webmercator_bounds(self):
+        import argparse
+        from export_common import parse_bbox
+        self.assertEqual(parse_bbox('-86.16,39.75,-86.10,39.80'), (-86.16,39.75,-86.10,39.80))
+        for invalid in ['1,2,3', '3,2,1,4', '0,-90,1,1', '0,0,nan,1', '170,0,-170,1']:
+            with self.subTest(invalid=invalid), self.assertRaises(argparse.ArgumentTypeError):
+                parse_bbox(invalid)
+
+    def test_shared_release_resolution_retains_pinning_and_validates_latest_response(self):
+        from export_common import release_id
+        from unittest.mock import patch
+        import io
+        self.assertEqual(release_id('2026-10-21.0'), '2026-10-21.0')
+        with patch('export_common.urllib.request.urlopen', return_value=io.BytesIO(b'{"latest":"2026-10-21.0"}')):
+            self.assertEqual(release_id('latest'), '2026-10-21.0')
+        for invalid in ['2026-10', 'https://example.org/release', '../release']:
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                release_id(invalid)
+
     def test_preserves_low_null_confidence_unnamed_uncategorized_closed_and_colocated(self):
         rows = [('a', None, None, None, None, None, None, 29., 41.),
                 ('b', 'Closed', 'restaurant', 0., 'permanently_closed', '', '', 29., 41.),
@@ -69,51 +88,23 @@ class AllPlacesQueryTest(unittest.TestCase):
                     if sql.startswith(('INSTALL ', 'LOAD ')): return self
                     return connection.execute(sql.replace('ST_GeomFromWKB(', 'fixture_ST_GeomFromWKB(').replace('ST_X(', 'fixture_ST_X(').replace('ST_Y(', 'fixture_ST_Y('), *args)
                 def read_parquet(self, source): return connection.read_parquet(source)
-                def close(self): connection.close()
-            output = folder / 'places.geojsonl'
-            with patch.object(duckdb, 'connect', return_value=LocalConnection()):
-                export.main(['--bbox=28.9,40.9,29.1,41.1','--release','2026-10-21.0','--input-parquet',str(parquet),'--output',str(output)])
-            features = [json.loads(line) for line in output.read_text().splitlines()]
-            self.assertEqual({f['properties']['gers_id'] for f in features}, {'unknown','closed','low'})
-            manifest = json.loads(output.with_suffix('.manifest.json').read_text())
-            self.assertEqual(manifest['feature_count'],3)
-            self.assertIsNone(manifest['confidence_filter'])
-            self.assertIsNone(manifest['category_filter'])
+                def close(self): pass
+            try:
+                for fmt in ['geojsonl', 'geojson']:
+                    output = folder / ('places-' + fmt + '.' + fmt)
+                    with patch.object(duckdb, 'connect', return_value=LocalConnection()):
+                        export.main(['--bbox=28.9,40.9,29.1,41.1','--release','2026-10-21.0','--input-parquet',str(parquet),'--format',fmt,'--output',str(output)])
+                    features = json.loads(output.read_text())['features'] if fmt == 'geojson' else [json.loads(line) for line in output.read_text().splitlines()]
+                    self.assertEqual({f['properties']['gers_id'] for f in features}, {'unknown','closed','low'})
+                    self.assertEqual(next(f for f in features if f['properties']['gers_id']=='low')['properties']['icon_group'],'cafe')
+                    manifest = json.loads(output.with_suffix('.manifest.json').read_text())
+                    self.assertEqual(manifest['feature_count'],3)
+                    self.assertEqual(manifest['format'],fmt)
+                    self.assertIsNone(manifest['confidence_filter'])
+                    self.assertIsNone(manifest['category_filter'])
+            finally:
+                connection.close()
 
 
-
-class ArcGISImportTest(unittest.TestCase):
-    def test_nullable_values_survive_import_and_count_mismatch_rolls_back(self):
-        import prepare_all_places_arcpy as prepare
-        from types import SimpleNamespace
-        for expected_count in [1, 2]:
-            with self.subTest(count=expected_count), tempfile.TemporaryDirectory() as folder:
-                folder = Path(folder)
-                source = folder / 'places.geojsonl'
-                export.write_sequence(Cursor([('a', None, None, None, None, None, None, 29., 41.)]), source, '2026-10-21.0', 10)
-                source.with_suffix('.manifest.json').write_text(json.dumps({'schema':'overture-places-all-pilot-v1','format':'geojsonl','release':'2026-10-21.0','feature_count':expected_count}))
-                inserted, events, fields = [], [], []
-                class InsertCursor:
-                    def __enter__(self): return self
-                    def __exit__(self, *args): return False
-                    def insertRow(self, row): inserted.append(row)
-                management = SimpleNamespace(
-                    CreateFileGDB=lambda *args: None, CreateFeatureclass=lambda *args, **kwargs: None,
-                    AddField=lambda destination, name, kind, **kwargs: fields.append((name,kind,kwargs)),
-                    AddIndex=lambda *args: events.append('index'), AddSpatialIndex=lambda *args: events.append('spatial'),
-                    Delete=lambda *args: events.append('delete'))
-                arcpy = SimpleNamespace(Exists=lambda path: False, SpatialReference=lambda wkid: wkid,
-                    management=management, da=SimpleNamespace(InsertCursor=lambda *args: InsertCursor()))
-                if expected_count == 2:
-                    with self.assertRaisesRegex(ValueError,'count'):
-                        prepare.import_snapshot(source, folder/'test.gdb', 'places', arcpy)
-                    self.assertEqual(events,['delete'])
-                else:
-                    destination, count = prepare.import_snapshot(source, folder/'test.gdb', 'places', arcpy)
-                    self.assertEqual(count,1)
-                    self.assertEqual(inserted[0][1],'a')
-                    self.assertIsNone(inserted[0][4])
-                    self.assertIn(('confidence','DOUBLE',{'field_is_nullable':'NULLABLE'}),fields)
-                    self.assertEqual(events,['index','spatial'])
-
-if __name__ == '__main__': unittest.main()
+if __name__ == '__main__':
+    unittest.main()

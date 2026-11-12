@@ -1157,6 +1157,6 @@ const es: Messages = {
   "uiPoiRestoreCount": "Lugares · {count}",
   "uiPoiSelectedNotInPage": "El lugar seleccionado no está en esta página de resultados o búsqueda. Sus detalles siguen disponibles.",
   "uiPoiServiceSetup": "Lugares no está configurado para esta aplicación.",
-  "uiPoiFeatureMigration": "Lugares no está configurado para esta aplicación.",
+
 };
 export default es;

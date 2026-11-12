@@ -1157,6 +1157,6 @@ const ar: Messages = {
   "uiPoiRestoreCount": "الأماكن · {count}",
   "uiPoiSelectedNotInPage": "المكان المحدد غير موجود في صفحة النتائج أو البحث الحالي. تبقى تفاصيله متاحة.",
   "uiPoiServiceSetup": "لم يتم إعداد الأماكن لهذا التطبيق.",
-  "uiPoiFeatureMigration": "لم يتم إعداد الأماكن لهذا التطبيق.",
+
 };
 export default ar;

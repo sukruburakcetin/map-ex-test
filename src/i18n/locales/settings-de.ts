@@ -52,11 +52,9 @@ const de: SettingsMessages = {
   "hideShareButton": "Teilen-Schaltfläche ausblenden",
   "hideLockMapRotationButton3d": "Schaltfläche zur Kartendrehsperre ausblenden (3D)",
   "hideCenterMapButton": "Schaltfläche zur Kartenzentrierung ausblenden",
-  "nearbyPlacesOverturePilot": "Orte in der Nähe · Overture-Pilot",
+
   "offerPlacesLayer": "Ortsebene anbieten",
-  "placesFeatureserverLayerUrl": "URL der FeatureServer-Ortsebene",
-  "useAnHttpsFeatureserverLayerUrlWithoutQueryParameters": "Eine HTTPS-URL für eine FeatureServer-Ebene ohne Abfrageparameter oder Zugangsdaten verwenden.",
-  "requiresAPublishedPilotLayerPreparedWithToolsOverture": "Benötigt eine veröffentlichte Pilotebene, die mit tools/overture_places erstellt wurde. Für Benutzer anfangs ausgeschaltet; maximal 200 Orte pro Ansicht. Siehe docs/OVERTURE-PLACES.md.",
+
   "featureDetectionLayers": "Objekterkennungsebenen",
   "enableTrafficSigns": "Verkehrszeichen aktivieren",
   "enableMapillaryObjects": "Mapillary-Objekte aktivieren",
@@ -154,11 +152,18 @@ const de: SettingsMessages = {
   "placesVectorServiceTitle": "Orte in der Nähe · Overture",
   "placesApiServiceUrl": "URL des Ortsdienstes",
   "placesApiUrlInvalid": "Geben Sie eine HTTPS-Basisdienst-URL ohne Zugangsdaten, Abfrageparameter oder Fragment ein.",
-  "placesApiMigration": "Geben Sie eine Ortsdienst-URL ein, um Orte in der Nähe zu erkunden.",
+
   "placesApiTest": "Verbindung testen",
   "placesApiTesting": "Dienst wird geprüft…",
   "placesApiConnected": "Verbunden",
   "placesApiFailed": "Verbindung fehlgeschlagen. Prüfen Sie URL, HTTPS-Zertifikat, CORS und Dienstkompatibilität.",
   "placesApiUrlHelp": "Geben Sie die Basis-URL des Ortsdienstes ein. Er liefert Vektorkacheln, Auswahl und Suche. Nutzer aktivieren Orte bei Bedarf.",
+  "placesPortalSource": "ArcGIS Portal (empfohlen)",
+  "placesExternalSource": "Externer Ortsdienst",
+  "placesPortalTilesUrl": "URL des Vektorkacheldienstes",
+  "placesPortalQueryUrl": "URL des Ortsabfrage-Layers",
+  "placesPortalHelp": "Vektorkacheln zeichnen die Karte. Der Abfragedienst liefert begrenzte Datensätze und wird nicht als Karten-Layer hinzugefügt. Beide Dienste müssen dem Veröffentlichungsleitfaden folgen.",
+  "placesPortalUrlsInvalid": "HTTPS-URLs für VectorTileServer und FeatureServer/Layer ohne Zugangsdaten oder URL-Parameter eingeben.",
+
 };
 export default de;

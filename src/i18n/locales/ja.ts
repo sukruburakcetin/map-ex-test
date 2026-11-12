@@ -1157,6 +1157,6 @@ const ja: Messages = {
   "uiPoiRestoreCount": "場所 · {count}",
   "uiPoiSelectedNotInPage": "選択した場所は現在の結果ページまたは検索に含まれていません。詳細は引き続き確認できます。",
   "uiPoiServiceSetup": "このアプリには場所が設定されていません。",
-  "uiPoiFeatureMigration": "このアプリには場所が設定されていません。",
+
 };
 export default ja;

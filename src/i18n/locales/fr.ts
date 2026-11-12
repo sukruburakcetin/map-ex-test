@@ -1157,6 +1157,6 @@ const fr: Messages = {
   "uiPoiRestoreCount": "Lieux · {count}",
   "uiPoiSelectedNotInPage": "Le lieu sélectionné ne figure pas sur cette page de résultats ou dans cette recherche. Ses détails restent disponibles.",
   "uiPoiServiceSetup": "Les lieux ne sont pas configurés pour cette application.",
-  "uiPoiFeatureMigration": "Les lieux ne sont pas configurés pour cette application.",
+
 };
 export default fr;

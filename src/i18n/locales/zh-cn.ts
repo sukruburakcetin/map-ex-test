@@ -1157,6 +1157,6 @@ const zhCN: Messages = {
   "uiPoiRestoreCount": "地点 · {count}",
   "uiPoiSelectedNotInPage": "所选地点不在当前结果页或搜索中。仍可查看其详情。",
   "uiPoiServiceSetup": "此应用尚未配置地点。",
-  "uiPoiFeatureMigration": "此应用尚未配置地点。",
+
 };
 export default zhCN;

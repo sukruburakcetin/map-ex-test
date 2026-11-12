@@ -29,7 +29,7 @@
 | Picking, UI coordination and remaining feature adapters | Point-cloud region in `../../runtime/widget.tsx` (remaining extractions) |
 | Discovery, cluster cache, decoding, worker and format utilities | `../../utils/pointCloudUtils.ts` |
 | Status, corridor, tools, calibration and export controls | Controlled components in this directory |
-| Ownership roadmap | [Point-cloud ownership](../../../docs/POINT-CLOUD-OWNERSHIP.md) |
+| Ownership roadmap | [Point-cloud ownership](../../../docs/development/point-cloud.md) |
 
 ## Viewer renderer
 
@@ -98,7 +98,7 @@ Start with `PointCloudAcquisition.ts` for load serialization, cancellation/deadl
 - `result` borrows the full unfiltered object. `retain()` runs during synchronous validated commit; `releaseResult()` runs at the established teardown point. Do not mutate or mirror this authority in runtime fields.
 - `active` is mode intent; `following` indicates a scheduled follow. React retains visibility/loading/paused presentation. `recordIssue()` counts qualifying automatic failures; `resetFailures()` and `stopMode()` keep retry/clear semantics explicit.
 
-Adapters read live state lazily, return transport promises directly and commit synchronously. Adding an extra await around commit can reorder late progress and success notifications. The current 90-second deadline covers acquisition and synchronous commit; it does not cancel non-abortable map edits. See `docs/POINT-CLOUD-OWNERSHIP.md` for guard and teardown details.
+Adapters read live state lazily, return transport promises directly and commit synchronously. Adding an extra await around commit can reorder late progress and success notifications. The current 90-second deadline covers acquisition and synchronous commit; it does not cancel non-abortable map edits. See `docs/development/point-cloud.md` for guard and teardown details.
 
 ```sh
 node tests/pointCloudAcquisition.test.cjs
@@ -118,7 +118,7 @@ Use `pointCloudGeometry.ts` for pure numerical preparation shared by initial loa
 - `filterPointCloudCorridor` returns a new array of borrowed point objects in original order. Crop membership uses shifted degrees before calibration, inclusive boundaries and nonpositive unlimited-axis sentinels.
 - `preparePointCloudMapGeometry` produces plain typed feature properties and colors in insertion order. It preserves logical versus filtered indices, raw SfM camera distance, calibration units, rounding and RGB behavior. It uses the existing candidate index, without introducing a new cache.
 
-Nudges and dimensions are meters; longitude/latitude are WGS84 degrees. Map z is source altitude minus the estimated floor plus vertical nudge. This is separate from the raw altitude attribute and viewer ENU conversion. Read function comments and `docs/POINT-CLOUD-OWNERSHIP.md` before changing these contracts.
+Nudges and dimensions are meters; longitude/latitude are WGS84 degrees. Map z is source altitude minus the estimated floor plus vertical nudge. This is separate from the raw altitude attribute and viewer ENU conversion. Read function comments and `docs/development/point-cloud.md` before changing these contracts.
 
 ```sh
 node tests/pointCloudGeometry.test.cjs

@@ -1,80 +1,69 @@
-# Prepare and publish the Overture Places pilot
+# Places data tools
 
-This runs outside Experience Builder. Nothing is uploaded/published automatically, and no credentials are requested or stored by this exporter.
+Follow the [administrator guide](../../docs/places/administrator-guide.md) for Windows/Linux setup, export, HTTPS serving, widget connection, hosting and release updates.
 
-1. Create a publishing environment:
-
-   ```sh
-   python -m venv .venv-places
-   # Activate it using your platform's normal venv activation command.
-   python -m pip install -r tools/overture_places/requirements.txt
-   ```
-
-2. Export a small AOI using a **pinned** Overture release. Example Indianapolis pilot:
-
-   ```sh
-   python tools/overture_places/export_places.py --release 2026-10-21.0 --bbox=-86.16,39.75,-86.10,39.80 --output places-indianapolis.geojson
-   ```
-
-   Example Istanbul pilot:
-
-   ```sh
-   python tools/overture_places/export_places.py --release 2026-10-21.0 --bbox=28.95,41.00,29.03,41.06 --output places-istanbul.geojson
-   ```
-
-   These AOIs are examples, not coverage-quality claims. `--release latest` resolves STAC's latest release and records the actual version. The tool uses cloud GeoParquet, spatial/bbox predicates, confidence >=0.95, a small category allowlist and a hard export limit. It refuses to silently truncate. Category mappings are explicit in `export_places.py`; review them when changing release/schema. The exporter does not collect all business categories. Confidence describes existence, not accurate entrance location. Exact duplicate IDs/name-location pairs are removed; nearby duplicates may remain.
-
-   DuckDB needs its official `spatial` extension and, for S3, `httpfs`. Allow their official download host in the publishing environment. An already downloaded current-schema file can be supplied with `--input-parquet path/to/places.parquet`; this still needs the spatial extension. The exporter is separate from the widget bundle.
-
-3. Inspect the GeoJSON in ArcGIS Pro/QGIS. Compare a sample of points with local authoritative data. Retain the manifest and applicable release/source license notices from https://docs.overturemaps.org/attribution/ . Places licensing differs from ODbL buildings/transportation. Preserve the original GERS identifier and release; Enterprise ObjectIDs are not stable place identities.
-
-4. In your Enterprise portal's Content page, add the GeoJSON and publish a **hosted feature layer** (your deployment must support GeoJSON publishing). If that is unavailable, use ArcGIS Pro: JSON To Features -> check WGS84 point geometry -> share as a hosted feature layer. Do not enable editing or sync for this read-only context layer. Record all fields below; do not rename them. Configure the service's `maxRecordCount` to **200** where supported (the widget also requests at most 200), and retain server-side spatial querying, record limits and standard JSON queries. An administrator can add a `place_group`/`confidence` attribute index for larger pilots. Ensure geometry has a spatial index.
-
-5. Configure sharing with the intended app audience. Private layers can use the existing ArcGIS sign-in session; test CORS/authentication for the Experience Builder origin. Do not put tokens into the URL. Add Overture release and required notices to the item description/attribution; a map attribution link is also shown by the widget.
-
-6. Copy the **layer** URL ending in `/FeatureServer/0` (or its actual numeric layer index). In widget settings, enable **Offer Places layer**, enter that HTTPS URL, save/publish your app, and let a user turn on Nearby places. This does not make Places load on startup.
-
-Required query fields:
-
-| Field | Type / maximum exported text length |
+| Tool or asset | Responsibility |
 |---|---|
-| `gers_id` | text / 160 |
-| `place_name` | text / 120 |
-| `category` | text / 80 |
-| `place_group` | text: health, education, parks, landmarks, services |
-| `confidence` | double / 0..1 |
-| `address` | text / 180 |
-| `website` | text / 500 |
-| `data_release` | text / 40 |
+| `export_all_places.py` | Export a pinned area to `.geojson` for Portal or `.geojsonl` for the external service, including `icon_group`. |
+| `convert_places_geojson.py` | Convert an existing exported GeoJSONL snapshot into a Portal-uploadable GeoJSON FeatureCollection without DuckDB or network access. |
+| `pro_places_package.py` | Small Pro diagnostic or complete regional native export plus attribute restoration; no Portal upload. |
+| `restore_places_vtpk.py` | Restore/verify the exact source attributes in a new copy of a Pro package; preserve geometry, refuse ambiguous identities and require full source coverage. |
+| `inspect_places_vtpk.py` | Bounded offline inspection of package bundle/tile attributes, without extracting files or exposing attribute values. |
+| `places_geojson.py` | Shared streaming validation, category normalization and exclusive complete-file publication. |
+| `export_common.py` | Validate bbox and resolve release identifiers. |
+| `places_service.py` | Import, inspect and serve a configured read-only SQLite database over HTTPS. |
+| `places_store.py` | Validate source records, build indexes and atomically publish a versioned database. |
+| `service.example.json` | Copy to your own service config; set database, URL, allowed origins and TLS paths. |
+| `serve_places_local.py` | Shared native tile/query protocol and optional in-memory direct test. |
+| `place_categories.py`, `basic_category_icons.csv` | Map source categories to shared icon families. |
+| `places_sprite.py` | Generate shared sprite atlases. |
+| `requirements.txt` | DuckDB dependency for offline export; serving uses standard-library Python. |
 
-Test one sample `/query` using the portal REST interface: geometry envelope, inSR=4326, outSR=4326, spatialRel=esriSpatialRelIntersects, resultRecordCount=200, returnGeometry=true, outFields=the fields above. Verify fields, bounded results and WGS84 point coordinates. The widget uses SDK authentication, not a separate token parameter.
+Keep the tool directory together. Import a regional snapshot once, then serve the persisted database without reading/reindexing source files at restart. The current tested import limit is 100,000 places. The [roadmap](../../docs/development/roadmap.md) tracks deployment and scale validation.
 
-## Refreshing data
+A [regional example pair](../../examples/places/README.md) is included. Preserve release attribution and `OVERTURE-EXPLORER-NOTICE.txt`. See the [service contract](../../docs/places/service-contract.md) for protocol details.
 
-Prepare a new dated export and inspect it outside the application. Back up the hosted item and its sharing/settings before replacing its data through your normal Enterprise publishing process. Preserve field names and schema; GERS IDs link place identity across releases. Existing sessions retain at most six two-minute cache entries; reload after replacing a release. Test each updated release's category taxonomy and geographic coverage before production use.
+## Portal-ready GeoJSON
 
-## Unfiltered vector tile experiment (Enterprise 12.1)
+Convert an existing export from the widget root:
 
-The separate `export_all_places.py` and `prepare_all_places_arcpy.py` tools retain all POI categories, confidence values and operating statuses in a bounded test area. They do not change the curated pilot exporter above. See [the Enterprise 12.1 workflow](../../docs/OVERTURE-ENTERPRISE-12.1.md) for export, ArcGIS Pro import, tile/details publishing and acceptance checks.
+```sh
+python tools/overture_places/convert_places_geojson.py --input places-all.geojsonl --output places-portal.geojson
+```
 
-For home testing without ArcGIS Pro, use `serve_places_local.py` with the already generated GeoJSONL and manifest. See [local tile testing](../../docs/OVERTURE-LOCAL-TEST.md). It uses standard-library Python and your existing Experience Builder HTTPS certificate.
+Or export a new area directly:
 
-The local style supports 28 shared sprite families. Edit `place_categories.py` to review visual classification; see `OVERTURE-EXPLORER-NOTICE.txt` for upstream mapping attribution. `/status` reports `icon_counts` so fallback coverage can be inspected without excluding POIs.
+```sh
+python tools/overture_places/export_all_places.py --release 2026-10-21.0 --bbox=-86.16,39.75,-86.10,39.80 --format geojson --output places-portal.geojson
+```
 
-`basic_category_icons.csv` maps all 298 published basic categories from release `2026-10-21.0` to the shared atlas. `/status` includes the top 20 `unmapped_categories` to distinguish unknown values from missing source categories. Review the CSV against future releases; it is not a live taxonomy subscription.
+The `.geojson` output extension also selects FeatureCollection format automatically. Direct export keeps the existing DuckDB requirements, 25,000-record default and 100,000-record maximum. Conversion uses only standard-library Python and the included category mapping, with a 100,000-record ceiling. Both retain IDs, nulls, Unicode and distinct colocated records; neither silently truncates or overwrites output. The external service continues using `.geojsonl` plus its matching manifest.
 
-The local harness supports an optional confidence control in the widget: All records, preset thresholds or a custom minimum. Tile and click queries use the same server filter before limits. All records remains the default and includes missing confidence. See the local testing guide; the confidence installer requires a widget rebuild/reload.
+Upload the resulting `.geojson` to Portal as query data. Follow the [Portal guide](../../docs/places/portal-administrator-guide.md) for field types, publishing and the separate vector tile service. GeoJSON itself is not a `.vtpk`.
 
-The local status installer adds Hide permanently closed, independent of confidence. It hides only explicit `permanently_closed` records from tiles and picking. Unknown and temporary statuses remain eligible. Rebuild/reload the widget and restart the local server after applying it.
+## External service quick start with the included example
 
-The imagery installer connects tiled POI popups to the widget's existing bounded Mapillary search and viewer. Search starts only on explicit request, initially within 75 m and optionally 250 m; closing or replacing the popup cancels pending work. Rebuild/reload after applying `apply-overture-poi-imagery.cjs`.
+```sh
+python tools/overture_places/places_service.py import --input examples/places/places-indianapolis.geojsonl --database data/places-2026-10-21.sqlite
+python tools/overture_places/places_service.py inspect --database data/places-2026-10-21.sqlite
+```
 
-The shared-selection installer connects native tile clicks to the existing POI popup, selected card, camera link and configured note/imagery actions, and restores normal coverage click dispatch. The bounded results-list/area-search adapter remains a separate parity task. See `docs/OVERTURE-POI-FEATURE-PARITY.md` before changing the default renderer.
+Copy `service.example.json` to `places-service.json` in the widget root and edit the certificate/key paths and app origin for your environment. Then:
 
-The panel installer adds bounded local area queries (`/search`, max 200), reusing the existing Places panel, manual/automatic controller, category facets, statuses and source-area navigation. Tile/pick/list predicates are synchronized; list display creates no graphics collection. Rebuild/reload and restart Python after applying `apply-overture-poi-panel.cjs`. Hover/overlap parity remains pending.
+```sh
+python tools/overture_places/places_service.py serve --config places-service.json
+```
 
-The hover/overlap installer connects map/list feedback using one reusable outline and an 80 ms, single-request hover lookup. Overlapping complete candidates use the existing paginated chooser, including candidates outside the loaded list. Coverage hover retains priority. Native clustering and exact rendered-symbol picking are not introduced. Rebuild/reload after applying `apply-overture-poi-hover-overlap.cjs`.
+Check `https://localhost:3444/health`, then configure the widget with `https://localhost:3444`. Retain dated databases for explicit stop/config-change/restart rollback. See the administrator guide for full platform and HTTPS hosting details.
 
-The rendering installer separates native tile visibility from optional list queries. The panel starts closed; `/search` runs only while results are consumed. Closing it cancels list work without clearing selection or hiding tiles. Bounds remain for the offline pilot, bounded results and point picking; native bulk rendering uses viewport tiles. No backend protocol/export change is required.
+For the pending tile-package workflow, run the [ArcGIS Pro feasibility test](../../docs/places/pro-package-test.md) before publishing a full package. Native Pro execution and Portal acceptance remain separate verification gates.
 
-The category-panel installer exposes all 28 native icon families, with localized labels and matching list/chooser/selection icons. Tile, area, click and hover filters share the `family` parameter; quality filters are retained. The five-group hosted-feature mode is unchanged. Restart Python and rebuild/reload after applying `apply-overture-poi-category-panel.cjs`; existing exports remain valid.
+The next full-data Portal step is the [attribute-preserving full build](../../docs/places/attribute-restoration.md). It generates the pairing contract automatically and requires a real Pro/Portal acceptance test. Existing diagnostic packages can be repaired offline without another Pro run when their exact build-source GeoJSON is supplied.
+
+## Saved-area maintenance
+
+Start with the [area maintenance guide](../../docs/places/area-maintenance.md). `places_area.py` provides `init`, `releases`, `check`, `adopt`, `refresh`/`prepare`, `build-portal` and `mark-published`. Preparation and publication are separate: no command uploads Portal items or rewrites the running HTTPS service configuration. `places_releases.py` owns bounded public catalog discovery.
+
+## Optional Portal publication
+
+`publish_places_portal.py` runs only when an administrator explicitly invokes it from a signed-in ArcGIS Pro Python window. `create_plan` reads Portal/account metadata and writes a local plan; `publish_plan` creates a new private query/vector tile pair and reports both URLs for review. It never overwrites/deletes existing services, changes the experience or saves credentials. No toolbox is included. See [Optional publishing](../../docs/places/optional-publishing.md) for requirements, usage, retained partial results and the live acceptance-test boundary. Ordinary downloading and manual publishing do not require this optional script.

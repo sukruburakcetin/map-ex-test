@@ -52,11 +52,9 @@ const it: SettingsMessages = {
   "hideShareButton": "Nascondi Pulsante di Condivisione",
   "hideLockMapRotationButton3d": "Nascondi Pulsante di Blocco Rotazione Mappa (3D)",
   "hideCenterMapButton": "Nascondi Pulsante di Centratura Mappa",
-  "nearbyPlacesOverturePilot": "Luoghi Vicini · Pilota Overture",
+
   "offerPlacesLayer": "Offri Layer dei Luoghi",
-  "placesFeatureserverLayerUrl": "URL del Layer FeatureServer dei Luoghi",
-  "useAnHttpsFeatureserverLayerUrlWithoutQueryParameters": "Usa un URL HTTPS di un layer FeatureServer senza parametri di query o credenziali.",
-  "requiresAPublishedPilotLayerPreparedWithToolsOverture": "Richiede un layer pilota pubblicato preparato con tools/overture_places. Inizialmente disattivato per gli utenti; massimo 200 luoghi per vista. Vedi docs/OVERTURE-PLACES.md.",
+
   "featureDetectionLayers": "Layer di Rilevamento delle Feature",
   "enableTrafficSigns": "Attiva Segnali Stradali",
   "enableMapillaryObjects": "Attiva Oggetti Mapillary",
@@ -154,11 +152,18 @@ const it: SettingsMessages = {
   "placesVectorServiceTitle": "Luoghi vicini · Overture",
   "placesApiServiceUrl": "URL del servizio dei luoghi",
   "placesApiUrlInvalid": "Inserisci un URL base di servizio HTTPS senza credenziali, parametri di query o frammenti.",
-  "placesApiMigration": "Inserisci un URL del servizio dei luoghi per esplorare i luoghi vicini.",
+
   "placesApiTest": "Prova connessione",
   "placesApiTesting": "Verifica del servizio…",
   "placesApiConnected": "Connesso",
   "placesApiFailed": "Connessione non riuscita. Controlla URL, certificato HTTPS, CORS e compatibilità del servizio.",
   "placesApiUrlHelp": "Inserisci l’URL base del servizio dei luoghi. Fornisce tasselli vettoriali, selezione e ricerca. Gli utenti attivano i luoghi quando necessario.",
+  "placesPortalSource": "ArcGIS Portal (consigliato)",
+  "placesExternalSource": "Servizio luoghi esterno",
+  "placesPortalTilesUrl": "URL del servizio tile vettoriali",
+  "placesPortalQueryUrl": "URL del layer di interrogazione dei luoghi",
+  "placesPortalHelp": "I tile vettoriali disegnano la mappa. Le interrogazioni restituiscono record limitati senza aggiungere un layer alla mappa. Entrambi i servizi devono seguire la guida di pubblicazione.",
+  "placesPortalUrlsInvalid": "Inserire URL HTTPS VectorTileServer e FeatureServer/layer senza credenziali o parametri.",
+
 };
 export default it;

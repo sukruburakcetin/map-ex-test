@@ -1157,6 +1157,6 @@ const ptBR: Messages = {
   "uiPoiRestoreCount": "Locais · {count}",
   "uiPoiSelectedNotInPage": "O local selecionado está fora desta página de resultados ou pesquisa. Os detalhes continuam disponíveis.",
   "uiPoiServiceSetup": "Locais não está configurado para este aplicativo.",
-  "uiPoiFeatureMigration": "Locais não está configurado para este aplicativo.",
+
 };
 export default ptBR;

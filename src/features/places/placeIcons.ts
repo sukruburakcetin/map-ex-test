@@ -36,7 +36,6 @@ Object.assign(glyphs, {
 const colors: Record<string, string> = { health: '#884b50', education: '#385d70', parks: '#3e6b45', landmarks: '#756042', services: '#5b5a76', other: '#38594d' };
 for (const group of Object.keys(glyphs)) if (!colors[group]) colors[group] = ['airport','parking','rail','bank','government'].includes(group) ? '#436aac' : ['golf','grocery'].includes(group) ? '#387d4d' : ['stadium','worship','entertainment','beauty'].includes(group) ? '#87579b' : ['bar','convenience','fuel','lodging','restaurant','shop','cafe','bakery'].includes(group) ? '#a46d2e' : '#5d6f73';
 const cache = new Map<string, string>();
-export const PLACE_ICON_RADIUS = 9;
 export const SELECTED_PLACE_ICON_RADIUS = 14;
 export function placeCategoryIcon(group: string | undefined, selected = false): string {
   const category = group && Object.prototype.hasOwnProperty.call(glyphs, group) ? group : 'other';

@@ -25,6 +25,8 @@
   "hideCoverageAnalysis": false,
   "enablePlaces": false,
   "placesApiUrl": "",
+  "placesPortalTilesUrl": "",
+  "placesPortalQueryUrl": "",
   "enableTrafficSigns": true,
   "enableMapillaryObjects": true,
   "renderMode": 1,

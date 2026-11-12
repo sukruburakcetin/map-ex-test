@@ -52,11 +52,9 @@ const ar: SettingsMessages = {
   "hideShareButton": "إخفاء زر المشاركة",
   "hideLockMapRotationButton3d": "إخفاء زر تثبيت دوران الخريطة (ثلاثي الأبعاد)",
   "hideCenterMapButton": "إخفاء زر توسيط الخريطة",
-  "nearbyPlacesOverturePilot": "الأماكن القريبة · تجربة Overture",
+
   "offerPlacesLayer": "إتاحة طبقة الأماكن",
-  "placesFeatureserverLayerUrl": "عنوان URL لطبقة الأماكن في FeatureServer",
-  "useAnHttpsFeatureserverLayerUrlWithoutQueryParameters": "استخدم عنوان HTTPS لطبقة FeatureServer، دون معاملات استعلام أو بيانات اعتماد.",
-  "requiresAPublishedPilotLayerPreparedWithToolsOverture": "تتطلب هذه الميزة طبقة تجريبية منشورة مُعدّة باستخدام tools/overture_places. تكون معطّلة للمستخدمين افتراضيًا، بحد أقصى 200 مكان لكل عرض. راجع docs/OVERTURE-PLACES.md.",
+
   "featureDetectionLayers": "طبقات العناصر المكتشفة",
   "enableTrafficSigns": "تفعيل إشارات المرور",
   "enableMapillaryObjects": "تفعيل عناصر Mapillary",
@@ -154,11 +152,18 @@ const ar: SettingsMessages = {
   "placesVectorServiceTitle": "الأماكن القريبة · Overture",
   "placesApiServiceUrl": "عنوان خدمة الأماكن",
   "placesApiUrlInvalid": "أدخل عنوان خدمة HTTPS أساسيًا دون بيانات اعتماد أو معلمات استعلام أو جزء.",
-  "placesApiMigration": "أدخل عنوان خدمة الأماكن لاستكشاف الأماكن القريبة.",
+
   "placesApiTest": "اختبار الاتصال",
   "placesApiTesting": "جارٍ فحص الخدمة…",
   "placesApiConnected": "متصل",
   "placesApiFailed": "فشل الاتصال. تحقق من العنوان وشهادة HTTPS وCORS وتوافق الخدمة.",
   "placesApiUrlHelp": "أدخل عنوان خدمة الأماكن الأساسي. توفر مربعات متجهية وتحديد الأماكن والبحث. يفعّل المستخدم الأماكن عند الحاجة.",
+  "placesPortalSource": "ArcGIS Portal (موصى به)",
+  "placesExternalSource": "خدمة أماكن خارجية",
+  "placesPortalTilesUrl": "رابط خدمة البلاطات المتجهة",
+  "placesPortalQueryUrl": "رابط طبقة استعلام الأماكن",
+  "placesPortalHelp": "ترسم البلاطات المتجهة الخريطة. تعيد خدمة الاستعلام سجلات محدودة فقط ولا تُضاف كطبقة إلى الخريطة. يجب إعداد الخدمتين وفق دليل نشر الأماكن.",
+  "placesPortalUrlsInvalid": "أدخل روابط HTTPS لخدمتي VectorTileServer وFeatureServer/طبقة دون بيانات اعتماد أو معلمات URL.",
+
 };
 export default ar;

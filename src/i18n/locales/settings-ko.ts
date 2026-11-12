@@ -52,11 +52,9 @@ const ko: SettingsMessages = {
   "hideShareButton": "공유 버튼 숨기기",
   "hideLockMapRotationButton3d": "지도 회전 잠금 버튼 숨기기(3D)",
   "hideCenterMapButton": "지도 중심 이동 버튼 숨기기",
-  "nearbyPlacesOverturePilot": "주변 장소 · Overture 시험 기능",
+
   "offerPlacesLayer": "장소 레이어 제공",
-  "placesFeatureserverLayerUrl": "장소 FeatureServer 레이어 URL",
-  "useAnHttpsFeatureserverLayerUrlWithoutQueryParameters": "쿼리 매개변수나 자격 증명이 없는 HTTPS FeatureServer 레이어 URL을 사용하세요.",
-  "requiresAPublishedPilotLayerPreparedWithToolsOverture": "tools/overture_places로 준비한 발행된 시험용 레이어가 필요합니다. 사용자에게는 처음에 꺼져 있으며 뷰당 최대 200개 장소를 표시합니다. docs/OVERTURE-PLACES.md를 참고하세요.",
+
   "featureDetectionLayers": "피처 탐지 레이어",
   "enableTrafficSigns": "교통 표지판 활성화",
   "enableMapillaryObjects": "Mapillary 객체 활성화",
@@ -154,11 +152,18 @@ const ko: SettingsMessages = {
   "placesVectorServiceTitle": "주변 장소 · Overture",
   "placesApiServiceUrl": "장소 서비스 URL",
   "placesApiUrlInvalid": "자격 증명, 쿼리 매개변수 또는 프래그먼트가 없는 HTTPS 서비스 기본 URL을 입력하세요.",
-  "placesApiMigration": "주변 장소를 탐색하려면 장소 서비스 URL을 입력하세요.",
+
   "placesApiTest": "연결 테스트",
   "placesApiTesting": "서비스 확인 중…",
   "placesApiConnected": "연결됨",
   "placesApiFailed": "연결에 실패했습니다. URL, HTTPS 인증서, CORS 및 서비스 호환성을 확인하세요.",
   "placesApiUrlHelp": "장소 서비스의 기본 URL을 입력하세요. 벡터 타일, 장소 선택 및 검색을 제공합니다. 사용자는 필요할 때 장소를 활성화합니다.",
+  "placesPortalSource": "ArcGIS Portal(권장)",
+  "placesExternalSource": "외부 장소 서비스",
+  "placesPortalTilesUrl": "벡터 타일 서비스 URL",
+  "placesPortalQueryUrl": "장소 쿼리 레이어 URL",
+  "placesPortalHelp": "벡터 타일이 지도를 그립니다. 쿼리 서비스는 제한된 레코드만 반환하며 지도 레이어로 추가되지 않습니다. 두 서비스 모두 장소 게시 가이드를 따라야 합니다.",
+  "placesPortalUrlsInvalid": "자격 증명이나 URL 매개변수 없이 HTTPS VectorTileServer 및 FeatureServer/레이어 URL을 입력하세요.",
+
 };
 export default ko;
