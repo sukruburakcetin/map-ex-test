@@ -30,7 +30,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({ editor, categories, onSa
         <label style={noteEditorLabelStyle}> {t('uiStatus')} <select style={inputStyle} value={values.status} onChange={e => setValues({ ...values, status: e.target.value })}>{FIELD_NOTE_STATUSES.map(item => <option key={item.value} value={item.value}>{t(item.value==='in_progress'?'uiStatusProgress':item.value==='completed'?'uiStatusCompleted':item.value==='dismissed'?'uiStatusDismissed':'uiStatusOpen')}</option>)}</select></label>
         <label style={noteEditorLabelStyle}> {t('uiResolutionNoteOptional')} <textarea dir="auto" rows={2} maxLength={2000} style={inputStyle} value={values.resolutionNote} onChange={e => setValues({ ...values, resolutionNote: e.target.value })} /></label>
         {editor.error && <div role="alert" style={noteErrorStyle}>{<OwnedMessage source={String(editor.error ?? "")}/>}</div>}
-        <div style={noteEditorActionsStyle}><button type="button" style={getNoteEditorCancelStyle(editor.saving)} onClick={onCancel}> {t('uiCancel')} </button><button type="button" style={getNoteEditorSaveStyle(editor.saving)} onClick={() => onSave(values)}>{editor.saving ? t('uiSaving') : editor.globalId ? t('uiUpdateSharedNote') : t('uiSaveLocally')}</button></div>
+        <div style={noteEditorActionsStyle}><button className="mly-text-action" type="button" style={getNoteEditorCancelStyle(editor.saving)} onClick={onCancel}> {t('uiCancel')} </button><button className="mly-text-action" type="button" style={getNoteEditorSaveStyle(editor.saving)} onClick={() => onSave(values)}>{editor.saving ? t('uiSaving') : editor.globalId ? t('uiUpdateSharedNote') : t('uiSaveLocally')}</button></div>
       </fieldset>
     </div>;
 };

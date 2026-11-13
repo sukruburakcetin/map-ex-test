@@ -26,7 +26,7 @@ export const StatusSummary: React.FC<StatusSummaryProps> = ({ address, turboCrea
               {/* Coordinates */}
               {currentImg && (
                 <details className="mly-image-coordinates"><summary> {t('uiCoordinates')} </summary>
-                  <button type="button" className="mly-coordinate-card" disabled={!onCopyCoordinates}
+                  <button type="button" className="mly-coordinate-card mly-text-action" disabled={!onCopyCoordinates}
                     title={t('uiClickOrTapToCopyLatitudeLongitude')}
                     aria-label={t('uiCopyCoordinates',{lat:currentImg.lat.toFixed(6),lon:currentImg.lon.toFixed(6)})}
                     onClick={() => onCopyCoordinates?.(currentImg.lat, currentImg.lon)}>

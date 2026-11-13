@@ -1,20 +1,28 @@
 # Mapillary Explorer
 
-A custom ArcGIS Experience Builder widget for exploring Mapillary street-level imagery alongside coverage, detected objects, places and field notes.
+An ArcGIS Experience Builder widget for exploring Mapillary street-level imagery, detected objects, nearby places and field notes.
 
-## Use the widget
+## Install the widget
 
-The widget targets **Experience Builder Developer Edition 1.20** (`manifest.json`). Place this repository in the host's `client/your-extensions/widgets/mapillary-explorer` directory, follow Esri's instructions to install/start that host, then add the widget to an experience and connect its map widget. Set the deployment's Mapillary access token in `manifest.json` under `properties.mapillaryAccessToken`, which the runtime reads, and configure the enabled tools in widget settings. Build and publish through the Experience Builder host; this repository is not a standalone web application.
+Use **Experience Builder Developer Edition 1.20**. This repository is a widget, not a standalone web app.
 
-Places, Enterprise notes and collaboration workspaces are optional. Each has a separate administrator setup; viewers use the configured tools without publishing data themselves.
+1. Download the widget source and place it in your Experience Builder installation at `client/your-extensions/widgets/mapillary-explorer`. That folder must directly contain `manifest.json`, `src` and `tools`.
+2. Follow Esri's Developer Edition setup instructions to install/start the Experience Builder host.
+3. Set your Mapillary access token in `manifest.json` under `properties.mapillaryAccessToken`.
+4. Add **Mapillary Explorer** to an experience, connect its map widget and configure the tools you want in widget settings.
+5. Preview the experience, then build/publish it through the Experience Builder host. Check each desktop/mobile widget instance you offer.
 
-| Task | Documentation |
+Current source includes the implemented features; you do not apply a sequence of development patch installers.
+
+## Add optional features
+
+| What you want | Read this |
 |---|---|
-| Explore available guides | [Documentation index](docs/README.md) |
-| Prepare and connect Places data | [Places administrator guide](docs/places/administrator-guide.md) |
-| Set up Enterprise field notes | [Enterprise notes](docs/administration/enterprise-notes.md) |
-| Operate a collaboration workspace backend | [Workspace operator kit](tools/community-notes/README.md) |
-| Develop, test or contribute | [Contributing](CONTRIBUTING.md) |
-| Improve translations | [Translation guide](docs/localization/CONTRIBUTING.md) and [lookup table](docs/localization/translations.csv) |
+| Businesses, services and landmarks from Overture | **[Places setup: download, publish and maintain](docs/places/README.md)** |
+| Organization-shared field notes | [Enterprise notes](docs/administration/enterprise-notes.md) |
+| Team collaboration workspaces | [Workspace backend setup](tools/community-notes/README.md) |
+| Viewer help or other documentation | [Documentation index](docs/README.md) |
+| Code changes and tests | [Contributing](CONTRIBUTING.md) |
+| Translation corrections | [Translation guide](docs/localization/CONTRIBUTING.md) |
 
-Current source includes the supported features. No sequence of patch installers is required. Data/service hosting remains separate from the viewer interface. Review applicable Mapillary, Esri and Overture terms for your deployment.
+Places and shared-note backends are optional. Viewers use tools configured by an administrator; they do not publish datasets. Review applicable Mapillary, Esri and Overture terms for your deployment.

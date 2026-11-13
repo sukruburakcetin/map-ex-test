@@ -24,7 +24,7 @@ Search is a literal case-insensitive substring across category, description, wor
 
 Results load 50 at a time. The map and list show the same loaded matching records, not an invisible cap presented as the workspace total. **Load more notes** adds the remaining matching pages. Exact totals and a loaded/matching message explain the distinction. Export includes the loaded matching records. Refresh notes retrieves updates from other members; this release does not add real-time polling or background synchronization.
 
-Native popups show category, status, description, resolution, workspace, contributor ID and last update, with legacy assessment only when present. Contributor IDs are provider UUIDs, not names or email addresses. The provider has no public profile/roster feature in this release.
+Native popups show category, status, description, resolution, workspace, contributor ID and last update, with legacy assessment only when present. Contributor IDs are provider UUIDs, not names or email addresses. Workspace-specific display names are available with migration 004; they are unverified labels paired with short ID tags. UUIDs still control authorization. See [display names](display-names.md).
 
 Disconnect, workspace changes, result replacement and unmount clear obsolete map state. Hiding the notes sheet retains the explicit memory-only connection and map results. No service credentials enter map layers, popups, local storage, exports or legend properties. The Enterprise refresh banner is hidden for Workspaces because it describes a different source.
 

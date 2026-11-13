@@ -1,6 +1,27 @@
 import type { Messages } from '../messages';
 /** Simplified Chinese presentation catalog; stored values and protocol identifiers remain unchanged. */
 const zhCN: Messages = {
+  "imageInfoTitle": "图像信息",
+  "imageInfoCaptured": "拍摄时间（UTC）",
+  "imageInfoContributor": "贡献者",
+  "imageInfoOrganization": "组织",
+  "imageInfoCamera": "相机",
+  "imageInfoProjection": "投影类型",
+  "imageInfoDimensions": "原始尺寸",
+  "imageInfoCaptureMethod": "拍摄方式",
+  "imageInfoFoot": "步行",
+  "imageInfoOther": "其他方式",
+  "imageInfoUnknownMethod": "未知",
+  "imageInfoUnavailable": "暂无信息",
+  "imageInfoPerspective": "透视",
+  "imageInfoFisheye": "鱼眼",
+  "imageInfoPanorama": "全景",
+  "imageInfoDeferred": "暂停播放以加载更多图像信息。",
+  "imageInfoLoading": "正在加载图像信息…",
+  "imageInfoError": "无法加载图像信息。",
+  "imageInfoNoImage": "请选择图像以查看其信息。",
+  "imageInfoOriginalNote": "尺寸指上传的原始图像，而非当前显示的预览图。",
+
   "notesSearch": "搜索备注",
   "notesSearchPlaceholder": "文本、类别、解决说明或状态",
   "notesClearSearch": "清除备注搜索",

@@ -9,20 +9,19 @@ This is a bring-your-own-service kit, not a hosted Mapillary Explorer community 
 | Service operator | Provider account, billing, provisioning accounts, data retention/deletion, backups, access, moderation, participant support and any required notices/consent |
 | Authorized workspace creator | May create projects when the operator grants the trusted `workspace_creator` capability; this does not grant backend administration |
 | Workspace owner | Project instructions, invitations, membership/roles, reviewing/removing shared notes and exports |
-| Contributor | Explicitly choose a local draft and publish it; maintain own assessments |
+| Contributor | Create or choose a draft, review it and explicitly publish; maintain permitted contributions |
 | Reader | View shared notes and open their map/image targets |
 | Widget developer / Mapillary team | No default workspace backend, global directory, account provisioning, project moderation or service-operation promise is created by this kit |
 
 An ownership boundary is an engineering arrangement, not a promise of zero legal responsibility. Operators must follow applicable provider/imagery terms and their own organizational requirements. Treat assessments as contributor observations rather than official certifications. Do not describe Mapillary as sponsoring or moderating a project.
 
-## Upgrade an existing installation
+## New installation or upgrade?
 
-1. Build and deploy the current widget source and reload the application.
-2. In the existing operator project, run `migrations/002-collaboration-creator.sql` once as project administrator. It preserves workspace/note/member data, migrates the trusted legacy `workspace_teacher` capability only when no `workspace_creator` decision already exists, and removes the legacy key. An explicit `workspace_creator=false` remains false.
-3. Reconnect/sign in to receive updated app metadata. The client accepts the old trusted capability while an operator schedules migration, but the new key takes precedence, including explicit denial. User-editable profile metadata never grants rights.
-4. Do not rerun `schema.sql` over existing tables. That file is for fresh projects; the migration can be repeated safely.
+**New project:** follow steps 1–3 below. Run `schema.sql` once; it includes creator capabilities, categories, display names and direct-contribution titles. For optional cropped detection-image attachments, run `migrations/006-detection-image-attachments.sql` afterward.
 
-A workspace creator is authorized to start projects; Owner, Contributor and Reader are roles within a particular project. Creating a project does not grant service-administrator access.
+**Existing project:** back it up, identify already applied migrations, and run only the missing migrations in order: 002 → 003 → 004 → 005. Add 006 if you use cropped detection attachments. Do not rerun the fresh schema over existing tables. Then deploy the matching widget and reconnect/sign in. The guides linked below explain individual upgrades; the widget never executes SQL for you.
+
+Workspace creation requires the trusted `workspace_creator` capability; Owner, Contributor and Reader remain roles inside a workspace. A creation capability is not service-administrator access.
 
 ## 1. Create the operator's backend
 
@@ -57,7 +56,7 @@ The kit does not create any cloud service or send messages when downloaded or in
 4. Risk assessment is optional: leave its disclosure closed for general collaboration notes. Unassessed records do not show an empty risk row. Risk opinion and workflow status are separate. `Completed` can coexist with `High risk`. `No obvious hazards observed` is an observation label, not a claim of no risk.
 5. Contributors can update their own assessments and remove their own submissions. Owners can moderate/remove shared notes; readers can only view/focus/export records. A stable `(workspace, author, local-note ID)` key prevents a retried publication from creating a second copy or overwriting an existing assessment. Different contributors can retain separate opinions at the same location.
 
-Refresh and Load more are explicit; no background polling or synchronization loop is installed. Shared records are not silently merged into Local/Enterprise collections. Show on map reuses the existing note-focus action. This version does not draw a new global workspace coverage layer or automatically load all shared markers.
+Refresh and Load more are explicit; no background polling or synchronization loop is installed. Shared records are not silently merged into Local/Enterprise collections. Show on map reuses the existing note-focus action. The map shows the authorized loaded results, including other contributors. Paging does not load the entire workspace at once.
 
 ## Operation and limits
 
@@ -70,7 +69,7 @@ Refresh and Load more are explicit; no background polling or synchronization loo
 - No automatic retries are made for writes. If a response is lost, Refresh first. The UI checks returned rows before confirming an update/deletion, and publication is idempotent for a given local-note ID.
 - The origin must be HTTPS, host the standard `/auth/v1` and `/rest/v1` routes, permit the viewer's CORS requests, and be allowed by the demo host's Content Security Policy. No developer-operated proxy is provided to bypass those policies.
 - Workspace-specific new copy currently uses English fallback through the existing presentation layer. Local/Enterprise localization remains intact. Full workspace translations are a follow-up before a multilingual rollout.
-- No file attachments, full edit history, automatic backups, account registration/recovery, shared place registry, domain-specific assessment templates or guided imagery-review workflows is included yet. This is the private collaboration foundation.
+- Optional cropped detection-image attachments require migration 006, including on a fresh project. This stores small immutable JPEG crops through the authenticated service; it is not a general document-file storage feature. Full edit history, automatic backups and account registration/recovery are operator responsibilities or separate work.
 
 Removing the widget feature does not delete the operator's database. Backend retirement and data deletion must be performed by the operator after an appropriate backup/retention review. No destructive database uninstaller is included.
 

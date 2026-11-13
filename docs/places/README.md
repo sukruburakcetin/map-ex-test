@@ -1,25 +1,30 @@
-# Nearby places · Overture
+# Places: start here
 
-Places is a built-in, optional context layer for Mapillary exploration. Turn it on from the viewer toolbar to explore nearby businesses, services and landmarks.
+Places adds businesses, services and landmarks to Mapillary Explorer. It is optional. Viewers click **Places** and explore; they do not download or publish data.
 
-- [Portal and external source behavior](portal-administrator-guide.md#7-what-viewers-can-do) explains publishing requirements and search-order differences.
-- Map tiles follow the visible map area; overview display, icons and label scales follow the published source style.
-- Category, minimum confidence and permanently closed filters apply to tiles, picking and results together. All scores includes missing values; a numeric threshold excludes them.
-- Search matches places throughout the searched area before returning batches of up to 200. The four-row list pagination browses that batch; Load more requests the next batch.
-- Auto and Search this area control result-list refreshes. They do not pause map tiles.
-- Select a map icon or result to inspect details, show its location, search nearby imagery or prepare a field note. Nearby imagery does not guarantee a visible entrance.
-- Minimize the panel to see the map or imagery beneath it; the layer stays active. Close hides the panel; the Places toggle disables the layer.
+## Set it up
 
-New configurations default to **ArcGIS Portal**: administrators provide a vector tile service URL and a query-layer URL. **External Places service** remains available with one API base URL. Existing configured external-service apps retain that source. Neither mode adds a bulk POI FeatureLayer or Graphics collection. Viewers do not supply URLs or import data.
+For most organizations, use **ArcGIS Portal**. You need a Portal account that can publish hosted layers and ArcGIS Pro on the publishing computer.
 
-| Task | Guide |
-|---|---|
-| Choose a map area, download data and refresh releases | [Area maintenance guide](area-maintenance.md) |
-| Optionally publish a prepared Portal release from Pro sign-in | [Optional publishing script](optional-publishing.md) |
-| Publish through ArcGIS Portal (default source) | [Portal administrator guide](portal-administrator-guide.md) |
-| Prepare, serve and connect an external Places service | [Administrator guide](administrator-guide.md) |
-| Implement or host a compatible API | [Service contract](service-contract.md) |
-| Change feature ownership or behavior | [Architecture](architecture.md) |
-| Verify functionality and performance | [Testing](testing.md) |
+1. **[Download your area](area-maintenance.md)** — choose it on the map, save its profile and prepare the data.
+2. **[Publish to Portal](portal-administrator-guide.md)** — upload the data, build one tile package and connect the two service URLs.
+3. **[Update the same area later](area-maintenance.md#update-your-data-later)** — reuse the profile; keep the old services until the new pair works.
 
-Developer investigation: [global/direct-browser exploration](global-exploration.md). This records source findings and the next prototype gates; it is not a newly enabled provider.
+The Portal workflow publishes two services: **vector tiles draw the map**, and a **query layer supplies search and details**. The query layer is not added to the map as a FeatureLayer. Both come from the same downloaded release.
+
+Only read these if you need them:
+
+- [Optional publishing script](optional-publishing.md): automate the Portal upload/build/publish steps from Pro's sign-in. No toolbox. Manual publishing remains available.
+- [External HTTPS service](external-service.md): an alternative for administrators who already manage a web server.
+- [Troubleshooting](troubleshooting.md): common setup problems and the next action.
+
+## Explore the published data
+
+- Click **Places**, then select a map icon or a result to see details, nearby imagery or field-note actions.
+- Use categories and quality filters to narrow the results. A minimum confidence excludes places with no score; a score is not a probability.
+- Search checks matching places in the searched area, including those beyond the first 200. Small list pages browse the current batch; **Load more** requests another batch.
+- **Auto** and **Search this area** refresh the results list. Map tiles continue following the map in either mode.
+- Minimize the panel to see beneath it while keeping Places active. Use the Places toggle to disable the layer.
+- Overview circles summarize places. Zoom in for individual icons. Dense icons may overlap, so filtering or zooming can reveal more.
+
+Coverage is the area your administrator published. Panning outside it does not download another region. Nearby imagery is a discovery aid; it may not show a place's entrance.

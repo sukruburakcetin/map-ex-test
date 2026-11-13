@@ -27,10 +27,10 @@ export function LocalNotePicker({notes,value,onSelect,onPreview}:{notes:readonly
       </label>)}
       {!matching.length&&<p style={{margin:4}}>{text(notes.length?'No local notes match this search.':'There are no local notes in this browser. Create a local note first.')}</p>}
     </div>
-    {matching.length>limit&&<button type="button" style={button} onClick={()=>setLimit(value=>value+30)}>{text('Show more local notes')} ({Math.min(limit,matching.length)}/{matching.length})</button>}
+    {matching.length>limit&&<button className="mly-text-action" type="button" style={button} onClick={()=>setLimit(value=>value+30)}>{text('Show more local notes')} ({Math.min(limit,matching.length)}/{matching.length})</button>}
     {selected?<div style={card}><strong>{text('Selected local note')}: {selected.category}</strong><span style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{selected.note.slice(0,300)}</span>
       {!matching.some(choice=>choice.note.id===value)&&<small>{text('Your selected note is outside the current search results.')}</small>}
-      <div style={row}><button type="button" style={button} onClick={()=>onPreview(selected)}>{text('Show local note on map')}</button><button type="button" style={button} onClick={()=>onSelect('')}>{text('Clear selection')}</button></div>
+      <div style={row}><button className="mly-text-action" type="button" style={button} onClick={()=>onPreview(selected)}>{text('Show local note on map')}</button><button className="mly-text-action" type="button" style={button} onClick={()=>onSelect('')}>{text('Clear selection')}</button></div>
     </div>:<small>{text('Select one local note to publish.')}</small>}
   </div>;
 }

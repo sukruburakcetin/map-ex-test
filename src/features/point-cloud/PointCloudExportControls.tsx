@@ -16,7 +16,7 @@ export type PointCloudExportControlsProps = Pick<InfoBoxProps, 'pointCloudExport
 export const PointCloudExportControls: React.FC<PointCloudExportControlsProps> = ({ format, onFormatChange, pointCloudExportLoading, onDownloadPointCloud }) => { const { t, locale } = useWidgetLocale(); return (
 <div className="mly-cloud-export" style={cloudExportPanelStyle}>
             <select disabled={pointCloudExportLoading} aria-label={t('uiPointCloudExportFormat')} title={t('uiCsvGeographicCoordinatesPlyLocalMetricXyzWith')} value={format} onChange={event => onFormatChange(event.target.value === "las" ? "las" : event.target.value === "ply" ? "ply" : "csv")} style={cloudExportSelectStyle}><option value="csv"> {t('uiCsvLatLon')} </option><option value="ply"> {t('uiPlyXyzRgb')} </option><option value="las"> {t('uiLasQgisUtm')} </option></select>
-            <button
+            <button className="mly-text-action"
               type="button" disabled={pointCloudExportLoading} aria-busy={!!pointCloudExportLoading}
               onClick={() => onDownloadPointCloud?.(format)}
               title={t('uiExportAllRetainedPointsWithAlignmentAndNudge')}

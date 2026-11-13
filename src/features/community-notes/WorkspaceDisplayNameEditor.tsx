@@ -16,12 +16,12 @@ export function WorkspaceDisplayNameEditor({value,userId,busy,error,onSave}:{val
   React.useEffect(()=>setDraft(value||''),[value]);
   return <div className="mly-workspace-section" style={section}>
     <div style={{...row,justifyContent:'space-between'}}><strong>{text('Your workspace display name')}</strong><bdi style={{overflowWrap:'anywhere'}}>{formatWorkspaceContributor(userId,value,text('Not set'))}</bdi>
-      {!editing&&<button type="button" style={secondary} onClick={()=>{setDraft(value||'');setValidation('');setEditing(true);}}>{text('Edit display name')}</button>}
+      {!editing&&<button className="mly-text-action" type="button" style={secondary} onClick={()=>{setDraft(value||'');setValidation('');setEditing(true);}}>{text('Edit display name')}</button>}
     </div>
     {editing&&<form style={{display:'grid',gap:8,minWidth:0}} onSubmit={event=>{event.preventDefault();if(busy)return;try{const name=validateWorkspaceDisplayName(draft);setValidation('');onSave(name,()=>setEditing(false));}catch(failure){setValidation((failure as Error).message);}}}>
       <label style={field}>{text('Workspace display name')}<input aria-label={text('Workspace display name')} style={input} maxLength={120} value={draft} disabled={busy} onChange={event=>setDraft(event.target.value)} autoComplete="off" /></label>
       <small>{text('Use an alias you are comfortable sharing with this workspace. Names are unverified and may be duplicated; ID tags distinguish contributors.')}</small>
-      <div style={row}><button type="submit" style={button} disabled={busy||!draft.trim()}>{text('Save display name')}</button>{value&&<button type="button" style={secondary} disabled={busy} onClick={()=>setEditing(false)}>{text('Cancel name edit')}</button>}</div>
+      <div style={row}><button className="mly-text-action" type="submit" style={button} disabled={busy||!draft.trim()}>{text('Save display name')}</button>{value&&<button className="mly-text-action" type="button" style={secondary} disabled={busy} onClick={()=>setEditing(false)}>{text('Cancel name edit')}</button>}</div>
       {(validation||error)&&<div role="alert" style={{color:'#ffb8a6',overflowWrap:'anywhere'}}>{text(validation||error)}</div>}
     </form>}
   </div>;

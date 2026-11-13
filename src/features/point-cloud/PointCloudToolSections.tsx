@@ -14,7 +14,7 @@ export const PointCloudMeasureTools: React.FC<PointCloudMeasureToolsProps> = ({ 
 <div
               style={cloudMeasurePanelStyle(isMeasureMode)}
             >
-              <button
+              <button className="mly-text-action"
                 onClick={onToggleMeasureMode}
                 title={t('uiToggle3dTapeMeasure')}
                 style={cloudToolToggleStyle}
@@ -38,7 +38,7 @@ export const PointCloudMeasureTools: React.FC<PointCloudMeasureToolsProps> = ({ 
                   {measurePoints && measurePoints.length === 1 && t('uiSecondPoint')}
                   {measurePoints && measurePoints.length === 2 && <div style={cloudMeasureReadyStyle}> {t('uiReady')} </div>}
                   {measurePoints && measurePoints.length > 0 && (
-                    <button
+                    <button className="mly-text-action"
                       onClick={onClearMeasurement}
                       style={cloudToolClearStyle}
                     >
@@ -58,7 +58,7 @@ export const PointCloudLassoTools: React.FC<PointCloudLassoToolsProps> = ({ isLa
 <div
               style={cloudLassoPanelStyle(isLassoMode)}
             >
-              <button
+              <button className="mly-text-action"
                 onClick={onToggleLassoMode}
                 title={t('uiToggleLassoPointSelection')}
                 style={cloudToolToggleStyle}
@@ -81,7 +81,7 @@ export const PointCloudLassoTools: React.FC<PointCloudLassoToolsProps> = ({ isLa
 
               {isLassoMode && (
                 <div style={cloudToolHelpStyle}>
-                   {t('uiDrawOnImageToSelect')} <button
+                   {t('uiDrawOnImageToSelect')} <button className="mly-text-action"
                     onClick={onClearLasso}
                     style={cloudToolClearStyle}
                   >
@@ -100,7 +100,7 @@ export const PointCloudSightTools: React.FC<PointCloudSightToolsProps> = ({ isSi
 <div
               style={cloudSightPanelStyle(isSightMode)}
             >
-              <button
+              <button className="mly-text-action"
                 onClick={onToggleSightMode}
                 title={t('uiToggle3dLineOfSight')}
                 style={cloudToolToggleStyle}
@@ -123,7 +123,7 @@ export const PointCloudSightTools: React.FC<PointCloudSightToolsProps> = ({ isSi
                   {!sightObserver && t('uiObserverPoint')}
                   {sightObserver && t('uiAddTargets')}
                   {(sightObserver || (sightTargets && sightTargets.length > 0)) && (
-                    <button
+                    <button className="mly-text-action"
                       onClick={onClearSight}
                       style={cloudToolClearStyle}
                     >
@@ -143,7 +143,7 @@ export const PointCloudViewshedTools: React.FC<PointCloudViewshedToolsProps> = (
 <div
               style={cloudViewshedPanelStyle(isViewshedMode)}
             >
-              <button
+              <button className="mly-text-action"
                 onClick={onToggleViewshedMode}
                 title={t('uiToggle3dViewshedBlindSpotAnalysis')}
                 style={cloudToolToggleStyle}
@@ -163,7 +163,7 @@ export const PointCloudViewshedTools: React.FC<PointCloudViewshedToolsProps> = (
 
               {isViewshedMode && (
                 <div style={cloudToolHelpStyle}>
-                   {t('uiClickCloudToCalculateBlindSpots')} <button
+                   {t('uiClickCloudToCalculateBlindSpots')} <button className="mly-text-action"
                     onClick={onClearViewshed}
                     style={cloudToolClearStyle}
                   >

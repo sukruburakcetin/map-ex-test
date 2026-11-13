@@ -19,7 +19,12 @@ export function buildNoteSymbol(color: string | number[], is3D: boolean): any {
  * This helper does not allocate SDK objects, access layers or decide whether a shared copy is visible.
  */
 export function buildLocalNoteGraphic(note: FieldNote, is3D: boolean): __esri.GraphicProperties {
-  const color = note.workspace?.color || (note.source === "manual" ? [245, 166, 35, 1] : [53, 175, 109, 1]);
+  // A shared local copy is still the Enterprise observation when focused from Local.
+  // Match its workflow color instead of painting a second manual-yellow marker above it.
+  const enterpriseColor = note.sharedStatus === 'shared'
+    ? ({ open: '#35b7c4', in_progress: '#f5a623', completed: '#05a056', dismissed: '#888888' } as Record<string,string>)[note.status || 'open'] || '#35b7c4'
+    : undefined;
+  const color = note.workspace?.color || enterpriseColor || (note.source === "manual" ? [245, 166, 35, 1] : [53, 175, 109, 1]);
 
   const symbol = buildNoteSymbol(color,is3D);
 

@@ -19,8 +19,8 @@ export function RoutePreviewControls({route,host}:{route:RouteData;host?:RoutePr
  const active=progress.state!=='idle';
  return <div className="mly-route-preview" role="group" aria-label={text('Route simulation')} style={{display:'grid',gap:5,paddingTop:7,marginTop:7,borderTop:'1px solid #49695a',color:'#d3e2d9',fontSize:9,minWidth:0}}>
   <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
-   <button type="button" style={{...button,flex:'1 1 auto'}} disabled={!host} onClick={progress.state==='playing'?()=>controller.current?.pause():play}>{text(progress.state==='playing'?'Pause':progress.state==='paused'?'Resume':progress.state==='finished'?'Replay A → B':'Preview A → B')}</button>
-   {active&&<button type="button" style={button} onClick={()=>controller.current?.stop()}>{text('Stop')}</button>}
+   <button className="mly-text-action" type="button" style={{...button,flex:'1 1 auto'}} disabled={!host} onClick={progress.state==='playing'?()=>controller.current?.pause():play}>{text(progress.state==='playing'?'Pause':progress.state==='paused'?'Resume':progress.state==='finished'?'Replay A → B':'Preview A → B')}</button>
+   {active&&<button className="mly-text-action" type="button" style={button} onClick={()=>controller.current?.stop()}>{text('Stop')}</button>}
   </div>
   {active&&<div style={{display:'grid',gap:3}}>
    <span role="status">{text(progress.state==='playing'?'Playing':progress.state==='paused'?'Paused':'Finished')} · {Math.round(progress.progress*100)}%</span>

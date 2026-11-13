@@ -157,7 +157,7 @@ export class PlacesCoordinator {
     const operating=document.createElement('p');this.l10n.bind(operating,'textContent',()=>this.l10n.text('Operating status')+': '+this.l10n.text(place.operatingStatus==='open'?'Open':place.operatingStatus==='temporarily_closed'?'Temporarily closed':place.operatingStatus==='permanently_closed'?'Permanently closed':place.operatingStatus||'Not provided'));content.appendChild(operating);
     if (place.website) { const link = document.createElement('a'); link.className = 'mly-place-website'; this.l10n.bind(link,"textContent",()=>this.l10n.text("Website")); link.href = place.website; link.target = '_blank'; link.rel = 'noopener noreferrer'; content.appendChild(link); }
     this.searchAbort?.abort(); this.searchAbort = null;
-    const button = document.createElement('button'); button.type = 'button'; this.l10n.bind(button,"textContent",()=>this.l10n.text("Find imagery within 75 m")); button.className = 'mly-place-open mly-place-open-primary'; content.appendChild(button);
+    const button = document.createElement('button'); button.type = 'button'; this.l10n.bind(button,"textContent",()=>this.l10n.text("Find imagery within 75 m")); button.className = 'mly-place-open mly-place-open-primary mly-text-action'; content.appendChild(button);
     const status = document.createElement('p'); status.setAttribute('role', 'status'); status.className = 'mly-place-meta'; content.appendChild(status);
     const alternatives = document.createElement('div'); content.appendChild(alternatives);
     const visibility = document.createElement('p'); visibility.className = 'mly-place-choice-note'; this.l10n.bind(visibility,"textContent",()=>this.l10n.text("Direction is estimated. Visibility isn’t confirmed.")); visibility.hidden = true; content.appendChild(visibility);
@@ -178,7 +178,7 @@ export class PlacesCoordinator {
           for (const image of found.slice(1, 3)) {
             const option = document.createElement('button'); option.type = 'button'; this.l10n.bind(option,"textContent",()=>this.l10n.text("Open view · {value0}",{value0:String(placeImageryDirectionLabel(image, this.l10n))}).replace(" · ","\n"));
             this.l10n.bindAttribute(option,'aria-label',()=>this.l10n.text("Open view: {value0}. {value1}",{value0:String(placeImageryDirectionLabel(image, this.l10n)),value1:String(placeImageryChoiceMeta(image, this.l10n))}));
-            option.className = 'mly-place-open';
+            option.className = 'mly-place-open mly-text-action';
             option.onclick = () => { if (active()) this.host.openImagery(image); };
             const detail = document.createElement('p'); this.l10n.bind(detail,"textContent",()=>placeImageryChoiceMeta(image, this.l10n)); detail.className = 'mly-place-meta mly-place-choice-meta'; this.l10n.bind(detail,'title',()=>this.l10n.text('Approximate straight-line distance, not walking distance or visibility'));
             alternatives.appendChild(option); alternatives.appendChild(detail);
@@ -220,7 +220,7 @@ export class PlacesCoordinator {
       list.replaceChildren();
       for (const place of members.slice(page * 4, page * 4 + 4)) {
         const selected = place.id === this.selection.place?.id, category = place.category.replace(/_/g, ' ');
-        const button = document.createElement('button'); button.type = 'button'; button.className = 'mly-place-open mly-place-group-row'; button.title = place.name;
+        const button = document.createElement('button'); button.type = 'button'; button.className = 'mly-place-open mly-place-group-row mly-text-action'; button.title = place.name;
         this.l10n.bindAttribute(button,'aria-label',()=>this.l10n.text("{value0}, {value1}{value2}. Open place details",{value0:String(place.name),value1:String(category),value2:String(selected ? ', selected' : '')}));
         if (selected) button.setAttribute('aria-current', 'true');
         const icon = document.createElement('img'); icon.src = placeCategoryIcon(place.group, selected); icon.alt = ''; icon.width = icon.height = 20; icon.setAttribute('aria-hidden', 'true'); button.appendChild(icon);

@@ -1,6 +1,27 @@
 import type { Messages } from '../messages';
 /** Spanish presentation catalog. Persisted values and protocol identifiers are unchanged. */
 const es: Messages = {
+  "imageInfoTitle": "Información de la imagen",
+  "imageInfoCaptured": "Capturada (UTC)",
+  "imageInfoContributor": "Colaborador",
+  "imageInfoOrganization": "Organización",
+  "imageInfoCamera": "Cámara",
+  "imageInfoProjection": "Proyección",
+  "imageInfoDimensions": "Dimensiones originales",
+  "imageInfoCaptureMethod": "Método de captura",
+  "imageInfoFoot": "A pie",
+  "imageInfoOther": "Otro método",
+  "imageInfoUnknownMethod": "Desconocido",
+  "imageInfoUnavailable": "No disponible",
+  "imageInfoPerspective": "Perspectiva",
+  "imageInfoFisheye": "Ojo de pez",
+  "imageInfoPanorama": "Panorámica",
+  "imageInfoDeferred": "Pausa la reproducción para cargar más información de la imagen.",
+  "imageInfoLoading": "Cargando información de la imagen…",
+  "imageInfoError": "No se pudo cargar la información de la imagen.",
+  "imageInfoNoImage": "Selecciona una imagen para ver su información.",
+  "imageInfoOriginalNote": "Las dimensiones corresponden a la imagen subida, no a la vista previa.",
+
   "notesSearch": "Buscar notas",
   "notesSearchPlaceholder": "Texto, categoría, resolución o estado",
   "notesClearSearch": "Borrar búsqueda de notas",

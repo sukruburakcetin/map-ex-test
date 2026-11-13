@@ -1,28 +1,33 @@
 # Documentation
 
-## Viewers
+## Start here
 
-- [Nearby places](places/README.md)
-- [Note selection](user-guide/note-selection.md) and [note search](user-guide/notes-search.md)
-- [Time travel](user-guide/time-travel.md)
-- [Collaboration workspaces](user-guide/workspaces.md) and [readability](user-guide/workspace-readability.md)
+- **[Install and configure the widget](../README.md#install-the-widget)** in Experience Builder.
+- **[Set up Places](places/README.md)**: download an area → publish → connect → update later.
+- **[Fix a Places problem](places/troubleshooting.md)**.
 
-## Administrators
+## Use the widget
 
-- [Places: ArcGIS Portal publishing and widget setup](places/portal-administrator-guide.md)
-- [Places: external HTTPS service and widget setup](places/administrator-guide.md)
-- [Enterprise field-note service](administration/enterprise-notes.md)
-- [Collaboration backend and migrations](../tools/community-notes/README.md)
+- [Explore Places](places/README.md#explore-the-published-data)
+- [Select and view notes](user-guide/note-selection.md)
+- [Search notes](user-guide/notes-search.md)
+- [Use collaboration workspaces](user-guide/workspaces.md) and [workspace controls](user-guide/workspace-readability.md)
+- [Read image information](user-guide/image-information.md)
+- [Compare capture dates](user-guide/time-travel.md)
 
-## Developers
+## Configure optional shared notes
+
+- [Enterprise notes](administration/enterprise-notes.md)
+- [Workspace backend setup and migrations](../tools/community-notes/README.md)
+
+## Contribute or maintain the code
+
+These are references, not extra installation steps.
 
 - [Contributing and checks](../CONTRIBUTING.md)
 - [Architecture](development/architecture.md), [maintenance](development/maintenance.md) and [roadmap](development/roadmap.md)
-- [Places architecture](places/architecture.md), [API](places/service-contract.md) and [testing](places/testing.md)
-- [Interaction UX](development/interaction-ux.md), [InfoBox sections](development/info-box.md), [point-cloud owners](development/point-cloud.md) and [field-note viewer](development/field-note-viewer.md)
-- [Localization contribution guide](localization/CONTRIBUTING.md), [glossary](localization/GLOSSARY.md) and [translation table](localization/translations.csv)
-- [Historical investigation records](history/README.md)
-
-## Release preparation
-
-- [5.0 draft notes, change inventory and publication workflow](releases/README.md)
+- [Places architecture](development/places-architecture.md), [package/schema reference](development/places-packages.md), [external API/hosting](development/places-service-contract.md), [tests](development/places-testing.md) and [research](development/places-research.md)
+- [Interaction owners](development/interaction-ux.md), [InfoBox](development/info-box.md), [point-cloud owners](development/point-cloud.md) and [field-note viewer](development/field-note-viewer.md)
+- [Translations](localization/CONTRIBUTING.md), [glossary](localization/GLOSSARY.md) and [review table](localization/translations.csv)
+- [Continuing design decisions](history/README.md)
+- [5.0 release preparation and change inventory](releases/README.md)

@@ -18,7 +18,7 @@ export const DetectionToolsSection: React.FC<DetectionToolsSectionProps> = ({ tr
           {/* EXPORT BUTTON */}
           {(trafficSignsActive || objectsActive) && (
             <button
-              type="button" className="mly-detection-button mly-detection-export"
+              type="button" className="mly-detection-button mly-detection-export mly-text-action"
               onClick={onDownloadFeatures}
               title={t('uiExportActiveSignsAndObjectsWithinTheMap')}
               disabled={mapFeatureExportLoading}
@@ -33,7 +33,7 @@ export const DetectionToolsSection: React.FC<DetectionToolsSectionProps> = ({ tr
           {/* AI OVERLAY BUTTON */}
           {(trafficSignsActive || objectsActive) && imageId && (
             <button
-              type="button" className="mly-detection-button"
+              type="button" className="mly-detection-button mly-text-action"
               onClick={onToggleDetections}
               title={t('uiShowOrHideDetectionOutlines')}
               aria-label={t('uiDetectionOutlines')}
@@ -48,7 +48,7 @@ export const DetectionToolsSection: React.FC<DetectionToolsSectionProps> = ({ tr
           {/* AI TAG VISIBILITY TOGGLE */}
           {detectionsActive && imageId && (trafficSignsActive || objectsActive) && (
             <button
-              type="button" className="mly-detection-button"
+              type="button" className="mly-detection-button mly-text-action"
               onClick={onToggleAiTags}
               title={showAiTags ? t('uiHideDetectionLabelsKeepOutlinesVisible') : t('uiDetectionLabels')}
               aria-label={t('uiDetectionLabels')}

@@ -1,6 +1,27 @@
 import type { Messages } from '../messages';
 /** Brazilian Portuguese presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const ptBR: Messages = {
+  "imageInfoTitle": "Informações da imagem",
+  "imageInfoCaptured": "Captura (UTC)",
+  "imageInfoContributor": "Colaborador",
+  "imageInfoOrganization": "Organização",
+  "imageInfoCamera": "Câmera",
+  "imageInfoProjection": "Projeção",
+  "imageInfoDimensions": "Dimensões originais",
+  "imageInfoCaptureMethod": "Método de captura",
+  "imageInfoFoot": "A pé",
+  "imageInfoOther": "Outro método",
+  "imageInfoUnknownMethod": "Desconhecido",
+  "imageInfoUnavailable": "Indisponível",
+  "imageInfoPerspective": "Perspectiva",
+  "imageInfoFisheye": "Olho de peixe",
+  "imageInfoPanorama": "Panorama",
+  "imageInfoDeferred": "Pause a reprodução para carregar informações adicionais da imagem.",
+  "imageInfoLoading": "Carregando informações da imagem…",
+  "imageInfoError": "Não foi possível carregar as informações da imagem.",
+  "imageInfoNoImage": "Selecione uma imagem para ver suas informações.",
+  "imageInfoOriginalNote": "As dimensões correspondem à imagem enviada, não à prévia exibida.",
+
   "notesSearch": "Pesquisar notas",
   "notesSearchPlaceholder": "Texto, categoria, resolução ou status",
   "notesClearSearch": "Limpar pesquisa de notas",

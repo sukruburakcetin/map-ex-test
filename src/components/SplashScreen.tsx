@@ -59,7 +59,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ showIntro, filtersLo
         <div className="mly-intro-copy">
           <div className="mly-intro-heading"><h2> {t('uiFindYourPointOfView')} </h2><p> {t('uiStreetImageryConnectedByTheMap')} </p></div>
           <div className="mly-intro-bottom">
-            {onDismiss && <button type="button" onClick={onDismiss} disabled={filtersLoaded}> {t('uiStartExploring')} <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M2 6h8M6 2l4 4-4 4"/></svg></button>}
+            {onDismiss && <button className="mly-text-action" type="button" onClick={onDismiss} disabled={filtersLoaded}> {t('uiStartExploring')} <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M2 6h8M6 2l4 4-4 4"/></svg></button>}
             <span className="mly-intro-status" role="status">{!filtersLoaded && <span className="mly-intro-loading" aria-hidden="true"/>}{filtersLoaded ? t('uiReadyToExplore') : t('uiPreparingYourTools')}</span>
           </div>
         </div>

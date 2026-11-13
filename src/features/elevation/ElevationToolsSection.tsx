@@ -13,7 +13,7 @@ export const ElevationToolsSection: React.FC<ElevationToolsSectionProps> = ({ is
 <div
               style={elevationPanelStyle(isElevationProfileActive)}
             >
-              <button
+              <button className="mly-text-action"
                 onClick={onToggleElevationProfile}
                 title={t('uiToggleElevationProfileAlongSequence')}
                 style={elevationToggleStyle}

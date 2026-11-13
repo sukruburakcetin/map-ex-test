@@ -1,4 +1,5 @@
 /** @jsx jsx */
+import { textButtonCss } from '../styles/textButtons';
 import { React, jsx } from 'jimu-core';
 import { useWidgetLocale } from './WidgetLocale';
 import { SettingsKey, SettingsMessages, settingsEn } from './settingsMessages';
@@ -20,8 +21,8 @@ export const SettingsCatalogProvider: React.FC<{children:React.ReactNode}> = ({c
   return()=>{active=false};
  },[locale,attempt]);
  const value=React.useMemo(()=>({locale:catalog.locale,owned,t:(key:SettingsKey)=>catalog.messages[key]||settingsEn[key]}),[catalog,owned]);
- return <SettingsLocaleContext.Provider value={value}>
-  {((failed&&settledCatalog.requested===locale)||baseFailed)&&<div role="status" style={{padding:8}}>{t('languageError')} <button type="button" onClick={()=>{if(baseFailed)retryBase();else setAttempt(n=>n+1)}}>{t('retryLanguage')}</button></div>}
+ return <SettingsLocaleContext.Provider value={value}><style>{textButtonCss}</style>
+  {((failed&&settledCatalog.requested===locale)||baseFailed)&&<div role="status" style={{padding:8}}>{t('languageError')} <button className="mly-text-action" type="button" onClick={()=>{if(baseFailed)retryBase();else setAttempt(n=>n+1)}}>{t('retryLanguage')}</button></div>}
   {children}
  </SettingsLocaleContext.Provider>;
 };

@@ -1,6 +1,27 @@
 import type { Messages } from '../messages';
 /** Korean presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const ko: Messages = {
+  "imageInfoTitle": "이미지 정보",
+  "imageInfoCaptured": "촬영 시간(UTC)",
+  "imageInfoContributor": "기여자",
+  "imageInfoOrganization": "조직",
+  "imageInfoCamera": "카메라",
+  "imageInfoProjection": "투영 방식",
+  "imageInfoDimensions": "원본 크기",
+  "imageInfoCaptureMethod": "촬영 방법",
+  "imageInfoFoot": "도보",
+  "imageInfoOther": "기타 방법",
+  "imageInfoUnknownMethod": "알 수 없음",
+  "imageInfoUnavailable": "정보 없음",
+  "imageInfoPerspective": "원근",
+  "imageInfoFisheye": "어안",
+  "imageInfoPanorama": "파노라마",
+  "imageInfoDeferred": "추가 이미지 정보를 불러오려면 재생을 일시 정지하세요.",
+  "imageInfoLoading": "이미지 정보 불러오는 중…",
+  "imageInfoError": "이미지 정보를 불러오지 못했습니다.",
+  "imageInfoNoImage": "정보를 보려면 이미지를 선택하세요.",
+  "imageInfoOriginalNote": "크기는 표시된 미리보기가 아닌 업로드된 원본 이미지의 크기입니다.",
+
   "notesSearch": "메모 검색",
   "notesSearchPlaceholder": "내용, 범주, 해결 내용 또는 상태",
   "notesClearSearch": "메모 검색 지우기",

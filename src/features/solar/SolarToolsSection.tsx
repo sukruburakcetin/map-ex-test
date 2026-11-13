@@ -13,7 +13,7 @@ export const SolarToolsSection: React.FC<SolarToolsSectionProps> = ({ isSolarMod
 <div
             style={solarPanelStyle(isSolarMode)}
           >
-            <button
+            <button className="mly-text-action"
               onClick={onToggleSolarMode}
               title={t('uiToggleSolarGlareShadowModeling')}
               style={solarToggleStyle}

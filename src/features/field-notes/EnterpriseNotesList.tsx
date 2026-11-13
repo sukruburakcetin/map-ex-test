@@ -9,8 +9,8 @@ import { filterNotes } from './noteSearch';
 import { FIELD_NOTE_STATUSES } from '../../components/types';
 import type { FieldNote } from '../../components/types';
 import type { EnterpriseNotesLoader } from './enterpriseList';
-import { noteActionStyle, noteListActionStyle, getNoteStatusBadgeStyle } from '../../styles/fieldNotes';
-import { enterpriseToolbarStyle, enterpriseRowsStyle, enterpriseRowStyle, enterpriseActionsStyle, notesSourceHintStyle, enterpriseErrorStyle, notesLocalPanelStyle, notesRowHeadingStyle, notesWorkflowStatusStyle, notesRowMetaStyle, notesRowButtonsStyle } from '../../styles/enterpriseNotes';
+import { noteActionStyle, noteListActionStyle, noteListCategoryStyle, noteListTextStyle, noteListResolutionStyle, getNoteStatusBadgeStyle } from '../../styles/fieldNotes';
+import { enterpriseToolbarStyle, enterpriseRowsStyle, enterpriseRowStyle, enterpriseActionsStyle, notesSourceHintStyle, enterpriseErrorStyle, enterprisePanelStyle, enterpriseContentStyle, notesRowHeadingStyle, notesRowHeaderContentStyle, notesWorkflowStatusStyle, notesRowMetaStyle, notesRowButtonsStyle } from '../../styles/enterpriseNotes';
 
 export interface EnterpriseNotesListProps {onLoadDetectionPreview?:DetectionPreviewLoader;onLoadDetectionAttachment?:(note:FieldNote,id:string,signal:AbortSignal)=>Promise<string>;
   loadPage: EnterpriseNotesLoader;
@@ -21,7 +21,6 @@ export interface EnterpriseNotesListProps {onLoadDetectionPreview?:DetectionPrev
   onFocus: (note: FieldNote) => void;
   onEdit?: (note: FieldNote) => void;
   onAttachments?: (note: FieldNote) => void;
-  onClose: () => void;
 }
 
 /** Abort obsolete/unmounted requests and retain loaded rows when a subsequent page fails. */
@@ -59,34 +58,35 @@ export const EnterpriseNotesList: React.FC<EnterpriseNotesListProps> = props => 
   const visibleNotes = React.useMemo(() => filterNotes(notes, query, locale, {
     open: t('uiStatusOpen'), in_progress: t('uiStatusProgress'), completed: t('uiStatusCompleted'), dismissed: t('uiStatusDismissed'),
   }), [notes, query, locale, t]);
-  return <div role="tabpanel" aria-label={t('uiEnterpriseNotes')} style={notesLocalPanelStyle}>
+  return <div role="tabpanel" aria-label={t('uiEnterpriseNotes')} className="mly-notes-scroll" tabIndex={0} style={enterprisePanelStyle}>
+    <div style={enterpriseContentStyle}>
     <div style={enterpriseToolbarStyle}><span>{t(notes.length===1?'uiEnterpriseCountOne':'uiEnterpriseCountMany',{count:new Intl.NumberFormat(locale).format(notes.length)})} </span>
-      <div><button type="button" style={noteActionStyle} disabled={busy} onClick={() => void load(0)}> {t('uiRefresh')} </button>{' '}
-      <button type="button" style={noteActionStyle} onClick={props.onClose} aria-label={t('uiCloseNotesList')}> {t('uiClose')} </button></div>
+      <div><button className="mly-text-action" type="button" style={noteActionStyle} disabled={busy} onClick={() => void load(0)}> {t('uiRefresh')} </button></div>
     </div>
-    <NotesSearchControls query={query} onChange={setQuery} shown={visibleNotes.length} total={notes.length} loadedOnly />
+    <NotesSearchControls query={query} onChange={setQuery} shown={visibleNotes.length} total={notes.length} loadedOnly help={t('uiOrganizationRecordsRefreshForLatestClearLocalKeeps')} />
     {query.trim() && notes.length > 0 && visibleNotes.length === 0 && <div style={notesSourceHintStyle}>{t('notesSearchEmpty')}</div>}
-    <p style={notesSourceHintStyle}> {t('uiOrganizationRecordsRefreshForLatestClearLocalKeeps')} </p>
     {busy && <div role="status" style={notesSourceHintStyle}> {t('uiLoadingEnterpriseNotes')} </div>}
-    {error && <div role="alert" style={enterpriseErrorStyle}>{t('uiEnterpriseLoadError')} <button type="button" style={noteActionStyle} disabled={busy} onClick={() => void load(failedOffset)}> {t('uiRetry')} </button></div>}
+    {error && <div role="alert" style={enterpriseErrorStyle}>{t('uiEnterpriseLoadError')} <button className="mly-text-action" type="button" style={noteActionStyle} disabled={busy} onClick={() => void load(failedOffset)}> {t('uiRetry')} </button></div>}
     {!busy && !error && notes.length === 0 && <div style={notesSourceHintStyle}> {t('uiNoEnterpriseNotesAreAvailableInThisLayer')} </div>}
     <div style={enterpriseRowsStyle}>{visibleNotes.map(note => {
       const validPosition = Number.isFinite(note.lon) && Number.isFinite(note.lat);
       const canManage = !!note.sharedGlobalId && !!note.sharedLayerUrl;
       return <div key={note.id} style={enterpriseRowStyle}>
-        <div style={notesRowHeadingStyle}><strong>{note.category}</strong><span style={notesRowMetaStyle}>{Number.isFinite(note.createdAt) && new Date(note.createdAt).toLocaleString(locale)}</span></div>
-        {note.note && <div><LinkedDetectionNoteText value={note.note} loadAttachment={props.onLoadDetectionAttachment?(id,signal)=>props.onLoadDetectionAttachment!(note,id,signal):undefined} load={props.onLoadDetectionPreview}/></div>}{note.resolutionNote && <div> {t('uiResolution')} {note.resolutionNote}</div>}
+        <div style={notesRowHeadingStyle}><div style={notesRowHeaderContentStyle}><strong style={noteListCategoryStyle}>{note.category}</strong><span style={notesRowMetaStyle}>{Number.isFinite(note.createdAt) && new Date(note.createdAt).toLocaleString(locale)}</span></div></div>
+
         <div style={enterpriseActionsStyle}>
           <div style={notesWorkflowStatusStyle}><span>{t('uiStatus')}:</span><span style={getNoteStatusBadgeStyle(note.status)}>{t(note.status==='in_progress'?'uiStatusProgress':note.status==='completed'?'uiStatusCompleted':note.status==='dismissed'?'uiStatusDismissed':'uiStatusOpen')}</span></div>
           <div style={notesRowButtonsStyle}>
-          <button type="button" style={noteListActionStyle} disabled={!validPosition} onClick={() => props.onFocus(note)}> {t('uiShowOnMap')} </button>
-          {canManage && props.onEdit && <button type="button" style={noteListActionStyle} disabled={props.editorBusy} onClick={() => props.onEdit?.(note)}> {t('uiUpdateShared')} </button>}
-          {canManage && props.onAttachments && <button type="button" style={noteListActionStyle} disabled={props.attachmentsBusy} onClick={() => props.onAttachments?.(note)}> {t('uiAttachments')} </button>}
+          <button className="mly-text-action" type="button" style={noteListActionStyle} disabled={!validPosition} onClick={() => props.onFocus(note)}> {t('uiShowOnMap')} </button>
+          {canManage && props.onEdit && <button className="mly-text-action" type="button" style={noteListActionStyle} disabled={props.editorBusy} onClick={() => props.onEdit?.(note)}> {t('uiUpdateShared')} </button>}
+          {canManage && props.onAttachments && <button className="mly-text-action" type="button" style={noteListActionStyle} disabled={props.attachmentsBusy} onClick={() => props.onAttachments?.(note)}> {t('uiAttachments')} </button>}
           </div>
         </div>
+        {note.note && <div style={noteListTextStyle}><LinkedDetectionNoteText value={note.note} loadAttachment={props.onLoadDetectionAttachment?(id,signal)=>props.onLoadDetectionAttachment!(note,id,signal):undefined} load={props.onLoadDetectionPreview}/></div>}{note.resolutionNote && <div style={noteListResolutionStyle}> {t('uiResolution')} {note.resolutionNote}</div>}
         {!canManage && <div style={notesSourceHintStyle}> {t('uiReadOnlyRecordSharedActionsRequireAGlobalid')} </div>}
       </div>;
     })}</div>
-    {hasMore && <button type="button" style={noteActionStyle} disabled={busy} onClick={() => void load(nextOffset)}> {t('uiLoadMore')} </button>}
+    {hasMore && <button className="mly-text-action" type="button" style={noteActionStyle} disabled={busy} onClick={() => void load(nextOffset)}> {t('uiLoadMore')} </button>}
+    </div>
   </div>;
 };

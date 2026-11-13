@@ -1,144 +1,85 @@
 # Optional Portal publishing script
 
-`tools/overture_places/publish_places_portal.py` is an **optional administrator script**. The manual [area maintenance workflow](area-maintenance.md) remains available. Nothing in the widget runs this publisher automatically, and it adds no toolbox, viewer button, browser credential setting or external hosting service.
+Use this **instead of the manual upload/build/publish steps** in the [Portal guide](portal-administrator-guide.md). Download your area with the [download guide](area-maintenance.md) first. This script is optional, has no toolbox and adds no widget controls.
 
-It runs in **ArcGIS Pro's Python window** on the administrator's computer. Pro remains responsible for the native vector tile build. It uses the account already signed into the explicitly selected Portal through `GIS("pro")`; it does not ask you to copy a token or save a password.
+It runs on your computer in **ArcGIS Pro's Python window**, using Pro's existing Portal sign-in. A browser login alone is not enough. Pro is still needed to build native vector tiles for each new release.
 
-## What the script does
+## Before you start
 
-After you explicitly publish a plan, it:
+- Open a project in licensed ArcGIS Pro and sign into the intended Portal.
+- Your account must be allowed to create items, publish hosted feature layers and publish hosted tile layers.
+- Use a compatible ArcGIS API for Python with the public folders/session/sharing interfaces. Signatures were checked against **2.4.4**; the script checks the required interfaces. If your Pro environment lacks them, use the manual guide or an administrator-approved compatible environment.
+- Have your prepared **Portal** profile and the exact release printed by `refresh`.
 
-1. Creates a uniquely named folder and uploads a verified copy of the prepared GeoJSON.
-2. Publishes a **new private hosted query layer** and checks its schema, complete count, release and sample attributes/location.
-3. Runs the existing full-source Pro build, attribute restoration, category icon and overview-cluster tools using the new query URL.
-4. Uploads a verified copy of the VTPK and publishes a **new private vector tile service**.
-5. Checks hosted tile metadata, release/query pairing, cluster metadata, icon assets and a real sample tile's attributes.
-6. Writes **connection.json** containing both widget URLs, plus a local publication report and returned Portal item IDs.
+No copied token, password or certificate is entered into the script. HTTPS trust must already work in Pro.
 
-Existing services/items are retained. The script never overwrites a service, deletes content, makes items public, edits an experience or calls `mark-published`. You review and test the new pair before changing the live experience.
+## 1. Create a plan
 
-## Requirements
-
-- A **Portal** area profile and a completed `refresh` for a pinned release. External-service profiles keep using their existing workflow.
-- An installed/licensed ArcGIS Pro with a project open. This version's supported route is the interactive Pro Python window, using `CURRENT`. It is not a scheduled/headless publishing setup.
-- Pro signed into the intended Portal with permission to create content, publish hosted feature layers and publish hosted tile layers. The script only creates content for that signed-in account.
-- A compatible ArcGIS API for Python exposing `GIS("pro")`, `ItemProperties`, `content.folders`, `session` and item sharing APIs. Public API signatures were checked against **2.4.4**. Planning checks the needed interfaces. If unavailable in your Pro environment, use a compatible environment or the manual workflow; the ordinary downloader venv is not a replacement for Pro.
-- Working Portal/service HTTPS trust in Pro's Python environment. Certificate validation remains enabled.
-
-Do not store a password, token, client secret or certificate in the area profile or publication plan. The plan/report contains ordinary Portal URLs, account name, names/IDs and hashes; authentication stays in the SDK session.
-
-## 1. Prepare your data as usual
-
-In your ordinary Python environment, use your existing profile:
-
-```bat
-python tools/overture_places/places_area.py check --profile test.places-area.json
-python tools/overture_places/places_area.py refresh --profile test.places-area.json
-```
-
-Review the returned `changes_report` and note the pinned release. The examples below use `2026-10-21.0`; replace it if your prepared release differs. The publisher does not silently download another release.
-
-If you already uploaded the query data manually, you can finish that manual build instead. This optional publisher deliberately creates a fresh pair rather than adopting/replacing arbitrary existing Portal items.
-
-## 2. Open Pro and select the Portal session
-
-1. Open a project in ArcGIS Pro.
-2. Use Pro's normal Portal/sign-in controls to select and sign into the intended Portal.
-3. Open **View → Python Window**.
-
-The Portal URL supplied to the script must match the active Portal shown by Pro. Use its root, such as `https://portal.example.com/portal`, without `/sharing/rest`, an app/item path, credentials or token parameters. A browser's Portal login alone does not establish Pro's session.
-
-## 3. Create and review a plan (no Portal content writes)
+In **Pro's Python window**, run:
 
 ```python
 import os, runpy
 os.chdir(r"C:\path\to\mapillary-explorer")
 publisher = runpy.run_path("tools/overture_places/publish_places_portal.py")
-
 plan = publisher["create_plan"](
-    "test.places-area.json",
+    r"C:\Places\my-area.places-area.json",
     "2026-10-21.0",
     portal_url="https://portal.example.com/portal"
 )
 ```
 
-Replace the folder, profile, release and Portal URL. Use a full profile path if it lives elsewhere.
+Replace the widget folder, profile, release and Portal root. Use the Portal root shown in Pro, not a service URL or `/sharing/rest` address.
 
-This verifies the local snapshot, checks the active account and available query-service name, and prints the account/Portal. It creates a **local** `publication-plan.json`, not Portal content. Review that file: it identifies the area source hash, source count, new names, private sharing and the policy to retain existing services. Planning must not report an unexpected account or Portal.
+Planning **creates no Portal content**. It checks the local data and signed-in account, then prints the local **publication-plan.json** path. Open it and review the Portal, account, release and source count before continuing.
 
-Local plan/report location:
+## 2. Publish the plan
 
-```text
-<area output>/releases/<release>/publishing/<unique run ID>/
-```
-
-Names include a unique suffix. Each new plan has its own Portal folder, service names and short Pro build folder, so earlier builds/upload names do not need to be deleted.
-
-## 4. Explicitly publish that plan
-
-After reviewing it, run:
+In the same Python window, run:
 
 ```python
 result = publisher["publish_plan"](plan["plan_path"])
-```
-
-This call **creates Portal content**. Progress is printed at stage boundaries. Pro packaging/uploading may take several minutes. Keep Pro open and signed into the same Portal/account.
-
-The script verifies that the profile/source still match the plan. Upload copies are retained in the run folder. The built package remains in its own short `pp_<unique suffix>` folder under the release. A local report is updated as stages complete and item IDs become known.
-
-A successful result has:
-
-```text
-status: ready_for_review
-experience_changed: false
-publication_recorded: false
-```
-
-For the URLs:
-
-```python
 print(result["connection_file"])
 ```
 
-Open that **connection.json**. It contains:
+This step **creates Portal content** and can take several minutes. Keep Pro open and signed into the same account/Portal.
 
-```json
-{
-  "placesSource": "portal",
-  "placesPortalTilesUrl": "https://server.example.com/server/rest/services/Hosted/NEW_TILES/VectorTileServer",
-  "placesPortalQueryUrl": "https://server.example.com/server/rest/services/Hosted/NEW_QUERY/FeatureServer/0"
-}
+It creates a uniquely named folder and a **new private service pair**: query layer first, then the complete package and vector tile service. It checks hosted schema, count, release pairing, icon/cluster resources and a sample tile. It retains the source upload, package and reports.
+
+Successful output says **ready_for_review**. Open the printed **connection.json** for:
+
+- `placesPortalTilesUrl`: the vector tile service URL.
+- `placesPortalQueryUrl`: the numeric query-layer URL.
+
+Local plans, reports and upload copies are under:
+
+```text
+<area output>/releases/RELEASE/publishing/UNIQUE_RUN/
 ```
 
-The actual URLs come from the published items; the query layer number is discovered instead of assumed. No token is included.
+The build has its own short `pp_...` folder under that release. New names avoid overwriting earlier files and services.
 
-## 5. Review, share and connect
+## 3. Review and connect
 
-1. Open the new vector tile item in Portal Map Viewer and test its overview/close-zoom appearance.
-2. Review both service items' sharing. The script verifies them as **private**. Share **both published services** with the intended experience audience using your Portal's normal controls; source-file/package items can remain private.
-3. Put the two returned URLs into the widget's Portal source settings and run **Test connection** using an account with access.
-4. Test categories, confidence/closed filters, clusters, picking, nearby imagery and notes on your deployment. Complete the required 2D/3D and mobile checks.
-5. Publish the updated experience with the matching pair. Retain the old pair for rollback.
-6. Only after the experience is switched, record that release locally:
+Continue at **[Share and connect the two services](portal-administrator-guide.md#4-share-and-connect-the-two-services)**:
 
-   ```bat
-   python tools/overture_places/places_area.py mark-published --profile test.places-area.json --release 2026-10-21.0
-   ```
+1. Check the tile item in Map Viewer.
+2. Share **both published services** with your intended audience. Source-file/package items can stay private.
+3. Paste both URLs into Builder, test the connection and check the viewer workflows/mobile layouts.
+4. Update the experience only when the new pair works. Keep the previous pair for rollback.
+5. Record the deployed release using `mark-published` in the [update guide](area-maintenance.md#update-your-data-later).
 
-The signed-in publisher seeing the data does not prove another viewer has access. The script therefore stages a new pair rather than silently changing sharing or switching the app for everyone.
+The script does not change the experience, record publication, delete items, overwrite services or make content public.
 
-## Failure, cancellation and retries
+## If a run fails
 
-- Inspect **publication-report.json**. It records the stage, safe failure type and returned item IDs, without raw SDK error text or authentication material. `new_item_verified: false` means the item was returned/pending but did not complete new-item/privacy verification; inspect it before taking any manual action.
-- Partial new items/build files are retained. Existing live services and the experience are unchanged. There is no automatic deletion or automatic retry of writes.
-- A timed-out/interrupted upload or publishing job may continue on the server. Inspect the new folder, planned service names and Portal jobs before starting another attempt.
-- A started plan cannot be published twice. For a deliberate new attempt, create a new plan, then explicitly publish it. Do not delete its started marker to force a rerun.
-- `validation_timeout` controls read-only hosted readiness polling, defaulting to 600 seconds. It does not override the SDK's upload/job processing behavior. If your cache import needs longer, use `publish_plan(plan["plan_path"], validation_timeout=1200)` on the initial run.
-- Wrong schemas, mixed releases, source/package changes, missing tile definitions and mismatched samples stop the run before a connection file is issued. Portal policies such as mandatory metadata/classification may require manual publication or an administrator-specific extension.
-- Keep the original plan, profile and prepared files in their locations. If you change the profile/source, create a new plan.
+Open **publication-report.json**. It records the stage and known item IDs. Partial files and new Portal items are retained for inspection; a failed run does not remove the current live pair. `new_item_verified: false` means that returned/pending item still needs inspection.
 
-## Verification status
+An upload or publication may continue on Portal after a timeout or interruption. Check the new folder, planned names and Portal job before trying again. A started plan cannot be run twice. For a deliberate new attempt, create a new plan; do not remove its started marker or automatically delete partial items.
 
-The sequence, failure handling, privacy checks, no-overwrite behavior, changed-account/Portal guards and retry protection are covered by protocol fixtures. The validator also passed against extracted resources from the real 7,089-place package, including icons, cluster contract and a sample tile. Those checks do not publish to a live Enterprise site.
+The default read-only readiness wait is 600 seconds. On the **initial** publishing call, a longer wait can be selected with `validation_timeout=1200`. This changes validation polling, not the SDK's upload/job timeout. Portal policies that require extra metadata may need manual publishing.
 
-The ArcGIS Python API 2.4.4 source was inspected for the public folders, item properties, sharing, session and asynchronous publish interfaces. This development environment has no licensed Pro/Portal session; **the first real authenticated publication remains a deployment acceptance test**. Keep the current working service pair until that test succeeds. The manual guide remains the supported alternative throughout.
+## What has been tested
+
+Automated fixtures cover planning, publishing order, privacy checks, source/account/Portal mismatch, partial failures and repeat protection. Validation also passed against resources from a real 7,089-place package. Public SDK signatures were checked against ArcGIS API for Python 2.4.4.
+
+**A real authenticated Pro/Portal publication still needs deployment testing.** Offline checks do not prove hosted import or viewer performance. Keep your working services until your first run passes the checks above. Scheduled/headless publishing is not provided.

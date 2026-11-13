@@ -17,7 +17,7 @@ export const NearbyToolsSection: React.FC<NearbyToolsSectionProps> = props => {
     <div
       style={nearbyToolsSectionStyle}
     >
-      <button
+      <button className="mly-text-action"
         type="button" aria-label={t('uiNearbyImages')} aria-expanded={!!nearbyStripOpen}
         onClick={onToggleNearbyStrip}
         title={t('uiShowCapturesNearby')}

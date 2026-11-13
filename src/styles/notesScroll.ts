@@ -3,6 +3,10 @@
  * embedded engines. Forced colors retains the browser's accessible colors.
  */
 export const notesScrollCss = `
+/* One control/body scale across sources, including host form-style overrides. */
+.mly-notes-sheet { --mly-notes-text-size:11px; --mly-notes-heading-size:12px; --mly-notes-meta-size:10px; font-size:var(--mly-notes-text-size); line-height:1.4; }
+.mly-notes-sheet :is(label, p, summary, button, input, select, textarea, code) { font-size:var(--mly-notes-text-size) !important; line-height:1.4 !important; }
+
 .mly-notes-sheet *, .mly-notes-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(171,205,187,.4) transparent;

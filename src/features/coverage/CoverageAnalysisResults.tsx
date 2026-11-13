@@ -50,7 +50,7 @@ export const CoverageAnalysisResults: React.FC<CoverageAnalysisResultsProps> = p
                     {(coverageAnalysisProgress || "Analysing coverage").replace(/(?:…|\.{3})+\s*$/, "")}
                   </div>
                   <div className="mly-coverage-scan" aria-hidden="true"><span/></div>
-                  <button type="button" onClick={onCancelCoverageAnalysis} style={coverageResultsCancelStyle}> {t('uiCancel')} </button>
+                  <button className="mly-text-action" type="button" onClick={onCancelCoverageAnalysis} style={coverageResultsCancelStyle}> {t('uiCancel')} </button>
                 </>
               )}
 
@@ -104,7 +104,7 @@ export const CoverageAnalysisResults: React.FC<CoverageAnalysisResultsProps> = p
                       {row("#dc3232", "None", "", nonePct, r.noneKm)}
 
                       {/* Toggle Button */}
-                      <button
+                      <button className="mly-text-action"
                         onClick={onToggleCoverageSegments}
                         style={getCoverageResultsMapToggleStyle(coverageSegmentsVisible)}
                       >

@@ -167,7 +167,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                             ] as { label: string; value: boolean | undefined }[]).map((opt) => {
                                 const isActive = turboFilterIsPano === opt.value;
                                 return (
-                                    <button
+                                    <button className="mly-text-action"
                                         key={opt.label}
                                         onClick={() => onTurboIsPanoChange(opt.value)}
                                         style={{

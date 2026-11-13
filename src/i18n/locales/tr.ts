@@ -1,6 +1,27 @@
 import type { Messages } from '../messages';
 /** Turkish presentation catalog. Community edits: docs/localization/CONTRIBUTING.md. */
 const tr: Messages = {
+  "imageInfoTitle": "Görüntü bilgileri",
+  "imageInfoCaptured": "Çekim zamanı (UTC)",
+  "imageInfoContributor": "Katkıda bulunan",
+  "imageInfoOrganization": "Kuruluş",
+  "imageInfoCamera": "Kamera",
+  "imageInfoProjection": "Projeksiyon",
+  "imageInfoDimensions": "Orijinal boyutlar",
+  "imageInfoCaptureMethod": "Çekim yöntemi",
+  "imageInfoFoot": "Yaya",
+  "imageInfoOther": "Diğer yöntem",
+  "imageInfoUnknownMethod": "Bilinmiyor",
+  "imageInfoUnavailable": "Mevcut değil",
+  "imageInfoPerspective": "Perspektif",
+  "imageInfoFisheye": "Balıkgözü",
+  "imageInfoPanorama": "Panorama",
+  "imageInfoDeferred": "Ek görüntü bilgilerini yüklemek için oynatmayı duraklatın.",
+  "imageInfoLoading": "Görüntü bilgileri yükleniyor…",
+  "imageInfoError": "Görüntü bilgileri yüklenemedi.",
+  "imageInfoNoImage": "Bilgilerini görmek için bir görüntü seçin.",
+  "imageInfoOriginalNote": "Boyutlar, gösterilen önizlemeyi değil yüklenen görüntüyü tanımlar.",
+
   "notesSearch": "Notlarda ara",
   "notesSearchPlaceholder": "Metin, kategori, çözüm veya durum",
   "notesClearSearch": "Not aramasını temizle",

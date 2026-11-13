@@ -17,7 +17,7 @@ export const NoteToolsSection: React.FC<NoteToolsSectionProps> = props => {
 <div
                 style={noteToolsSectionStyle}
               >
-                <button
+                <button className="mly-text-action"
                   type="button"
                   onClick={onToggleAnnotationMode}
                   aria-pressed={!!isAnnotationMode}
@@ -39,7 +39,7 @@ export const NoteToolsSection: React.FC<NoteToolsSectionProps> = props => {
                 </button>
 
                 {
-                  <button
+                  <button className="mly-text-action"
                     onClick={onToggleFieldNotesList}
                     title={t('uiShowFieldNotes')}
                     style={noteToolsListButtonStyle}

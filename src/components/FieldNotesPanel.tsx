@@ -17,7 +17,7 @@ import { EnterpriseNotesList } from '../features/field-notes/EnterpriseNotesList
 import type { WorkspaceLocationRequest } from '../features/community-notes/WorkspaceLocationPicker';
 import { WorkspaceBoundary } from '../features/community-notes/WorkspaceBoundary';
 import type { EnterpriseNotesLoader } from '../features/field-notes/enterpriseList';
-import { notesTabsStyle, getNotesTabStyle, notesSheetStyle, notesSheetHandleStyle, notesSheetGripStyle } from '../styles/enterpriseNotes';
+import { notesTabsStyle, getNotesTabStyle, notesSheetStyle, notesSheetHandleStyle, notesSheetGripStyle, notesSheetHeaderStyle, notesSheetCloseStyle } from '../styles/enterpriseNotes';
 import { FieldNote, FieldNoteEditor, FieldNoteAttachments, FIELD_NOTE_CATEGORIES } from "./types";
 
 interface Props {
@@ -156,11 +156,12 @@ export const FieldNotesPanel: React.FC<Props> = (props) => {
 
             {workspacePicking&&<div role="status" onPointerDown={event=>event.stopPropagation()} onClick={event=>event.stopPropagation()} style={{position:'absolute',bottom:12,left:12,right:12,zIndex:999999994,padding:12,background:'#13251ef2',color:'#eef6f0',border:'1px solid #7fae94',borderRadius:6,display:'flex',flexWrap:'wrap',alignItems:'center',gap:10}}>
               <span>{owned('Click the map to choose a contribution location. Press Escape to cancel.')}</span>
-              <button type="button" style={{...noteMapRefreshStyle,padding:'6px 10px',minHeight:32}} onClick={()=>cancelWorkspacePick.current?.()}>{owned('Cancel location picking')}</button>
+              <button className="mly-text-action" type="button" style={{...noteMapRefreshStyle,padding:'6px 10px',minHeight:32}} onClick={()=>cancelWorkspacePick.current?.()}>{owned('Cancel location picking')}</button>
             </div>}
             {/* Notes list: bottom-sheet with fixed header and scrollable notes */}
             {(listOpen || workspaceVisited) && (
                 <div className="mly-notes-sheet" hidden={!listOpen||workspacePicking} style={{ ...notesSheetStyle, display: listOpen&&!workspacePicking ? 'flex' : 'none', ...(notesExpanded ? { height: '92%' } : {}) }}>
+                    <div style={notesSheetHeaderStyle}>
                     {/* Native button supports touch, Enter and Space without stealing list scrolling. */}
                     <button type="button" aria-expanded={notesExpanded} aria-label={owned(notesExpanded ? 'Collapse notes panel' : 'Expand notes panel')}
                       title={owned(notesExpanded ? 'Collapse notes panel' : 'Expand notes panel')} style={notesSheetHandleStyle}
@@ -168,7 +169,12 @@ export const FieldNotesPanel: React.FC<Props> = (props) => {
                       onPointerDown={event => event.stopPropagation()}>
                       <span aria-hidden="true" style={notesSheetGripStyle} />
                     </button>
-                    {props.sharedMessage && activeSource !== 'workspace' && <div role="status" style={noteMapMessageStyle}>{<OwnedMessage source={String(props.sharedMessage ?? "")}/>} <button type="button" onClick={props.onRetrySharedDisplay} style={noteMapRefreshStyle}> {t('uiRefresh')} </button></div>}
+                    <button type="button" aria-label={t('uiCloseNotesList')} title={t('uiCloseNotesList')} style={notesSheetCloseStyle}
+                      onPointerDown={event => event.stopPropagation()} onClick={event => { event.stopPropagation(); onCloseList(); }}>
+                      <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                    </button>
+                    </div>
+                    {props.sharedMessage && activeSource !== 'workspace' && <div role="status" style={noteMapMessageStyle}>{<OwnedMessage source={String(props.sharedMessage ?? "")}/>} <button className="mly-text-action" type="button" onClick={props.onRetrySharedDisplay} style={noteMapRefreshStyle}> {t('uiRefresh')} </button></div>}
                     <div role="tablist" aria-label={t('uiNoteSource')} style={{ ...notesTabsStyle, flexWrap: 'wrap' }} onKeyDown={event => {
                       if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
                       event.preventDefault();
@@ -178,7 +184,7 @@ export const FieldNotesPanel: React.FC<Props> = (props) => {
                       setNoteSource(nextSource); setIsConfirmingClear(false);
                       (event.currentTarget.querySelector('[data-source="' + nextSource + '"]') as HTMLButtonElement | null)?.focus();
                     }}>
-                      {sources.map(source => <button key={source} type="button" role="tab" data-source={source} aria-selected={activeSource === source}
+                      {sources.map(source => <button className="mly-text-action" key={source} type="button" role="tab" data-source={source} aria-selected={activeSource === source}
                         tabIndex={activeSource === source ? 0 : -1} style={getNotesTabStyle(activeSource === source)}
                         onClick={() => { setNoteSource(source); setIsConfirmingClear(false); }}>
                         {source === 'local' ? `${t('uiLocal').trim()}${notes.length})` : source === 'enterprise' ? t('uiEnterprise') : owned('Workspaces')}
@@ -190,14 +196,14 @@ export const FieldNotesPanel: React.FC<Props> = (props) => {
                       style={{ display: activeSource === 'workspace' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, flex: '1 1 0' }}>
                       <WorkspaceBoundary fallback={<div role="alert" style={workspaceFeedbackStyle}>{owned('Workspace controls could not load. Local notes remain available; reload the page to retry.')}</div>}>
                         <React.Suspense fallback={<div role="status" style={workspaceFeedbackStyle}>{owned('Loading workspace controls…')}</div>}>
-                          <CommunityWorkspacePanel onDetectionDraftLocation={props.onDetectionDraftLocation} onDetectionDraftFinished={props.onDetectionDraftFinished} onLoadDetectionPreview={props.onLoadDetectionPreview} detectionDraft={props.detectionWorkspaceDraft} onClearDetectionDraft={props.onClearDetectionWorkspaceDraft} notes={notes} onFocus={onFocusNote} onClose={onCloseList} onMapNotes={props.onWorkspaceMapChange} onPickLocation={props.onWorkspacePickLocation?requestWorkspacePick:undefined} currentImageId={props.currentImageId} />
+                          <CommunityWorkspacePanel onDetectionDraftLocation={props.onDetectionDraftLocation} onDetectionDraftFinished={props.onDetectionDraftFinished} onLoadDetectionPreview={props.onLoadDetectionPreview} detectionDraft={props.detectionWorkspaceDraft} onClearDetectionDraft={props.onClearDetectionWorkspaceDraft} notes={notes} onFocus={onFocusNote} onMapNotes={props.onWorkspaceMapChange} onPickLocation={props.onWorkspacePickLocation?requestWorkspacePick:undefined} currentImageId={props.currentImageId} />
                         </React.Suspense>
                       </WorkspaceBoundary>
                     </div>}
-                    {listOpen && activeSource !== 'workspace' && (activeSource === "enterprise" && props.onLoadEnterpriseNotes ? <EnterpriseNotesList onLoadDetectionAttachment={props.onLoadDetectionAttachment} onLoadDetectionPreview={props.onLoadDetectionPreview} loadPage={props.onLoadEnterpriseNotes} context={props.enterpriseContext} layerUrl={props.enterpriseLayerUrl} onFocus={onFocusNote} onEdit={props.sharingEnabled ? props.onEditSharedNote : undefined} onAttachments={props.onAttachments} editorBusy={!!props.editor?.saving} attachmentsBusy={!!props.attachments?.busy} onClose={onCloseList} /> : <LocalNotesList onLoadDetectionAttachment={props.onLoadDetectionAttachment} onLoadDetectionPreview={props.onLoadDetectionPreview} notes={notes} fileInputRef={fileInputRef} isConfirmingClear={isConfirmingClear} setIsConfirmingClear={setIsConfirmingClear}
+                    {listOpen && activeSource !== 'workspace' && (activeSource === "enterprise" && props.onLoadEnterpriseNotes ? <EnterpriseNotesList onLoadDetectionAttachment={props.onLoadDetectionAttachment} onLoadDetectionPreview={props.onLoadDetectionPreview} loadPage={props.onLoadEnterpriseNotes} context={props.enterpriseContext} layerUrl={props.enterpriseLayerUrl} onFocus={onFocusNote} onEdit={props.sharingEnabled ? props.onEditSharedNote : undefined} onAttachments={props.onAttachments} editorBusy={!!props.editor?.saving} attachmentsBusy={!!props.attachments?.busy} /> : <LocalNotesList onLoadDetectionAttachment={props.onLoadDetectionAttachment} onLoadDetectionPreview={props.onLoadDetectionPreview} notes={notes} fileInputRef={fileInputRef} isConfirmingClear={isConfirmingClear} setIsConfirmingClear={setIsConfirmingClear}
                       sharingEnabled={props.sharingEnabled} editorBusy={props.editor?.saving} attachmentsBusy={props.attachments?.busy}
                       onShareNote={props.onShareNote} onEditNote={props.onEditNote} onEditSharedNote={props.onEditSharedNote} onAttachments={props.onAttachments}
-                      onDeleteNote={onDeleteNote} onClearAll={onClearAll} onExport={onExport} onImportFile={onImportFile} onFocusNote={onFocusNote} onCloseList={onCloseList} />)}
+                      onDeleteNote={onDeleteNote} onClearAll={onClearAll} onExport={onExport} onImportFile={onImportFile} onFocusNote={onFocusNote} />)}
                 </div>
             )}
         </React.Fragment>

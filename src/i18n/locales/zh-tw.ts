@@ -1,6 +1,27 @@
 import type { Messages } from '../messages';
 /** Traditional Chinese (Taiwan) presentation catalog; stored values and protocol identifiers remain unchanged. */
 const zhTW: Messages = {
+  "imageInfoTitle": "影像資訊",
+  "imageInfoCaptured": "拍攝時間（UTC）",
+  "imageInfoContributor": "貢獻者",
+  "imageInfoOrganization": "組織",
+  "imageInfoCamera": "相機",
+  "imageInfoProjection": "投影類型",
+  "imageInfoDimensions": "原始尺寸",
+  "imageInfoCaptureMethod": "拍攝方式",
+  "imageInfoFoot": "步行",
+  "imageInfoOther": "其他方式",
+  "imageInfoUnknownMethod": "未知",
+  "imageInfoUnavailable": "暫無資訊",
+  "imageInfoPerspective": "透視",
+  "imageInfoFisheye": "魚眼",
+  "imageInfoPanorama": "全景",
+  "imageInfoDeferred": "暫停播放以載入更多影像資訊。",
+  "imageInfoLoading": "正在載入影像資訊…",
+  "imageInfoError": "無法載入影像資訊。",
+  "imageInfoNoImage": "請選取影像以查看其資訊。",
+  "imageInfoOriginalNote": "尺寸指上傳的原始影像，而非目前顯示的預覽圖。",
+
   "notesSearch": "搜尋備註",
   "notesSearchPlaceholder": "文字、類別、解決說明或狀態",
   "notesClearSearch": "清除備註搜尋",

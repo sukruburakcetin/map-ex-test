@@ -1,3 +1,4 @@
+import type { ImageInformationHost, InformationViewer } from '../features/image-information/ImageInformation';
 import type { DetectionExplorerOptions, DetectionSummary } from '../features/detections/detectionExploration';
 import type { RoutePreviewHost } from '../features/routing/RoutePreviewSimulation';
 /** @file Shared prop types for Mapillary Explorer sub-components */
@@ -91,6 +92,9 @@ export const FIELD_NOTE_CATEGORIES = DEFAULT_FIELD_NOTE_CATEGORIES;
 
 // InfoBox props
 export interface InfoBoxProps {
+  imageInformationHost?: ImageInformationHost;
+  imageInformationViewer?: InformationViewer | null;
+  imageInformationActive?: boolean;
   routePreviewHost?: RoutePreviewHost;
   detectionToolsRequest?: number;
   // visibility / config

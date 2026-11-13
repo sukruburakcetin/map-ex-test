@@ -9,9 +9,9 @@ import { NotesSearchControls } from './NotesSearchControls';
 import { filterNotes } from './noteSearch';
 import { FIELD_NOTE_STATUSES } from '../../components/types';
 import type { FieldNote } from '../../components/types';
-import { noteListToolbarStyle, noteListToolbarActionsStyle, noteListImportStyle, noteListFileInputStyle, noteListExportStyle, noteListCloseStyle, noteListEmptyStyle, noteListCategoryStyle, noteListDeleteStyle, noteListShareStyle, getNoteStatusBadgeStyle, noteListResolutionStyle, noteListErrorStyle, noteListTextStyle } from '../../styles/fieldNotes';
+import { noteListToolbarStyle, noteListToolbarActionsStyle, noteListImportStyle, noteListFileInputStyle, noteListExportStyle, noteListEmptyStyle, noteListCategoryStyle, noteListDeleteStyle, noteListShareStyle, getNoteStatusBadgeStyle, noteListResolutionStyle, noteListErrorStyle, noteListTextStyle } from '../../styles/fieldNotes';
 import { noteListActionStyle } from '../../styles/fieldNotes';
-import { notesSourceHintStyle, notesLocalPanelStyle, enterpriseRowsStyle, enterpriseActionsStyle, notesRowHeadingStyle, notesWorkflowStatusStyle, notesRowMetaStyle, notesRowButtonsStyle, notesAttachmentHintStyle } from '../../styles/enterpriseNotes';
+import { notesSourceHintStyle, enterprisePanelStyle, enterpriseContentStyle, enterpriseRowsStyle, enterpriseRowStyle, enterpriseActionsStyle, notesRowHeadingStyle, notesRowHeaderContentStyle, notesWorkflowStatusStyle, notesRowMetaStyle, notesRowButtonsStyle, notesAttachmentHintStyle } from '../../styles/enterpriseNotes';
 
 export interface LocalNotesListProps {onLoadDetectionPreview?:DetectionPreviewLoader;onLoadDetectionAttachment?:(note:FieldNote,id:string,signal:AbortSignal)=>Promise<string>;
   notes: FieldNote[];
@@ -30,26 +30,26 @@ export interface LocalNotesListProps {onLoadDetectionPreview?:DetectionPreviewLo
   onExport: () => void;
   onImportFile: (file: File) => void;
   onFocusNote: (note: FieldNote) => void;
-  onCloseList: () => void;
 }
 
 /** Render newest-first local copies and forward actions; clearing never deletes Enterprise records. */
 export const LocalNotesList: React.FC<LocalNotesListProps> = props => {
  const { t, formatLocale:locale } = useWidgetLocale();
 
-  const { notes, fileInputRef, isConfirmingClear, setIsConfirmingClear, onDeleteNote, onClearAll, onExport, onImportFile, onFocusNote, onCloseList } = props;
+  const { notes, fileInputRef, isConfirmingClear, setIsConfirmingClear, onDeleteNote, onClearAll, onExport, onImportFile, onFocusNote } = props;
   const [query, setQuery] = React.useState('');
   const visibleNotes = React.useMemo(() => filterNotes(notes, query, locale, {
     open: t('uiStatusOpen'), in_progress: t('uiStatusProgress'), completed: t('uiStatusCompleted'), dismissed: t('uiStatusDismissed'),
   }), [notes, query, locale, t]);
   return (
-<div role="tabpanel" aria-label={t('uiLocalNotes')} style={notesLocalPanelStyle}>
-                    {/* Fixed Header: Actions remain visible at all times */}
+<div role="tabpanel" aria-label={t('uiLocalNotes')} className="mly-notes-scroll" tabIndex={0} style={enterprisePanelStyle}>
+                    <div style={enterpriseContentStyle}>
+                    {/* Tools and cards share one viewport so every local copy remains reachable. */}
                     <div style={noteListToolbarStyle}>
                         <span>{notes.length > 0 ? <OwnedMessage source={notes.length === 1 ? "{count} local note" : "{count} local notes"} values={{count:notes.length}}/> : t('uiNoLocalNotes')}</span>
                         <div style={noteListToolbarActionsStyle}>
                             {/* Import Button */}
-                            <button
+                            <button className="mly-text-action"
                                 onClick={() => fileInputRef.current?.click()}
                                 style={noteListImportStyle}
                                     > {t('uiImport')} </button>
@@ -66,12 +66,12 @@ export const LocalNotesList: React.FC<LocalNotesListProps> = props => {
                                 }}
                             />
                             {/* Export Button */}
-                            <button
+                            <button className="mly-text-action"
                                 onClick={onExport}
                                 style={noteListExportStyle}
                                 > {t('uiExport')} </button>
                             {notes.length > 0 && (
-                                <button
+                                <button className="mly-text-action"
                                     onClick={() => {
                                         if (notes.some(note => note.sharedStatus === "saving")) return;
                                         if (isConfirmingClear) {
@@ -100,11 +100,6 @@ export const LocalNotesList: React.FC<LocalNotesListProps> = props => {
                                     {isConfirmingClear ? t('uiConfirmClearLocal') : t('uiClearLocal')}
                                 </button>
                             )}
-                            {/* Close Button */}
-                            <button
-                                onClick={onCloseList}
-                                style={noteListCloseStyle}
-                            >✕</button>
                         </div>
                     </div>
 
@@ -119,40 +114,40 @@ export const LocalNotesList: React.FC<LocalNotesListProps> = props => {
                         {visibleNotes.slice().reverse().map(n => (
                             <div
                                 key={n.id}
-                                style={{
-                                    padding: "5px 8px", borderRadius: "6px",
-                                    background: "rgba(255,255,255,0.05)",
-                                    borderLeft: `3px solid ${n.source === 'manual' ? '#f5a623' : '#35AF6D'}`,
-                                    flexShrink: 0
-                                }}
+                                style={{ ...enterpriseRowStyle, borderLeft: `3px solid ${n.source === 'manual' ? '#f5a623' : '#35AF6D'}` }}
                             >
                                 <div style={notesRowHeadingStyle}>
-                                    <span style={noteListCategoryStyle}>{n.category} <span style={notesRowMetaStyle}>{new Date(n.createdAt).toLocaleString(locale)}</span></span>
-                                    <span role="button" tabIndex={0} aria-label={n.sharedStatus === "shared" ? t('uiRemoveLocalCopyEnterpriseNoteRemains') : t('uiDeleteLocalNote')}
-                                        onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); event.stopPropagation(); onDeleteNote(n.id); } }}
+                                    <div style={notesRowHeaderContentStyle}>
+                                      <span style={noteListCategoryStyle}>{n.category}</span>
+                                      <span style={notesRowMetaStyle}>{new Date(n.createdAt).toLocaleString(locale)}</span>
+                                <span style={{ fontSize: 10, color: n.sharedStatus === "failed" ? "#ffb8a6" : "#9ed9df" }}>{n.sharedStatus === "saving" ? t('uiSavingToOrganization') : n.sharedStatus === "shared" ? t('uiSharedLocalCopy') : n.sharedStatus === "failed" ? t('uiShareFailedLocalDraftPreserved') : t('uiLocalDraft')}
+                                  {props.sharingEnabled && n.sharedStatus !== "shared" && <button className="mly-text-action" type="button" disabled={n.sharedStatus === "saving"} onClick={event => { event.stopPropagation(); props.onShareNote?.(n.id); }} title={n.sharedStatus === "failed" ? t('uiRetrySavingThisLocalDraftToYourOrganization') : t('uiSaveThisLocalNoteToYourOrganizationS')} style={noteListShareStyle}>{n.sharedStatus === "failed" ? t('uiRetrySharing') : t('uiShare')}</button>}
+                                </span>
+                                    </div>
+                                    <button type="button" aria-label={n.sharedStatus === "shared" ? t('uiRemoveLocalCopyEnterpriseNoteRemains') : t('uiDeleteLocalNote')}
                                         onClick={(e) => { e.stopPropagation(); onDeleteNote(n.id); }}
                                         style={noteListDeleteStyle}
-                                    >✕</span>
-                                </div>
-                                <div style={{ fontSize: 10, marginTop: 3, color: n.sharedStatus === "failed" ? "#ffb8a6" : "#9ed9df" }}>{n.sharedStatus === "saving" ? t('uiSavingToOrganization') : n.sharedStatus === "shared" ? t('uiSharedLocalCopy') : n.sharedStatus === "failed" ? t('uiShareFailedLocalDraftPreserved') : t('uiLocalDraft')}
-                                  {props.sharingEnabled && n.sharedStatus !== "shared" && <button type="button" disabled={n.sharedStatus === "saving"} onClick={event => { event.stopPropagation(); props.onShareNote?.(n.id); }} title={n.sharedStatus === "failed" ? t('uiRetrySavingThisLocalDraftToYourOrganization') : t('uiSaveThisLocalNoteToYourOrganizationS')} style={noteListShareStyle}>{n.sharedStatus === "failed" ? t('uiRetrySharing') : t('uiShare')}</button>}
+                                        title={n.sharedStatus === "shared" ? t('uiRemoveLocalCopyEnterpriseNoteRemains') : t('uiDeleteLocalNote')}
+                                    ><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7" /></svg></button>
                                 </div>
                                 <div style={enterpriseActionsStyle}>
                                   <div style={notesWorkflowStatusStyle}><span>{t('uiStatus')}:</span><span style={getNoteStatusBadgeStyle(n.status)}>{t(n.status==='in_progress'?'uiStatusProgress':n.status==='completed'?'uiStatusCompleted':n.status==='dismissed'?'uiStatusDismissed':'uiStatusOpen')}</span></div>
                                   <div style={notesRowButtonsStyle}>
-                                  <button type="button" style={noteListActionStyle} disabled={!Number.isFinite(n.lon) || !Number.isFinite(n.lat)} onClick={() => onFocusNote(n)}> {t('uiShowOnMap')} </button>
-                                  <button type="button" disabled={n.sharedStatus === "saving" || !!props.editorBusy} onClick={event => { event.stopPropagation(); props.onEditNote?.(n.id); }} style={{ ...noteListActionStyle, opacity: n.sharedStatus === "saving" || props.editorBusy ? 0.45 : 1 }}> {t('uiEditLocal')} </button>
-                                  {props.sharingEnabled && n.sharedStatus === "shared" && <button type="button" disabled={!!props.editorBusy} onClick={event => { event.stopPropagation(); props.onEditSharedNote?.(n); }} style={{ ...noteListActionStyle, opacity: props.editorBusy ? 0.45 : 1 }}> {t('uiUpdateShared')} </button>}
-                                  {props.sharingEnabled && n.sharedStatus === "shared" && <button type="button" disabled={!!props.attachmentsBusy} style={{ ...noteListActionStyle, opacity: props.attachmentsBusy ? 0.45 : 1 }} onClick={event => { event.stopPropagation(); props.onAttachments?.(n); }}> {t('uiAttachments')} </button>}
+                                  <button className="mly-text-action" type="button" style={noteListActionStyle} disabled={!Number.isFinite(n.lon) || !Number.isFinite(n.lat)} onClick={() => onFocusNote(n)}> {t('uiShowOnMap')} </button>
+                                  <button className="mly-text-action" type="button" disabled={n.sharedStatus === "saving" || !!props.editorBusy} onClick={event => { event.stopPropagation(); props.onEditNote?.(n.id); }} style={{ ...noteListActionStyle, opacity: n.sharedStatus === "saving" || props.editorBusy ? 0.45 : 1 }}> {t('uiEditLocal')} </button>
+                                  {props.sharingEnabled && n.sharedStatus === "shared" && <button className="mly-text-action" type="button" disabled={!!props.editorBusy} onClick={event => { event.stopPropagation(); props.onEditSharedNote?.(n); }} style={{ ...noteListActionStyle, opacity: props.editorBusy ? 0.45 : 1 }}> {t('uiUpdateShared')} </button>}
+                                  {props.sharingEnabled && n.sharedStatus === "shared" && <button className="mly-text-action" type="button" disabled={!!props.attachmentsBusy} style={{ ...noteListActionStyle, opacity: props.attachmentsBusy ? 0.45 : 1 }} onClick={event => { event.stopPropagation(); props.onAttachments?.(n); }}> {t('uiAttachments')} </button>}
                                   </div>
                                 </div>
                                 {n.sharedStatus !== "shared" && props.sharingEnabled && <div style={notesAttachmentHintStyle}> {t('uiShareFirstToAttachFiles')} </div>}
+                                {n.note && <div style={noteListTextStyle}><LinkedDetectionNoteText value={n.note} loadAttachment={props.onLoadDetectionAttachment?(id,signal)=>props.onLoadDetectionAttachment!(n,id,signal):undefined} load={props.onLoadDetectionPreview}/></div>}
                                 {n.resolutionNote && <div style={noteListResolutionStyle}> {t('uiResolution')} {n.resolutionNote}</div>}
                                 {n.sharedError && <div style={noteListErrorStyle}>{<OwnedMessage source={String(n.sharedError ?? "")}/>}</div>}
-                                {n.note && <div style={noteListTextStyle}><LinkedDetectionNoteText value={n.note} loadAttachment={props.onLoadDetectionAttachment?(id,signal)=>props.onLoadDetectionAttachment!(n,id,signal):undefined} load={props.onLoadDetectionPreview}/></div>}
+
 
                             </div>
                         ))}
+                    </div>
                     </div>
                     </div>
   );

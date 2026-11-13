@@ -40,7 +40,7 @@ export const TimeTravelPreview: React.FC<Props> = ({imageId,load,onClose,onExter
   <div lang={locale} ref={dialog} className="mly-travel-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId}>
    <header><h2 id={titleId}>{t('timeTravel')} </h2><button type="button" aria-label={t('closeTravel')} onClick={onClose}>✕</button></header>
    {!data&&!error&&<div role="status" className="mly-travel-status">{t('loadingCaptures')} </div>}
-   {error&&<div role="alert"><p>{t('travelError')}</p><button type="button" onClick={()=>setRetry(v=>v+1)}>{t('retry')} </button></div>}
+   {error&&<div role="alert"><p>{t('travelError')}</p><button className="mly-text-action" type="button" onClick={()=>setRetry(v=>v+1)}>{t('retry')} </button></div>}
    {data&&!candidate&&<p>{t('noCaptures')} </p>}
    {data&&candidate&&<React.Fragment>
     <label>{t('relatedCapture')} <select value={selected} onChange={event=>{setSelected(Number(event.target.value));setSplit(50)}}>{data.alternatives.map((item,index)=><option value={index} key={item.id}>{t('captureOption',{date:date(item.capturedAt),distance:new Intl.NumberFormat(locale,{maximumFractionDigits:0}).format(item.distance)})}{item.pano?' · '+t('panorama'):''}</option>)}</select></label>
@@ -50,9 +50,9 @@ export const TimeTravelPreview: React.FC<Props> = ({imageId,load,onClose,onExter
     <div className="mly-travel-dates"><span>{t('relatedDate',{date:date(candidate.capturedAt)})}</span>{compare&&<span>{t('currentDate',{date:date(data.current.capturedAt)})}</span>}</div>
     {compare&&<label>{t('slideCompare')} <input dir="ltr" className="mly-travel-slider" type="range" min="0" max="100" value={split} onChange={event=>setSplit(Number(event.target.value))} aria-label={t('revealRelated')}/></label>}
     <p>{t('compareNote')} {(candidate.pano||data.current.pano)?' '+t('panoramaNote'):''}</p>
-    <button type="button" className="mly-travel-primary" disabled={failed.includes(candidate.url)||failed.includes(data.current.url)} onClick={()=>{setCompare(value=>!value);setSplit(50)}}>{compare?t('previewOnly'):t('compareCurrent')}</button>
+    <button type="button" className="mly-travel-primary mly-text-action" disabled={failed.includes(candidate.url)||failed.includes(data.current.url)} onClick={()=>{setCompare(value=>!value);setSplit(50)}}>{compare?t('previewOnly'):t('compareCurrent')}</button>
    </React.Fragment>}
-   <footer><button type="button" onClick={onExternal}>{t('exploreMapillary')} </button></footer>
+   <footer><button className="mly-text-action" type="button" onClick={onExternal}>{t('exploreMapillary')} </button></footer>
   </div>
  </div>,document.fullscreenElement||document.body);
 };

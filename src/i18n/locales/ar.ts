@@ -1,6 +1,27 @@
 import type { Messages } from '../messages';
 /** Modern Standard Arabic. Assisted draft; community native review is welcome. */
 const ar: Messages = {
+  "imageInfoTitle": "معلومات الصورة",
+  "imageInfoCaptured": "وقت الالتقاط (UTC)",
+  "imageInfoContributor": "المساهم",
+  "imageInfoOrganization": "المؤسسة",
+  "imageInfoCamera": "الكاميرا",
+  "imageInfoProjection": "نوع الإسقاط",
+  "imageInfoDimensions": "أبعاد الصورة الأصلية",
+  "imageInfoCaptureMethod": "طريقة الالتقاط",
+  "imageInfoFoot": "سيرًا على الأقدام",
+  "imageInfoOther": "طريقة أخرى",
+  "imageInfoUnknownMethod": "غير معروف",
+  "imageInfoUnavailable": "غير متاح",
+  "imageInfoPerspective": "منظوري",
+  "imageInfoFisheye": "عين السمكة",
+  "imageInfoPanorama": "بانوراما",
+  "imageInfoDeferred": "أوقف التشغيل مؤقتًا لتحميل معلومات إضافية عن الصورة.",
+  "imageInfoLoading": "جارٍ تحميل معلومات الصورة…",
+  "imageInfoError": "تعذّر تحميل معلومات الصورة.",
+  "imageInfoNoImage": "اختر صورة لعرض معلوماتها.",
+  "imageInfoOriginalNote": "تصف الأبعاد الصورة المرفوعة، وليس المعاينة المعروضة.",
+
   "notesSearch": "البحث في الملاحظات",
   "notesSearchPlaceholder": "النص أو الفئة أو الحل أو الحالة",
   "notesClearSearch": "مسح البحث في الملاحظات",

@@ -1,6 +1,7 @@
 /** @jsx jsx */
 import { React, jsx } from 'jimu-core';
 import { PresentationText, Presentation, presentationFormatter, TextValues } from './PresentationText';
+import { textButtonCss } from '../styles/textButtons';
 import { arabicUiCss } from './arabicUiCss';
 import { legacyEnglish } from './legacyEnglish';
 import { startupMessages, languageName } from './startupMessages';
@@ -66,7 +67,7 @@ export const WidgetLocaleProvider: React.FC<{appLocale?:string;widgetId:string;d
  React.useLayoutEffect(()=>{presentation.update(catalog.locale,owned,formatLocale)},[catalog,owned,presentation,formatLocale]);
  React.useEffect(()=>()=>presentation.clear(),[presentation]);
  const value=React.useMemo<LocaleValue>(()=>({presentation,owned,allowSwitch:allowUserChoice,locale:catalog.locale,formatLocale,direction:directionOf(catalog.locale),preference:preferenceOf(defaultLanguage)!=='auto'?preferenceOf(defaultLanguage):preference,builderControlled:preferenceOf(defaultLanguage)!=='auto',loading:loading||settledCatalog.requested!==requested,failed:failed&&settledCatalog.requested===requested,setPreference,retry,t:(key,values)=>message(catalog.messages,key,values)}),[catalog,preference,loading,failed,setPreference,retry,allowUserChoice,presentation,owned,defaultLanguage,settledCatalog,requested,formatLocale]);
- return <WidgetLocaleContext.Provider value={value}>{value.direction==='rtl'&&<style>{arabicUiCss}</style>}{children}</WidgetLocaleContext.Provider>;
+ return <WidgetLocaleContext.Provider value={value}><style>{textButtonCss}</style>{value.direction==='rtl'&&<style>{arabicUiCss}</style>}{children}</WidgetLocaleContext.Provider>;
 };
 export const useWidgetLocale = (): LocaleValue => React.useContext(WidgetLocaleContext);
 export const LanguageChoice: React.FC = () => {
@@ -78,7 +79,7 @@ export const LanguageChoice: React.FC = () => {
    <option value="auto" style={{background:preference==='auto'?'#31543d':'#192f24',color:'#e1eee5'}}>{t('automatic')}</option>{(['en','en-GB','ar','tr','es','fr','de','pt-BR','it','ja','ko','zh-CN','zh-TW'] as const).map(language=><option key={language} value={language} style={{background:preference===language?'#31543d':'#192f24',color:'#e1eee5'}} lang={locale==='en'?'en-US':locale}>{languageName(locale,language)}</option>)}
   </select></label>
   {loading&&<span role="status">{t('languageLoading')}</span>}
-  {failed&&<div role="status">{t('languageError')} <button type="button" onClick={retry}>{t('retryLanguage')}</button></div>}
+  {failed&&<div role="status">{t('languageError')} <button className="mly-text-action" type="button" onClick={retry}>{t('retryLanguage')}</button></div>}
  </div>;
 };
 

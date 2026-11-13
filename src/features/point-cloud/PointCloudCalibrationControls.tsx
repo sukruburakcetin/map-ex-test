@@ -17,7 +17,7 @@ export const PointCloudCalibrationControls: React.FC<PointCloudCalibrationContro
 <div
               style={calibrationPanelStyle(showCalibrationPanel)}
             >
-              <button
+              <button className="mly-text-action"
                 onClick={onToggleCalibrationPanel}
                 title={t('uiCalibratePointCloudGpsDrift')}
                 style={calibrationToggleStyle}
@@ -49,7 +49,7 @@ export const PointCloudCalibrationControls: React.FC<PointCloudCalibrationContro
                     <button onClick={() => onJoystickNudge?.("x", -1)} style={miniJoyStyle}>
                       ◀
                     </button>
-                    <button
+                    <button className="mly-text-action"
                       title={t('uiResetCalibration')} aria-label={t('uiResetCalibration')} onClick={onResetCalibration}
                       style={calibrationResetStyle(miniJoyStyle)}
                     >
@@ -66,9 +66,9 @@ export const PointCloudCalibrationControls: React.FC<PointCloudCalibrationContro
 
                   {/* Vertical Z-controls */}
                   <div style={calibrationVerticalRowStyle}>
-                    <button onClick={() => onJoystickNudge?.("z", -1)} style={calibrationVerticalButtonStyle(miniJoyStyle)}>
+                    <button className="mly-text-action" onClick={() => onJoystickNudge?.("z", -1)} style={calibrationVerticalButtonStyle(miniJoyStyle)}>
                        {t('uiZ')} </button>
-                    <button onClick={() => onJoystickNudge?.("z", 1)} style={calibrationVerticalButtonStyle(miniJoyStyle)}>
+                    <button className="mly-text-action" onClick={() => onJoystickNudge?.("z", 1)} style={calibrationVerticalButtonStyle(miniJoyStyle)}>
                        {t('uiZ2')} </button>
                   </div>
                 </div>

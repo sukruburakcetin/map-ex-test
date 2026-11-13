@@ -1,6 +1,27 @@
 import type { Messages } from '../messages';
 /** French presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const fr: Messages = {
+  "imageInfoTitle": "Informations sur l’image",
+  "imageInfoCaptured": "Prise de vue (UTC)",
+  "imageInfoContributor": "Contributeur",
+  "imageInfoOrganization": "Organisation",
+  "imageInfoCamera": "Appareil photo",
+  "imageInfoProjection": "Projection",
+  "imageInfoDimensions": "Dimensions originales",
+  "imageInfoCaptureMethod": "Mode de prise de vue",
+  "imageInfoFoot": "À pied",
+  "imageInfoOther": "Autre mode",
+  "imageInfoUnknownMethod": "Inconnu",
+  "imageInfoUnavailable": "Indisponible",
+  "imageInfoPerspective": "Perspective",
+  "imageInfoFisheye": "Œil-de-poisson",
+  "imageInfoPanorama": "Panorama",
+  "imageInfoDeferred": "Mettez la lecture en pause pour charger les informations supplémentaires.",
+  "imageInfoLoading": "Chargement des informations de l’image…",
+  "imageInfoError": "Impossible de charger les informations de l’image.",
+  "imageInfoNoImage": "Sélectionnez une image pour afficher ses informations.",
+  "imageInfoOriginalNote": "Les dimensions sont celles de l’image importée, pas de l’aperçu affiché.",
+
   "notesSearch": "Rechercher des notes",
   "notesSearchPlaceholder": "Texte, catégorie, résolution ou statut",
   "notesClearSearch": "Effacer la recherche de notes",

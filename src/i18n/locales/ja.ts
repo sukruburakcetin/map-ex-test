@@ -1,6 +1,27 @@
 import type { Messages } from '../messages';
 /** Japanese presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const ja: Messages = {
+  "imageInfoTitle": "画像情報",
+  "imageInfoCaptured": "撮影日時（UTC）",
+  "imageInfoContributor": "投稿者",
+  "imageInfoOrganization": "組織",
+  "imageInfoCamera": "カメラ",
+  "imageInfoProjection": "投影方式",
+  "imageInfoDimensions": "元の画像サイズ",
+  "imageInfoCaptureMethod": "撮影方法",
+  "imageInfoFoot": "徒歩",
+  "imageInfoOther": "その他の方法",
+  "imageInfoUnknownMethod": "不明",
+  "imageInfoUnavailable": "情報なし",
+  "imageInfoPerspective": "透視投影",
+  "imageInfoFisheye": "魚眼",
+  "imageInfoPanorama": "パノラマ",
+  "imageInfoDeferred": "追加の画像情報を読み込むには再生を一時停止してください。",
+  "imageInfoLoading": "画像情報を読み込み中…",
+  "imageInfoError": "画像情報を読み込めませんでした。",
+  "imageInfoNoImage": "画像を選択すると情報が表示されます。",
+  "imageInfoOriginalNote": "サイズはアップロードされた元の画像のもので、表示中のプレビューのものではありません。",
+
   "notesSearch": "メモを検索",
   "notesSearchPlaceholder": "本文、カテゴリ、対応内容、ステータス",
   "notesClearSearch": "メモの検索をクリア",

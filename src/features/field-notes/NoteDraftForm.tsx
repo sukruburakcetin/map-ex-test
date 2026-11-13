@@ -44,11 +44,11 @@ export const NoteDraftForm: React.FC<NoteDraftFormProps> = props => {
                     />
                     {props.sharingEnabled && <label style={noteDraftShareStyle}><input type="checkbox" checked={share} onChange={event => setShare(event.target.checked)} /> {t('uiAlsoShareWithYourOrganization')} </label>}
                     <div style={noteDraftActionsStyle}>
-                        <button
+                        <button className="mly-text-action"
                             onClick={onCancelPending}
                             style={noteDraftCancelStyle}
                         > {t('uiCancel')} </button>
-                        <button
+                        <button className="mly-text-action"
                             onClick={() => onSubmitNote(category, noteText, props.sharingEnabled && share)}
                             style={noteDraftSaveStyle}
                         > {t('uiSave')} </button>

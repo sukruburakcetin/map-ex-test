@@ -176,7 +176,7 @@ export class GlassDatePicker extends React.PureComponent<GlassDatePickerProps, G
                 style={dateWrapperStyle}
             >
                 {/* Trigger button */}
-                <button
+                <button className="mly-text-action"
                     type="button"
                     onClick={this.toggle}
                     style={getDateTriggerStyle(open, selected, disabled)}
@@ -262,7 +262,7 @@ export class GlassDatePicker extends React.PureComponent<GlassDatePickerProps, G
                         <div style={dateTodaySectionStyle}>
                             <button
                                 type="button"
-                                className="today-btn"
+                                className="today-btn mly-text-action"
                                 onClick={e => {
                                     e.stopPropagation();
                                     const t = new Date();

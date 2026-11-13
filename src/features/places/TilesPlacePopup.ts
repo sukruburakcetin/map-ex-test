@@ -31,7 +31,7 @@ export class TilesPlacePopup {
       const line = document.createElement('div'); line.textContent = `${label}: ${value}`; content.appendChild(line);
     }
     if (place.website) { const link = document.createElement('a'); link.textContent = text('Website'); link.href = place.website; link.target = '_blank'; link.rel = 'noopener noreferrer'; content.appendChild(link); }
-    const button = document.createElement('button'); button.type = 'button'; button.style.cssText = 'display:block;margin-top:8px'; button.textContent = text('Find imagery within 75 m'); content.appendChild(button);
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'mly-text-action'; button.style.cssText = 'display:block;margin-top:8px'; button.textContent = text('Find imagery within 75 m'); content.appendChild(button);
     const status = document.createElement('p'); status.setAttribute('role', 'status'); content.appendChild(status);
     const alternatives = document.createElement('div'); content.appendChild(alternatives);
     const caveat = document.createElement('small'); caveat.textContent = text('Direction is estimated. Visibility isn’t confirmed.'); caveat.hidden = true; content.appendChild(caveat);
@@ -50,7 +50,7 @@ export class TilesPlacePopup {
           candidate = found[0]; button.textContent = l10n.text('Suggested view · {value0}', { value0: placeImageryDirectionLabel(candidate, l10n) });
           status.textContent = placeImageryChoiceMeta(candidate, l10n); caveat.hidden = false;
           for (const image of found.slice(1, 3)) {
-            const option = document.createElement('button'); option.type = 'button'; option.style.cssText = 'display:block;margin-top:5px';
+            const option = document.createElement('button'); option.type = 'button'; option.className = 'mly-text-action'; option.style.cssText = 'display:block;margin-top:5px';
             option.textContent = `${l10n.text('Open view · {value0}', { value0: placeImageryDirectionLabel(image, l10n) })} · ${placeImageryChoiceMeta(image, l10n)}`;
             option.onclick = () => { if (active()) this.host.open(image); }; alternatives.appendChild(option);
           }

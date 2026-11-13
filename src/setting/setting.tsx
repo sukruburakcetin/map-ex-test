@@ -528,7 +528,7 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
                 }}
               />
               {config.turboDefaultStartDate && (
-                <button
+                <button className="mly-text-action"
                   onClick={() => {
                     let config = this.props.config.set("turboDefaultStartDate", undefined);
                                     this.props.onSettingChange({ id: this.props.id, config });
@@ -568,7 +568,7 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
                 }}
               />
               {config.turboDefaultEndDate && (
-                <button
+                <button className="mly-text-action"
                   onClick={() => {
                     let config = this.props.config.set("turboDefaultEndDate", undefined);
                                     this.props.onSettingChange({ id: this.props.id, config });
@@ -694,18 +694,18 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
             <p style={{fontSize:12,opacity:.8}}>{t('placesApiUrlHelp')}</p>
           </div>}
           {!placesSourceKey(config)&&(config.placesApiUrl||config.placesPortalTilesUrl||config.placesPortalQueryUrl)&&<p role="status">{t(placesSourceKind(config)==='portal'?'placesPortalUrlsInvalid':'placesApiUrlInvalid')}</p>}
-          <SettingRow><Button onClick={this.testPlacesConnection} disabled={!placesSourceKey(config)||this.state.placesTestStatus==='checking'}>{t(this.state.placesTestStatus==='checking'?'placesApiTesting':'placesApiTest')}</Button></SettingRow>
+          <SettingRow><Button className="mly-text-action" onClick={this.testPlacesConnection} disabled={!placesSourceKey(config)||this.state.placesTestStatus==='checking'}>{t(this.state.placesTestStatus==='checking'?'placesApiTesting':'placesApiTest')}</Button></SettingRow>
           {this.state.placesTestStatus==='ok'&&<p role="status">{t('placesApiConnected')}{this.state.placesTestInfo?' · '+this.state.placesTestInfo:''}</p>}
           {this.state.placesTestStatus==='error'&&<p role="alert">{t('placesApiFailed')}{this.state.placesTestInfo?' '+this.state.placesTestInfo:''}</p>}
           <details style={{marginTop:12}} onToggle={event=>{if(!(event.currentTarget as HTMLDetailsElement).open){this.clearPlacesArea();this.setState({placesAreaProfile:null,placesAreaError:'',placesAreaBusy:false});}}}>
             <summary><OwnedMessage source="Data preparation"/></summary>
             <p style={{fontSize:12}}><OwnedMessage source="Frame your area in the 2D map, highlight it, then save its profile. Reuse the profile to download newer Overture releases."/></p>
             <SettingRow flow="wrap" label={this.context.owned('Area name')}><TextInput value={this.state.placesAreaName} maxLength={80} onChange={event=>this.setState({placesAreaName:event.target.value})}/></SettingRow>
-            <Button size="sm" disabled={this.state.placesAreaBusy} onClick={this.capturePlacesArea}><OwnedMessage source={this.state.placesAreaBusy?'Selecting area…':'Use this map area'}/></Button>
+            <Button className="mly-text-action" size="sm" disabled={this.state.placesAreaBusy} onClick={this.capturePlacesArea}><OwnedMessage source={this.state.placesAreaBusy?'Selecting area…':'Use this map area'}/></Button>
             {this.state.placesAreaProfile&&<div style={{fontSize:12,marginTop:8}}>
               <p><OwnedMessage source="Review the saved boundary before saving. These actions keep the map position and zoom unchanged."/></p>
               <output style={{display:'block',overflowWrap:'anywhere',marginBottom:8}} aria-label={this.context.owned('Rectangle coordinates')}>{this.state.placesAreaProfile.bbox.map(n=>n.toFixed(5)).join(', ')}</output>
-              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}><Button size="sm" onClick={this.showPlacesArea}><OwnedMessage source="Show saved area"/></Button><Button size="sm" disabled={!this.state.placesAreaName.trim()} onClick={this.downloadPlacesArea}><OwnedMessage source="Save area profile"/></Button></div>
+              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}><Button className="mly-text-action" size="sm" onClick={this.showPlacesArea}><OwnedMessage source="Show saved area"/></Button><Button className="mly-text-action" size="sm" disabled={!this.state.placesAreaName.trim()} onClick={this.downloadPlacesArea}><OwnedMessage source="Save area profile"/></Button></div>
             </div>}
             {this.state.placesAreaError&&<p role="alert" style={{fontSize:12}}><OwnedMessage source={this.state.placesAreaError}/></p>}
             <p style={{fontSize:12,opacity:.8}}><OwnedMessage source="Keep the profile in a stable working folder and follow the area-maintenance guide. Preparing a newer dataset does not change the published experience."/></p>
@@ -884,7 +884,7 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
                   }}
                   style={{ flex: 1 }}
                 />
-                <button
+                <button className="mly-text-action"
                   type="button"
                   onClick={this.onAddCategory}
                   style={{
@@ -902,7 +902,7 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
               </div>
 
               {/* Reset to Default Button */}
-              <button
+              <button className="mly-text-action"
                 type="button"
                 onClick={this.onResetCategories}
                 style={{

@@ -1,6 +1,7 @@
 import type { Messages } from '../messages';
 /** British English differences only; all other messages inherit the US base. */
 const overrides: Partial<Messages> = {
+  "imageInfoOrganization": "Organisation",
   "complete003": "{value0} · Organisation ID: {value1}",
   "complete004": "Organisation ID: {value0}",
   "complete024": "Sequence elevation in metres. Dashed blue line marks the confirmed current image.",

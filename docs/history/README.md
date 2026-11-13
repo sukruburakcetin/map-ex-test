@@ -1,7 +1,12 @@
-# Historical development records
+# Design history
 
-These records explain intermediate experiments and implementation decisions. They are not current installation instructions, supported-mode menus or current test-count claims. Use the [documentation index](../README.md) for current guides. Sequential patch scripts and prior source versions remain available through Git history.
+Current setup begins at the [documentation index](../README.md). Intermediate visual trials, patch installers and completed extraction logs are not installation requirements. Their useful continuing decisions are recorded below; current implementation contracts live with their owners.
 
-- [Map interaction investigations](map-interaction-investigations.md)
-- [Completed implementation notes](implementation-notes.md)
-- [Localization review record](localization-review.md)
+- **Imagery opens before optional work.** Latest-click ownership prevents late SDK/metadata results from opening older selections. Shared tile requests and bounded background work support navigation; controlled tests do not establish a deployment speedup. See [interaction owners](../development/interaction-ux.md) and [sequence diagnostics](../../src/features/imagery/SEQUENCE-PERFORMANCE.md).
+- **Map/viewer identity is explicit.** Native coverage anchors, confirmed-image tracking, creating-view cleanup and cancellation matter more than line-count reductions. Earlier marker/cone visual trials are not alternative supported modes. See [architecture](../development/architecture.md).
+- **Places stays optional context.** Portal uses native vector tiles plus bounded queries; external HTTPS remains an alternative. Browser-only global exploration remains research, not a shipping provider. See [Places architecture](../development/places-architecture.md) and [research](../development/places-research.md).
+- **Pro attributes require verified restoration.** Native exports did not retain all required Places fields. The complete build now includes restoration, icons and aggregates; users do not apply those as separate patches. See [package reference](../development/places-packages.md).
+- **Translation source catalogs remain authoritative.** The CSV supports community review/import. Previous review tables and test counts do not replace current checks or native-language review. See [translation instructions](../localization/CONTRIBUTING.md).
+- **Publication is explicit.** Local drafts, workspace contributions and Enterprise notes have different owners and save boundaries. Database upgrades remain operator actions. See [Enterprise notes](../administration/enterprise-notes.md) and [workspace operations](../../tools/community-notes/README.md).
+
+The [5.0 inventory](../releases/5.0-change-inventory.md) retains the release comparison and unfinished acceptance work. It is separate from beginner setup. Use Git history for committed earlier implementations; no sequence of development installers is required for current source.

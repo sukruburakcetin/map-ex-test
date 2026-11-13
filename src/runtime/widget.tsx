@@ -175,6 +175,7 @@ import type { DetectionPreviewLoader } from '../features/detections/detectionPre
 import { defaultDetectionExplorer, detectionGroup, showDetection } from '../features/detections/detectionExploration';
 import type { DetectionExplorerOptions, DetectionSummary } from '../features/detections/detectionExploration';
 import "mapillary-js/dist/mapillary.css";
+import { IMAGE_INFORMATION_FIELDS, normalizeImageInformation, viewerImageInformation, type ImageInformationHost } from '../features/image-information/ImageInformation';
 import { InfoBox } from "../components/InfoBox";
 import { shouldRecenterImage } from "../features/imagery/imageFollowPolicy";
 import { sceneFollowCamera } from '../features/imagery/sceneFollowCamera';
@@ -939,7 +940,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       status.setAttribute("role", "status"); content.appendChild(status);
     }
     const button = document.createElement("button");
-    button.type = "button"; this._presentation.bind(button,"textContent",()=>this._owned("Associated images"));
+    button.type = "button"; button.className = "mly-text-action"; this._presentation.bind(button,"textContent",()=>this._owned("Associated images"));
     button.style.cssText = "padding:3px 7px;font-size:12px;white-space:nowrap;cursor:pointer";
     button.onclick = () => this.setState({ nearbyStripOpen: true, imageTrayTab: "object", fieldNotesListOpen: false });
     content.appendChild(button);
@@ -1085,6 +1086,25 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private readonly _sharedTileRequests = new SharedTileRequests();
   private readonly _sequenceTileIndex = new SequenceTileIndex();
   private readonly _backgroundRequests = new BackgroundRequestQueue(2);
+  /** Explicit, read-only information enrichment. It never changes queue policy or foreground work. */
+  private readonly _imageInformationHost: ImageInformationHost = {
+    isPaused: () => this._userPaused !== false,
+    isVisible: () => this.props.state !== 'CLOSED' && this.props.visible !== false && (typeof document === 'undefined' || document.visibilityState !== 'hidden'),
+    scope: () => this.accessToken,
+    isCurrent: (viewer, id) => this.mapillaryViewer === viewer && this._profileConfirmedViewer === viewer && this._profileConfirmedImageId === id,
+    seed: image => ({ ...normalizeImageInformation(String(image.id), this._turboMetadataCache.get(String(image.id))), ...viewerImageInformation(image) }),
+    load: (viewer, id, signal) => this._backgroundRequests.run(async queuedSignal => {
+      const token = this.accessToken;
+      const current = () => !queuedSignal.aborted && this._imageInformationHost.isPaused() && this._imageInformationHost.isVisible()
+        && this._imageInformationHost.isCurrent(viewer, id) && !this.state.isLoading && this._imageryOpeningRequest == null && token === this.accessToken;
+      if (!current()) throw new DOMException('Cancelled', 'AbortError');
+      const data = await this.fetchMapillaryJson(`${GRAPH_API.BASE}/${encodeURIComponent(id)}?fields=${IMAGE_INFORMATION_FIELDS}`, token, queuedSignal);
+      if (!current()) throw new DOMException('Cancelled', 'AbortError');
+      if (String(data?.id) !== id) throw new Error('Image information identity mismatch.');
+      return normalizeImageInformation(id, data);
+    }, signal),
+  };
+
   private readonly _sequencePerformance = new SequencePerformance();
   private _tileRequestToken: string | null = null;
   private _reverseGeocodeAbort: AbortController | null = null;
@@ -13819,9 +13839,9 @@ private stopSafePlayback = () => {
               }}
             >
               <div role="tablist" aria-label={this._t('appImageSources')} style={{ display: "flex", gap: 8 }}>
-                {(["nearby", "object"] as const).filter(tab=>tab==='nearby'||!!this.state.selectedFeatureMetadata).map(tab => <button key={tab} role="tab" aria-selected={(this.state.imageTrayTab || "nearby") === tab} onClick={() => {this.highlightNearbyPin(null);if(tab==='object')this.revealDetectionTools();this.setState({ imageTrayTab: tab });}} style={{ background: "none", border: 0, color: (this.state.imageTrayTab || "nearby") === tab ? "#8bdbb7" : "#bbb", padding: "6px", cursor: "pointer" }}>{tab === "nearby" ? <OwnedMessage source={"Nearby ({value0})"} values={{value0:String((this.state.nearbyImages || []).length)}}/> : <OwnedMessage source={"Selected object ({value0})"} values={{value0:String(this.state.alternateImages.length)}}/>}</button>)}
+                {(["nearby", "object"] as const).filter(tab=>tab==='nearby'||!!this.state.selectedFeatureMetadata).map(tab => <button className="mly-text-action" key={tab} role="tab" aria-selected={(this.state.imageTrayTab || "nearby") === tab} onClick={() => {this.highlightNearbyPin(null);if(tab==='object')this.revealDetectionTools();this.setState({ imageTrayTab: tab });}} style={{ background: "none", border: 0, color: (this.state.imageTrayTab || "nearby") === tab ? "#8bdbb7" : "#bbb", padding: "6px", cursor: "pointer" }}>{tab === "nearby" ? <OwnedMessage source={"Nearby ({value0})"} values={{value0:String((this.state.nearbyImages || []).length)}}/> : <OwnedMessage source={"Selected object ({value0})"} values={{value0:String(this.state.alternateImages.length)}}/>}</button>)}
               </div>
-              {this.state.imageTrayTab!=='object'&&this.state.nearbyCanExpand&&<button type="button" disabled={!!this.state.nearbyLoading}
+              {this.state.imageTrayTab!=='object'&&this.state.nearbyCanExpand&&<button className="mly-text-action" type="button" disabled={!!this.state.nearbyLoading}
                 title={this._owned('Search a larger sample and show the nearest 20 captures')}
                 onClick={()=>this.refreshNearbyAfterPause(true,true)}
                 style={{fontSize:9,padding:'2px 5px',border:'1px solid #648b73',borderRadius:4,background:'#214233',color:'#e1eee5',cursor:'pointer'}}>{this._owned('Search more')}</button>}
@@ -13919,9 +13939,9 @@ private stopSafePlayback = () => {
             </div>
             <div role="tabpanel" aria-label={this._t('appSelectedObjectImages')} style={{ display: this.state.imageTrayTab === "object"&&this.state.selectedFeatureMetadata ? "flex" : "none", gap: 6, flex: "1 1 0", minHeight: 0, overflowX: "auto", overflowY: "hidden", alignItems: "flex-start", color: "#ddd", fontSize: 12 }}>
               {this.state.isFetchingAlternates && <span style={{ alignSelf: "center" }} role="status"> {this._t('appLoadingAssociatedImages')} </span>}
-              {this.state.alternateImagesError && <span style={{ alignSelf: "center" }} role="alert">{<OwnedMessage source={String(this.state.alternateImagesError ?? "")}/>} <button onClick={() => { const location = this.state.selectedFeatureLocation; const id = this.state.selectedFeatureMetadata?.id; if (location && id) void this.fetchAlternateImages(id, location.lat, location.lon); }}> {this._t('appRetry')} </button></span>}
+              {this.state.alternateImagesError && <span style={{ alignSelf: "center" }} role="alert">{<OwnedMessage source={String(this.state.alternateImagesError ?? "")}/>} <button className="mly-text-action" onClick={() => { const location = this.state.selectedFeatureLocation; const id = this.state.selectedFeatureMetadata?.id; if (location && id) void this.fetchAlternateImages(id, location.lat, location.lon); }}> {this._t('appRetry')} </button></span>}
               {!this.state.isFetchingAlternates && !this.state.alternateImagesError && !this.state.alternateImages.length && <span> {this._t('appNoAssociatedImagesAvailableSelectASignOrObject')} </span>}
-              {this.state.alternateImages.map(img => <button key={img.id}
+              {this.state.alternateImages.map(img => <button className="mly-text-action" key={img.id}
                 onMouseEnter={event => { event.currentTarget.style.transform = "scale(1.04)"; }}
                 onMouseLeave={event => { event.currentTarget.style.transform = "scale(1)"; }}
                 onClick={() => void this._handleSelectAlternateImage(img)} aria-label={this._owned("Open associated image {value0}",{value0:String(img.id)})} title={`${img.detectionLabel || "Detected object"} · ${Number.isFinite(img.capturedAt) ? new Date(img.capturedAt).toLocaleDateString(this._runtimeLocale?.formatLocale) : this._t('appDateUnavailable')}`} style={{ flex: "0 0 auto", width: "var(--tray-card-width)", padding: 0, transition: "transform 0.12s", background: "#182321", color: "#ddd", border: img.id === this.state.imageId ? "2px solid #05a056" : "2px solid transparent", borderRadius: 5, overflow: "hidden", cursor: "pointer" }}>
@@ -14064,6 +14084,8 @@ private stopSafePlayback = () => {
 
         {/* INFO BOX */}
         {!this.state.isFullscreen && <InfoBox
+          imageInformationHost={this._imageInformationHost} imageInformationViewer={this.mapillaryViewer}
+          imageInformationActive={this.props.state !== 'CLOSED' && this.props.visible !== false}
           detectionToolsRequest={this._detectionToolsRequest}
           hideInfoBox={this.props.config.hideInfoBox}
           turboCreator={this.props.config.turboCreator}
@@ -14370,7 +14392,7 @@ private stopSafePlayback = () => {
               <span className="mly-coverage-touch-hint">{this.getCoverageBarHint(true)}</span>
             </span>
             {coveragePresentation.action && (
-              <button type="button" onClick={() => void this.handleTurboWarningAction(coveragePresentation.action)} style={coverageNoticeStyles.action}>
+              <button className="mly-text-action" type="button" onClick={() => void this.handleTurboWarningAction(coveragePresentation.action)} style={coverageNoticeStyles.action}>
                 {coveragePresentation.label}
               </button>
             )}
@@ -14382,8 +14404,8 @@ private stopSafePlayback = () => {
           <div role="alert" style={{ ...coverageNoticeStyles.helpPanel, zIndex: 1100 }}>
             <div style={coverageNoticeStyles.message}>{<OwnedMessage source={String(this.state.selectionError ?? "")}/>}</div>
             <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-              {this.state.selectionCanRetry && <button type="button" onClick={() => void this.retrySelectedImage()} style={coverageNoticeStyles.action}> {this._t('appRetryImage')} </button>}
-              <button type="button" aria-label={this._t('appDismissImageError')} onClick={() => this.setState({ selectionError: undefined })} style={coverageNoticeStyles.action}> {this._t('appDismiss')} </button>
+              {this.state.selectionCanRetry && <button className="mly-text-action" type="button" onClick={() => void this.retrySelectedImage()} style={coverageNoticeStyles.action}> {this._t('appRetryImage')} </button>}
+              <button className="mly-text-action" type="button" aria-label={this._t('appDismissImageError')} onClick={() => this.setState({ selectionError: undefined })} style={coverageNoticeStyles.action}> {this._t('appDismiss')} </button>
             </div>
           </div>
         )}

@@ -14,7 +14,7 @@ export const PointCloudAdaptiveControl: React.FC<PointCloudAdaptiveControlProps>
 
   const { pointCloudAdaptive, onPointCloudAdaptiveChange } = props;
   return (
-<button
+<button className="mly-text-action"
             type="button" role="switch" aria-checked={!!pointCloudAdaptive}
             aria-label={t('uiAdaptiveSceneDisplay')}
             title={t('uiAdaptiveSceneDisplayFewerScenePointsWhileNavigating')}
@@ -41,7 +41,7 @@ export const PointCloudStatus: React.FC<PointCloudStatusProps> = props => {
               <div style={cloudStatusDetailsStyle}>{<OwnedMessage source={String(pointCloudSummary ?? "")}/>}</div>
             </details>
             <div style={cloudStatusVisibleStyle}>{pointCloudSummary.split(" · ").find(part => part.includes(" visible"))?.replace(" visible", " corridor pts")}</div>
-            {pointCloudIncomplete && <button type="button" title={t('uiRetryMissingDiscoveryDownloadsTheDataBudgetsStill')} disabled={pointCloudLoading} onClick={onRetryPointCloud} style={getCloudStatusRetryStyle(pointCloudLoading)}>{pointCloudLoading ? t('uiRetrying') : pointCloudAutoPaused ? t('uiResume') : t('uiRetry')}</button>}
+            {pointCloudIncomplete && <button className="mly-text-action" type="button" title={t('uiRetryMissingDiscoveryDownloadsTheDataBudgetsStill')} disabled={pointCloudLoading} onClick={onRetryPointCloud} style={getCloudStatusRetryStyle(pointCloudLoading)}>{pointCloudLoading ? t('uiRetrying') : pointCloudAutoPaused ? t('uiResume') : t('uiRetry')}</button>}
           </div>
   );
 };

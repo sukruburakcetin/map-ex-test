@@ -32,6 +32,6 @@ export function WorkspaceContributionEditor({note,categories,busy,error,onSave,o
     </fieldset>
     <details><summary>{text('Location and image')}</summary><p style={{overflowWrap:'anywhere'}}>{text('Longitude')}: {note.lon} · {text('Latitude')}: {note.lat}<br/>{text('Image ID')}: {note.image_id||text('Not linked')}</p><small>{text('Location and image stay attached to this contribution. To change them, publish a new local note at the correct location or image.')}</small></details>
     {error&&<div role="alert" style={{color:'#ffb8a6'}}>{text(error)}<p>{text('Your draft is kept. If the contribution changed, cancel and reopen after refreshing to review the latest version.')}</p></div>}
-    <div style={actions}><button type="submit" style={button} disabled={busy}>{text(busy?'Saving…':'Save changes')}</button><button type="button" style={secondary} disabled={busy} onClick={onCancel}>{text('Cancel')}</button></div>
+    <div style={actions}><button className="mly-text-action" type="submit" style={button} disabled={busy}>{text(busy?'Saving…':'Save changes')}</button><button className="mly-text-action" type="button" style={secondary} disabled={busy} onClick={onCancel}>{text('Cancel')}</button></div>
   </form>;
 }

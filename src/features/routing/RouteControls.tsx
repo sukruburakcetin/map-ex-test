@@ -69,7 +69,7 @@ class ExtraTimePicker extends React.PureComponent<ExtraTimePickerProps, { open: 
     const stepStyle: React.CSSProperties = { background: "none", border: "none", color: "white", fontSize: "8px", padding: "2px 3px", cursor: disabled ? "default" : "pointer" };
     return <div style={{ display: "flex", alignItems: "center", gap: "2px", minWidth: 0 }}>
       <button type="button" aria-label={this.context.t('uiDecreaseExtraTimeBy5Minutes')} disabled={disabled || value <= 5} onClick={() => onChange?.(Math.max(5, value - 5))} style={{ ...stepStyle, opacity: disabled || value <= 5 ? 0.4 : 1 }}>−</button>
-      <button type="button" ref={this.trigger} aria-haspopup="dialog" aria-expanded={this.state.open && !disabled} aria-label={this.context.t('uiExtraPreset',{minutes:value})} title={this.context.t('uiAddedTravelTimeBeyondTheDirectAB')} disabled={disabled}
+      <button className="mly-text-action" type="button" ref={this.trigger} aria-haspopup="dialog" aria-expanded={this.state.open && !disabled} aria-label={this.context.t('uiExtraPreset',{minutes:value})} title={this.context.t('uiAddedTravelTimeBeyondTheDirectAB')} disabled={disabled}
         onClick={() => this.setState({ open: !this.state.open }, () => { if (this.state.open) (this.menu.current?.querySelector<HTMLButtonElement>("button[aria-pressed='true']") || this.menu.current?.querySelector<HTMLButtonElement>("button[data-preset]"))?.focus(); })}
         style={{ background: "rgba(243,156,18,0.09)", border: "1px solid rgba(243,156,18,0.3)", borderRadius: "3px", color: "#f39c12", fontSize: "6.5px", fontWeight: 700, whiteSpace: "nowrap", padding: "2px 3px", cursor: disabled ? "default" : "pointer" }}>{value}  {this.context.t('uiMin')} </button>
       <button type="button" aria-label={this.context.t('uiIncreaseExtraTimeBy5Minutes')} disabled={disabled || value >= 120} onClick={() => onChange?.(Math.min(120, value + 5))} style={{ ...stepStyle, opacity: disabled || value >= 120 ? 0.4 : 1 }}>+</button>
@@ -80,7 +80,7 @@ class ExtraTimePicker extends React.PureComponent<ExtraTimePickerProps, { open: 
             <button type="button" aria-label={this.context.t('uiCloseExtraTimePresets')} onClick={() => this.close(true)} style={{ background: "none", border: "none", color: "#bac7cb", width: "28px", height: "28px", cursor: "pointer", fontSize: "18px" }}>×</button>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "4px" }}>
-            {[15, 30, 45, 60, 90, 120].map(minutes => <button key={minutes} type="button" data-preset aria-pressed={value === minutes} disabled={disabled} onClick={() => { onChange?.(minutes); this.close(true); }}
+            {[15, 30, 45, 60, 90, 120].map(minutes => <button className="mly-text-action" key={minutes} type="button" data-preset aria-pressed={value === minutes} disabled={disabled} onClick={() => { onChange?.(minutes); this.close(true); }}
               style={{ minHeight: "44px", padding: "4px", borderRadius: "5px", border: `1px solid ${value === minutes ? "#f39c12" : "rgba(255,255,255,0.14)"}`, background: value === minutes ? "rgba(243,156,18,0.16)" : "rgba(255,255,255,0.04)", color: value === minutes ? "#f6bc58" : "#e3eaed", fontSize: "12px", fontWeight: value === minutes ? 700 : 500, cursor: "pointer" }}>{minutes}  {this.context.t('uiMin')} </button>)}
           </div>
         </div>, document.fullscreenElement || document.body)}
@@ -167,7 +167,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
         <div style={routeDraftStyle}>
           {/* Point A and B Selection Buttons */}
           <div className="mly-route-pick-buttons" style={routePointButtonsStyle}>
-            <button
+            <button className="mly-text-action"
               onClick={() => onSetRoutePickMode?.(routePickMode === "start" ? null : "start")}
               title={t('uiSelectStartPointAOnMap')}
               style={getRouteStartButtonStyle(routePickMode, !!routeStartPoint)}
@@ -175,7 +175,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
               {routePickMode === "start" ? t('uiClick') : routeStartPoint ? t('uiA') : t('uiAPick')}
             </button>
 
-            <button
+            <button className="mly-text-action"
               onClick={() => onSetRoutePickMode?.(routePickMode === "end" ? null : "end")}
               title={t('uiSelectDestinationPointBOnMap')}
               style={getRouteEndButtonStyle(routePickMode, !!routeEndPoint)}
@@ -186,7 +186,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
 
           {/* CLEAR A / B */}
           {(routeStartPoint || routeEndPoint) && (
-            <button
+            <button className="mly-text-action"
               onClick={onResetRoutePoints}
               title={t('uiClearAAndBRoutePoints')}
               style={routeClearPointsStyle}
@@ -201,7 +201,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
           </div>
 
           {/* Generate Route Button with Progress Bar */}
-          <button
+          <button className="mly-text-action"
             onClick={onGenerateRoute}
             disabled={isGeneratingRoute || !routeStartPoint || !routeEndPoint}
             style={getRouteGenerateStyle(isGeneratingRoute, !!routeStartPoint, !!routeEndPoint)}
@@ -377,7 +377,7 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
           <div
             className="mly-route-result-actions" style={routeResultActionsStyle}
           >
-            <button
+            <button className="mly-text-action"
               onClick={onDownloadRouteGPX}
               style={routeGpxStyle}
             >
@@ -434,7 +434,7 @@ export const RoutePointControls: React.FC<RoutePointControlsProps> = props => {
       </div>
 
       {/* Remove preserved A/B points */}
-      <button
+      <button className="mly-text-action"
         onClick={onResetRoutePoints}
         title={t('uiRemoveAAndBRoutePoints')}
         style={routePointsClearStyle}

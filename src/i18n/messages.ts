@@ -2,6 +2,27 @@ import { completionEn } from './completionMessages';
 import { runtimeEn } from './runtimeMessages';
 /** English fallback catalog. Message keys stay stable when wording changes. */
 export const en = {
+  "imageInfoTitle": "Image info",
+  "imageInfoCaptured": "Captured (UTC)",
+  "imageInfoContributor": "Contributor",
+  "imageInfoOrganization": "Organization",
+  "imageInfoCamera": "Camera",
+  "imageInfoProjection": "Projection",
+  "imageInfoDimensions": "Original dimensions",
+  "imageInfoCaptureMethod": "Capture method",
+  "imageInfoFoot": "On foot",
+  "imageInfoOther": "Other method",
+  "imageInfoUnknownMethod": "Unknown",
+  "imageInfoUnavailable": "Unavailable",
+  "imageInfoPerspective": "Perspective",
+  "imageInfoFisheye": "Fisheye",
+  "imageInfoPanorama": "Panorama",
+  "imageInfoDeferred": "Pause playback to load additional image information.",
+  "imageInfoLoading": "Loading image information…",
+  "imageInfoError": "Image information could not load.",
+  "imageInfoNoImage": "Select an image to see its information.",
+  "imageInfoOriginalNote": "Dimensions describe the uploaded image, not the displayed preview.",
+
   "notesSearch": "Search notes",
   "notesSearchPlaceholder": "Text, category, resolution or status",
   "notesClearSearch": "Clear note search",

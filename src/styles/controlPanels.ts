@@ -169,6 +169,11 @@ export const utilityDockCss = `
   .mly-fullscreen-viewer:not(.mly-minimap-expanded) .glass-image-utility-panel.mly-utility-dock { top: calc(78px + env(safe-area-inset-top,0px)) !important; left: calc(114px + env(safe-area-inset-left,0px)) !important; }
 }
 
+/* A translated Cancel label may grow while the normal icon retains its exact geometry. */
+.glass-image-utility-panel.mly-utility-dock:has(.mly-dock-cloud.is-loading) { display:flex !important; flex-wrap:wrap; }
+.glass-image-utility-panel.mly-utility-dock .mly-dock-cloud-group:has(.is-loading) { min-width:0; max-width:100%; flex:0 1 auto; }
+.glass-image-utility-panel.mly-utility-dock .mly-dock-cloud.is-loading { width:auto !important; height:auto !important; min-height:30px; max-width:calc(100% - 18px); }
+
 /* Mobile-only minimize rail sits inside the same glass shell. */
 .glass-image-utility-panel.mly-utility-dock[data-mobile="true"]:not(.is-collapsed) { padding-left: 18px !important; }
 .glass-image-utility-panel.mly-utility-dock[data-mobile="true"] .mly-dock-collapse { position: absolute; top: 2px; left: 2px; width: 14px !important; height: calc(100% - 4px) !important; border: 0; border-right: 1px solid #a6cbb529; border-radius: 0; background: transparent; }

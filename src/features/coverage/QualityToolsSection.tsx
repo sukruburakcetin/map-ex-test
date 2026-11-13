@@ -24,7 +24,7 @@ export const QualityToolsSection: React.FC<QualityToolsSectionProps> = props => 
     <div
       style={props.hideToggle ? { marginTop: 3 } : qualityToolsSectionStyle}
     >
-      {!props.hideToggle && <button
+      {!props.hideToggle && <button className="mly-text-action"
         type="button" aria-label={t('uiColorCoverageByQuality')} aria-pressed={!!qualityViewActive}
         onClick={onToggleQualityView}
         title={qualityViewActive ? t('uiQualityViewOnLinesColouredByImageQuality') : t('uiQualityViewOffClickToColourCoverageLines')}

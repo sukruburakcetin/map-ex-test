@@ -1,5 +1,7 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
+import { imageInformationCss } from '../styles/infoBox';
+import { ImageInformationSection } from '../features/image-information/ImageInformationSection';
 import { WidgetLocaleContext } from '../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 
@@ -31,6 +33,7 @@ import { miniJoyStyle } from '../utils/styles';
 
 interface InfoBoxState {
   detailsOpen: boolean;
+  toolsOpen: boolean;
   wide: boolean;
   isOverflowing: boolean;
   canScrollDown: boolean;
@@ -65,6 +68,7 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
     super(props);
     this.state = {
       detailsOpen: false,
+      toolsOpen: false,
       wide: false,
       isOverflowing: false,
       canScrollDown: false,
@@ -209,7 +213,7 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
         onKeyDown={event => { if (event.key === "Escape" && this.state.detailsOpen) { event.stopPropagation(); this.setState({ detailsOpen: false }, () => this.panelToggleRef.current?.focus()); } }}
         style={infoPanelShellStyle(isOverflowing)}
       >
-        <style>{infoPanelResponsiveCss}{infoDetailsCss}</style>
+        <style>{infoPanelResponsiveCss}{infoDetailsCss}{imageInformationCss}</style>
         <div className="mly-info-header">
         <button ref={this.panelToggleRef} type="button" className="mly-info-toggle"
           aria-expanded={this.state.detailsOpen} aria-label={this.state.detailsOpen ? this.context.t('uiCloseImageDetailsAndTools') : this.context.t('uiOpenImageDetailsAndTools')}
@@ -230,6 +234,7 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
         <div
           ref={this.scrollContainerRef}
           className="mly-info-scroll"
+          tabIndex={0} role="region" aria-label={this.context.t('uiToolsDetails')}
           onScroll={this.checkOverflow}
           style={infoControlsViewportStyle(isOverflowing)}
         >
@@ -240,10 +245,10 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
               style={infoStatusCardStyle}
             >
               <div className="mly-info-quick" role="group" aria-label={this.context.t('uiImageActions')}>
-                {!hideCoverageAnalysis && <button type="button" aria-label={this.context.t('uiColorCoverageByQuality')} aria-pressed={!!qualityViewActive} title={this.context.t('uiColorCoverageByQuality')} onClick={onToggleQualityView}> {this.context.t('uiQuality')} <span className="mly-quick-state" aria-hidden="true"/></button>}
-                {imageId && <button type="button" aria-label={this.context.t('uiNearbyImages')} aria-expanded={!!nearbyStripOpen} onClick={onToggleNearbyStrip}> {this.context.t('uiNearby')} <span className="mly-quick-count">{nearbyLoading ? "…" : nearbyCount || ""}</span></button>}
-                <button type="button" aria-label={isAnnotationMode ? this.context.t('uiStopAddingNotes') : this.context.t('uiAddNote')} aria-pressed={!!isAnnotationMode} onClick={onToggleAnnotationMode}>{isAnnotationMode ? this.context.t('uiFinishNote') : this.context.t('uiNote')}</button>
-                <button type="button" aria-label={this.context.t('uiViewNotes')} aria-expanded={!!fieldNotesListOpen} onClick={onToggleFieldNotesList}> {this.context.t('uiNotes')} <span className="mly-quick-count">{fieldNotesCount || ""}</span></button>
+                {!hideCoverageAnalysis && <button className="mly-text-action" type="button" aria-label={this.context.t('uiColorCoverageByQuality')} aria-pressed={!!qualityViewActive} title={this.context.t('uiColorCoverageByQuality')} onClick={onToggleQualityView}> {this.context.t('uiQuality')} <span className="mly-quick-state" aria-hidden="true"/></button>}
+                {imageId && <button className="mly-text-action" type="button" aria-label={this.context.t('uiNearbyImages')} aria-expanded={!!nearbyStripOpen} onClick={onToggleNearbyStrip}> {this.context.t('uiNearby')} <span className="mly-quick-count">{nearbyLoading ? "…" : nearbyCount || ""}</span></button>}
+                <button className="mly-text-action" type="button" aria-label={isAnnotationMode ? this.context.t('uiStopAddingNotes') : this.context.t('uiAddNote')} aria-pressed={!!isAnnotationMode} onClick={onToggleAnnotationMode}>{isAnnotationMode ? this.context.t('uiFinishNote') : this.context.t('uiNote')}</button>
+                <button className="mly-text-action" type="button" aria-label={this.context.t('uiViewNotes')} aria-expanded={!!fieldNotesListOpen} onClick={onToggleFieldNotesList}> {this.context.t('uiNotes')} <span className="mly-quick-count">{fieldNotesCount || ""}</span></button>
               </div>
 
               {/* Turbo year legend */}
@@ -253,8 +258,8 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
             </div>
           )}
 
-          <details ref={this.toolsDetailsRef} className="mly-info-more"><summary> {this.context.t('uiToolsDetails')} </summary>
-              {!hideInfoBox && <div className="info-box"><StatusSummary currentImg={currentImg} currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} address={null} turboCreator={turboCreator} turboOrganization={turboOrganization} turboOrganizationName={turboOrganizationName} onCopyCoordinates={this.props.onCopyCoordinates} />{!hideCoverageAnalysis && <QualityToolsSection hideToggle qualityViewType={this.props.qualityViewType} currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} qualityViewActive={qualityViewActive} onToggleQualityView={onToggleQualityView} selectedQualityBand={selectedQualityBand} onQualityLegendClick={onQualityLegendClick} />}</div>}
+          <details ref={this.toolsDetailsRef} className="mly-info-more" onToggle={event => { const toolsOpen = event.currentTarget.open; if (toolsOpen !== this.state.toolsOpen) this.setState({ toolsOpen }); }}><summary> {this.context.t('uiToolsDetails')} </summary>
+              {!hideInfoBox && <div className="info-box"><StatusSummary currentImg={currentImg} currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} address={null} turboCreator={turboCreator} turboOrganization={turboOrganization} turboOrganizationName={turboOrganizationName} onCopyCoordinates={this.props.onCopyCoordinates} /><ImageInformationSection host={this.props.imageInformationHost} viewer={this.props.imageInformationViewer} active={this.state.detailsOpen && this.state.toolsOpen && this.props.imageInformationActive !== false} />{!hideCoverageAnalysis && <QualityToolsSection hideToggle qualityViewType={this.props.qualityViewType} currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} qualityViewActive={qualityViewActive} onToggleQualityView={onToggleQualityView} selectedQualityBand={selectedQualityBand} onQualityLegendClick={onQualityLegendClick} />}</div>}
               {!hideInfoBox && turboModeActive && !hideCoverageAnalysis && <CoverageAnalysisTrigger currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} turboPointsAvailable={turboPointsAvailable} coverageAnalysisLoading={coverageAnalysisLoading} coverageResult={coverageResult} onRunCoverageAnalysis={onRunCoverageAnalysis} turboMinZoom={turboMinZoom} />}
 
           {/* 3D TAPE MEASURE */}

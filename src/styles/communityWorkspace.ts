@@ -1,23 +1,23 @@
 import type { React } from 'jimu-core';
 /** Workspace controls scroll within the existing notes sheet at controller/mobile widths. */
-export const workspacePanelStyle: React.CSSProperties = {display:'flex',flexDirection:'column',gap:10,flex:'1 1 0',minHeight:0,minWidth:0,boxSizing:'border-box',paddingInline:'var(--mly-workspace-inset, 8px)',paddingBottom:'max(20px, env(safe-area-inset-bottom, 0px))',scrollPaddingBottom:48,overscrollBehavior:'contain',overflowY:'auto',overflowX:'hidden',fontSize:12,lineHeight:1.5,color:'#d3e2d9'};
+export const workspacePanelStyle: React.CSSProperties = {display:'flex',flexDirection:'column',gap:10,flex:'1 1 0',minHeight:0,minWidth:0,boxSizing:'border-box',paddingInline:'var(--mly-workspace-inset, 8px)',paddingBottom:'max(20px, env(safe-area-inset-bottom, 0px))',scrollPaddingBottom:48,overscrollBehavior:'contain',overflowY:'auto',overflowX:'hidden',fontSize:'var(--mly-notes-text-size, 11px)',lineHeight:1.4,color:'#d3e2d9'};
 export const workspaceCardStyle: React.CSSProperties = {display:'grid',gap:8,padding:'var(--mly-workspace-card-padding, 10px)',background:'#101e18',border:'1px solid #3f5b4c',borderRadius:6,minWidth:0,overflowWrap:'anywhere'};
 export const workspaceRowStyle: React.CSSProperties = {display:'flex',flexWrap:'wrap',gap:6,alignItems:'center',minWidth:0};
 export const workspaceFieldStyle: React.CSSProperties = {display:'grid',gap:3,minWidth:0};
-export const workspaceInputStyle: React.CSSProperties = {width:'100%',minWidth:0,boxSizing:'border-box',padding:6,font:'inherit',fontSize:'var(--mly-workspace-input-size, 12px)',background:'#14251d',color:'#eef6f0',border:'1px solid #526e60',borderRadius:4};
+export const workspaceInputStyle: React.CSSProperties = {width:'100%',minWidth:0,boxSizing:'border-box',padding:6,font:'inherit',fontSize:'var(--mly-workspace-input-size, 11px)',background:'#14251d',color:'#eef6f0',border:'1px solid #526e60',borderRadius:4};
 export const workspaceButtonStyle: React.CSSProperties = {font:'inherit',padding:'6px 10px',minHeight:'var(--mly-workspace-target-height, 32px)',justifySelf:'start',maxWidth:'100%',background:'#214233',color:'#e4f2ea',border:'1px solid #526e60',borderRadius:4,cursor:'pointer'};
 
 /** Visual hierarchy: control sections, contribution cards, and compact actions differ. */
 export const workspaceSectionStyle: React.CSSProperties = {...workspaceCardStyle,background:'var(--mly-workspace-surface, #13251e)',borderColor:'#49695a'};
-export const workspaceSummaryStyle: React.CSSProperties = {padding:'5px 0',fontSize:12,fontWeight:700,color:'#eef6f0',cursor:'pointer'};
+export const workspaceSummaryStyle: React.CSSProperties = {padding:'5px 0',fontSize:11,fontWeight:700,color:'#eef6f0',cursor:'pointer'};
 export const workspaceSecondaryButtonStyle: React.CSSProperties = {...workspaceButtonStyle,background:'transparent',borderColor:'#718d7d'};
 export const workspaceDangerButtonStyle: React.CSSProperties = {...workspaceSecondaryButtonStyle,color:'#ffcfbf',borderColor:'#986c5d'};
-export const workspaceHeadingStyle: React.CSSProperties = {fontSize:'var(--mly-workspace-heading-size, 14px)',fontWeight:700,lineHeight:1.4,margin:0,color:'#f0f7f3'};
+export const workspaceHeadingStyle: React.CSSProperties = {fontSize:'var(--mly-workspace-heading-size, 12px)',fontWeight:700,lineHeight:1.4,margin:0,color:'#f0f7f3'};
 export const workspaceContributionCardStyle: React.CSSProperties = {...workspaceCardStyle,padding:'var(--mly-workspace-card-padding, 12px)',gap:9,background:'#1b3027',borderColor:'#567363'};
 export const workspaceStatusBadgeStyle: React.CSSProperties = {display:'inline-flex',padding:'3px 7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#303f38',color:'#ecf3ef'};
 /** Pair category color with readable text; long names wrap at controller widths. */
 export const getWorkspaceCategoryBadgeStyle = (color: string): React.CSSProperties => ({display:'inline-flex',alignItems:'center',gap:6,
-  padding:'4px 8px',borderRadius:5,border:'1px solid '+color,background:color+'26',color:'#f3f8f5',fontWeight:700,fontSize:12,minWidth:0,maxWidth:'100%',overflowWrap:'anywhere'});
+  padding:'4px 8px',borderRadius:5,border:'1px solid '+color,background:color+'26',color:'#f3f8f5',fontWeight:700,fontSize:11,minWidth:0,maxWidth:'100%',overflowWrap:'anywhere'});
 
 /** Explicit inner layout keeps disclosure content spaced in browsers where
  * details does not establish a grid for its anonymous content wrapper. */
@@ -33,7 +33,12 @@ export const workspacePickerResultsStyle: React.CSSProperties = {display:'grid',
 /** Neutral bands help scanning without competing with semantic category colors. */
 export const workspaceReadabilityCss = `
 /* Scope browser text inflation control to this UI; preserve browser/pinch zoom. */
-.mly-workspace-scroll { container: mly-workspace / inline-size; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+.mly-workspace-scroll {
+ --mly-workspace-heading-size:var(--mly-notes-heading-size, 12px);
+ --mly-workspace-title-size:var(--mly-notes-heading-size, 12px);
+ --mly-workspace-description-size:var(--mly-notes-text-size, 11px);
+ --mly-workspace-input-size:var(--mly-notes-text-size, 11px);
+ container: mly-workspace / inline-size; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .mly-workspace-scroll button { white-space: normal; overflow-wrap: anywhere; line-height: 1.35; }
 .mly-workspace-scroll input, .mly-workspace-scroll select, .mly-workspace-scroll textarea { max-width: 100%; }
 @container mly-workspace (max-width: 480px) {
@@ -41,16 +46,16 @@ export const workspaceReadabilityCss = `
   --mly-workspace-card-padding: 6px;
   --mly-workspace-heading-size: 12px;
   --mly-workspace-title-size: 12px;
-  --mly-workspace-description-size: 10px;
+  --mly-workspace-description-size: 11px;
  }
  /* Host form rules can specify sizes/margins directly on labels and inputs;
   * inheritance alone does not constrain them. Keep overrides inside this panel. */
- .mly-workspace-scroll > * { font-size: 10px; line-height: 1.4; }
+ .mly-workspace-scroll > * { font-size: 11px; line-height: 1.4; }
  .mly-workspace-scroll :is(label, p, summary, button, input, select, textarea, code) {
-  font-size: 10px !important; line-height: 1.4 !important;
+  font-size: 11px !important; line-height: 1.4 !important;
  }
  .mly-workspace-scroll :is(label, p) { margin: 0 !important; }
- .mly-workspace-scroll small { font-size: 9px; line-height: 1.4; }
+ .mly-workspace-scroll small { font-size: 10px; line-height: 1.4; }
  .mly-workspace-scroll :is(h3, h4) { font-size: 12px !important; }
  .mly-workspace-scroll button { padding: 5px 8px !important; min-height: 30px !important; }
  .mly-workspace-scroll :is(input, select, textarea):not([type=checkbox]):not([type=radio]):not([type=color]) {
@@ -65,7 +70,7 @@ export const workspaceReadabilityCss = `
 /* Compact touch controls use the same text size as the panel. Do not increase
  * form typography on coarse-pointer devices or scale the entire interface. */
 @media (pointer: coarse) {
- .mly-workspace-scroll { --mly-workspace-target-height: 34px; --mly-workspace-input-size: 12px; }
+ .mly-workspace-scroll { --mly-workspace-target-height: 34px; --mly-workspace-input-size: 11px; }
  .mly-workspace-scroll label:has(input[type=checkbox]), .mly-workspace-scroll summary { min-height: 32px; box-sizing: border-box; }
  .mly-workspace-scroll input:not([type=checkbox]):not([type=radio]):not([type=color]),
  .mly-workspace-scroll select { min-height: 34px; line-height: 1.4; }

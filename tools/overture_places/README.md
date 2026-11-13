@@ -1,69 +1,28 @@
-# Places data tools
+# Places tools
 
-Follow the [administrator guide](../../docs/places/administrator-guide.md) for Windows/Linux setup, export, HTTPS serving, widget connection, hosting and release updates.
+**[Start with the Places setup guide](../../docs/places/README.md).** It leads from selecting an area to downloading, publishing and updating it. Keep this tool directory together; run relative commands from the widget root.
 
-| Tool or asset | Responsibility |
-|---|---|
-| `export_all_places.py` | Export a pinned area to `.geojson` for Portal or `.geojsonl` for the external service, including `icon_group`. |
-| `convert_places_geojson.py` | Convert an existing exported GeoJSONL snapshot into a Portal-uploadable GeoJSON FeatureCollection without DuckDB or network access. |
-| `pro_places_package.py` | Small Pro diagnostic or complete regional native export plus attribute restoration; no Portal upload. |
-| `restore_places_vtpk.py` | Restore/verify the exact source attributes in a new copy of a Pro package; preserve geometry, refuse ambiguous identities and require full source coverage. |
-| `inspect_places_vtpk.py` | Bounded offline inspection of package bundle/tile attributes, without extracting files or exposing attribute values. |
-| `places_geojson.py` | Shared streaming validation, category normalization and exclusive complete-file publication. |
-| `export_common.py` | Validate bbox and resolve release identifiers. |
-| `places_service.py` | Import, inspect and serve a configured read-only SQLite database over HTTPS. |
-| `places_store.py` | Validate source records, build indexes and atomically publish a versioned database. |
-| `service.example.json` | Copy to your own service config; set database, URL, allowed origins and TLS paths. |
-| `serve_places_local.py` | Shared native tile/query protocol and optional in-memory direct test. |
-| `place_categories.py`, `basic_category_icons.csv` | Map source categories to shared icon families. |
-| `places_sprite.py` | Generate shared sprite atlases. |
-| `requirements.txt` | DuckDB dependency for offline export; serving uses standard-library Python. |
+| Task | Entry point | Environment |
+|---|---|---|
+| Save/import an area, check releases, download, compare and record deployment | `places_area.py` | Ordinary Python 3.10+; downloader requirements installed |
+| Build the full Portal package, including attributes, icons and counts | `places_area.py:build_portal` | ArcGIS Pro |
+| Optionally publish a new private Portal pair from Pro sign-in | `publish_places_portal.py` | Pro Python window; explicit plan then publish |
+| Run the external HTTPS alternative | `places_service.py` | Ordinary Python with SQLite R-tree; server/certificate configuration |
 
-Keep the tool directory together. Import a regional snapshot once, then serve the persisted database without reading/reindexing source files at restart. The current tested import limit is 100,000 places. The [roadmap](../../docs/development/roadmap.md) tracks deployment and scale validation.
+## Normal guides
 
-A [regional example pair](../../examples/places/README.md) is included. Preserve release attribution and `OVERTURE-EXPLORER-NOTICE.txt`. See the [service contract](../../docs/places/service-contract.md) for protocol details.
+- [Download and update](../../docs/places/area-maintenance.md)
+- [Manual Portal publishing](../../docs/places/portal-administrator-guide.md)
+- [Optional publishing script](../../docs/places/optional-publishing.md)
+- [External HTTPS service](../../docs/places/external-service.md)
+- [Troubleshooting](../../docs/places/troubleshooting.md)
 
-## Portal-ready GeoJSON
+## Developer helpers
 
-Convert an existing export from the widget root:
+`export_all_places.py`, `convert_places_geojson.py`, `places_geojson.py` and `export_common.py` export/normalize data. `places_releases.py` reads the public release catalog. `pro_places_package.py`, `restore_places_vtpk.py`, `style_places_vtpk.py`, `prepare_places_portal.py` and `inspect_places_vtpk.py` build or inspect packages. The complete area build runs the required stages together.
 
-```sh
-python tools/overture_places/convert_places_geojson.py --input places-all.geojsonl --output places-portal.geojson
-```
+`places_store.py`, `serve_places_local.py`, `service.example.json`, `place_categories.py` and `places_sprite.py` support the external service and shared category resources. The direct in-memory server is a developer test path; the normal external workflow uses a prepared SQLite file.
 
-Or export a new area directly:
+See [package/schema reference](../../docs/development/places-packages.md), [external API/hosting reference](../../docs/development/places-service-contract.md) and [tests](../../docs/development/places-testing.md). An [example dataset](../../examples/places/README.md) is included. Preserve its manifest, [Overture attribution](https://docs.overturemaps.org/attribution/) and `OVERTURE-EXPLORER-NOTICE.txt`.
 
-```sh
-python tools/overture_places/export_all_places.py --release 2026-10-21.0 --bbox=-86.16,39.75,-86.10,39.80 --format geojson --output places-portal.geojson
-```
-
-The `.geojson` output extension also selects FeatureCollection format automatically. Direct export keeps the existing DuckDB requirements, 25,000-record default and 100,000-record maximum. Conversion uses only standard-library Python and the included category mapping, with a 100,000-record ceiling. Both retain IDs, nulls, Unicode and distinct colocated records; neither silently truncates or overwrites output. The external service continues using `.geojsonl` plus its matching manifest.
-
-Upload the resulting `.geojson` to Portal as query data. Follow the [Portal guide](../../docs/places/portal-administrator-guide.md) for field types, publishing and the separate vector tile service. GeoJSON itself is not a `.vtpk`.
-
-## External service quick start with the included example
-
-```sh
-python tools/overture_places/places_service.py import --input examples/places/places-indianapolis.geojsonl --database data/places-2026-10-21.sqlite
-python tools/overture_places/places_service.py inspect --database data/places-2026-10-21.sqlite
-```
-
-Copy `service.example.json` to `places-service.json` in the widget root and edit the certificate/key paths and app origin for your environment. Then:
-
-```sh
-python tools/overture_places/places_service.py serve --config places-service.json
-```
-
-Check `https://localhost:3444/health`, then configure the widget with `https://localhost:3444`. Retain dated databases for explicit stop/config-change/restart rollback. See the administrator guide for full platform and HTTPS hosting details.
-
-For the pending tile-package workflow, run the [ArcGIS Pro feasibility test](../../docs/places/pro-package-test.md) before publishing a full package. Native Pro execution and Portal acceptance remain separate verification gates.
-
-The next full-data Portal step is the [attribute-preserving full build](../../docs/places/attribute-restoration.md). It generates the pairing contract automatically and requires a real Pro/Portal acceptance test. Existing diagnostic packages can be repaired offline without another Pro run when their exact build-source GeoJSON is supplied.
-
-## Saved-area maintenance
-
-Start with the [area maintenance guide](../../docs/places/area-maintenance.md). `places_area.py` provides `init`, `releases`, `check`, `adopt`, `refresh`/`prepare`, `build-portal` and `mark-published`. Preparation and publication are separate: no command uploads Portal items or rewrites the running HTTPS service configuration. `places_releases.py` owns bounded public catalog discovery.
-
-## Optional Portal publication
-
-`publish_places_portal.py` runs only when an administrator explicitly invokes it from a signed-in ArcGIS Pro Python window. `create_plan` reads Portal/account metadata and writes a local plan; `publish_plan` creates a new private query/vector tile pair and reports both URLs for review. It never overwrites/deletes existing services, changes the experience or saves credentials. No toolbox is included. See [Optional publishing](../../docs/places/optional-publishing.md) for requirements, usage, retained partial results and the live acceptance-test boundary. Ordinary downloading and manual publishing do not require this optional script.
+Preparation never changes the live experience. Only the optional publisher uploads Portal content when explicitly called; it creates new private items. Service switching and recording publication remain administrator actions.

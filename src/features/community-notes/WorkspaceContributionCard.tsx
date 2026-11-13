@@ -21,15 +21,15 @@ export function WorkspaceContributionCard({note,color,own,ownerContribution,canE
  const {owned:text,formatLocale}=useWidgetLocale();
  return <article style={{...card,borderInlineStart:'4px solid '+color}}>
   <div style={{...row,justifyContent:'space-between'}}><WorkspaceCategoryBadge name={note.category} color={color}/><span style={statusBadge}>{text('Status')}: {text(statuses[note.status]||note.status)}</span></div>
-  <h3 style={{margin:0,fontSize:'var(--mly-workspace-title-size, 15px)',lineHeight:1.4,overflowWrap:'anywhere'}}>{note.title?.trim()||note.category}</h3>
+  <h3 style={{margin:0,fontSize:'var(--mly-workspace-title-size, 12px)',lineHeight:1.4,overflowWrap:'anywhere'}}>{note.title?.trim()||note.category}</h3>
   <div style={{...row,fontSize:10,color:'#bdd0c5'}}><bdi style={{fontWeight:600,overflowWrap:'anywhere'}}>{formatWorkspaceContributor(note.author_id,note.author_display_name,text('Contributor'))}</bdi><span>{text(own?'Your contribution':ownerContribution?'Owner’s contribution':'Member’s contribution')}</span><span>{text('Last updated')}: {new Date(note.updated_at||note.created_at).toLocaleString(formatLocale)}</span></div>
-  <div style={{margin:0,fontSize:'var(--mly-workspace-description-size, 13px)',lineHeight:1.6,whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}><LinkedDetectionNoteText value={note.note_text} loadAttachment={onLoadDetectionAttachment} load={onLoadDetectionPreview}/></div>
-  {note.resolution_note&&<div style={{fontSize:12,lineHeight:1.5}}><strong>{text('Outcome / follow-up')}: </strong>{note.resolution_note}</div>}
+  <div style={{margin:0,fontSize:'var(--mly-workspace-description-size, 11px)',lineHeight:1.6,whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}><LinkedDetectionNoteText value={note.note_text} loadAttachment={onLoadDetectionAttachment} load={onLoadDetectionPreview}/></div>
+  {note.resolution_note&&<div style={{fontSize:11,lineHeight:1.4}}><strong>{text('Outcome / follow-up')}: </strong>{note.resolution_note}</div>}
   {note.risk_label&&<small>{text('Legacy risk assessment')}: {text(legacy[note.risk_label]||note.risk_label)}</small>}
   <div style={{...row,borderTop:'1px solid #496052',paddingTop:8}}>
-   <button type="button" style={button} onClick={onShow}>{text('Show on map')}</button>
-   {canEdit&&<button type="button" style={secondary} disabled={busy} onClick={onEdit}>{text('Update contribution')}</button>}
-   {canRemove&&<button type="button" style={danger} disabled={busy} onClick={onRemove}>{text('Remove shared note')}</button>}
+   <button className="mly-text-action" type="button" style={button} onClick={onShow}>{text('Show on map')}</button>
+   {canEdit&&<button className="mly-text-action" type="button" style={secondary} disabled={busy} onClick={onEdit}>{text('Update contribution')}</button>}
+   {canRemove&&<button className="mly-text-action" type="button" style={danger} disabled={busy} onClick={onRemove}>{text('Remove shared note')}</button>}
   </div>
   {children}
  </article>;

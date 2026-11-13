@@ -4,7 +4,7 @@ This is a React/TypeScript widget hosted by ArcGIS Experience Builder Developer 
 
 - [Documentation index](docs/README.md)
 - [Architecture](docs/development/architecture.md) and [roadmap](docs/development/roadmap.md)
-- [Places tests](docs/places/testing.md)
+- [Places tests](docs/development/places-testing.md)
 - [Localization contributions](docs/localization/CONTRIBUTING.md)
 
 Run affected Node suites with `node --test tests/<suite>.test.cjs`. The lightweight TypeScript loaders resolve the host's `typescript`, or the module path supplied through `MAPILLARY_TYPESCRIPT`. React/DOM suites additionally need compatible React, React DOM and jsdom available from the environment. Browser suites need their documented browser harness/dependencies. Python export tests need `tools/overture_places/requirements.txt`; serving uses standard-library Python.

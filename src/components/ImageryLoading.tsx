@@ -21,7 +21,7 @@ export const ImageryLoading: React.FC<{ loading: boolean; hasImage: boolean; rep
       <div role="status" aria-live="polite" style={imageryLoadingCardStyle}>
         <span aria-hidden="true" className="mly-imagery-spinner" style={imagerySpinnerStyle} />
         <span title={representative ? t('uiOpeningRepresentativeStreetImageryZoomCloserToChoose') : t('uiOpeningStreetImagery')} style={imageryLoadingTextStyle}>{resolving ? <OwnedMessage source={"Finding nearest frame{value0}"} values={{value0:String(progress ? ` · ${progress}` : "…")}}/> : slow ? t('uiOpeningImageryTakingLongerThanUsual') : representative ? t('uiOpeningRepresentativeImageryZoomCloserToChooseA') : t('uiOpeningStreetImagery')}</span>
-        {resolving && onCancel && <button type="button" onClick={onCancel} className="mly-imagery-cancel"> {t('uiCancel')} </button>}
+        {resolving && onCancel && <button type="button" onClick={onCancel} className="mly-imagery-cancel mly-text-action"> {t('uiCancel')} </button>}
       </div>
     </div>;
 };

@@ -17,7 +17,7 @@ import { CommunityWorkspaceClient, communityNoteTarget, parseWorkspaceInvitation
 import type { CommunityWorkspace, CommunityRecord, WorkspaceMember, WorkspaceInvite, WorkspaceCategory } from './communityWorkspace';
 import { workspaceReadabilityCss, workspacePanelStyle as panel, workspaceCardStyle as card, workspaceRowStyle as row, workspaceFieldStyle as field, workspaceInputStyle as input, workspaceButtonStyle as button, workspaceSectionStyle as sectionStyle, workspaceSummaryStyle as summaryStyle, workspaceHeadingStyle as headingStyle, workspaceSecondaryButtonStyle as secondary } from '../../styles/communityWorkspace';
 
-interface Props {onDetectionDraftLocation?:(requestId:string,point:{lon:number;lat:number})=>void;onDetectionDraftFinished?:(requestId:string)=>void; onLoadDetectionPreview?:DetectionPreviewLoader; detectionDraft?:ExternalContributionSeed|null;onClearDetectionDraft?:(applied?:boolean)=>void; onPickLocation?:WorkspaceLocationRequest;currentImageId?:string|null;notes: readonly FieldNote[]; onFocus(note: FieldNote): void; onClose(): void;
+interface Props {onDetectionDraftLocation?:(requestId:string,point:{lon:number;lat:number})=>void;onDetectionDraftFinished?:(requestId:string)=>void; onLoadDetectionPreview?:DetectionPreviewLoader; detectionDraft?:ExternalContributionSeed|null;onClearDetectionDraft?:(applied?:boolean)=>void; onPickLocation?:WorkspaceLocationRequest;currentImageId?:string|null;notes: readonly FieldNote[]; onFocus(note: FieldNote): void;
   onMapNotes?(notes: FieldNote[],categories: readonly WorkspaceCategory[],workspaceName: string): void }
 const emptyRecords: CommunityRecord[] = [], emptyCategories: WorkspaceCategory[] = [];
 
@@ -25,7 +25,7 @@ const emptyRecords: CommunityRecord[] = [], emptyCategories: WorkspaceCategory[]
  * live in this mount only. No local note leaves the browser without Publish.
  * All database rights are verified by the operator's RLS, never by button visibility.
  */
-export const CommunityWorkspacePanel: React.FC<Props> = ({notes,onFocus,onClose,onMapNotes,onPickLocation,currentImageId,detectionDraft,onClearDetectionDraft,onLoadDetectionPreview,onDetectionDraftFinished,onDetectionDraftLocation}) => {
+export const CommunityWorkspacePanel: React.FC<Props> = ({notes,onFocus,onMapNotes,onPickLocation,currentImageId,detectionDraft,onClearDetectionDraft,onLoadDetectionPreview,onDetectionDraftFinished,onDetectionDraftLocation}) => {
   const { owned: text } = useWidgetLocale();
   const [connectionOpen,setConnectionOpen]=React.useState(true);
   const resultsRef=React.useRef<HTMLDivElement>(null),createRef=React.useRef<HTMLDetailsElement>(null),publishRef=React.useRef<HTMLDetailsElement>(null),categoriesRef=React.useRef<HTMLDetailsElement>(null);
@@ -80,7 +80,7 @@ export const CommunityWorkspacePanel: React.FC<Props> = ({notes,onFocus,onClose,
   /** Membership controls refresh separately from debounced contribution reads. */
   function loadPage(refresh=true){const api=client.current;if(!api||!active)return;if(refresh)contributions.refresh();void run(async()=>({members:await api.members(active),invites:owner?await api.invites(active):[]}),result=>{setMembers(result.members);setInvites(result.invites);});}
   React.useEffect(()=>{setMembers([]);setInvites([]);setShareText('');setEditing('');setEditError('');setAliasError('');setRemoval(null);setPublishCategory('');setCreateError('');if(signedIn&&active)loadPage(false);},[active,signedIn]);
-  const action=(label:string,callback:()=>void,disabled=busy)=><button type="button" style={button} disabled={disabled} onClick={callback}>{text(label)}</button>;
+  const action=(label:string,callback:()=>void,disabled=busy)=><button className="mly-text-action" type="button" style={button} disabled={disabled} onClick={callback}>{text(label)}</button>;
   // Retain the card element tree while typing; large loaded lists must not
   // re-render descriptions/editors for every search-input character.
   const contributionCards=React.useMemo(()=>workspace?records.map(note=><WorkspaceContributionCard onLoadDetectionAttachment={(id,signal)=>client.current!.noteImage(note.id,id,signal)} onLoadDetectionPreview={onLoadDetectionPreview} key={note.id} note={note} color={categories.find(category=>category.name===note.category)?.color||'#f5a623'}
@@ -97,7 +97,7 @@ export const CommunityWorkspacePanel: React.FC<Props> = ({notes,onFocus,onClose,
   return <section className="mly-notes-scroll mly-workspace-scroll" role="tabpanel" aria-label={text('Workspace notes')} style={panel} onClick={event=>event.stopPropagation()} onPointerDown={event=>event.stopPropagation()} onKeyDown={event=>event.stopPropagation()}>
     <style>{workspaceReadabilityCss}</style>
     {detectionDraft&&!canWrite&&<div role="status" style={card}><strong>{detectionDraft.title}</strong><span>{text('Note draft ready. Connect, sign in and choose a workspace where you can contribute.')}</span>{action('Discard incoming draft',()=>onClearDetectionDraft?.(),false)}</div>}
-    <div style={row}><strong>{text('Collaboration workspace')}</strong>{action('Close',onClose,false)}{connected&&action('Disconnect',disconnect,false)}</div>
+    <div style={row}><strong>{text('Collaboration workspace')}</strong>{connected&&action('Disconnect',disconnect,false)}</div>
     <details open={connectionOpen} onToggle={event=>setConnectionOpen(event.currentTarget.open)} className="mly-workspace-section" style={sectionStyle}><summary style={summaryStyle}>{text('Connection and workspace settings')}</summary>
     {!connected?<div style={card}>
       <p>{text('Connect to a workspace service operated by your team, community, or organization. This widget does not host shared notes.')}</p>
@@ -112,7 +112,7 @@ export const CommunityWorkspacePanel: React.FC<Props> = ({notes,onFocus,onClose,
         <p>{text('Use an account supplied by the workspace operator. No Esri Enterprise account is required.')}</p>
         <label style={field}>{text('Email')}<input style={input} type="email" autoComplete="username" required value={email} onChange={event=>setEmail(event.target.value)} /></label>
         <label style={field}>{text('Password')}<input style={input} type="password" autoComplete="current-password" required value={password} onChange={event=>setPassword(event.target.value)} /></label>
-        <button type="submit" style={button} disabled={busy}>{text('Sign in')}</button>
+        <button className="mly-text-action" type="submit" style={button} disabled={busy}>{text('Sign in')}</button>
       </form>:<React.Fragment>
         <label style={field}>{text('Workspace')}<select aria-label={text('Workspace')} style={input} disabled={busy} value={active} onChange={event=>setActive(event.target.value)}><option value="">{text('Choose a workspace')}</option>{workspaces.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
         {action('Refresh workspaces',()=>{const api=client.current!;void run(()=>api.workspaces(),list=>{setWorkspaces(list);if(!list.some(item=>item.id===active))setActive(list[0]?.id||'');});})}
@@ -133,10 +133,10 @@ export const CommunityWorkspacePanel: React.FC<Props> = ({notes,onFocus,onClose,
       <div className="mly-workspace-section" style={sectionStyle}><div style={{...row,justifyContent:'space-between'}}><h3 style={headingStyle}>{workspace.name}</h3><span>{text('Your role')}: {text(owner?'Owner':canWrite?'Contributor':'Reader')}</span></div>
         <small>{text('Operator contact')}: {workspace.operator_contact}</small>
         <nav aria-label={text('Workspace actions')} style={row}>
-          <button type="button" style={button} onClick={()=>goToSection(resultsRef)}>{text('Read contributions')}</button>
-          {canWrite&&<button type="button" style={button} onClick={()=>goToSection(createRef)}>{text('Create contribution')}</button>}
-          {canWrite&&<button type="button" style={secondary} onClick={()=>goToSection(publishRef)}>{text('Publish a local draft')}</button>}
-          {owner&&<button type="button" style={secondary} onClick={()=>goToSection(categoriesRef)}>{text('Edit categories')}</button>}
+          <button className="mly-text-action" type="button" style={button} onClick={()=>goToSection(resultsRef)}>{text('Read contributions')}</button>
+          {canWrite&&<button className="mly-text-action" type="button" style={button} onClick={()=>goToSection(createRef)}>{text('Create contribution')}</button>}
+          {canWrite&&<button className="mly-text-action" type="button" style={secondary} onClick={()=>goToSection(publishRef)}>{text('Publish a local draft')}</button>}
+          {owner&&<button className="mly-text-action" type="button" style={secondary} onClick={()=>goToSection(categoriesRef)}>{text('Edit categories')}</button>}
           {action('Refresh notes',()=>loadPage())}
         </nav>
       </div>
@@ -150,7 +150,7 @@ export const CommunityWorkspacePanel: React.FC<Props> = ({notes,onFocus,onClose,
       {contributions.busy&&<p role="status" style={{margin:0}}>{text(contributions.waiting?'Waiting for you to finish typing…':'Updating results…')}{records.length>0&&' '+text('Previous results remain visible until the search finishes.')}</p>}
       {contributionCards}
       {contributions.hasMore&&action('Load more notes',contributions.loadMore,contributions.busy)}
-      {!contributions.busy&&!contributions.error&&!records.length&&<div style={{...card,padding:16}}><strong>{text('No contributions match the current filters.')}</strong><span>{text('Try a different search or turn off Only my contributions.')}</span>{(contributions.query||contributions.mine)&&<button type="button" style={secondary} onClick={()=>{contributions.clearSearch();contributions.setMine(false);}}>{text('Show all contributions')}</button>}</div>}
+      {!contributions.busy&&!contributions.error&&!records.length&&<div style={{...card,padding:16}}><strong>{text('No contributions match the current filters.')}</strong><span>{text('Try a different search or turn off Only my contributions.')}</span>{(contributions.query||contributions.mine)&&<button className="mly-text-action" type="button" style={secondary} onClick={()=>{contributions.clearSearch();contributions.setMine(false);}}>{text('Show all contributions')}</button>}</div>}
       </div>
       {owner&&<WorkspaceCategoryEditor key={'categories:'+active} sectionRef={categoriesRef} categories={categories} busy={busy} onSave={(name,color,archived)=>{const api=client.current!;void run(()=>api.setCategory(active,name,color,archived),()=>{contributions.refresh();setMessage(text('Workspace category saved.'));});}} />}
       {contributions.page&&!activeCategories.length&&!contributions.busy&&<p>{text(owner?'Add a workspace category to enable publishing.':'The owner must add an active workspace category before new contributions can be published.')}</p>}

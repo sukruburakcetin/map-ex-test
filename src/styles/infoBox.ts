@@ -199,3 +199,24 @@ export const infoDetailsCss = `
 /* Width expansion is available in narrow controllers and on touch screens too. */
 .mly-info-width-toggle { flex-basis: 24px; min-height: 28px; }
 `;
+
+/** Scoped definition-list reset protects the compact card from Experience Builder typography. */
+export const imageInformationCss = `
+.mly-info-panel .mly-info-body { overflow: hidden; flex: 1 1 auto; }
+.mly-info-panel .mly-info-scroll { flex: 1 1 auto; scrollbar-width: thin !important; scrollbar-color: #a8cbb480 transparent; }
+.mly-info-panel .mly-info-scroll::-webkit-scrollbar { display: block; width: 5px; }
+.mly-info-panel .mly-info-scroll::-webkit-scrollbar-thumb { background: #a8cbb480; border-radius: 4px; }
+.mly-info-panel .mly-info-scroll > * { flex-shrink: 0; }
+.mly-info-panel .mly-info-scroll:focus-visible { outline: 1px solid #b4f3ca; outline-offset: -1px; }
+.mly-image-information { margin: 0 !important; padding: 0 !important; min-width: 0; color: #d9e5de; font: 9px/1.4 "Segoe UI", sans-serif; text-align: start; }
+.mly-info-panel .mly-image-information > summary { margin: 0; padding: 3px 4px; min-height: 0; color: #c7dfd0; font: inherit; line-height: 1.25; cursor: pointer; }
+.mly-image-information-content { margin: 2px 0 4px; padding: 4px; border: 1px solid #8ab89b2e; border-radius: 5px; background: #0a171136; min-width: 0; overflow-wrap: anywhere; }
+.mly-image-information .mly-image-information-content dl { display: block; margin: 0 !important; padding: 0 !important; font: inherit !important; color: #e0eee5 !important; }
+.mly-image-information-row { margin: 0; padding: 2px 0; border-bottom: 1px solid #ffffff12; }
+.mly-image-information-row:first-child { padding-top: 0; }
+.mly-image-information-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.mly-image-information .mly-image-information-row dt, .mly-image-information .mly-image-information-row dd { display: block; float: none; width: auto; max-width: 100%; min-width: 0; margin: 0 !important; padding: 0 !important; font: inherit !important; line-height: 1.3 !important; overflow-wrap: anywhere; white-space: normal; }
+.mly-image-information .mly-image-information-row dt { color: #a9c8b6 !important; font-size: 8px !important; font-weight: 400 !important; }
+.mly-image-information .mly-image-information-row dd { color: #e0eee5 !important; }
+.mly-image-information-id { display: block; margin: 4px 0 0; color: #a9c8b6; font: 8px/1.4 "Segoe UI", sans-serif; overflow-wrap: anywhere; }
+`;

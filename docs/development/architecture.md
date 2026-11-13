@@ -4,7 +4,7 @@
 
 | Area | Entry point |
 |---|---|
-| Places data and interactions | [Places owners](../places/architecture.md) |
+| Places data and interactions | [Places owners](places-architecture.md) |
 | Shared coverage/imagery dispatch | [Interaction UX](interaction-ux.md) |
 | InfoBox composition | [Sections](info-box.md) |
 | Field-note ownership | [Feature README](../../src/features/field-notes/README.md) and [viewer](field-note-viewer.md) |

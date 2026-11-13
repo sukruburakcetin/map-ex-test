@@ -37,7 +37,7 @@ export const NearbyCarousel: React.FC<Props> = ({
     <div style={{ position: 'absolute', bottom: 8, right: 8, zIndex: 20 }}>
 
       {/* Badge button */}
-      <button
+      <button className="mly-text-action"
         onClick={() => setOpen(o => !o)}
         title={t('uiCapturesNearby')}
         style={{

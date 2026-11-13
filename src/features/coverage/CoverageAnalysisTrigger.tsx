@@ -33,7 +33,7 @@ export const CoverageAnalysisTrigger: React.FC<CoverageAnalysisTriggerProps> = p
       <div
         className="mly-coverage-analysis-trigger" style={coverageAnalysisTriggerRowStyle}
       >
-        <button
+        <button className="mly-text-action"
           type="button" disabled={!canRun} aria-disabled={!canRun}
           onClick={onRunCoverageAnalysis}
           title={tooltip}

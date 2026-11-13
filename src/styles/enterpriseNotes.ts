@@ -4,7 +4,10 @@ export const notesTabsStyle: React.CSSProperties = { display: 'flex', gap: 6, al
 export const getNotesTabStyle = (selected: boolean): React.CSSProperties => ({ padding: '5px 10px', borderRadius: 5,
   border: selected ? '1px solid #48966b' : '1px solid #3c5145', background: selected ? '#214d35' : 'transparent', color: '#d4e7dc', cursor: 'pointer', fontSize: 11 });
 export const enterpriseToolbarStyle: React.CSSProperties = { display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, flexWrap: 'wrap', fontSize: 10, color: '#b2cbbc' };
-export const enterpriseRowsStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 5, flex: '1 1 0', minHeight: 0, overflowY: 'auto', overflowX: 'hidden' };
+export const enterpriseRowsStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 5, flex: '0 0 auto', minWidth: 0 };
+/** Enterprise tools and records share one viewport, so fixed help cannot squeeze cards to zero. */
+export const enterprisePanelStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, flex: '1 1 0', overflowY: 'auto', overflowX: 'hidden', overscrollBehaviorY: 'contain' };
+export const enterpriseContentStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 6, flex: '0 0 auto', minWidth: 0 };
 export const enterpriseRowStyle: React.CSSProperties = { padding: '5px 8px', flexShrink: 0, borderRadius: 6, background: 'rgba(255,255,255,0.05)', borderLeft: '3px solid #35b7c4', color: '#d3e2d9', fontSize: 11 };
 /** Explicit workflow state shares a wrapping row with actions to conserve panel height. */
 export const enterpriseActionsStyle: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 3 };
@@ -17,15 +20,22 @@ export const enterpriseErrorStyle: React.CSSProperties = { color: '#ffb8a6', fon
 
 export const notesLocalPanelStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 6, minHeight: 0, flex: '1 1 0', overflow: 'hidden' };
 
-/** Default source-independent sheet height; only records scroll as tabs/loading state change. */
+/** Source-independent sheet height; the active source owns its scroll viewport beneath the tabs. */
 export const notesSheetStyle: React.CSSProperties = { position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 999999990,
   height: 'min(300px, 65%)', boxSizing: 'border-box', background: 'rgba(12,12,12,0.92)', backdropFilter: 'blur(10px)',
   borderTop: '1px solid rgba(255,255,255,0.1)', padding: '6px 8px 8px', display: 'flex', flexDirection: 'column', gap: 6,
   minHeight: 0, maxHeight: '100%', overflow: 'hidden', animation: 'nearbySlideUp 0.2s ease-out' };
-export const notesRowHeadingStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between', flexWrap: 'wrap' };
+export const notesRowHeadingStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between', minHeight: 32, minWidth: 0 };
 export const notesRowMetaStyle: React.CSSProperties = { fontSize: 9, color: '#a0ada5' };
 
 /** Wide touch/keyboard target with a familiar sheet grip; records retain their own scrolling. */
 export const notesSheetHandleStyle: React.CSSProperties = { display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0,
-  width: '100%', minHeight: 28, padding: 4, border: 0, borderRadius: 5, background: 'transparent', color: '#d3e2d9', cursor: 'pointer', touchAction: 'manipulation' };
+  width: '100%', minHeight: 32, padding: '4px 40px', border: 0, borderRadius: 5, background: 'transparent', color: '#d3e2d9', cursor: 'pointer', touchAction: 'manipulation' };
 export const notesSheetGripStyle: React.CSSProperties = { display: 'block', width: 44, height: 5, borderRadius: 4, background: 'currentColor' };
+
+/** One source-independent close action remains outside each tab's scrolling content. */
+export const notesSheetHeaderStyle: React.CSSProperties = { position: 'relative', flexShrink: 0, minHeight: 32 };
+export const notesSheetCloseStyle: React.CSSProperties = { position: 'absolute', insetInlineEnd: 0, top: 0, width: 32, height: 32, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0, border: 0, borderRadius: 5, background: 'transparent', color: '#d3e2d9', cursor: 'pointer', touchAction: 'manipulation' };
+
+/** Title, timestamp and sharing provenance use one wrapping header beside the removal target. */
+export const notesRowHeaderContentStyle: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '2px 8px', flex: '1 1 0', minWidth: 0, overflowWrap: 'anywhere' };

@@ -88,7 +88,7 @@ export const Legend: React.FC<LegendProps> = ({ turboModeActive, onClearCache, h
                                 {diamondMarker} <span style={legendTextStyle}> {t('uiFieldNote')} </span>
                             </div>
                         )}
-                        <button onClick={onClearCache} style={compactButtonStyle}> {t('uiClearCache')} </button>
+                        <button className="mly-text-action" onClick={onClearCache} style={compactButtonStyle}> {t('uiClearCache')} </button>
                     </React.Fragment>
                 )}
             </div>
