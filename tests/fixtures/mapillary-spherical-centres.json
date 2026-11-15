@@ -1,0 +1,546 @@
+{
+  "sdk": "mapillary-js@4.1.2",
+  "method": "Actual SDK Transform.projectBasic of horizontal ENU direction, followed by public setCenter clamping",
+  "cases": [
+    {
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "exifOrientation": 1,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 0,
+      "expected": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "exifOrientation": 1,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 90,
+      "expected": [
+        0.75,
+        0.5
+      ]
+    },
+    {
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "exifOrientation": 1,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 359,
+      "expected": [
+        0.49722222222222207,
+        0.5
+      ]
+    },
+    {
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "exifOrientation": 3,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 0,
+      "expected": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "exifOrientation": 3,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 90,
+      "expected": [
+        0.25,
+        0.5
+      ]
+    },
+    {
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "exifOrientation": 3,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 359,
+      "expected": [
+        0.502777777777778,
+        0.5
+      ]
+    },
+    {
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "exifOrientation": 6,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 0,
+      "expected": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "exifOrientation": 6,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 90,
+      "expected": [
+        0.5,
+        0.75
+      ]
+    },
+    {
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "exifOrientation": 6,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 359,
+      "expected": [
+        0.5,
+        0.49722222222222207
+      ]
+    },
+    {
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "exifOrientation": 8,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 0,
+      "expected": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "exifOrientation": 8,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 90,
+      "expected": [
+        0.5,
+        0.25
+      ]
+    },
+    {
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "exifOrientation": 8,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 359,
+      "expected": [
+        0.5,
+        0.502777777777778
+      ]
+    },
+    {
+      "rotation": [
+        1.3,
+        0.2,
+        -0.3
+      ],
+      "exifOrientation": 1,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 0,
+      "expected": [
+        0.5548763688039579,
+        0.5761822195214772
+      ]
+    },
+    {
+      "rotation": [
+        1.3,
+        0.2,
+        -0.3
+      ],
+      "exifOrientation": 1,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 90,
+      "expected": [
+        0.8007561808848418,
+        0.46635899426864447
+      ]
+    },
+    {
+      "rotation": [
+        1.3,
+        0.2,
+        -0.3
+      ],
+      "exifOrientation": 1,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 359,
+      "expected": [
+        0.5520326957598298,
+        0.5767737424732229
+      ]
+    },
+    {
+      "rotation": [
+        1.3,
+        0.2,
+        -0.3
+      ],
+      "exifOrientation": 3,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 0,
+      "expected": [
+        0.44512363119604215,
+        0.4238177804785228
+      ]
+    },
+    {
+      "rotation": [
+        1.3,
+        0.2,
+        -0.3
+      ],
+      "exifOrientation": 3,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 90,
+      "expected": [
+        0.1992438191151582,
+        0.5336410057313555
+      ]
+    },
+    {
+      "rotation": [
+        1.3,
+        0.2,
+        -0.3
+      ],
+      "exifOrientation": 3,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 359,
+      "expected": [
+        0.44796730424017017,
+        0.4232262575267771
+      ]
+    },
+    {
+      "rotation": [
+        1.3,
+        0.2,
+        -0.3
+      ],
+      "exifOrientation": 6,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 0,
+      "expected": [
+        0.4238177804785228,
+        0.5548763688039579
+      ]
+    },
+    {
+      "rotation": [
+        1.3,
+        0.2,
+        -0.3
+      ],
+      "exifOrientation": 6,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 90,
+      "expected": [
+        0.5336410057313555,
+        0.8007561808848418
+      ]
+    },
+    {
+      "rotation": [
+        1.3,
+        0.2,
+        -0.3
+      ],
+      "exifOrientation": 6,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 359,
+      "expected": [
+        0.4232262575267771,
+        0.5520326957598298
+      ]
+    },
+    {
+      "rotation": [
+        1.3,
+        0.2,
+        -0.3
+      ],
+      "exifOrientation": 8,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 0,
+      "expected": [
+        0.5761822195214772,
+        0.44512363119604215
+      ]
+    },
+    {
+      "rotation": [
+        1.3,
+        0.2,
+        -0.3
+      ],
+      "exifOrientation": 8,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 90,
+      "expected": [
+        0.46635899426864447,
+        0.1992438191151582
+      ]
+    },
+    {
+      "rotation": [
+        1.3,
+        0.2,
+        -0.3
+      ],
+      "exifOrientation": 8,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 359,
+      "expected": [
+        0.5767737424732229,
+        0.44796730424017017
+      ]
+    },
+    {
+      "rotation": [
+        0.9,
+        -0.7,
+        0.4
+      ],
+      "exifOrientation": 1,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 0,
+      "expected": [
+        0.3728947369710246,
+        0.693525912778811
+      ]
+    },
+    {
+      "rotation": [
+        0.9,
+        -0.7,
+        0.4
+      ],
+      "exifOrientation": 1,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 90,
+      "expected": [
+        0.6263343425172825,
+        0.5098811760564013
+      ]
+    },
+    {
+      "rotation": [
+        0.9,
+        -0.7,
+        0.4
+      ],
+      "exifOrientation": 1,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 359,
+      "expected": [
+        0.3695146583791129,
+        0.6932821740454331
+      ]
+    },
+    {
+      "rotation": [
+        0.9,
+        -0.7,
+        0.4
+      ],
+      "exifOrientation": 3,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 0,
+      "expected": [
+        0.6271052630289754,
+        0.30647408722118896
+      ]
+    },
+    {
+      "rotation": [
+        0.9,
+        -0.7,
+        0.4
+      ],
+      "exifOrientation": 3,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 90,
+      "expected": [
+        0.3736656574827175,
+        0.49011882394359874
+      ]
+    },
+    {
+      "rotation": [
+        0.9,
+        -0.7,
+        0.4
+      ],
+      "exifOrientation": 3,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 359,
+      "expected": [
+        0.6304853416208871,
+        0.30671782595456687
+      ]
+    },
+    {
+      "rotation": [
+        0.9,
+        -0.7,
+        0.4
+      ],
+      "exifOrientation": 6,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 0,
+      "expected": [
+        0.30647408722118896,
+        0.3728947369710246
+      ]
+    },
+    {
+      "rotation": [
+        0.9,
+        -0.7,
+        0.4
+      ],
+      "exifOrientation": 6,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 90,
+      "expected": [
+        0.49011882394359874,
+        0.6263343425172825
+      ]
+    },
+    {
+      "rotation": [
+        0.9,
+        -0.7,
+        0.4
+      ],
+      "exifOrientation": 6,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 359,
+      "expected": [
+        0.30671782595456687,
+        0.3695146583791129
+      ]
+    },
+    {
+      "rotation": [
+        0.9,
+        -0.7,
+        0.4
+      ],
+      "exifOrientation": 8,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 0,
+      "expected": [
+        0.693525912778811,
+        0.6271052630289754
+      ]
+    },
+    {
+      "rotation": [
+        0.9,
+        -0.7,
+        0.4
+      ],
+      "exifOrientation": 8,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 90,
+      "expected": [
+        0.5098811760564013,
+        0.3736656574827175
+      ]
+    },
+    {
+      "rotation": [
+        0.9,
+        -0.7,
+        0.4
+      ],
+      "exifOrientation": 8,
+      "width": 4096,
+      "height": 2048,
+      "bearing": 359,
+      "expected": [
+        0.6932821740454331,
+        0.6304853416208871
+      ]
+    }
+  ]
+}

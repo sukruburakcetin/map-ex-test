@@ -1,0 +1,11 @@
+# Hover preview feedback
+
+The existing coverage status bar shows a localized **Finding preview…** message and its existing busy indicator when coverage hover work remains pending for 250 ms. It covers pointer-local tile lookup, image selection/metadata and the current thumbnail's load or error. Fast/cached previews do not flash a loading message.
+
+`DelayedHoverStatus` owns one timer and cancellable tokens, not network requests. Default timer functions are wrapped so browser Window APIs are never invoked with the status owner as their receiver. Pick work hands over to metadata/thumbnail work without restarting the delay. Completion of an obsolete token cannot clear a newer request's status. Pointer leave, layer disable and hover cancellation abort the corresponding signals; active-view transfer clears ownership, and unmount disposes silently. Foreground image opening, coverage preparation, route loading and existing selection errors keep status priority. A dismissed status bar is not forcibly reopened.
+
+Thumbnail feedback uses an optional callback in `renderImageryHoverCard`. A metadata placeholder does not finish the status. Image load/error finishes it only for the currently retained card. Same-image enrichment reuses the existing image; a decoded cached thumbnail settles synchronously. No additional API requests or image elements are introduced by the status owner.
+
+The message is in the lazy runtime catalogs and the contributor translation CSV. It is not a download percentage or a claim that all coverage is loaded. This feature does not identify or alter a host/browser loading line.
+
+Checks: `tests/hoverPreviewStatus.browser.cjs` runs the production low-zoom pointer handler with native Chromium timers and verifies a delayed preview is reached without a warning. `tests/hoverPreviewBrowserTimers.test.cjs` enforces browser timer receiver rules. `tests/hoverPreviewStatus.test.cjs` covers delay, handoff, cancellation, stale completion, disposal and actual status-bar priority. `tests/hoverPreviewThumbnailStatus.test.cjs` covers real DOM thumbnail completion, reuse and obsolete callbacks. Existing hover/bearing/coverage/cache interaction suites remain relevant. Verify footer visibility, rapid target changes and mouse leave in the actual Experience Builder host after rebuilding.

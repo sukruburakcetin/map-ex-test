@@ -1,0 +1,11 @@
+# Community translation workflow v6.116
+
+Requires v6.115. Consolidates all 1,070 Turkish runtime translations into locales/tr.ts. Removes locales/runtime-tr.ts and locales/completion-tr.ts after their imports are removed. The resulting catalog's complete key/value map was compared with v6.115 and is unchanged. English source modules and every other language catalog remain unchanged; Turkish builder settings remain separate.
+
+Adds a UTF-8 CSV lookup table with 1,231 stable rows: all 1,070 runtime entries, 150 builder entries and 11 language-name entries. Every row includes scope, key, English and all ten translations. The root README links the contributor guide. The CSV and tooling are developer/documentation assets and do not enter runtime bundles.
+
+The developer-only translation-table tool exports, checks and imports the table. Import is read-only by default and lists all proposed changes; --write explicitly applies reviewed changes. Preflight rejects unknown, missing and duplicate rows, incorrect columns, changed English, blank translations, placeholder drift and corrupt characters before any write. Applied edits update the affected runtime/settings catalog, eager startup subsets, language names and the checked-in CSV together. CSV supports BOM, quotes, commas, multiline text and row sorting. Catalogs remain the runtime source of truth. This workflow does not replace Git conflict review or native editorial review.
+
+Validation includes unchanged Turkish key/value parity, all catalog QA, table/catalog parity, CSV round trips, actual fixture edits to Spanish runtime/settings/names, startup synchronization, unchanged other languages, repeat imports and invalid-input rejection without source changes. Existing runtime/builder browser switching and Experience Builder development build are checked. The installer supports guarded removal of the two obsolete Turkish source files, restores them on uninstall and refuses edited/conflicting targets before writing.
+
+Install: node apply-community-translations-v6-116.cjs. Undo: node apply-community-translations-v6-116.cjs --uninstall. Uninstall refuses later edits; preserve community contributions and review their diff before rolling back.

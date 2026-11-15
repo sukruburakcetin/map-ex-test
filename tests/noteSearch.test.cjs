@@ -1,0 +1,13 @@
+const fs=require('node:fs'),path=require('node:path'),test=require('node:test'),assert=require('node:assert/strict'),ts=require(process.env.MAPILLARY_TYPESCRIPT||'typescript');
+const moduleObject={exports:{}};new Function('module','exports',ts.transpileModule(fs.readFileSync(path.join(__dirname,'../src/features/field-notes/noteSearch.ts'),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText)(moduleObject,moduleObject.exports);
+const {filterNotes}=moduleObject.exports;
+const notes=[{id:'a',category:'Café Road',note:'Broken sidewalk',resolutionNote:'Crew assigned',status:'in_progress'}, {id:'b',category:'Sign',note:'Repaired bridge',status:'completed'}, {id:'c',category:'Other',note:'Literal [x] 100% _'}, {id:'d',category:'Other',note:'İSTANBUL'}];
+const labels={open:'Open',in_progress:'In progress',completed:'Completed',dismissed:'Dismissed'};
+const ids=(query,locale='en-US')=>filterNotes(notes,query,locale,labels).map(n=>n.id);
+test('blank searches reuse the complete array without changing order',()=>{assert.equal(filterNotes(notes,'  \n ','en-US',labels),notes);});
+test('note text, category, resolution and raw/localized statuses are searchable',()=>{assert.deepEqual(ids('sidewalk'),['a']);assert.deepEqual(ids('cafe'),['a']);assert.deepEqual(ids('crew'),['a']);assert.deepEqual(ids('progress'),['a']);assert.deepEqual(ids('completed'),['b']);assert.deepEqual(ids('open'),['c','d']);assert.deepEqual(filterNotes(notes,'En cours','fr',{...labels,in_progress:'En cours'}).map(n=>n.id),['a']);});
+test('multiple terms may match across fields and all must match',()=>{assert.deepEqual(ids('ROAD assigned'),['a']);assert.deepEqual(ids('ROAD bridge'),[]);});
+test('matching uses literal input instead of wildcard or regular expression syntax',()=>{assert.deepEqual(ids('[x]'),['c']);assert.deepEqual(ids('100% _'),['c']);assert.deepEqual(ids('.*'),[]);});
+test('locale-aware case folding handles Turkish dotted I',()=>{assert.deepEqual(ids('istanbul','tr-TR'),['d']);});
+test('filtering preserves note identity and never mutates source records',()=>{const copy=JSON.stringify(notes),result=filterNotes(notes,'bridge','en-US',labels);assert.equal(result[0],notes[1]);assert.equal(JSON.stringify(notes),copy);});
+test('newly loaded notes immediately participate in the same query',()=>{assert.equal(filterNotes(notes,'new','en-US',labels).length,0);assert.equal(filterNotes([...notes,{id:'new',note:'New record'}],'new','en-US',labels).length,1);});

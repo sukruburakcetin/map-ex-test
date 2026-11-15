@@ -1,0 +1,15 @@
+# German v6.108
+
+Requires v6.107. Adds German to the widget and builder language selectors. The language name follows the displayed UI language: German / Almanca / Alemán / Allemand / Deutsch. App locale variants de-DE, de-AT, de-CH and other de-* variants use the shared German catalog; regional wording variants are not provided.
+
+The German catalogs explicitly cover all 1,070 runtime and 150 builder entries with identical keys and placeholders. Brands, request values, saved note categories, user content and service data are preserved. The v6.105 startup subset includes German splash and language controls on first paint. The v6.106 policy remains: explicit builder language overrides saved viewer preferences and disables the matching runtime selector; viewer choice is available in App language mode if allowed.
+
+Full runtime and builder catalogs are separately lazy-loaded. Isolated optimized text estimates: German runtime 63,021 bytes / 19,283 gzip; builder 11,578 bytes / 4,722 gzip. The total eager startup subset for all non-English languages and localized language names is 4,932 bytes / 1,874 gzip. These are catalog estimates, not measured full application transfer changes. No language framework, fonts or icon assets are added.
+
+Validation: 24 localization checks, including all German catalog keys/placeholders/syntax, startup consistency, regional locale normalization, builder priority for all five languages against every saved preference, five-language notice conversion and German Intl formatting. Chromium fixtures verify German first paint with the runtime download held pending; saved Spanish versus builder German; synchronized disabled selector; five-language comparison position without image refetch; edited-note and custom-category preservation; saved German after navigation; automatic de-AT; lazy runtime and settings chunks; failed download fallback and recovery after reload; translated builder headings, Spanish/German round trip, retained OSRM URL and canonical route value. Compact place buttons have no horizontal text overflow and the German splash heading stays within the viewport at 320 px. No layout changes were needed for those tested controls. Experience Builder development build passed.
+
+Browser fixtures render actual widget components with mocked Experience Builder UI wrappers, not a complete deployed Experience Builder application. The narrow checks cover the tested place buttons and splash, not every possible panel. In-place retry after a failed dynamic import is not certified; reload recovery is tested. German is an assisted translation draft without native editorial certification. External SDK/service text and compound technical errors can retain their original language, as documented in v6.103. Equal key counts are not proof that every externally rendered string is translated.
+
+No map selection, hover, marker, coverage or imagery-request algorithms are changed.
+
+Install from widget root: `node apply-german-language-v6-108.cjs`. Undo: `node apply-german-language-v6-108.cjs --uninstall`. Guarded dry-run, install, repeat install, exact uninstall and conflict-before-writes are checked.
