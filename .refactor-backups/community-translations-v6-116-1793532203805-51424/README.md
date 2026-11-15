@@ -1,1 +1,0 @@
-# map-ex-test
