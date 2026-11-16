@@ -18,9 +18,19 @@ export interface SpriteMeta {
 
 // Low-level helpers
 
+/** Reject missing deployment assets before parsing the server's 404/HTML response. */
+export async function loadSpriteMetadata(url: string): Promise<Record<string, SpriteMeta>> {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Sprite metadata unavailable (HTTP ${response.status}): ${url}`);
+  let data: unknown;
+  try { data = await response.json(); } catch { throw new Error(`Invalid JSON sprite metadata response: ${url}`); }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error(`Invalid sprite metadata object: ${url}`);
+  return data as Record<string, SpriteMeta>;
+}
+
 /**
   * Loads an <img> element from a URL, with crossOrigin = 'anonymous'
-  * (required for GitHub-hosted sprite PNGs).
+  * (also supports widget assets hosted on an approved cross-origin widget CDN).
 */
 export function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -71,11 +81,7 @@ export async function loadSpriteIconDataURL(
   spritePNGUrl:  string,
   iconName:      string
 ): Promise<string> {
-  const jsonResp = await fetch(spriteJSONUrl);
-  if (!jsonResp.ok) {
-    throw new Error(`Failed to fetch sprite JSON (${jsonResp.status}): ${spriteJSONUrl}`);
-  }
-  const spriteData: Record<string, SpriteMeta> = await jsonResp.json();
+  const spriteData = await loadSpriteMetadata(spriteJSONUrl);
 
   if (!spriteData[iconName]) {
     throw new Error(`Icon '${iconName}' not found in sprite JSON`);
@@ -169,7 +175,7 @@ export async function loadSpriteOptions(
   labelFn:       (code: string) => string
 ): Promise<Array<{ value: string; label: string; iconUrl: string }>> {
   const [spriteData, img] = await Promise.all([
-    fetch(`${spriteBaseUrl}.json`).then(r => r.json()) as Promise<Record<string, SpriteMeta>>,
+    loadSpriteMetadata(`${spriteBaseUrl}.json`),
     loadImage(`${spriteBaseUrl}.png`),
   ]);
 

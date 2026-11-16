@@ -9,6 +9,8 @@ import { useWidgetLocale } from '../i18n/WidgetLocale';
 import { React, jsx } from "jimu-core";
 import { notesScrollCss } from '../styles/notesScroll';
 import { noteMapMessageStyle, noteMapRefreshStyle } from '../styles/fieldNotes';
+import { EnterpriseAccountIndicator } from '../features/field-notes/EnterpriseAccountIndicator';
+import type { EnterpriseIdentityManager } from '../features/field-notes/enterpriseAccount';
 import { LocalNotesList } from '../features/field-notes/LocalNotesList';
 import { NoteAttachments } from '../features/field-notes/NoteAttachments';
 import { NoteEditor } from '../features/field-notes/NoteEditor';
@@ -34,6 +36,8 @@ interface Props {
     onLoadEnterpriseNotes?: EnterpriseNotesLoader;
     enterpriseContext?: unknown;
     enterpriseLayerUrl?: string;
+    enterpriseWriteUrl?: string;
+    loadEnterpriseIdentityManager?: () => Promise<EnterpriseIdentityManager>;
     attachments?: FieldNoteAttachments | null;
     currentImageAvailable?: boolean;
     onAttachments?: (note: FieldNote) => void;
@@ -174,8 +178,11 @@ export const FieldNotesPanel: React.FC<Props> = (props) => {
                       <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
                     </button>
                     </div>
+                    <div className="mly-notes-context">
                     {props.sharedMessage && activeSource !== 'workspace' && <div role="status" style={noteMapMessageStyle}>{<OwnedMessage source={String(props.sharedMessage ?? "")}/>} <button className="mly-text-action" type="button" onClick={props.onRetrySharedDisplay} style={noteMapRefreshStyle}> {t('uiRefresh')} </button></div>}
-                    <div role="tablist" aria-label={t('uiNoteSource')} style={{ ...notesTabsStyle, flexWrap: 'wrap' }} onKeyDown={event => {
+                    {listOpen && !workspacePicking && props.enterpriseEnabled && props.enterpriseWriteUrl && props.loadEnterpriseIdentityManager && activeSource !== 'workspace' && <EnterpriseAccountIndicator url={props.enterpriseWriteUrl} loadManager={props.loadEnterpriseIdentityManager} />}
+                    </div>
+                    <div className="mly-notes-tabs" role="tablist" aria-label={t('uiNoteSource')} style={{ ...notesTabsStyle, flexWrap: 'wrap' }} onKeyDown={event => {
                       if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
                       event.preventDefault();
                       const index = sources.indexOf(activeSource);

@@ -23,3 +23,7 @@ Place the source at `client/your-extensions/widgets/mapillary-explorer`, configu
 | Translation corrections | [Translation guide](docs/localization/CONTRIBUTING.md) |
 
 Places and shared-note backends are optional. Viewers use tools configured by an administrator; they do not publish datasets. Review applicable Mapillary, Esri and Overture terms for your deployment.
+
+## Icon attribution
+
+Traffic-sign and object icon sprites are **derived from Mapillary's sprite-source artwork (MIT)** and repackaged for this widget. The original Mapillary copyright and full license ship with the assets. See [third-party notices](THIRD_PARTY_NOTICES.md).

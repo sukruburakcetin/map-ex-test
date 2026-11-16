@@ -1,6 +1,19 @@
 import type { SettingsMessages } from '../settingsMessages';
 /** Japanese presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const ja: SettingsMessages = {
+  "builderMapConnection": "地図への接続",
+  "builderCoverageDefaults": "カバレッジの既定値",
+  "builderEnableServiceHint": "上のオプションを有効にしてサービスを設定します。既存の値は保持されます。",
+
+  "hideMapFollowButton": "画像を表示範囲に維持 / 画像に固定ボタンを非表示",
+  "appearanceShowAll": "すべて表示",
+  "appearanceHideAll": "すべて非表示",
+  "appearanceImageDetails": "画像の詳細",
+  "appearanceNavigation": "地図の操作",
+  "appearanceExploration": "探索とエクスポート",
+  "appearanceVisibilityHint": "表示のみ変更します。有効な機能、サービス、地図の追従動作は変わりません。",
+  "appearanceMapFollowHint": "地図と画像の同期が有効な場合に利用できます。ボタンを非表示にしても同期は無効になりません。",
+
   "source": "ソース",
   "selectMapWidget": "マップウィジェットを選択",
   "lockMapToView": "マップをビューに固定",

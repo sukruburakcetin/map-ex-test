@@ -36,6 +36,51 @@ Leave **Approve this layer to be shared with the public when editing is enabled*
 
 **Create view layer** is optional. Use a read-only view when some users should read notes while contributors can add them to the editable layer. Restrict the view to its authorized organization/group, expose the required fields and records, and enter its layer endpoint in the widget's optional read-only URL setting. A public view is not required.
 
+### Who can change or delete a note?
+
+The widget uses the signed-in ArcGIS account. Configure permissions in Portal; there is no separate widget role assignment. Enterprise deletion is not implemented in the widget. Local trash and Clear local remove browser copies only.
+
+ArcGIS combines three controls:
+
+- **Member role and user type:** whether an account has editing privileges. A user type must support the assigned privileges. A custom role is based on an existing role; its name alone grants nothing.
+- **Item sharing and groups:** which layer or hosted view the account can access. A normal group named Reviewers does not automatically grant broader editing rights.
+- **Layer/view settings and editor tracking:** whether Add, Update or Delete is allowed, and whether editors can update only their own records or everyone's records. The service checks each request.
+
+For the simplest setup, start with contributors and administrators. Add a separate reviewer view only when a review team needs it.
+
+| Audience | Normal workflow | Permanent deletion |
+| --- | --- | --- |
+| Contributors | Read shared notes; add notes; update their own attributes | Not allowed through the contributor endpoint; use Dismissed for mistakes |
+| Reviewers, when needed | Read and update everyone's note attributes; record a status and resolution | Not allowed through the reviewer endpoint |
+| Administrators / designated layer manager | Manage the source layer using approved Portal tools | Managed outside this widget, subject to organization policy |
+
+#### Configure a hosted layer in Portal
+
+The layer owner or administrator performs these steps. Labels vary by Enterprise release. For a referenced/registered feature service, have the server administrator configure the equivalent service and ownership controls instead of assuming hosted-view options are available.
+
+1. Enable editor tracking on the source layer. ArcGIS must record the authenticated creator; the widget's local creation timestamp is not an ownership field. Keep the source item private to its owner and administrators. Do not share this unrestricted source with contributors.
+2. In **Organization → Members**, ensure contributors have a user type and role permitting feature editing. If using a custom role, the administrator creates it under the organization's role settings and assigns it to the intended members. Avoid broad administrative privileges and **Edit with full control** for ordinary contributors and reviewers: full-control editing can bypass normal editing restrictions.
+3. Create a normal group named **Field Notes Contributors** and add the intended accounts. Group membership controls access, not record ownership.
+4. From the source layer, create a hosted feature layer view named **Field Notes — Contributors**. Preserve the required fields, real GlobalIDs, records and attachment access. Verify the view supports this widget's GlobalID-based edits before using it.
+5. On the contributor view's **Settings**, enable editing with **Add** and **Update attributes only**. Leave **Delete** off. Turn on editor tracking where required and select the ownership option equivalent to **Editors can only edit their own features**. Let authorized editors see all notes, including their own, so browsing and retry lookup work. Keep anonymous/public editing off.
+6. Share the contributor view only with the contributor group. In the contributor experience's widget settings, enter this view's numeric layer URL as the **editable Enterprise notes URL**. Its own query endpoint can supply reading, or configure a compatible read-only view accessible to the same accounts.
+7. If reviewers are needed, create **Field Notes Reviewers** as another normal group and a separate hosted view named **Field Notes — Reviewers**. Allow **Update attributes only**, let editors update all features, and leave **Delete** off. Share it only with the reviewer group. Add is optional for reviewers who also submit notes.
+8. Configure a separate reviewer experience/widget instance with the reviewer view's editable URL. The current widget has one editable endpoint; it does not automatically switch URLs by group. A reviewer who opens only the contributor experience still uses the contributor endpoint's restrictions. Ensure contributors cannot access the reviewer view or its experience.
+9. Keep permanent deletion in the layer owner's or administrator's approved management workflow. Use **Dismissed** with a resolution note for routine rejected or mistaken submissions. If deletion is necessary, verify the target and apply the organization's retention rules in Portal tools.
+
+A read-only URL setting does not revoke access to an editable endpoint that is already shared with the same account. Restrict the items themselves. Owner accounts, administrators, full-control editing privileges, shared-update arrangements and access to other editable views can give an account broader powers; review those paths before relying on an ownership restriction.
+
+#### Verify with separate accounts
+
+Do not validate ownership as the layer owner or administrator; those accounts may bypass ordinary restrictions.
+
+1. Contributor A creates and shares a note. Contributor B can read it but cannot update it. A can update their own note's status. Neither contributor endpoint allows remote deletion.
+2. A reviewer opens the reviewer experience and updates A's status/resolution. An ordinary contributor cannot access that editable view.
+3. An administrator verifies the source-management workflow separately. The widget still has no Enterprise Delete button.
+4. Removing a shared local copy leaves its Enterprise record and attachments intact. Verify denied updates retain the local copy and show an error rather than claiming success.
+
+These are deployment steps, not settings that a documentation update can apply to your Portal. The widget's existing update checks and the service's server-side authorization remain in place.
+
 #### Indexes and service options
 
 | Setting | Recommended value | Reason |
@@ -127,3 +172,24 @@ The map/scene layer list now contains a **Field Notes** group with **Local notes
 The temporary yellow placement marker uses a single screen-projected element and smooth frame animation instead of replacing an ArcGIS symbol every 50 ms. It follows the clicked location in 2D/3D, hides when the Field Notes group is hidden, and is removed on Save, Cancel, view switch or teardown. It introduces no extra feature layer.
 
 Deployment checks: enable attachments, share a note, upload a picture/document, attach a selected sequence photo, verify its filename/image ID, and download using another authorized account. Test denied upload permission, oversized files, missing attachment capability and uncertain uploads. Toggle the Field Notes parent eye and each child eye; verify redraws and view changes do not unexpectedly reveal saved markers. Verify the placement marker remains stable in 2D and 3D while opening/canceling/saving a note.
+
+### Identify the account in the running experience
+
+Open the Notes list. When an editable Enterprise notes endpoint is configured, **Enterprise account** shows the username from ArcGIS IdentityManager's cached credential for that endpoint. **Not confirmed** means no current named credential could be found; it does not prove anonymous access or denied access. The Client ID and the application owner's account are not used to infer the viewer's identity.
+
+This is a session indicator, not a live authentication or permission check. It does not contact the service, open a sign-in prompt, assign Contributor/Reviewer roles, or authorize edits. Refresh it after signing in or signing out; opening the list, returning to the browser tab, and new ArcGIS credentials also update it. It uses the editable endpoint even when the map reads a different view. Tokens and credentials are never displayed or saved by this indicator. Closing the list removes its listeners.
+
+For the final account check, share a test note and inspect its server-managed Creator field. A Portal page in the same browser can show a different session from the credential used by a service; the Creator field identifies who actually submitted that record.
+
+#### Tests to run when ordinary accounts are available
+
+Use separate browser profiles for Contributor A, Contributor B, and a reviewer, plus a separate administrator profile. Do not use the application-registration owner's identity as proof of viewer permissions.
+
+- With no known service credential, the label says Not confirmed. A public/read-only layer may still display; the indicator never grants editing.
+- After sharing as A, verify the label and the saved record's Creator agree. A can update their own note; B can read it but is denied an update under contributor ownership rules.
+- Open the restricted reviewer experience and confirm a reviewer can update A's note. Confirm B cannot access that reviewer endpoint. No endpoint intended for contributors/reviewers permits deletion.
+- Switch accounts or sign out, select Refresh, and verify an expired/removed cached identity is not retained. Server rejection must leave local notes intact. If another credential is still cached for the editable service, the indicator reflects that service credential rather than guessing from another Portal tab.
+- Close/reopen Notes, switch between Local/Enterprise/Workspaces, change the configured editable URL, and test a missing/unavailable IdentityManager. No old username should appear against a different endpoint. No automatic sign-in or repeated network polling should occur.
+- Test permanent deletion separately with authorized management tools. Local trash and Clear local must never delete Enterprise records or their attachments.
+
+Mocked credential and React lifecycle tests cover the indicator locally. Real Portal ownership, hosted-view capabilities, SSO, expiry/revocation and permissions must still be verified in the deployed organization before claiming the role workflow is validated.

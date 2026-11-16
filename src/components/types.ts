@@ -1,3 +1,4 @@
+import type { CategorySelection } from '../features/detections/categorySelection';
 import type { ImageInformationHost, InformationViewer } from '../features/image-information/ImageInformation';
 import type { DetectionExplorerOptions, DetectionSummary } from '../features/detections/detectionExploration';
 import type { RoutePreviewHost } from '../features/routing/RoutePreviewSimulation';
@@ -10,6 +11,8 @@ import type {
 
 // Shared option shape (GlassSelect)
 export interface FilterOption {
+    /** Exact atlas/map category; labels are presentation only. */
+    code?: string;
     value: string;
     label: string;
     iconUrl: string | null;
@@ -92,6 +95,7 @@ export const FIELD_NOTE_CATEGORIES = DEFAULT_FIELD_NOTE_CATEGORIES;
 
 // InfoBox props
 export interface InfoBoxProps {
+  imageInformationRequest?: number;
   imageInformationHost?: ImageInformationHost;
   imageInformationViewer?: InformationViewer | null;
   imageInformationActive?: boolean;
@@ -247,6 +251,19 @@ export interface InfoBoxProps {
 
 // FilterBar props
 export interface FilterBarProps {
+    signDisplayMode?: 'selected' | 'highlight';
+    objectDisplayMode?: 'selected' | 'highlight';
+    onDetectionDisplayModeChange?: (kind: 'signs' | 'objects', mode: 'selected' | 'highlight') => void;
+    signReduceOverlap?: boolean;
+    objectReduceOverlap?: boolean;
+    onDetectionOverlapChange?: (kind: 'signs' | 'objects', reduce: boolean) => void;
+    signLabels?: boolean;
+    objectLabels?: boolean;
+    onDetectionLabelsChange?: (kind: 'signs' | 'objects', enabled:boolean) => void;
+    signOpacity?: number;
+    objectOpacity?: number;
+    onDetectionOpacityChange?: (kind: 'signs' | 'objects', opacity: number) => void;
+    onDetectionDisplayReset?: (kind: 'signs' | 'objects') => void;
     signSpriteScale?: number;
     objectSpriteScale?: number;
     onSpriteScaleChange?: (kind: 'signs' | 'objects', scale: number) => void;
@@ -284,6 +301,10 @@ export interface FilterBarProps {
     onTurboIsPanoChange: (val: boolean | undefined) => void;
     onTurboColorByDateChange: (val: boolean) => void;
     // callbacks - traffic signs / objects
+    trafficSignsSelectedCodes?: CategorySelection;
+    objectsSelectedCodes?: CategorySelection;
+    onTrafficSignCategoriesChange?: (codes: CategorySelection) => void;
+    onObjectCategoriesChange?: (codes: CategorySelection) => void;
     onTrafficSignsFilterChange: (selected: FilterOption) => void;
     onObjectsFilterChange: (selected: FilterOption) => void;
 }
@@ -374,6 +395,7 @@ export interface ImageUtilityGroupProps {
     isDownloading?: boolean;
     syncHeading: boolean;
     mapFollowEnabled?: boolean;
+    hideMapFollowButton?: boolean;
     lockToImage?: boolean;
     onToggleImageLock?: () => void;
     is3D: boolean;

@@ -1,6 +1,19 @@
 import type { SettingsMessages } from '../settingsMessages';
 /** German presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const de: SettingsMessages = {
+  "builderMapConnection": "Kartenverbindung",
+  "builderCoverageDefaults": "Abdeckungsvorgaben",
+  "builderEnableServiceHint": "Aktivieren Sie die Option oben, um den Dienst zu konfigurieren. Vorhandene Werte bleiben erhalten.",
+
+  "hideMapFollowButton": "Schaltfläche Bild im Blick behalten / An Bild binden ausblenden",
+  "appearanceShowAll": "Alle anzeigen",
+  "appearanceHideAll": "Alle ausblenden",
+  "appearanceImageDetails": "Bilddetails",
+  "appearanceNavigation": "Kartennavigation",
+  "appearanceExploration": "Erkunden und Export",
+  "appearanceVisibilityHint": "Ändert nur die Sichtbarkeit. Funktionen, Dienste und Kartenverfolgung bleiben unverändert.",
+  "appearanceMapFollowHint": "Verfügbar bei aktivierter Karten-Bild-Synchronisierung. Ausblenden deaktiviert die Synchronisierung nicht.",
+
   "source": "Quelle",
   "selectMapWidget": "Karten-Widget auswählen",
   "lockMapToView": "Karte an Ansicht binden",

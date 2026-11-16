@@ -1,3 +1,5 @@
+import { detectionLabelStyle } from '../features/detections/detectionLabels';
+import { categoryDisplayStyle, type CategoryDisplayMode, categoryMatcher, selectedCategoryCodes, type CategorySelection, type MapCategoryFilter } from '../features/detections/categorySelection';
 import { placesSourceKey, placesSourceKind } from '../features/places/placesSource';
 import { PortalPlacesSource } from '../features/places/PortalPlacesSource';
 import { placesApiEndpoints } from '../features/places/placesApi';
@@ -34,7 +36,8 @@ import { Place } from "../features/places/placesModel";
 import { PlacesState } from "../features/places/PlacesController";
 import { fetchCoverageRoads } from "../features/coverage/fetchCoverageRoads";
 import { FullscreenControls } from "../components/FullscreenControls";
-import { React, AllWidgetProps, jsx, SessionManager } from "jimu-core";
+import { widgetSpriteUrls } from '../utils/widgetSpriteUrls';
+import { React, AllWidgetProps, jsx, SessionManager, getAppStore } from "jimu-core";
 import { JimuMapViewComponent, JimuMapView, loadArcGISJSAPIModules, MapViewManager } from "jimu-arcgis";
 import ReactDOM from "react-dom";
 import * as webMercatorUtils from "esri/geometry/support/webMercatorUtils";
@@ -49,7 +52,6 @@ import {
   STYLE_SOURCE_IDS,
   TILE_URLS,
   GRAPH_API,
-  SPRITE_URLS,
   ZOOM,
   BBOX,
   LIMITS,
@@ -161,7 +163,7 @@ import { PointCloudViewerRenderer } from '../features/point-cloud/PointCloudView
 import type { PointCloudResult, PointCloudPoint } from "../utils/pointCloudUtils";
 import { decodeAndNormalizeGeometry, getDetectionColor } from "../utils/mapillaryDetections";
 import { createYearBasedRenderer, YEAR_COLOR_PALETTE } from "../utils/mapillaryRenderers";
-import { loadImage, cropSpriteImage, processInChunks } from "../utils/spriteUtils";
+import { loadImage, loadSpriteMetadata, cropSpriteImage, processInChunks } from "../utils/spriteUtils";
 import { Viewer, OutlineTag, PolygonGeometry, geodeticToEnu, RenderPass } from "mapillary-js";
 import { PanoramaDetectionLabels } from '../features/detections/PanoramaDetectionLabels';
 import { DetectionNoteAction } from '../features/detections/DetectionNoteAction';
@@ -308,10 +310,20 @@ interface State {
   zoomWarningMessage?: string;
   turboWarningAction?: "zoom" | "retry";
   turboWarningIsHelp?: boolean;
+  trafficSignsSelectedCodes: CategorySelection;
+  objectsSelectedCodes: CategorySelection;
   trafficSignsFilterValue: { value: string; label: string; iconUrl: string | null };
   objectsFilterValue: { value: string; label: string; iconUrl: string | null };
   filtersLoaded: boolean;
   showIntro: boolean;
+  signDisplayMode?: CategoryDisplayMode;
+  objectDisplayMode?: CategoryDisplayMode;
+  signReduceOverlap?: boolean;
+  objectReduceOverlap?: boolean;
+  signLabels?: boolean;
+  objectLabels?: boolean;
+  signOpacity?: number;
+  objectOpacity?: number;
   signSpriteScale?: number;
   objectSpriteScale?: number;
   minimapView?: __esri.MapView;
@@ -890,10 +902,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       if (!layer) continue;
       const code = filters.get(kind);
       const all = kind === "signs" ? DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS : DEFAULT_FILTER_LABELS.OBJECTS;
+      const matchesCategory = categoryMatcher(code, all);
       for (let i = 0; i < layer.length; i++) {
         if (i % 100 === 0) { await new Promise(resolve => setTimeout(resolve, 0)); if (signal.aborted) throw new DOMException("Export cancelled", "AbortError"); }
         const feature = layer.feature(i), attrs = feature.properties;
-        if (attrs.id == null || !attrs.value || (kind === "objects" && String(attrs.value).includes("object--traffic-sign")) || (code && code !== all && attrs.value !== code)) continue;
+        if (attrs.id == null || !attrs.value || (kind === "objects" && String(attrs.value).includes("object--traffic-sign")) || !matchesCategory(attrs.value)) continue;
         const id = `${kind}/${attrs.id}`; if (seen.has(id)) continue;
         const point = feature.loadGeometry()?.[0]?.[0]; if (!point) continue;
         const extent = Number(feature.extent) || 4096, n = 2 ** z;
@@ -914,6 +927,44 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _objectPopupContent: HTMLElement | null = null;
   private _objectPopupView: __esri.MapView | __esri.SceneView | null = null;
 
+  /** Opt-in, configuration-only diagnostics; never include popup content or credentials. */
+  private traceObjectPopupDocking(view: __esri.MapView | __esri.SceneView, phase: string) {
+    try {
+      if (sessionStorage.getItem('mlyPopupDebug') !== '1') return;
+      const widgetId = this.props.useMapWidgetIds?.[0];
+      const config = widgetId ? getAppStore().getState().appConfig?.widgets?.[widgetId]?.config : null;
+      const settings: Record<string, unknown> = {};
+      const collect = (value: any, path: string, depth: number) => {
+        if (!value || typeof value !== 'object' || depth > 8) return;
+        for (const key of Object.keys(value)) {
+          const next = path ? `${path}.${key}` : key;
+          const item = value[key];
+          if (/popup|dock/i.test(next) && /dock|position|breakpoint|enabled|width|height/i.test(key) && (item === null || ['string','number','boolean'].includes(typeof item))) settings[next] = item;
+          else if (item && typeof item === 'object') collect(item, next, depth + 1);
+        }
+      };
+      collect(config?.toJS ? config.toJS() : config, '', 0);
+      const popup = view.popup;
+      console.info('[Mapillary popup docking]', JSON.stringify({phase, mapWidgetId:widgetId,
+        mapSettings:settings, viewSize:{width:view.width,height:view.height},
+        popup:popup ? {dockEnabled:popup.dockEnabled,dockOptions:{
+          position:typeof popup.dockOptions?.position === 'function' ? '[function]' : popup.dockOptions?.position,
+          breakpoint:popup.dockOptions?.breakpoint,buttonEnabled:popup.dockOptions?.buttonEnabled},
+          visible:popup.visible} : null}));
+    } catch { /* Diagnostics must never affect map interaction. */ }
+  }
+
+  private applyObjectPopupDocking(view: __esri.MapView | __esri.SceneView) {
+    const widgetId = this.props.useMapWidgetIds?.[0];
+    const config = widgetId ? getAppStore().getState().appConfig?.widgets?.[widgetId]?.config : null;
+    const position = config?.popupDockPosition;
+    if (!view.popup || !['top-left','top-center','top-right','bottom-left','bottom-center','bottom-right'].includes(position)) return;
+    // openPopup lazily creates the SDK Popup in current Experience Builder versions.
+    // Preserve its responsive breakpoint and other options; apply the Map widget's corner.
+    view.popup.dockOptions = { ...view.popup.dockOptions, position };
+    view.popup.dockEnabled = true;
+  }
+
   private showSelectedObjectPopup() {
     const view = this.state.jimuMapView?.view;
     const selected = this._selectedMapFeature?.graphic;
@@ -921,7 +972,14 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._objectPopupContent = document.createElement("div");
     this._objectPopupView = view;
     this.updateSelectedObjectPopup();
-    view.openPopup({ location: selected.geometry, title: String(this.state.selectedFeatureMetadata.name).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"), content: this._objectPopupContent });
+    this.traceObjectPopupDocking(view, 'before-open');
+    this.applyObjectPopupDocking(view);
+    const opening = view.openPopup({ location: selected.geometry, title: String(this.state.selectedFeatureMetadata.name).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"), content: this._objectPopupContent });
+    void Promise.resolve(opening).then(() => {
+      if (view.destroyed || this._objectPopupView !== view || view.popup?.content !== this._objectPopupContent) return;
+      this.applyObjectPopupDocking(view);
+      this.traceObjectPopupDocking(view, 'after-open');
+    }, () => {});
   }
 
   private updateSelectedObjectPopup() {
@@ -963,6 +1021,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _mapFeatureTiles = new TurboTileCache(4 * 1024 * 1024);
   private _mapFeatureIndexes = new TurboIndexCache(8 * 1024 * 1024);
   private _selectedMapFeature: any = null;
+  private _imageInformationRequest=0;
   private _detectionToolsRequest=0;
   private revealDetectionTools=()=>{++this._detectionToolsRequest;this.forceUpdate();};
   private _selectedMapFeatureKind: "signs" | "objects" | null = null;
@@ -980,7 +1039,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       featureMetadataLoading:false,featureMetadataError:'',alternateImagesError:'',targetDetectionId:null,imageTrayTab:'nearby',
       ...(this.state.imageTrayTab==='object'?{nearbyStripOpen:false}:{})});
   }
-  private _mapFeatureFilterCodes = new Map<string, string>();
+  private _mapFeatureFilterCodes = new Map<string, MapCategoryFilter>();
   private _mapFeatureClickAbort: AbortController | null = null;
   private mapillaryTrafficSignsFeatureLayer: __esri.FeatureLayer | null = null;
   private mapillaryObjectsFeatureLayer: __esri.FeatureLayer | null = null;
@@ -1090,6 +1149,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private readonly _backgroundRequests = new BackgroundRequestQueue(2);
   /** Explicit, read-only information enrichment. It never changes queue policy or foreground work. */
   private readonly _imageInformationHost: ImageInformationHost = {
+    hasImage: () => !!this._profileConfirmedImageId && this._profileConfirmedViewer === this.mapillaryViewer,
     isPaused: () => this._userPaused !== false,
     isVisible: () => this.props.state !== 'CLOSED' && this.props.visible !== false && (typeof document === 'undefined' || document.visibilityState !== 'hidden'),
     scope: () => this.accessToken,
@@ -1640,6 +1700,8 @@ private syncMapLegendLayer() {
     qualityViewActive: false,
     selectedQualityBand: null,
     showTrafficSignsFilterBox: false,
+    trafficSignsSelectedCodes: null,
+    objectsSelectedCodes: null,
     trafficSignsFilterValue: { value: DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS, label: DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS, iconUrl: null },
     signSpritesStatus:'idle',objectSpritesStatus:'idle',
     trafficSignsOptions: [{ value: DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS, label: DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS, iconUrl: null }],
@@ -2375,6 +2437,11 @@ private syncMapLegendLayer() {
       if (!current() || this.mapillaryViewer !== viewer) return;
       imageTiming?.finish();
       this._imageryOpeningRequest = null;
+      if (clickStartedAt !== undefined && !this.props.config.hideInfoBox) {
+        ++this._imageInformationRequest;
+        this.forceUpdate();
+      }
+
         this._places?.controller.sync();
       this._backgroundRequests?.setPaused(false);
       this.updateNativeSequenceSelection();
@@ -4464,14 +4531,18 @@ private syncMapLegendLayer() {
   // #region FILTER LOADING
   // Preloads traffic sign and object dropdown options from sprite sheets.
   /**
-   * Loads traffic sign filter options with icons from Mapillary sprite repository.
+   * Loads traffic sign filter options with icons from the bundled Mapillary sprite snapshot.
    * Sets up dropdown options and initializes filter state to DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS.
    */
+  private get spriteUrls() {
+    return widgetSpriteUrls(this.props.context?.folderUrl);
+  }
+
   private async preloadTrafficSignOptions() {
     try {
-      const spriteBaseUrl = SPRITE_URLS.TRAFFIC_SIGNS;
+      const spriteBaseUrl = this.spriteUrls.TRAFFIC_SIGNS;
 
-      const [jsonResp, img] = await Promise.all([fetch(`${spriteBaseUrl}.json`).then((r) => r.json()), loadImage(`${spriteBaseUrl}.png`)]);
+      const [jsonResp, img] = await Promise.all([loadSpriteMetadata(`${spriteBaseUrl}.json`), loadImage(`${spriteBaseUrl}.png`)]);
 
       const codes = Object.keys(jsonResp);
       this._detectionSignCodes = new Set(codes);
@@ -4489,7 +4560,7 @@ private syncMapLegendLayer() {
           // 2. Check if it is valid
           if (!iconUrl) return null;
 
-          return { value: friendlyName, label: friendlyName, iconUrl };
+          return { value: friendlyName, label: friendlyName, iconUrl, code };
         },
         (results) => {
           const allOption: FilterOption = { value: DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS, label: DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS, iconUrl: null };
@@ -4503,7 +4574,7 @@ private syncMapLegendLayer() {
               trafficSignsOptions: fullList,
               trafficSignsFilterValue: allOption,
             },
-            () => this.checkFiltersLoaded(),
+            () => { this.checkFiltersLoaded(); if(this.state.signLabels&&this.state.trafficSignsActive)this.filterTrafficSignsVTLayer(this._mapFeatureFilterCodes.get('signs')); },
           );
         },
       );
@@ -4513,14 +4584,14 @@ private syncMapLegendLayer() {
   }
 
   /**
-   * Loads object detection filter options with icons from Mapillary sprite repository.
+   * Loads object detection filter options with icons from the bundled Mapillary sprite snapshot.
    * Sets up dropdown options and initializes filter state to DEFAULT_FILTER_LABELS.OBJECTS.
    */
   private async preloadObjectOptions() {
     try {
-      const spriteBaseUrl = SPRITE_URLS.OBJECTS;
+      const spriteBaseUrl = this.spriteUrls.OBJECTS;
 
-      const [jsonResp, img] = await Promise.all([fetch(`${spriteBaseUrl}.json`).then((r) => r.json()), loadImage(`${spriteBaseUrl}.png`)]);
+      const [jsonResp, img] = await Promise.all([loadSpriteMetadata(`${spriteBaseUrl}.json`), loadImage(`${spriteBaseUrl}.png`)]);
 
       const codes = Object.keys(jsonResp);
       this._detectionObjectCodes = new Set(codes);
@@ -4538,7 +4609,7 @@ private syncMapLegendLayer() {
           // 2. Check
           if (!iconUrl) return null;
 
-          return { value: friendlyName, label: friendlyName, iconUrl };
+          return { value: friendlyName, label: friendlyName, iconUrl, code };
         },
         (results) => {
           const allOption: FilterOption = { value: DEFAULT_FILTER_LABELS.OBJECTS, label: DEFAULT_FILTER_LABELS.OBJECTS, iconUrl: null };
@@ -4552,7 +4623,7 @@ private syncMapLegendLayer() {
               objectsOptions: fullList,
               objectsFilterValue: allOption,
             },
-            () => this.checkFiltersLoaded(),
+            () => { this.checkFiltersLoaded(); if(this.state.objectLabels&&this.state.objectsActive)this.filterObjectsVTLayer(this._mapFeatureFilterCodes.get('objects')); },
           );
         },
       );
@@ -4575,12 +4646,21 @@ private syncMapLegendLayer() {
     }
   }
 
-  /**
-   * Filters the traffic signs VectorTileLayer so only icons matching `selectedValue` show.
-   * Works at all zoom levels because VTL renders coverage regardless of FeatureLayer zoom threshold.
-   * @param selectedValue trafficSignsOptions dropdown value ("all" or code)
-   */
-  private filterTrafficSignsVTLayer(selectedValue: string) {
+  private onTrafficSignCategoriesChange = (codes: CategorySelection) => this.applyMapFeatureCategories('signs',codes);
+  private onObjectCategoriesChange = (codes: CategorySelection) => this.applyMapFeatureCategories('objects',codes);
+
+  /** Commit one immutable selection and retire obsolete map-picking feedback. */
+  private applyMapFeatureCategories = (kind: 'signs' | 'objects', codes: CategorySelection) => {
+    const selection = codes === null ? null : Object.freeze([...new Set(codes)]);
+    this._mapFeatureClickAbort?.abort(); this._turboHoverPickAbort?.abort();
+    this.clearSelectedMapFeature(kind); this.clearTurboHoverDetails();
+    this.setState(kind === 'signs' ? {trafficSignsSelectedCodes:selection} : {objectsSelectedCodes:selection});
+    if (kind === 'signs') this.filterTrafficSignsVTLayer(selection);
+    else this.filterObjectsVTLayer(selection);
+  };
+
+  /** Apply All/None/multiple categories to the native sign style; legacy single codes remain supported. */
+  private filterTrafficSignsVTLayer(selectedValue: MapCategoryFilter) {
     this._mapFeatureFilterCodes.set("signs", selectedValue || "");
     this.refreshDetectionExploration();
     if (!this.mapillaryTrafficSignsLayer) return;
@@ -4590,17 +4670,15 @@ private syncMapLegendLayer() {
 
     const targetLayer = newStyle.layers.find((ly: any) => ly.id === STYLE_LAYER_IDS.TRAFFIC_SIGNS_ICONS);
     if (targetLayer) {
-      if (!selectedValue || selectedValue === DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS) {
-        delete targetLayer.filter;
-      } else {
-        // Ensure proper filter format
-        targetLayer.filter = ["==", ["get", "value"], selectedValue];
-      }
+      const display = categoryDisplayStyle(selectedValue, DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS, this.state.signDisplayMode || 'selected');
+      if (display.filter) targetLayer.filter = display.filter;
+      else delete targetLayer.filter;
+      targetLayer.paint = {...targetLayer.paint, 'icon-opacity':display.opacity};
     }
 
     try {
       const { VectorTileLayer } = this.ArcGISModules;
-      const filteredLayer = new VectorTileLayer({ id:LAYER_IDS.TRAFFIC_SIGNS_VT, title:"Mapillary Traffic Signs Coverage", style: newStyle });
+      const filteredLayer = new VectorTileLayer({ id:LAYER_IDS.TRAFFIC_SIGNS_VT, title:"Mapillary Traffic Signs Coverage", style: this.mapFeatureLabelStyle('signs',newStyle) });
 
       const { view } = this.state.jimuMapView;
       if (this.mapillaryTrafficSignsLayer && view.map.layers.includes(this.mapillaryTrafficSignsLayer)) {
@@ -4618,9 +4696,9 @@ private syncMapLegendLayer() {
   /**
    * Filters the objects/points VectorTileLayer so only icons matching `selectedValue` show.
    * Works at all zoom levels because VTL renders coverage regardless of FeatureLayer zoom threshold.
-   * @param selectedValue objectOptions dropdown value ("all" or code)
+   * @param selectedValue All/None/multiple categories, or a legacy single code
    */
-  private filterObjectsVTLayer(selectedValue?: string) {
+  private filterObjectsVTLayer(selectedValue?: MapCategoryFilter) {
     this._mapFeatureFilterCodes.set("objects", selectedValue || "");
     this.refreshDetectionExploration();
     if (!this.mapillaryObjectsLayer) return;
@@ -4630,16 +4708,15 @@ private syncMapLegendLayer() {
     const targetLayer = newStyle.layers.find((ly: any) => ly.id === STYLE_LAYER_IDS.OBJECTS_ICONS);
 
     if (targetLayer) {
-      if (!selectedValue || selectedValue === DEFAULT_FILTER_LABELS.OBJECTS) {
-        delete targetLayer.filter;
-      } else {
-        targetLayer.filter = ["==", ["get", "value"], selectedValue];
-      }
+      const display = categoryDisplayStyle(selectedValue, DEFAULT_FILTER_LABELS.OBJECTS, this.state.objectDisplayMode || 'selected');
+      if (display.filter) targetLayer.filter = display.filter;
+      else delete targetLayer.filter;
+      targetLayer.paint = {...targetLayer.paint, 'icon-opacity':display.opacity};
     }
 
     try {
       const { VectorTileLayer } = this.ArcGISModules;
-      const filteredLayer = new VectorTileLayer({ id:LAYER_IDS.OBJECTS_VT, title:"Mapillary Objects Coverage", style: newStyle });
+      const filteredLayer = new VectorTileLayer({ id:LAYER_IDS.OBJECTS_VT, title:"Mapillary Objects Coverage", style: this.mapFeatureLabelStyle('objects',newStyle) });
 
       const { view } = this.state.jimuMapView;
       if (this.mapillaryObjectsLayer && view.map.layers.includes(this.mapillaryObjectsLayer)) {
@@ -5023,7 +5100,7 @@ private syncMapLegendLayer() {
     if (signs) this.mapillaryTrafficSignsLayer = layer; else this.mapillaryObjectsLayer = layer;
     layer.visible = true;
     const code = this._mapFeatureFilterCodes.get(kind);
-    if (code) { if (signs) this.filterTrafficSignsVTLayer(code); else this.filterObjectsVTLayer(code); }
+    if (code || (signs ? this.state.signLabels : this.state.objectLabels)) { if (signs) this.filterTrafficSignsVTLayer(code); else this.filterObjectsVTLayer(code); }
     void this.applyMapFeatureSpriteScale(kind);
     const displayedLayer=signs?this.mapillaryTrafficSignsLayer:this.mapillaryObjectsLayer;
     if(displayedLayer)this._mapSpriteLoading.start(kind,view as any,displayedLayer);
@@ -5070,6 +5147,7 @@ private syncMapLegendLayer() {
       const layer = signs ? this.mapillaryTrafficSignsLayer : this.mapillaryObjectsLayer;
       if (!active() || !layer?.visible || !view.map.layers.includes(layer)) continue;
       const code = this._mapFeatureFilterCodes.get(kind), all = signs ? DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS : DEFAULT_FILTER_LABELS.OBJECTS;
+      const matchesCategory = categoryMatcher(code, all);
       const seen = new Set<string>(); let count = 0;
       for (const box of boxes) for (const [x,y,z] of turboTiles(box, ZOOM.TILE_FETCH)) {
         const key = `${kind}:${z}/${x}/${y}`;
@@ -5097,7 +5175,7 @@ private syncMapLegendLayer() {
         const consider = (i: number) => {
           const feature = source.feature(i), attrs = feature.properties;
           if (attrs.id == null || !attrs.value || (!signs && String(attrs.value).includes("object--traffic-sign"))) return;
-          if (code && code !== all && attrs.value !== code) return;
+          if (!matchesCategory(attrs.value)) return;
           const p = feature.loadGeometry()?.[0]?.[0]; if (!p) return;
           const n = 2 ** z, extent = Number(feature.extent) || 4096;
           const lon = (x+p.x/extent)/n*360-180, lat = Math.atan(Math.sinh(Math.PI*(1-2*(y+p.y/extent)/n)))*180/Math.PI;
@@ -5128,6 +5206,50 @@ private syncMapLegendLayer() {
     return {layer:nearest.layer,graphic:new this.ArcGISModules.Graphic({geometry:nearest.geometry,attributes:nearest.attributes})};
   }
 
+  private changeDetectionDisplayMode = (kind: 'signs' | 'objects', mode: CategoryDisplayMode) => {
+    try{if(sessionStorage.getItem('mlyDisplayDebug')==='1')console.info('[Mapillary display mode]',JSON.stringify({stage:'widget-handler',kind,requested:mode,current:kind==='signs'?this.state.signDisplayMode:this.state.objectDisplayMode}));}catch{}
+    if (mode !== 'selected' && mode !== 'highlight') return;
+    this._mapFeatureClickAbort?.abort(); this._turboHoverPickAbort?.abort();
+    this.setState(kind === 'signs' ? {signDisplayMode:mode} : {objectDisplayMode:mode}, () => {
+      try{if(sessionStorage.getItem('mlyDisplayDebug')==='1')console.info('[Mapillary display mode]',JSON.stringify({stage:'state-committed',kind,current:kind==='signs'?this.state.signDisplayMode:this.state.objectDisplayMode}));}catch{}
+      const selection = this._mapFeatureFilterCodes.get(kind);
+      if (kind === 'signs') this.filterTrafficSignsVTLayer(selection);
+      else this.filterObjectsVTLayer(selection);
+    });
+  };
+  private mapFeatureLabelStyle(kind: 'signs' | 'objects', style: any) {
+    const signs = kind === 'signs';
+    return detectionLabelStyle(style, signs ? STYLE_LAYER_IDS.TRAFFIC_SIGNS_ICONS : STYLE_LAYER_IDS.OBJECTS_ICONS,
+      kind, signs ? this._detectionSignCodes : Object.keys(objectNameMap), this._mapFeatureFilterCodes.get(kind),
+      signs ? DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS : DEFAULT_FILTER_LABELS.OBJECTS,
+      (signs ? this.state.signLabels : this.state.objectLabels) === true);
+  }
+  private changeDetectionLabels = (kind: 'signs' | 'objects', enabled: boolean) => {
+    if (typeof enabled !== 'boolean') return;
+    this.setState(kind === 'signs' ? {signLabels:enabled} : {objectLabels:enabled}, () => {
+      if (kind === 'signs') this.filterTrafficSignsVTLayer(this._mapFeatureFilterCodes.get(kind));
+      else this.filterObjectsVTLayer(this._mapFeatureFilterCodes.get(kind));
+    });
+  };
+  private changeDetectionOverlap = (kind: 'signs' | 'objects', reduce: boolean) => {
+    if (typeof reduce !== 'boolean') return;
+    this.setState(kind === 'signs' ? {signReduceOverlap:reduce} : {objectReduceOverlap:reduce}, () => {
+      void this.applyMapFeatureSpriteScale(kind);
+    });
+  };
+  private changeDetectionOpacity = (kind: 'signs' | 'objects', opacity: number) => {
+    if (!Number.isFinite(opacity) || opacity < .2 || opacity > 1) return;
+    const layer = kind === 'signs' ? this.mapillaryTrafficSignsLayer : this.mapillaryObjectsLayer;
+    if (layer && !layer.destroyed) layer.opacity = opacity;
+    this.setState(kind === 'signs' ? {signOpacity:opacity} : {objectOpacity:opacity});
+  };
+  private resetDetectionDisplay = (kind: 'signs' | 'objects') => {
+    this.setState(kind === 'signs' ? {signSpriteScale:1,signOpacity:1,signDisplayMode:'selected',signReduceOverlap:false,signLabels:false} : {objectSpriteScale:1,objectOpacity:1,objectDisplayMode:'selected',objectReduceOverlap:false,objectLabels:false}, () => {
+      this.applyMapFeatureCategories(kind,null);
+      void this.applyMapFeatureSpriteScale(kind);
+    });
+  };
+
   private changeMapFeatureSpriteScale = (kind: "signs" | "objects", scale: number) => {
     if (![0.75, 1, 1.25, 1.5, 2].includes(scale)) return;
     this.setState(kind === "signs" ? { signSpriteScale: scale } : { objectSpriteScale: scale }, () => { void this.applyMapFeatureSpriteScale(kind); });
@@ -5137,11 +5259,14 @@ private syncMapLegendLayer() {
     const layer = kind === "signs" ? this.mapillaryTrafficSignsLayer : this.mapillaryObjectsLayer;
     const id = kind === "signs" ? STYLE_LAYER_IDS.TRAFFIC_SIGNS_ICONS : STYLE_LAYER_IDS.OBJECTS_ICONS;
     if (!layer || layer.destroyed) return;
+    layer.opacity = (kind === 'signs' ? this.state.signOpacity : this.state.objectOpacity) ?? 1;
     try {
       await layer.load();
       if (this._sharedNotesDisposed || layer.destroyed || layer !== (kind === "signs" ? this.mapillaryTrafficSignsLayer : this.mapillaryObjectsLayer)) return;
       const scale = (kind === "signs" ? this.state.signSpriteScale : this.state.objectSpriteScale) || 1;
-      layer.setLayoutProperties(id, { ...layer.getLayoutProperties(id), "icon-size": 0.5 * scale });
+      const reduce = (kind === 'signs' ? this.state.signReduceOverlap : this.state.objectReduceOverlap) === true;
+      layer.setLayoutProperties(id, { ...layer.getLayoutProperties(id), "icon-size": 0.5 * scale,
+        "icon-allow-overlap": !reduce, "icon-ignore-placement": !reduce });
     } catch (error) { if (!this._sharedNotesDisposed) this.showToast(this._t('appIconSizeCouldNotBeAppliedTryAgainAfter'), 4000); }
   }
 
@@ -5149,7 +5274,7 @@ private syncMapLegendLayer() {
     const { VectorTileLayer } = this.ArcGISModules;
 
     const vectorTileSourceUrl = `${TILE_URLS.TRAFFIC_SIGNS}?access_token=${this.accessToken}`;
-    const spriteBaseUrl = SPRITE_URLS.TRAFFIC_SIGNS;
+    const spriteBaseUrl = this.spriteUrls.TRAFFIC_SIGNS;
 
     const minimalStyle = {
       version: 8,
@@ -5199,7 +5324,7 @@ private syncMapLegendLayer() {
     const { VectorTileLayer } = this.ArcGISModules;
 
     const vectorTileSourceUrl = `${TILE_URLS.OBJECTS}?access_token=${this.accessToken}`;
-    const spriteBaseUrl = SPRITE_URLS.OBJECTS;
+    const spriteBaseUrl = this.spriteUrls.OBJECTS;
 
     const minimalStyle = {
       version: 8,
@@ -6394,11 +6519,13 @@ private syncMapLegendLayer() {
     if (this.state.qualityViewActive) context.push(this.state.selectedQualityBand ? this._t('uiQualityBand',{band:this.state.selectedQualityBand}) : this._t('uiQualityOn'));
     if (this.state.trafficSignsActive) {
       const code = this._mapFeatureFilterCodes.get("signs");
-      context.push(code && code !== DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS ? this._t('uiSigns',{name:formatTrafficSignName(code)}) : this._t('uiSignsOn'));
+      const codes = selectedCategoryCodes(code, DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS);
+      context.push(codes === null ? this._t('uiSignsOn') : this._t('uiSigns',{name:codes.length===1?formatTrafficSignName(codes[0]):codes.length?this._t('featureSelectedCount',{count:codes.length}):this._t('featureNoneSelected')}));
     }
     if (this.state.objectsActive) {
       const code = this._mapFeatureFilterCodes.get("objects");
-      context.push(code && code !== DEFAULT_FILTER_LABELS.OBJECTS ? this._t('uiObjectsFilter',{name:objectNameMap[code] || code}) : this._t('uiObjectsOn'));
+      const codes = selectedCategoryCodes(code, DEFAULT_FILTER_LABELS.OBJECTS);
+      context.push(codes === null ? this._t('uiObjectsOn') : this._t('uiObjectsFilter',{name:codes.length===1?objectNameMap[codes[0]]||codes[0]:codes.length?this._t('featureSelectedCount',{count:codes.length}):this._t('featureNoneSelected')}));
     }
     return context;
   }
@@ -10720,6 +10847,11 @@ private syncMapLegendLayer() {
   /** Release the group from its creating view after stopping the pending note marker. */
   private clearFieldNotesGroup() { this._detectionViewerMarkers?.dispose();this._detectionViewerMarkers=null; this._workspaceNoteLocation?.cancel(); this._fieldNoteMap.clear(); }
 
+  private readonly loadEnterpriseIdentityManager = async () => {
+    const [manager] = await loadArcGISJSAPIModules(['esri/identity/IdentityManager']);
+    return manager;
+  };
+
   private sharedNotesUrl(read = false): string {
     return resolveEnterpriseNotesEndpoint(this.props.config, read);
   }
@@ -13768,6 +13900,7 @@ private stopSafePlayback = () => {
             isDownloading={this.state.isDownloading}
             syncHeading={this.state.syncHeading}
             mapFollowEnabled={this.props.config.syncMapWithImage === true && !this.state.isFullscreen}
+            hideMapFollowButton={this.props.config.hideMapFollowButton}
             lockToImage={this.state.lockToImage}
             onToggleImageLock={() => this.setState(previous => ({ lockToImage: !previous.lockToImage }), () => {
               const view = this.state.jimuMapView?.view;
@@ -14063,6 +14196,8 @@ private stopSafePlayback = () => {
           onLoadEnterpriseNotes={this.loadEnterpriseNotesPage}
           enterpriseContext={this.state.jimuMapView?.view}
           enterpriseLayerUrl={String(this.props.config.sharedFieldNotesReadUrl || this.props.config.sharedFieldNotesUrl || "")}
+          enterpriseWriteUrl={String(this.props.config.sharedFieldNotesUrl || "")}
+          loadEnterpriseIdentityManager={this.loadEnterpriseIdentityManager}
           sharingEnabled={!!(this.props.config.sharedFieldNotesEnabled && this.props.config.sharedFieldNotesUrl)}
           sharedMessage={this.props.config.sharedFieldNotesEnabled ? this.state.sharedNotesMessage : undefined}
           attachments={this.state.fieldNoteAttachments}
@@ -14095,7 +14230,7 @@ private stopSafePlayback = () => {
 
         {/* INFO BOX */}
         {!this.state.isFullscreen && <InfoBox
-          imageInformationHost={this._imageInformationHost} imageInformationViewer={this.mapillaryViewer}
+          imageInformationRequest={this._imageInformationRequest} imageInformationHost={this._imageInformationHost} imageInformationViewer={this.mapillaryViewer}
           imageInformationActive={this.props.state !== 'CLOSED' && this.props.visible !== false}
           detectionToolsRequest={this._detectionToolsRequest}
           hideInfoBox={this.props.config.hideInfoBox}
@@ -14249,6 +14384,14 @@ private stopSafePlayback = () => {
         <FilterBar
           signSpriteScale={this.state.signSpriteScale || 1}
           objectSpriteScale={this.state.objectSpriteScale || 1}
+          signLabels={this.state.signLabels === true} objectLabels={this.state.objectLabels === true}
+          onDetectionLabelsChange={this.changeDetectionLabels}
+          signReduceOverlap={this.state.signReduceOverlap === true} objectReduceOverlap={this.state.objectReduceOverlap === true}
+          onDetectionOverlapChange={this.changeDetectionOverlap}
+          signDisplayMode={this.state.signDisplayMode || 'selected'} objectDisplayMode={this.state.objectDisplayMode || 'selected'}
+          onDetectionDisplayModeChange={this.changeDetectionDisplayMode}
+          signOpacity={this.state.signOpacity ?? 1} objectOpacity={this.state.objectOpacity ?? 1}
+          onDetectionOpacityChange={this.changeDetectionOpacity} onDetectionDisplayReset={this.resetDetectionDisplay}
           onSpriteScaleChange={this.changeMapFeatureSpriteScale}
           showTurboFilterBox={this.state.showTurboFilterBox}
           showTrafficSignsFilterBox={this.state.showTrafficSignsFilterBox}
@@ -14267,6 +14410,10 @@ private stopSafePlayback = () => {
           turboModeActive={this.state.turboModeActive}
           turboCreator={this.props.config.turboCreator}
           turboOrganization={this.props.config.turboOrganization}
+          trafficSignsSelectedCodes={this.state.trafficSignsSelectedCodes}
+          objectsSelectedCodes={this.state.objectsSelectedCodes}
+          onTrafficSignCategoriesChange={this.onTrafficSignCategoriesChange}
+          onObjectCategoriesChange={this.onObjectCategoriesChange}
           trafficSignsFilterValue={this.state.trafficSignsFilterValue}
           trafficSignsOptions={this.state.trafficSignsOptions}
           objectsFilterValue={this.state.objectsFilterValue}
@@ -14310,8 +14457,7 @@ private stopSafePlayback = () => {
               const newName = selected.value;
               let filterCode = newName;
               if (newName !== DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS) {
-                const jsonResp = await fetch(`${SPRITE_URLS.TRAFFIC_SIGNS}.json`);
-                const spriteData = await jsonResp.json();
+                const spriteData = await loadSpriteMetadata(`${this.spriteUrls.TRAFFIC_SIGNS}.json`);
                 const code = Object.keys(spriteData).find((c) => formatTrafficSignName(c) === newName);
                 filterCode = code || newName;
               }
@@ -14324,8 +14470,7 @@ private stopSafePlayback = () => {
               const newName = selected.value;
               let filterCode = newName;
               if (newName !== DEFAULT_FILTER_LABELS.OBJECTS) {
-                const jsonResp = await fetch(`${SPRITE_URLS.OBJECTS}.json`);
-                const spriteData = await jsonResp.json();
+                const spriteData = await loadSpriteMetadata(`${this.spriteUrls.OBJECTS}.json`);
                 const code = Object.keys(spriteData).find((c) => (objectNameMap[c] || c) === newName);
                 filterCode = code || newName;
               }

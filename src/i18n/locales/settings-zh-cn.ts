@@ -1,6 +1,19 @@
 import type { SettingsMessages } from '../settingsMessages';
 /** Simplified Chinese presentation catalog; stored values and protocol identifiers remain unchanged. */
 const zhCN: SettingsMessages = {
+  "builderMapConnection": "地图连接",
+  "builderCoverageDefaults": "覆盖范围默认设置",
+  "builderEnableServiceHint": "启用上方选项以配置服务。现有值会保留。",
+
+  "hideMapFollowButton": "隐藏保持图像可见 / 锁定图像按钮",
+  "appearanceShowAll": "全部显示",
+  "appearanceHideAll": "全部隐藏",
+  "appearanceImageDetails": "图像详情",
+  "appearanceNavigation": "地图导航",
+  "appearanceExploration": "探索与导出",
+  "appearanceVisibilityHint": "仅更改可见性。已启用的功能、服务和地图跟随行为保持不变。",
+  "appearanceMapFollowHint": "启用地图与图像同步时可用。隐藏按钮不会禁用同步。",
+
   "source": "源",
   "selectMapWidget": "选择地图微件",
   "lockMapToView": "将地图锁定到视图",

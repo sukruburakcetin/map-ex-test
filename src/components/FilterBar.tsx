@@ -1,6 +1,8 @@
 /** @jsx jsx */
 import { useWidgetLocale } from '../i18n/WidgetLocale';
 import { React, jsx } from "jimu-core";
+import { DetectionDisplayControls } from '../features/detections/DetectionDisplayControls';
+import { CategoryMultiSelect } from '../features/detections/CategoryMultiSelect';
 import { GlassSelect } from "../components/GlassSelect";
 import { GlassDatePicker } from "../components/GlassDatePicker";
 import { glassStyles } from "../utils/styles";
@@ -17,20 +19,13 @@ import { organizationFilterId } from "../utils/organizationFilter";
     *   - Objects filter (GlassSelect dropdown)
     * Each group is only rendered when its corresponding `show*FilterBox` flag is true.
 */
-const SpriteSize: React.FC<{ label: string; value: number; onChange: (value: number) => void }> = ({ label, value, onChange }) => {
- const {t,owned} = useWidgetLocale();
- return (
-    <label className="mly-filter-size" title={t('iconSize',{label})} style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 9, color: "#e4eee8", flexShrink: 0 }}>
-      
-      {t('size')} <select aria-label={t('iconSize',{label})} value={value} onChange={event => onChange(Number(event.target.value))} style={{ height: 22, minWidth: 64, flexShrink: 0, fontSize: 10, padding: "0 4px", borderRadius: 4, border: "1px solid #ffffff35", background: "#214d36", color: "white" }}>
-        {[0.75, 1, 1.25, 1.5, 2].map(scale => <option key={scale} value={scale}>{scale * 100}%</option>)}
-      </select>
-    </label>
-);
-};
-
 export const FilterBar: React.FC<FilterBarProps> = ({
     signSpriteScale = 1, objectSpriteScale = 1, onSpriteScaleChange,
+    signLabels = false, objectLabels = false, onDetectionLabelsChange,
+    signReduceOverlap = false, objectReduceOverlap = false, onDetectionOverlapChange,
+    signDisplayMode = 'selected', objectDisplayMode = 'selected', onDetectionDisplayModeChange,
+    signOpacity = 1, objectOpacity = 1, onDetectionOpacityChange, onDetectionDisplayReset,
+    trafficSignsSelectedCodes = null, objectsSelectedCodes = null, onTrafficSignCategoriesChange, onObjectCategoriesChange,
     showTurboFilterBox,
     showTrafficSignsFilterBox,
     showObjectsFilterBox,
@@ -62,6 +57,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     onObjectsFilterChange,
 }) => {
     const {t,owned} = useWidgetLocale();
+    const changeDisplayMode = (kind:'signs'|'objects',mode:'selected'|'highlight') => {
+      try{if(sessionStorage.getItem('mlyDisplayDebug')==='1')console.info('[Mapillary display mode]',JSON.stringify({stage:'filter-bar',kind,requested:mode,hasCallback:typeof onDetectionDisplayModeChange==='function'}));}catch{}
+      onDetectionDisplayModeChange?.(kind,mode);
+    };
     const signOptions = React.useMemo(() => (trafficSignsOptions || []).map(option => option.label === 'All traffic signs' ? {...option,label:t('uiAllSigns')} : {...option,label:owned(option.label)}), [trafficSignsOptions,t,owned]);
     const pointOptions = React.useMemo(() => (objectsOptions || []).map(option => option.label === 'All points' ? {...option,label:t('uiAllPoints')} : {...option,label:owned(option.label)}), [objectsOptions,t,owned]);
     if (!showTurboFilterBox && !showTrafficSignsFilterBox && !showObjectsFilterBox) {
@@ -224,28 +223,28 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             {/* TRAFFIC SIGN FILTERS */}
             {showTrafficSignsFilterBox && (
                 <div className="mly-filter-group mly-filter-group--features" role="group" aria-label={t('signFilters')}>
-                    <GlassSelect floatingMenu compact
+                    {onTrafficSignCategoriesChange ? <CategoryMultiSelect label={t('signFilters')} allLabel={t('uiAllSigns')} options={signOptions} selected={trafficSignsSelectedCodes} onChange={onTrafficSignCategoriesChange}/> : <GlassSelect floatingMenu compact
                         value={trafficSignsFilterValue}
                         onChange={onTrafficSignsFilterChange}
                         options={signOptions}
                         accentColor="#63c38e"
                         menuPlacement="top"
-                    />
-                    {onSpriteScaleChange && <SpriteSize label={t('sign')} value={signSpriteScale} onChange={value => onSpriteScaleChange("signs", value)} />}
+                    />}
+                    {onSpriteScaleChange && <DetectionDisplayControls label={t('sign')} scale={signSpriteScale} opacity={signOpacity} labels={signLabels} onLabels={enabled=>onDetectionLabelsChange?.('signs',enabled)} reduceOverlap={signReduceOverlap} onOverlap={reduce=>onDetectionOverlapChange?.('signs',reduce)} mode={signDisplayMode} onMode={mode=>changeDisplayMode('signs',mode)} onScale={value=>onSpriteScaleChange('signs',value)} onOpacity={value=>onDetectionOpacityChange?.('signs',value)} onReset={()=>onDetectionDisplayReset?.('signs')} />}
                 </div>
             )}
 
             {/* OBJECT FILTERS */}
             {showObjectsFilterBox && (
                 <div className="mly-filter-group mly-filter-group--features" role="group" aria-label={t('objectFilters')}>
-                    <GlassSelect floatingMenu compact
+                    {onObjectCategoriesChange ? <CategoryMultiSelect label={t('objectFilters')} allLabel={t('uiAllPoints')} options={pointOptions} selected={objectsSelectedCodes} onChange={onObjectCategoriesChange}/> : <GlassSelect floatingMenu compact
                         value={objectsFilterValue}
                         onChange={onObjectsFilterChange}
                         options={pointOptions}
                         accentColor="#63c38e"
                         menuPlacement="top"
-                    />
-                    {onSpriteScaleChange && <SpriteSize label={t('object')} value={objectSpriteScale} onChange={value => onSpriteScaleChange("objects", value)} />}
+                    />}
+                    {onSpriteScaleChange && <DetectionDisplayControls label={t('object')} scale={objectSpriteScale} opacity={objectOpacity} labels={objectLabels} onLabels={enabled=>onDetectionLabelsChange?.('objects',enabled)} reduceOverlap={objectReduceOverlap} onOverlap={reduce=>onDetectionOverlapChange?.('objects',reduce)} mode={objectDisplayMode} onMode={mode=>changeDisplayMode('objects',mode)} onScale={value=>onSpriteScaleChange('objects',value)} onOpacity={value=>onDetectionOpacityChange?.('objects',value)} onReset={()=>onDetectionDisplayReset?.('objects')} />}
                 </div>
             )}
         </FilterScrollRegion>

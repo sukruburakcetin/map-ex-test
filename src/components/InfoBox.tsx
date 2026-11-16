@@ -1,5 +1,6 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
+import { hasImageToolsContent } from './info-box/infoBoxVisibility';
 import { imageInformationCss } from '../styles/infoBox';
 import { ImageInformationSection } from '../features/image-information/ImageInformationSection';
 import { WidgetLocaleContext } from '../i18n/WidgetLocale';
@@ -60,8 +61,26 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
       this.checkOverflow();
     });
   };
+  private revealImageInformation=()=>{
+    if(this.props.hideInfoBox)return;
+    this.setState({detailsOpen:true,toolsOpen:true},()=>{
+      if(this.toolsDetailsRef.current)this.toolsDetailsRef.current.open=true;
+      this.checkOverflow();
+    });
+  };
   private panelToggleRef = React.createRef<HTMLButtonElement>();
   private scrollResizeObserver: ResizeObserver | null = null;
+  private observedScrollContainer: HTMLDivElement | null = null;
+  private observeScrollContainer = () => {
+    const target = this.scrollContainerRef.current;
+    if (target === this.observedScrollContainer) return;
+    this.scrollResizeObserver?.disconnect(); this.scrollResizeObserver = null;
+    this.observedScrollContainer = target;
+    if (target && typeof ResizeObserver !== "undefined") {
+      this.scrollResizeObserver = new ResizeObserver(this.checkOverflow);
+      this.scrollResizeObserver.observe(target);
+    }
+  };
   private scrollContainerRef = React.createRef<HTMLDivElement>();
 
   constructor(props: InfoBoxProps) {
@@ -82,18 +101,25 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
   componentDidMount() {
     this.checkOverflow();
     if(this.props.detectionToolsRequest)this.revealDetectionTools();
+    if(this.props.imageInformationRequest)this.revealImageInformation();
     window.addEventListener("resize", this.checkOverflow);
-    if (typeof ResizeObserver !== "undefined" && this.scrollContainerRef.current) { this.scrollResizeObserver = new ResizeObserver(this.checkOverflow); this.scrollResizeObserver.observe(this.scrollContainerRef.current); }
+    this.observeScrollContainer();
   }
 
   componentDidUpdate(previous:InfoBoxProps) {
+    this.observeScrollContainer();
+    if (!hasImageToolsContent(this.props)) {
+      if (this.state.detailsOpen || this.state.toolsOpen) this.setState({ detailsOpen: false, toolsOpen: false });
+      return;
+    }
     this.checkOverflow();
+    if(this.props.imageInformationRequest&&previous.imageInformationRequest!==this.props.imageInformationRequest)this.revealImageInformation();
     if(this.props.detectionToolsRequest&&previous.detectionToolsRequest!==this.props.detectionToolsRequest)this.revealDetectionTools();
   }
 
   /** Release every resize subscription owned by this panel before its viewport is discarded. */
   componentWillUnmount() {
-    window.removeEventListener("resize", this.checkOverflow); this.scrollResizeObserver?.disconnect(); this.scrollResizeObserver = null;
+    window.removeEventListener("resize", this.checkOverflow); this.scrollResizeObserver?.disconnect(); this.scrollResizeObserver = null; this.observedScrollContainer = null;
   }
 
   checkOverflow = () => {
@@ -205,13 +231,16 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
       routeGenerationProgress,
     } = this.props;
 
+    if (!hasImageToolsContent(this.props)) return null;
+
     const currentImg = imageId && sequenceImages.length > 0 ? sequenceImages.find((img) => img.id === imageId) : null;
 
     return (
       <div
         className={`mly-info-panel${this.state.detailsOpen ? " is-open" : ""}${this.state.wide ? " is-wide" : ""}`}
         onKeyDown={event => { if (event.key === "Escape" && this.state.detailsOpen) { event.stopPropagation(); this.setState({ detailsOpen: false }, () => this.panelToggleRef.current?.focus()); } }}
-        style={infoPanelShellStyle(isOverflowing)}
+        dir={this.context.direction}
+        style={infoPanelShellStyle(isOverflowing, this.context.direction)}
       >
         <style>{infoPanelResponsiveCss}{infoDetailsCss}{imageInformationCss}</style>
         <div className="mly-info-header">
@@ -259,7 +288,7 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
           )}
 
           <details ref={this.toolsDetailsRef} className="mly-info-more" onToggle={event => { const toolsOpen = event.currentTarget.open; if (toolsOpen !== this.state.toolsOpen) this.setState({ toolsOpen }); }}><summary> {this.context.t('uiToolsDetails')} </summary>
-              {!hideInfoBox && <div className="info-box"><StatusSummary currentImg={currentImg} currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} address={null} turboCreator={turboCreator} turboOrganization={turboOrganization} turboOrganizationName={turboOrganizationName} onCopyCoordinates={this.props.onCopyCoordinates} /><ImageInformationSection host={this.props.imageInformationHost} viewer={this.props.imageInformationViewer} active={this.state.detailsOpen && this.state.toolsOpen && this.props.imageInformationActive !== false} />{!hideCoverageAnalysis && <QualityToolsSection hideToggle qualityViewType={this.props.qualityViewType} currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} qualityViewActive={qualityViewActive} onToggleQualityView={onToggleQualityView} selectedQualityBand={selectedQualityBand} onQualityLegendClick={onQualityLegendClick} />}</div>}
+              {!hideInfoBox && <div className="info-box"><StatusSummary currentImg={currentImg} currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} address={null} turboCreator={turboCreator} turboOrganization={turboOrganization} turboOrganizationName={turboOrganizationName} onCopyCoordinates={this.props.onCopyCoordinates} /><ImageInformationSection openRequest={this.props.imageInformationRequest} host={this.props.imageInformationHost} viewer={this.props.imageInformationViewer} active={this.state.detailsOpen && this.state.toolsOpen && this.props.imageInformationActive !== false} />{!hideCoverageAnalysis && <QualityToolsSection hideToggle qualityViewType={this.props.qualityViewType} currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} qualityViewActive={qualityViewActive} onToggleQualityView={onToggleQualityView} selectedQualityBand={selectedQualityBand} onQualityLegendClick={onQualityLegendClick} />}</div>}
               {!hideInfoBox && turboModeActive && !hideCoverageAnalysis && <CoverageAnalysisTrigger currentZoom={currentZoom} jimuMapViewZoom={jimuMapViewZoom} turboPointsAvailable={turboPointsAvailable} coverageAnalysisLoading={coverageAnalysisLoading} coverageResult={coverageResult} onRunCoverageAnalysis={onRunCoverageAnalysis} turboMinZoom={turboMinZoom} />}
 
           {/* 3D TAPE MEASURE */}

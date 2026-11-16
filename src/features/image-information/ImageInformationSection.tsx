@@ -2,11 +2,12 @@
 import { React, jsx } from 'jimu-core';
 import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import { ImageInformationController, type ImageInformationHost, type InformationViewer, type ImageInformationView } from './ImageInformation';
-interface Props { host?: ImageInformationHost; viewer?: InformationViewer | null; active: boolean; }
+interface Props { openRequest?: number; host?: ImageInformationHost; viewer?: InformationViewer | null; active: boolean; }
 /** Stable props + memo prevent image/playback state renders from reaching this closed disclosure. */
-export const ImageInformationSection = React.memo(function ImageInformationSection({ host, viewer, active }: Props) {
+export const ImageInformationSection = React.memo(function ImageInformationSection({ host, viewer, active, openRequest }: Props) {
   const { t, formatLocale } = useWidgetLocale();
   const [open, setOpen] = React.useState(false);
+  React.useEffect(() => { if(openRequest)setOpen(true); }, [openRequest]);
   const [view, setView] = React.useState<ImageInformationView>({ kind: 'empty' });
   const details = React.useRef<HTMLDetailsElement>(null);
   const owner = React.useRef<{ host: ImageInformationHost; controller: ImageInformationController } | null>(null);
@@ -30,7 +31,7 @@ export const ImageInformationSection = React.memo(function ImageInformationSecti
     <dt>{label}</dt>
     <dd><bdi>{content}</bdi></dd>
   </div>;
-  return <details ref={details} className="mly-image-information" open={open}  onToggle={event => { const next = event.currentTarget.open; if (next !== open) { setView({ kind: 'loading' }); setOpen(next); } }}>
+  return <details ref={details} className="mly-image-information" open={open}  onToggle={event => { const next = event.currentTarget.open; if (next !== open) { setView({ kind: 'empty' }); setOpen(next); } }}>
     <summary>{t('imageInfoTitle')}</summary>
     {open && active && <div className="mly-image-information-content">
       {view.kind !== 'ready' && <div role="status">{t(view.kind === 'deferred' ? 'imageInfoDeferred' : view.kind === 'error' ? 'imageInfoError' : view.kind === 'empty' ? 'imageInfoNoImage' : 'imageInfoLoading')}</div>}

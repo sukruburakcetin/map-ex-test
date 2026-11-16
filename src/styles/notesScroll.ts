@@ -19,4 +19,18 @@ export const notesScrollCss = `
 .mly-notes-scroll { scrollbar-gutter:stable; }
 .mly-workspace-scroll > * { flex-shrink:0; }
 @media (forced-colors: active) { .mly-notes-sheet *, .mly-notes-scroll { scrollbar-color:auto; } }
+
+/* Height changes keep bottom:0 anchored, so the sheet grows north without scaling content. */
+.mly-notes-sheet { transition: height 240ms cubic-bezier(.2,.8,.2,1); }
+.mly-notes-context { display:flex; flex-wrap:wrap; align-items:center; gap:2px 12px; min-width:0; flex-shrink:0; }
+.mly-notes-context:empty { display:none; }
+.mly-notes-context > [role="status"] { display:flex; align-items:center; flex-wrap:wrap; gap:4px; }
+.mly-notes-context .mly-enterprise-account { padding:0 !important; }
+.mly-notes-sheet :is(.mly-notes-context,.mly-notes-tabs,.mly-notes-toolbar) button.mly-text-action { margin:0; padding-block:2px !important; min-block-size:26px; }
+.mly-notes-sheet .mly-notes-tabs { gap:4px !important; }
+.mly-notes-sheet .mly-notes-search-row { gap:4px 8px; }
+.mly-notes-sheet .mly-notes-search-row :is(input,select) { min-height:28px; margin:0; padding-block:3px; }
+.mly-notes-sheet .mly-notes-search-row .mly-notes-sort { flex:0 1 auto; }
+.mly-notes-sr-label { position:absolute !important; width:1px !important; height:1px !important; padding:0 !important; margin:-1px !important; overflow:hidden !important; clip-path:inset(50%) !important; white-space:nowrap !important; border:0 !important; }
+@media (prefers-reduced-motion: reduce) { .mly-notes-sheet { transition:none !important; animation:none !important; } }
 `;

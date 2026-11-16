@@ -1,3 +1,5 @@
+import { BuilderSettingsSection, builderSettingsSectionsCss } from './BuilderSettingsSection';
+import { APPEARANCE_GROUPS, APPEARANCE_KEYS, appearanceVisibilityPatch } from './appearanceOptions';
 import { createPlacesAreaPreview } from '../features/places/placesAreaPreview';
 import { placesSourceKey, placesSourceKind } from '../features/places/placesSource';
 import { PortalPlacesSource, PortalPlacesConfigurationError } from '../features/places/PortalPlacesSource';
@@ -11,7 +13,7 @@ import { WidgetLocaleProvider } from '../i18n/WidgetLocale';
 import { SettingsCatalogProvider, SettingsLocaleContext } from '../i18n/SettingsLocale';
 import { React, jsx } from "jimu-core";
 import { AllWidgetSettingProps } from "jimu-for-builder";
-import { SettingSection, SettingRow } from "jimu-ui/advanced/setting-components";
+import { SettingRow } from "jimu-ui/advanced/setting-components";
 import { MapWidgetSelector } from "jimu-ui/advanced/setting-components";
 import { Switch, TextInput, NumericInput, Select, Option, Button } from "jimu-ui";
 import { testPlacesApi } from "../features/places/placesApi";
@@ -179,6 +181,19 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
   onToggleTurboDefaultColorByDate = (evt: React.ChangeEvent<HTMLInputElement>) => {
     let config = this.props.config.set("turboDefaultColorByDate", evt.target.checked);
     this.props.onSettingChange({ id: this.props.id, config });
+  };
+
+  onTogglePlacesEnabled = (enabled: boolean) => {
+    if (!enabled) {
+      this.placesTestAbort?.abort(); this.placesTestAbort = null;
+      this.clearPlacesArea();
+      this.setState({placesTestStatus:'idle',placesTestInfo:''});
+    }
+    this.props.onSettingChange({id:this.props.id,config:this.props.config.set('enablePlaces',enabled)});
+  };
+
+  onSetAppearanceHidden = (hidden: boolean) => {
+    this.props.onSettingChange({ id: this.props.id, config: this.props.config.merge(appearanceVisibilityPatch(hidden)) });
   };
 
   onToggleHideLegend = (evt: React.ChangeEvent<HTMLInputElement>) => {
@@ -422,7 +437,8 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
 
     return (
       <div dir={directionOf(locale)} lang={locale==='en'?'en-US':locale} className="widget-setting-mapillary jimu-widget-setting">
-        <SettingSection title={t('source')}>
+        <style>{builderSettingsSectionsCss}</style>
+        <BuilderSettingsSection title={t('builderMapConnection')} defaultOpen>
           <SettingRow>
             <div style={{ width: "100%" }}>
               <div style={{ marginBottom: "8px", fontWeight: 500 }}> {t('selectMapWidget')} </div>
@@ -466,8 +482,8 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
               </div>
             )}
           </SettingRow>
-        </SettingSection>
-        <SettingSection title={t('languagePilot')}>
+        </BuilderSettingsSection>
+        <BuilderSettingsSection title={t('languagePilot')}>
           <SettingRow label={t('defaultWidgetLanguage')} flow="wrap">
             <Select className="w-100" aria-label={t('defaultWidgetLanguage')} value={preferenceOf(config.widgetLanguage)}
               onChange={event => this.props.onSettingChange({ id: this.props.id,
@@ -480,8 +496,31 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
               onChange={event => this.props.onSettingChange({id:this.props.id,config:config.set("allowUserLanguageChoice",event.target.checked)})}/>
           </SettingRow>
           <p style={{fontSize:12,margin:'8px 0'}}> {t('appliesToTranslatedImageActionsFiltersDatesAndTime')} </p>
-        </SettingSection>
-        <SettingSection title={t('generalSettings')}>
+        </BuilderSettingsSection>
+        <BuilderSettingsSection title={t('appearanceSettings')}>
+          <SettingRow>
+            <span className="text" style={{ fontSize: "12px", marginTop: "5px", opacity: "0.3", fontStyle: "italic" }}>
+               {t('toggleUiElementsAndActionToolsToSimplifyThe')} </span>
+          </SettingRow>
+
+          <SettingRow flow="wrap">
+            <div role="group" aria-label={t('appearanceSettings')} style={{display:'flex',flexWrap:'wrap',gap:6,width:'100%'}}>
+              <Button className="mly-text-action" size="sm" disabled={APPEARANCE_KEYS.every(key=>config[key]!==true)} onClick={()=>this.onSetAppearanceHidden(false)}>{t('appearanceShowAll')}</Button>
+              <Button className="mly-text-action" size="sm" disabled={APPEARANCE_KEYS.every(key=>config[key]===true)} onClick={()=>this.onSetAppearanceHidden(true)}>{t('appearanceHideAll')}</Button>
+            </div>
+            <small style={{display:'block',marginTop:5,opacity:.7}}>{t('appearanceVisibilityHint')}</small>
+          </SettingRow>
+          {APPEARANCE_GROUPS.map(group=><div key={group.title}>
+            <h4 style={{fontSize:12,margin:'12px 0 4px',fontWeight:600}}>{t(group.title)}</h4>
+            {group.options.map(option=><div key={option.key}>
+              <SettingRow label={t(option.label)}>
+                <Switch aria-label={t(option.label)} checked={config[option.key]===true} onChange={event=>this.props.onSettingChange({id:this.props.id,config:config.set(option.key,event.target.checked)})}/>
+              </SettingRow>
+              {option.key==='hideMapFollowButton' && <small style={{display:'block',margin:'0 0 10px',fontSize:11,lineHeight:1.4,opacity:.55}}>{t('appearanceMapFollowHint')}</small>}
+            </div>)}
+          </div>)}
+        </BuilderSettingsSection>
+        <BuilderSettingsSection title={t('builderCoverageDefaults')}>
           {/*Default Creator Field */}
           <SettingRow flow="wrap">
             <div style={{ width: "100%" }}>
@@ -616,72 +655,9 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
             <span className="text" style={{ fontSize: "11px", fontStyle: "italic", opacity: "0.4" }}>
                {t('whenEnabledCoveragePointsAreColouredByTheirCapture')} </span>
           </SettingRow>
-        </SettingSection>
-        <SettingSection title={t('appearanceSettings')}>
-          <SettingRow>
-            <span className="text" style={{ fontSize: "12px", marginTop: "5px", opacity: "0.3", fontStyle: "italic" }}>
-               {t('toggleUiElementsAndActionToolsToSimplifyThe')} </span>
-          </SettingRow>
-
-          {/* UI Toggles */}
-          <SettingRow label={t('hideMapillaryMapLegend')}>
-            <Switch checked={config.hideLegend === true} onChange={this.onToggleHideLegend} />
-          </SettingRow>
-
-          <SettingRow label={t('hideInfoBox')}>
-            <Switch checked={config.hideInfoBox === true} onChange={this.onToggleHideInfoBox} />
-          </SettingRow>
-
-          <SettingRow label={t('hideCoverageFilterButton')}>
-            <Switch checked={config.hideTurboFilter === true} onChange={this.onToggleHideTurboFilter} />
-          </SettingRow>
-
-          <SettingRow label={t('hideAnalysisStreetgapQualityView')}>
-            <Switch checked={config.hideCoverageAnalysis === true} onChange={this.onToggleHideCoverageAnalysis} />
-          </SettingRow>
-
-          <SettingRow label={t('hidePointCloud3dOnly')}>
-            <Switch checked={config.hidePointCloud === true} onChange={this.onToggleHidePointCloud} />
-          </SettingRow>
-
-          <SettingRow label={t('hideImageDownload')}>
-            <Switch checked={config.hideImageDownload === true} onChange={this.onToggleHideImageDownload} />
-          </SettingRow>
-
-          <SettingRow label={t('hideTimeTravel')}>
-            <Switch checked={config.hideTimeTravel === true} onChange={this.onToggleHideTimeTravel} />
-          </SettingRow>
-
-          <SettingRow label={t('hideShareButton')}>
-            <Switch checked={config.hideShareButton === true} onChange={this.onToggleHideShareButton} />
-          </SettingRow>
-          <SettingRow label={t('hideLockMapRotationButton3d')}>
-            <Switch
-              checked={config.hideSyncHeadingButton === true}
-              onChange={(evt) =>
-                this.props.onSettingChange({
-                  id: this.props.id,
-                  config: this.props.config.set("hideSyncHeadingButton", evt.target.checked),
-                })
-              }
-            />
-          </SettingRow>
-
-          <SettingRow label={t('hideCenterMapButton')}>
-            <Switch
-              checked={config.hideCenterMapButton === true}
-              onChange={(evt) =>
-                this.props.onSettingChange({
-                  id: this.props.id,
-                  config: this.props.config.set("hideCenterMapButton", evt.target.checked),
-                })
-              }
-            />
-          </SettingRow>
-        </SettingSection>
-
-        <SettingSection title={t('placesVectorServiceTitle')}>
-          <SettingRow label={t('offerPlacesLayer')}><Switch checked={config.enablePlaces===true} onChange={event=>this.props.onSettingChange({id:this.props.id,config:config.set('enablePlaces',event.target.checked)})}/></SettingRow>
+        </BuilderSettingsSection>
+        <BuilderSettingsSection title={t('placesVectorServiceTitle')} toggleLabel={t('offerPlacesLayer')} enabled={config.enablePlaces===true} onToggle={this.onTogglePlacesEnabled} onExpandedChange={open=>{if(!open)this.clearPlacesArea();}}>
+          {config.enablePlaces===true ? <React.Fragment>
           <SettingRow flow="wrap" label={t('source')}><Select value={placesSourceKind(config)} onChange={event=>this.onPlacesSourceSetting('placesSource',event.target.value)}>
             <Option value="portal">{t('placesPortalSource')}</Option><Option value="external">{t('placesExternalSource')}</Option>
           </Select></SettingRow>
@@ -711,131 +687,18 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
             <p style={{fontSize:12,opacity:.8}}><OwnedMessage source="Keep the profile in a stable working folder and follow the area-maintenance guide. Preparing a newer dataset does not change the published experience."/></p>
           </details>
 
-        </SettingSection>
+                  </React.Fragment> : <small style={{display:'block',opacity:.6,fontSize:11}}>{t('builderEnableServiceHint')}</small>}
+        </BuilderSettingsSection>
+        <BuilderSettingsSection title={t('fieldNotesSettings')} toggleLabel={t('enterpriseNotesLayer')} enabled={config.sharedFieldNotesEnabled===true} onToggle={enabled=>this.props.onSettingChange({id:this.props.id,config:config.set('sharedFieldNotesEnabled',enabled)})}>
 
-        <SettingSection title={t('featureDetectionLayers')}>
-          <SettingRow label={t('enableTrafficSigns')}>
-            <Switch checked={config.enableTrafficSigns !== false} onChange={this.onToggleTrafficSigns} />
-          </SettingRow>
-
-          <SettingRow label={t('enableMapillaryObjects')}>
-            <Switch checked={config.enableMapillaryObjects !== false} onChange={this.onToggleObjects} />
-          </SettingRow>
-
-          <SettingRow>
-            <span className="text" style={{ fontSize: "12px", fontStyle: "italic", marginTop: "5px", opacity: "0.3" }}>
-               {t('disablingTheseWillHideTheSignAndObjectLayer')} </span>
-          </SettingRow>
-        </SettingSection>
-
-        <SettingSection title={t('advancedSettings')}>
-          <SettingRow label={t('enableSolarModeling')}>
-            <Switch checked={config.enableSolar === true} onChange={evt => this.props.onSettingChange({ id: this.props.id, config: config.set("enableSolar", evt.target.checked) })} />
-          </SettingRow>
-          <SettingRow label={t('enable3dTerrain')}>
-            <Switch checked={config.enable3DTerrain === true} onChange={evt => this.props.onSettingChange({ id: this.props.id, config: config.set("enable3DTerrain", evt.target.checked) })} />
-          </SettingRow>
-          <SettingRow>
-            <span style={{ fontSize: "12px", opacity: 0.7 }}> {t('usesExistingMapTerrainOrAddsWorldElevationIn')} </span>
-          </SettingRow>
-          <SettingRow label={t('enableElevationProfiler')}>
-            <Switch checked={config.enableElevationProfile === true} onChange={evt => this.props.onSettingChange({ id: this.props.id, config: config.set("enableElevationProfile", evt.target.checked) })} />
-          </SettingRow>
-          <SettingRow label={t('renderMode')}>
-            <Select
-              size="sm"
-              // Fallback to '1' (Fill) if renderMode is undefined
-              value={String(config.renderMode ?? 1)}
-              onChange={(evt) =>
-                this.props.onSettingChange({
-                  id: this.props.id,
-                  config: this.props.config.set("renderMode", parseInt(evt.target.value, 10)),
-                })
-              }
-              style={{ width: "130px" }}
-            >
-              <Option value="1"> {t('fillDefault')} </Option>
-              <Option value="0"> {t('letterbox')} </Option>
-            </Select>
-          </SettingRow>
-          <SettingRow>
-            <span className="text" style={{ fontSize: "11px", fontStyle: "italic", marginTop: "-5px", opacity: "0.3" }}>
-              <b> {t('fill')} </b>  {t('fillsTheWindow')} <br />
-              <b> {t('letterboxExtra')} </b>  {t('showsTheFullOriginalImageMayShowBlackBars')} </span>
-          </SettingRow>
-
-          <SettingRow label={t('transitionMode')}>
-            <Select size="sm" value={String(config.transitionMode ?? 0)} onChange={this.onTransitionModeChange} style={{ width: "130px" }}>
-              <Option value="0"> {t('smoothDefault')} </Option>
-              <Option value="1"> {t('instantaneous')} </Option>
-            </Select>
-          </SettingRow>
-          <SettingRow>
-            <span className="text" style={{ fontSize: "11px", fontStyle: "italic", marginTop: "-5px", opacity: "0.3" }}>
-              <b> {t('default')} </b>  {t('usesMotionBlendingBetweenFrames')} <br />
-              <b> {t('instantaneousExtra')} </b>  {t('jumpsImmediatelyToTheNextFrameSnappier')} </span>
-          </SettingRow>
-          <SettingRow flow="wrap">
-            <div className="w-100">
-              <div style={{ fontWeight: 500, marginBottom: "5px" }}> {t('defaultCameraAngleNormalized01')} </div>
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <span style={{ fontSize: "12px" }}> {t('horizontalX')} </span>
-                <NumericInput
-                  size="sm"
-                  style={{ width: "80px" }}
-                  value={config.cameraX}
-                  min={0}
-                  max={1}
-                  step={0.05}
-                  placeholder="0.5" // Shows 0.5 when empty
-                  onChange={this.onCameraXChange}
-                />
-              </div>
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <span style={{ fontSize: "12px" }}> {t('verticalY')} </span>
-                <NumericInput
-                  size="sm"
-                  style={{ width: "80px" }}
-                  value={config.cameraY}
-                  min={0}
-                  max={1}
-                  step={0.05}
-                  placeholder="0.5" // Shows 0.5 when empty
-                  onChange={this.onCameraYChange}
-                />
-              </div>
-              <div className="text" style={{ fontSize: "11px", fontStyle: "italic", opacity: "0.3" }}>
-                 {t('standardIs05ForBothRefersToCenter')} <br />
-                <b> {t('x')} </b>  {t('horizontalAxisMeaning')} <br />
-                <b> {t('y')} </b>  {t('verticalAxisMeaning')} </div>
-            </div>
-          </SettingRow>
-          <SettingRow label={t('loadImageryInTiles')}>
-            <Switch checked={config.imageTiling === true} onChange={this.onToggleImageTiling} />
-          </SettingRow>
-          <SettingRow>
-            <span className="text" style={{ fontSize: "12px" }}>
-               {t('compareLoadingOnYourImagesAndConnectionReopenThe')} </span>
-          </SettingRow>
-          <SettingRow label={t('debugMode')}>
-            <Switch checked={config.debugMode === true} onChange={this.onToggleDebugMode} />
-          </SettingRow>
-          <SettingRow>
-            <span className="text" style={{ fontSize: "12px", fontStyle: "italic", marginTop: "0px", opacity: "0.3" }}>
-               {t('enablesDeveloperLoggingInTheBrowserConsoleF12')} </span>
-          </SettingRow>
-        </SettingSection>
-
-        <SettingSection title={t('fieldNotesSettings')}>
-          <SettingRow label={t('enterpriseNotesLayer')}>
-            <Switch checked={config.sharedFieldNotesEnabled === true} onChange={event => this.props.onSettingChange({ id: this.props.id, config: config.set("sharedFieldNotesEnabled", event.target.checked) })} />
-          </SettingRow>
+          {config.sharedFieldNotesEnabled===true && <React.Fragment>
           <SettingRow flow="wrap" label={t('editableLayerUrl')}>
             <TextInput className="w-100" placeholder="https://.../FeatureServer/0" value={config.sharedFieldNotesUrl || ""} onChange={event => this.props.onSettingChange({ id: this.props.id, config: config.set("sharedFieldNotesUrl", event.target.value.trim()) })} />
           </SettingRow>
           <SettingRow flow="wrap" label={t('readOnlyLayerViewUrlOptional')}>
             <TextInput className="w-100" placeholder="https://.../FeatureServer/0" value={config.sharedFieldNotesReadUrl || ""} onChange={event => this.props.onSettingChange({ id: this.props.id, config: config.set("sharedFieldNotesReadUrl", event.target.value.trim()) })} />
           </SettingRow>
+          </React.Fragment>}
           <SettingRow><span style={{ fontSize: 11 }}> {t('localNotesRemainAvailablePublishingIsExplicitUsersAuthenticate')} </span></SettingRow>
           <SettingRow flow="wrap">
             <div style={{ width: "100%" }}>
@@ -918,8 +781,22 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
                  {t('resetToDefaultCategories')} </button>
             </div>
           </SettingRow>
-        </SettingSection>
-        <SettingSection title={t('routing')}>
+        </BuilderSettingsSection>
+        <BuilderSettingsSection title={t('featureDetectionLayers')}>
+          <SettingRow label={t('enableTrafficSigns')}>
+            <Switch checked={config.enableTrafficSigns !== false} onChange={this.onToggleTrafficSigns} />
+          </SettingRow>
+
+          <SettingRow label={t('enableMapillaryObjects')}>
+            <Switch checked={config.enableMapillaryObjects !== false} onChange={this.onToggleObjects} />
+          </SettingRow>
+
+          <SettingRow>
+            <span className="text" style={{ fontSize: "12px", fontStyle: "italic", marginTop: "5px", opacity: "0.3" }}>
+               {t('disablingTheseWillHideTheSignAndObjectLayer')} </span>
+          </SettingRow>
+        </BuilderSettingsSection>
+        <BuilderSettingsSection title={t('routing')}>
           <SettingRow>
             <div
               style={{
@@ -1234,7 +1111,104 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
               )}
             </div>
           </SettingRow>
-        </SettingSection>
+        </BuilderSettingsSection>
+        <BuilderSettingsSection title={t('advancedSettings')}>
+          <SettingRow label={t('enableSolarModeling')}>
+            <Switch checked={config.enableSolar === true} onChange={evt => this.props.onSettingChange({ id: this.props.id, config: config.set("enableSolar", evt.target.checked) })} />
+          </SettingRow>
+          <SettingRow label={t('enable3dTerrain')}>
+            <Switch checked={config.enable3DTerrain === true} onChange={evt => this.props.onSettingChange({ id: this.props.id, config: config.set("enable3DTerrain", evt.target.checked) })} />
+          </SettingRow>
+          <SettingRow>
+            <span style={{ fontSize: "12px", opacity: 0.7 }}> {t('usesExistingMapTerrainOrAddsWorldElevationIn')} </span>
+          </SettingRow>
+          <SettingRow label={t('enableElevationProfiler')}>
+            <Switch checked={config.enableElevationProfile === true} onChange={evt => this.props.onSettingChange({ id: this.props.id, config: config.set("enableElevationProfile", evt.target.checked) })} />
+          </SettingRow>
+          <SettingRow label={t('renderMode')}>
+            <Select
+              size="sm"
+              // Fallback to '1' (Fill) if renderMode is undefined
+              value={String(config.renderMode ?? 1)}
+              onChange={(evt) =>
+                this.props.onSettingChange({
+                  id: this.props.id,
+                  config: this.props.config.set("renderMode", parseInt(evt.target.value, 10)),
+                })
+              }
+              style={{ width: "130px" }}
+            >
+              <Option value="1"> {t('fillDefault')} </Option>
+              <Option value="0"> {t('letterbox')} </Option>
+            </Select>
+          </SettingRow>
+          <SettingRow>
+            <span className="text" style={{ fontSize: "11px", fontStyle: "italic", marginTop: "-5px", opacity: "0.3" }}>
+              <b> {t('fill')} </b>  {t('fillsTheWindow')} <br />
+              <b> {t('letterboxExtra')} </b>  {t('showsTheFullOriginalImageMayShowBlackBars')} </span>
+          </SettingRow>
+
+          <SettingRow label={t('transitionMode')}>
+            <Select size="sm" value={String(config.transitionMode ?? 0)} onChange={this.onTransitionModeChange} style={{ width: "130px" }}>
+              <Option value="0"> {t('smoothDefault')} </Option>
+              <Option value="1"> {t('instantaneous')} </Option>
+            </Select>
+          </SettingRow>
+          <SettingRow>
+            <span className="text" style={{ fontSize: "11px", fontStyle: "italic", marginTop: "-5px", opacity: "0.3" }}>
+              <b> {t('default')} </b>  {t('usesMotionBlendingBetweenFrames')} <br />
+              <b> {t('instantaneousExtra')} </b>  {t('jumpsImmediatelyToTheNextFrameSnappier')} </span>
+          </SettingRow>
+          <SettingRow flow="wrap">
+            <div className="w-100">
+              <div style={{ fontWeight: 500, marginBottom: "5px" }}> {t('defaultCameraAngleNormalized01')} </div>
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <span style={{ fontSize: "12px" }}> {t('horizontalX')} </span>
+                <NumericInput
+                  size="sm"
+                  style={{ width: "80px" }}
+                  value={config.cameraX}
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  placeholder="0.5" // Shows 0.5 when empty
+                  onChange={this.onCameraXChange}
+                />
+              </div>
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <span style={{ fontSize: "12px" }}> {t('verticalY')} </span>
+                <NumericInput
+                  size="sm"
+                  style={{ width: "80px" }}
+                  value={config.cameraY}
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  placeholder="0.5" // Shows 0.5 when empty
+                  onChange={this.onCameraYChange}
+                />
+              </div>
+              <div className="text" style={{ fontSize: "11px", fontStyle: "italic", opacity: "0.3" }}>
+                 {t('standardIs05ForBothRefersToCenter')} <br />
+                <b> {t('x')} </b>  {t('horizontalAxisMeaning')} <br />
+                <b> {t('y')} </b>  {t('verticalAxisMeaning')} </div>
+            </div>
+          </SettingRow>
+          <SettingRow label={t('loadImageryInTiles')}>
+            <Switch checked={config.imageTiling === true} onChange={this.onToggleImageTiling} />
+          </SettingRow>
+          <SettingRow>
+            <span className="text" style={{ fontSize: "12px" }}>
+               {t('compareLoadingOnYourImagesAndConnectionReopenThe')} </span>
+          </SettingRow>
+          <SettingRow label={t('debugMode')}>
+            <Switch checked={config.debugMode === true} onChange={this.onToggleDebugMode} />
+          </SettingRow>
+          <SettingRow>
+            <span className="text" style={{ fontSize: "12px", fontStyle: "italic", marginTop: "0px", opacity: "0.3" }}>
+               {t('enablesDeveloperLoggingInTheBrowserConsoleF12')} </span>
+          </SettingRow>
+        </BuilderSettingsSection>
       </div>
     );
   }

@@ -12,6 +12,8 @@ import { WorkspaceContributionEditor } from './WorkspaceContributionEditor';
 import { WorkspaceContributionCard } from './WorkspaceContributionCard';
 import { WorkspaceCategoryEditor } from './WorkspaceCategoryEditor';
 import { WorkspaceContributionTools } from './WorkspaceContributionTools';
+import { sortNotes, type NoteSort } from '../field-notes/noteSort';
+import { NotesSortControl } from '../field-notes/NotesSortControl';
 import { useWorkspaceContributions } from './useWorkspaceContributions';
 import { CommunityWorkspaceClient, communityNoteTarget, parseWorkspaceInvitation, formatWorkspaceContributor } from './communityWorkspace';
 import type { CommunityWorkspace, CommunityRecord, WorkspaceMember, WorkspaceInvite, WorkspaceCategory } from './communityWorkspace';
@@ -26,7 +28,8 @@ const emptyRecords: CommunityRecord[] = [], emptyCategories: WorkspaceCategory[]
  * All database rights are verified by the operator's RLS, never by button visibility.
  */
 export const CommunityWorkspacePanel: React.FC<Props> = ({notes,onFocus,onMapNotes,onPickLocation,currentImageId,detectionDraft,onClearDetectionDraft,onLoadDetectionPreview,onDetectionDraftFinished,onDetectionDraftLocation}) => {
-  const { owned: text } = useWidgetLocale();
+  const { owned: text, formatLocale } = useWidgetLocale();
+  const [sort, setSort] = React.useState<NoteSort>('date-desc');
   const [connectionOpen,setConnectionOpen]=React.useState(true);
   const resultsRef=React.useRef<HTMLDivElement>(null),createRef=React.useRef<HTMLDetailsElement>(null),publishRef=React.useRef<HTMLDetailsElement>(null),categoriesRef=React.useRef<HTMLDetailsElement>(null);
   /** Open the requested task and move focus without stealing normal list scrolling. */
@@ -59,6 +62,7 @@ export const CommunityWorkspacePanel: React.FC<Props> = ({notes,onFocus,onMapNot
   React.useEffect(()=>setConnectionOpen(!(signedIn&&workspace)),[signedIn,workspace?.id]);
   const contributions=useWorkspaceContributions(client.current,signedIn?active:'');
   const records=contributions.page?.notes||emptyRecords, categories=contributions.page?.categories||emptyCategories;
+  const sortedRecords=React.useMemo(()=>sortNotes(records,sort,formatLocale,note=>({name:note.title?.trim()||note.category,date:note.created_at,status:note.status})),[records,sort,formatLocale]);
   const activeCategories=categories.filter(category=>!category.archived);
   const chosenCategory=activeCategories.some(category=>category.name===publishCategory)?publishCategory:activeCategories[0]?.name||'';
   React.useEffect(()=>{onMapNotes?.(records.map(note=>communityNoteTarget(note,categories,workspace?.name)),categories,workspace?.name||'');},[records,categories,workspace?.name,onMapNotes]);
@@ -83,7 +87,7 @@ export const CommunityWorkspacePanel: React.FC<Props> = ({notes,onFocus,onMapNot
   const action=(label:string,callback:()=>void,disabled=busy)=><button className="mly-text-action" type="button" style={button} disabled={disabled} onClick={callback}>{text(label)}</button>;
   // Retain the card element tree while typing; large loaded lists must not
   // re-render descriptions/editors for every search-input character.
-  const contributionCards=React.useMemo(()=>workspace?records.map(note=><WorkspaceContributionCard onLoadDetectionAttachment={(id,signal)=>client.current!.noteImage(note.id,id,signal)} onLoadDetectionPreview={onLoadDetectionPreview} key={note.id} note={note} color={categories.find(category=>category.name===note.category)?.color||'#f5a623'}
+  const contributionCards=React.useMemo(()=>workspace?sortedRecords.map(note=><WorkspaceContributionCard onLoadDetectionAttachment={(id,signal)=>client.current!.noteImage(note.id,id,signal)} onLoadDetectionPreview={onLoadDetectionPreview} key={note.id} note={note} color={categories.find(category=>category.name===note.category)?.color||'#f5a623'}
         busy={busy} own={note.author_id===client.current?.userId} ownerContribution={note.author_id===workspace.owner_id}
         canEdit={owner||canWrite&&note.author_id===client.current?.userId} canRemove={owner||canWrite&&note.author_id===client.current?.userId}
         onShow={()=>onFocus(communityNoteTarget(note,categories,workspace.name))}
@@ -93,7 +97,7 @@ export const CommunityWorkspacePanel: React.FC<Props> = ({notes,onFocus,onMapNot
           onCancel={()=>{setEditing('');setEditError('');}}
           onSave={(values,version)=>{const api=client.current!;setEditError('');void run(()=>api.editContribution(active,note.id,values,version),()=>{contributions.refresh();setEditing('');setMessage(text('Contribution updated.'));},setEditError);}} />}
 
-      </WorkspaceContributionCard>):[],[records,categories,busy,owner,canWrite,editing,editError,onFocus,active,workspace,run,contributions.refresh,text,onLoadDetectionPreview]);
+      </WorkspaceContributionCard>):[],[sortedRecords,categories,busy,owner,canWrite,editing,editError,onFocus,active,workspace,run,contributions.refresh,text,onLoadDetectionPreview]);
   return <section className="mly-notes-scroll mly-workspace-scroll" role="tabpanel" aria-label={text('Workspace notes')} style={panel} onClick={event=>event.stopPropagation()} onPointerDown={event=>event.stopPropagation()} onKeyDown={event=>event.stopPropagation()}>
     <style>{workspaceReadabilityCss}</style>
     {detectionDraft&&!canWrite&&<div role="status" style={card}><strong>{detectionDraft.title}</strong><span>{text('Note draft ready. Connect, sign in and choose a workspace where you can contribute.')}</span>{action('Discard incoming draft',()=>onClearDetectionDraft?.(),false)}</div>}
@@ -148,6 +152,7 @@ export const CommunityWorkspacePanel: React.FC<Props> = ({notes,onFocus,onMapNot
       <div ref={resultsRef} tabIndex={-1} role="region" aria-label={text('Loaded contributions')} aria-busy={contributions.busy} style={{display:'grid',gap:10,minWidth:0,scrollMarginTop:10}}><div style={{...row,justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid #567363'}}><h3 style={headingStyle}>{text('Search results')}</h3>{action('Export loaded notes',()=>{const data={type:'FeatureCollection',features:records.map(note=>({type:'Feature',geometry:{type:'Point',coordinates:[note.lon,note.lat]},properties:{id:`workspace:${note.id}`,source:'manual',title:note.title||'',category:note.category,categoryColor:categories.find(category=>category.name===note.category)?.color||'#f5a623',note:note.note_text,resolutionNote:note.resolution_note,status:note.status,risk_label:note.risk_label,imageId:note.image_id,workspaceId:note.workspace_id,authorId:note.author_id,authorDisplayName:note.author_display_name||null,createdAt:note.created_at,updatedAt:note.updated_at}}))};const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/geo+json'}));const link=document.createElement('a');link.href=url;link.download='workspace-notes.geojson';link.click();URL.revokeObjectURL(url);},busy||!records.length)}</div>
       {!contributions.busy&&contributions.page&&<p style={{margin:0,color:'#d3e2d9'}}>{text('Showing')} {records.length} {text('of')} {contributions.page.statistics.matching} {text('matching contributions')}{contributions.query.trim()?` · “${contributions.query.trim()}”`:''}{contributions.mine?` · ${text('Only my contributions')}`:''}</p>}
       {contributions.busy&&<p role="status" style={{margin:0}}>{text(contributions.waiting?'Waiting for you to finish typing…':'Updating results…')}{records.length>0&&' '+text('Previous results remain visible until the search finishes.')}</p>}
+      <NotesSortControl value={sort} onChange={setSort} loadedOnly />
       {contributionCards}
       {contributions.hasMore&&action('Load more notes',contributions.loadMore,contributions.busy)}
       {!contributions.busy&&!contributions.error&&!records.length&&<div style={{...card,padding:16}}><strong>{text('No contributions match the current filters.')}</strong><span>{text('Try a different search or turn off Only my contributions.')}</span>{(contributions.query||contributions.mine)&&<button className="mly-text-action" type="button" style={secondary} onClick={()=>{contributions.clearSearch();contributions.setMine(false);}}>{text('Show all contributions')}</button>}</div>}

@@ -44,3 +44,13 @@ Add `--browser` to include real Chromium thumbnail tests. Those require Playwrig
 Current focused results: 133 tests plus seven Chromium checks. Earlier reproduction tests demonstrate the metadata cache crash, stale click ordering, synchronous long-scan interruption, same-image element replacement and optional-hover error propagation before their fixes.
 
 For host validation, check 2D and tilted 3D, cold/warm hover, rapid clicks in reverse response order, active competing tools, a 10,000-frame cached route, thumbnail loading, close/reopen and preserved selected faint overview. Existing debug-mode metrics distinguish click-dispatch, SDK viewer-open and total click-image time. A controlled test is not a deployed FPS/latency benchmark. The previously discussed terrain-projection hypothesis has not been established as a live failure after the confirmed cache crash was fixed; do not change terrain picking based on that hypothesis alone.
+
+## Traffic-sign and object category selection
+
+The map category picker owns a local draft and applies it explicitly. `categorySelection.ts` represents All as null/undefined (or a legacy All label), None as an empty immutable array, and explicit selection as exact atlas codes. Display labels are not identifiers; duplicate friendly names retain separate codes and show those codes in the picker.
+
+The same membership rule drives native vector-style filters, map picking and area exports. Picking retains the existing selection-identity checks for obsolete work. Export captures the selection at its start. Filter-strip summaries show a single category name or a localized selection count. Category checkbox/search/page changes do not rebuild layers; Apply commits once. Sprite size remains independent.
+
+Image detections retain their separate Standard/Explore behavior and classification controls. Map-sprite codes do not suppress image-overlay categories, because those taxonomies can differ. Existing image opening, playback, detection request ownership and export limits remain unchanged.
+
+The popup searches the whole in-memory sprite catalog but mounts only 40 options per page. It uses native checkboxes, Escape/cancel/outside dismissal, arrow-key navigation within the current page, and a fullscreen-aware portal. Popup and viewport listeners exist only while open. Ancestor scrolling repositions it, including native RTL focus scrolling; it does not introduce polling or metadata requests on each checkbox click.

@@ -1,6 +1,19 @@
 import type { SettingsMessages } from '../settingsMessages';
 /** Brazilian Portuguese presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const ptBR: SettingsMessages = {
+  "builderMapConnection": "Conexão do mapa",
+  "builderCoverageDefaults": "Padrões de cobertura",
+  "builderEnableServiceHint": "Ative a opção acima para configurar o serviço. Os valores existentes são mantidos.",
+
+  "hideMapFollowButton": "Ocultar botão Manter imagem visível / Fixar na imagem",
+  "appearanceShowAll": "Mostrar tudo",
+  "appearanceHideAll": "Ocultar tudo",
+  "appearanceImageDetails": "Detalhes da imagem",
+  "appearanceNavigation": "Navegação no mapa",
+  "appearanceExploration": "Exploração e exportação",
+  "appearanceVisibilityHint": "Altera apenas a visibilidade. Recursos, serviços e acompanhamento do mapa permanecem iguais.",
+  "appearanceMapFollowHint": "Disponível com a sincronização mapa-imagem ativada. Ocultar o botão não desativa a sincronização.",
+
   "source": "Origem",
   "selectMapWidget": "Selecionar Widget de Mapa",
   "lockMapToView": "Fixar Mapa na Vista",

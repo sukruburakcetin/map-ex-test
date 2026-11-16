@@ -1,6 +1,19 @@
 import type { SettingsMessages } from '../settingsMessages';
 /** Traditional Chinese (Taiwan) presentation catalog; stored values and protocol identifiers remain unchanged. */
 const zhTW: SettingsMessages = {
+  "builderMapConnection": "地圖連線",
+  "builderCoverageDefaults": "覆蓋範圍預設值",
+  "builderEnableServiceHint": "啟用上方選項以設定服務。現有值會保留。",
+
+  "hideMapFollowButton": "隱藏保持影像可見 / 鎖定影像按鈕",
+  "appearanceShowAll": "全部顯示",
+  "appearanceHideAll": "全部隱藏",
+  "appearanceImageDetails": "影像詳細資訊",
+  "appearanceNavigation": "地圖導覽",
+  "appearanceExploration": "探索與匯出",
+  "appearanceVisibilityHint": "僅變更可見性。已啟用的功能、服務及地圖跟隨行為保持不變。",
+  "appearanceMapFollowHint": "啟用地圖與影像同步時可用。隱藏按鈕不會停用同步。",
+
   "source": "來源",
   "selectMapWidget": "選取地圖小工具",
   "lockMapToView": "將地圖鎖定於視圖",

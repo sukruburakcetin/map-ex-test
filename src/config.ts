@@ -165,6 +165,9 @@ export interface Config {
    */
   hideCenterMapButton?: boolean;
 
+  /** Hide the map-follow/Lock to image control without changing synchronization behavior. */
+  hideMapFollowButton?: boolean;
+
   /**
    * If true, the Street Coverage Analysis, StreetGap, and Quality View features inside the InfoBox are hidden.
    */

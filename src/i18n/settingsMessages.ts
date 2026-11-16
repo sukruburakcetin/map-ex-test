@@ -1,5 +1,18 @@
 /** Builder-only catalog. */
 export const settingsEn = {
+  "builderMapConnection": "Map connection",
+  "builderCoverageDefaults": "Coverage defaults",
+  "builderEnableServiceHint": "Enable this option above to configure its service. Existing values are kept.",
+
+  "hideMapFollowButton": "Hide Keep image in view / Lock to image button",
+  "appearanceShowAll": "Show all",
+  "appearanceHideAll": "Hide all",
+  "appearanceImageDetails": "Image details",
+  "appearanceNavigation": "Map navigation",
+  "appearanceExploration": "Exploration and export",
+  "appearanceVisibilityHint": "Changes visibility only. Enabled features, services and map-follow behavior stay unchanged.",
+  "appearanceMapFollowHint": "This control is available when map-to-image sync is enabled. Hiding the button does not disable sync.",
+
  "source": "Source",
  "selectMapWidget": "Select Map Widget",
  "lockMapToView": "Lock Map To View",

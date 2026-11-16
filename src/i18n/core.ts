@@ -16,7 +16,7 @@ export function languageOf(value?:string):WidgetLanguage {
 export function preferenceOf(value: unknown): LanguagePreference { return value === 'en-US' ? 'en' : value === 'en-GB' ? 'en-GB' : value === 'ar' ? 'ar' : value === 'tr' || value === 'es' || value === 'fr' || value === 'de' || value === 'pt-BR' || value === 'it' || value === 'ja' || value === 'ko' || value === 'zh-CN' || value === 'zh-TW' || value === 'en' ? value : 'auto'; }
 /** React renders the result as text; substitution never generates HTML. */
 export function message(catalog: Partial<Messages>, key: MessageKey, values: Record<string,string|number> = {}): string {
- return (catalog[key] || en[key]).replace(/\{([a-zA-Z][a-zA-Z0-9]*)\}/g, (placeholder, name) =>
+ return (catalog[key] || en[key] || String(key)).replace(/\{([a-zA-Z][a-zA-Z0-9]*)\}/g, (placeholder, name) =>
   Object.prototype.hasOwnProperty.call(values,name) ? String(values[name]) : placeholder);
 }
 

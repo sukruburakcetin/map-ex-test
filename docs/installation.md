@@ -65,6 +65,8 @@ tools/
 
 Avoid a second nested `mapillary-explorer` directory. A current source checkout already includes the implemented changes; new users do not apply historical feature installers.
 
+Keep **`src/runtime/assets`** with the source. It contains the bundled traffic-sign and object sprites. Experience Builder copies it to **`dist/runtime/assets`** during compilation. Deploy the full widget build, including this directory; copying only `widget.js` omits the icons. The widget resolves assets through its own `context.folderUrl`, so no sprite-service URL or GitHub access is needed. For cross-origin widget hosting, allow the experience's origin to load the widget's PNG/JSON assets. See [sprite maintenance and deployment checks](development/sprites.md).
+
 ## 4. Install the widget's extra dependencies
 
 Return to the host's **`client` directory**. Do not run these commands from the widget folder or from `server`.

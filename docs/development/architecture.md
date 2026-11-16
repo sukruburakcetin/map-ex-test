@@ -4,6 +4,7 @@
 
 | Area | Entry point |
 |---|---|
+| Traffic-sign/object sprite assets | [Bundled snapshot and deployment](sprites.md) |
 | Places data and interactions | [Places owners](places-architecture.md) |
 | Shared coverage/imagery dispatch | [Interaction UX](interaction-ux.md) |
 | InfoBox composition | [Sections](info-box.md) |

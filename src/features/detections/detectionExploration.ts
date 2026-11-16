@@ -19,7 +19,7 @@ export function detectionGroup(value:string,knownSigns?:ReadonlySet<string>):Det
  if(parts[0]==='object')return 'objects';
  return 'other';
 }
-export function showDetection(value:string,group:DetectionGroup,options:DetectionExplorerOptions,filters:{signs:boolean;objects:boolean;signCode?:string;objectCode?:string;knownObjects:ReadonlySet<string>}):boolean {
+export function showDetection(value:string,group:DetectionGroup,options:DetectionExplorerOptions,filters:{signs:boolean;objects:boolean;signCode?:string|readonly string[]|null;objectCode?:string|readonly string[]|null;knownObjects:ReadonlySet<string>}):boolean {
  if(options.mode==='explore')return options.groups.includes(group);
  // Standard view preserves the original image-overlay rules. Map sprite source/filter
  // state must not suppress image detections (their classification codes can differ).

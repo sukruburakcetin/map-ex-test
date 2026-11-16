@@ -26,7 +26,9 @@ const filterPanelCss = `
 .mly-filter-group .mly-filter-travel select { width:88px; min-width:0; }
 .mly-filter-size { height:24px; white-space:nowrap; }
 .mly-filter-size select { width:64px; min-width:64px; flex:0 0 64px; }
-.mly-filter-group--features > div:first-child { flex:0 0 180px !important; width:180px !important; min-width:0; }
+.mly-filter-group--features { width:min(280px, calc(100vw - 24px)); gap:8px; }
+.mly-filter-group--features > div:first-child { flex:1 1 0 !important; width:auto !important; min-width:0; }
+.mly-filter-group--features .mly-category-trigger { width:100%; max-width:100% !important; display:flex; align-items:center; justify-content:space-between; gap:6px; }
 .mly-filter-group--features [role="combobox"] { height:24px; min-height:24px; max-height:24px; padding:0 6px; border-color:#507d64; border-radius:5px; background:#173d2b; }
 .mly-filter-group button { box-sizing:border-box; }
 .mly-filter-dates { display:flex; align-items:center; gap:3px; }

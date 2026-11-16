@@ -1,6 +1,19 @@
 import type { SettingsMessages } from '../settingsMessages';
 /** Spanish presentation catalog. Persisted values and protocol identifiers are unchanged. */
 const es: SettingsMessages = {
+  "builderMapConnection": "Conexión del mapa",
+  "builderCoverageDefaults": "Valores predeterminados de cobertura",
+  "builderEnableServiceHint": "Active la opción de arriba para configurar su servicio. Se conservan los valores existentes.",
+
+  "hideMapFollowButton": "Ocultar botón Mantener imagen visible / Fijar a imagen",
+  "appearanceShowAll": "Mostrar todo",
+  "appearanceHideAll": "Ocultar todo",
+  "appearanceImageDetails": "Detalles de imagen",
+  "appearanceNavigation": "Navegación del mapa",
+  "appearanceExploration": "Exploración y exportación",
+  "appearanceVisibilityHint": "Solo cambia la visibilidad. Las funciones, servicios y seguimiento del mapa no cambian.",
+  "appearanceMapFollowHint": "Este control está disponible con la sincronización mapa-imagen activada. Ocultarlo no desactiva la sincronización.",
+
   "source": "Origen",
   "selectMapWidget": "Seleccionar Widget de Mapa",
   "lockMapToView": "Fijar Mapa a la Vista",

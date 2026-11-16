@@ -3,7 +3,7 @@
 import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 import type { InfoBoxProps } from '../../components/types';
-import { coverageAnalysisTriggerRowStyle, coverageAnalysisTriggerSpinnerStyle, coverageAnalysisTriggerHoverBackground, getCoverageAnalysisTriggerButtonStyle, getCoverageAnalysisTriggerBackground } from '../../styles/coverageAnalysis';
+import { coverageAnalysisTriggerCss, coverageAnalysisTriggerRowStyle, coverageAnalysisTriggerSpinnerStyle, coverageAnalysisTriggerHoverBackground, getCoverageAnalysisTriggerButtonStyle, getCoverageAnalysisTriggerBackground } from '../../styles/coverageAnalysis';
 
 export type CoverageAnalysisTriggerProps = Pick<InfoBoxProps, 'currentZoom' | 'jimuMapViewZoom' | 'turboPointsAvailable' | 'coverageAnalysisLoading' | 'coverageResult' | 'onRunCoverageAnalysis'> & { turboMinZoom: number };
 
@@ -29,11 +29,12 @@ export const CoverageAnalysisTrigger: React.FC<CoverageAnalysisTriggerProps> = p
 
   return (
     <React.Fragment>
+      <style>{coverageAnalysisTriggerCss}</style>
       {/* Coverage Analysis button */}
       <div
         className="mly-coverage-analysis-trigger" style={coverageAnalysisTriggerRowStyle}
       >
-        <button className="mly-text-action"
+        <button className={`mly-text-action${canRun && !coverageResult && (locale === 'en' || locale === 'en-GB') ? ' mly-coverage-single-line' : ''}`}
           type="button" disabled={!canRun} aria-disabled={!canRun}
           onClick={onRunCoverageAnalysis}
           title={tooltip}

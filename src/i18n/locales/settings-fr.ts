@@ -1,6 +1,19 @@
 import type { SettingsMessages } from '../settingsMessages';
 /** French presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const fr: SettingsMessages = {
+  "builderMapConnection": "Connexion à la carte",
+  "builderCoverageDefaults": "Valeurs de couverture par défaut",
+  "builderEnableServiceHint": "Activez l’option ci-dessus pour configurer son service. Les valeurs existantes sont conservées.",
+
+  "hideMapFollowButton": "Masquer le bouton Garder l’image visible / Verrouiller sur l’image",
+  "appearanceShowAll": "Tout afficher",
+  "appearanceHideAll": "Tout masquer",
+  "appearanceImageDetails": "Détails de l’image",
+  "appearanceNavigation": "Navigation sur la carte",
+  "appearanceExploration": "Exploration et export",
+  "appearanceVisibilityHint": "Modifie uniquement la visibilité. Les fonctions, services et le suivi de la carte restent inchangés.",
+  "appearanceMapFollowHint": "Ce contrôle est disponible lorsque la synchronisation carte-image est activée. Le masquer ne désactive pas la synchronisation.",
+
   "source": "Source",
   "selectMapWidget": "Sélectionner le Widget Carte",
   "lockMapToView": "Verrouiller la Carte sur la Vue",

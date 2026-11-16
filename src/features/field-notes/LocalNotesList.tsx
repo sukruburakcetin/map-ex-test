@@ -7,6 +7,7 @@ import type { DetectionPreviewLoader } from '../detections/detectionPreview';
 import { React, jsx } from 'jimu-core';
 import { NotesSearchControls } from './NotesSearchControls';
 import { filterNotes } from './noteSearch';
+import { sortNotes, type NoteSort } from './noteSort';
 import { FIELD_NOTE_STATUSES } from '../../components/types';
 import type { FieldNote } from '../../components/types';
 import { noteListToolbarStyle, noteListToolbarActionsStyle, noteListImportStyle, noteListFileInputStyle, noteListExportStyle, noteListEmptyStyle, noteListCategoryStyle, noteListDeleteStyle, noteListShareStyle, getNoteStatusBadgeStyle, noteListResolutionStyle, noteListErrorStyle, noteListTextStyle } from '../../styles/fieldNotes';
@@ -38,14 +39,15 @@ export const LocalNotesList: React.FC<LocalNotesListProps> = props => {
 
   const { notes, fileInputRef, isConfirmingClear, setIsConfirmingClear, onDeleteNote, onClearAll, onExport, onImportFile, onFocusNote } = props;
   const [query, setQuery] = React.useState('');
-  const visibleNotes = React.useMemo(() => filterNotes(notes, query, locale, {
+  const [sort, setSort] = React.useState<NoteSort>('date-desc');
+  const visibleNotes = React.useMemo(() => sortNotes(filterNotes(notes, query, locale, {
     open: t('uiStatusOpen'), in_progress: t('uiStatusProgress'), completed: t('uiStatusCompleted'), dismissed: t('uiStatusDismissed'),
-  }), [notes, query, locale, t]);
+  }), sort, locale, note => ({ name: note.title?.trim() || note.category, date: note.createdAt, status: note.status })), [notes, query, locale, t, sort]);
   return (
 <div role="tabpanel" aria-label={t('uiLocalNotes')} className="mly-notes-scroll" tabIndex={0} style={enterprisePanelStyle}>
                     <div style={enterpriseContentStyle}>
                     {/* Tools and cards share one viewport so every local copy remains reachable. */}
-                    <div style={noteListToolbarStyle}>
+                    <div className="mly-notes-toolbar" style={noteListToolbarStyle}>
                         <span>{notes.length > 0 ? <OwnedMessage source={notes.length === 1 ? "{count} local note" : "{count} local notes"} values={{count:notes.length}}/> : t('uiNoLocalNotes')}</span>
                         <div style={noteListToolbarActionsStyle}>
                             {/* Import Button */}
@@ -103,7 +105,7 @@ export const LocalNotesList: React.FC<LocalNotesListProps> = props => {
                         </div>
                     </div>
 
-                    <NotesSearchControls query={query} onChange={setQuery} shown={visibleNotes.length} total={notes.length} />
+                    <NotesSearchControls sort={sort} onSort={setSort} query={query} onChange={setQuery} shown={visibleNotes.length} total={notes.length} />
                     {query.trim() && notes.length > 0 && visibleNotes.length === 0 && <div style={noteListEmptyStyle}>{t('notesSearchEmpty')}</div>}
                     {isConfirmingClear && <div role="status" style={notesSourceHintStyle}> {t('uiLocalRecordsWillBeRemovedEnterpriseNotesWill')} </div>}
                     <div style={enterpriseRowsStyle}>
@@ -111,14 +113,14 @@ export const LocalNotesList: React.FC<LocalNotesListProps> = props => {
                             <div style={noteListEmptyStyle}>
                                  {t('uiYouCanGetStartedByImportingAGeojson')} </div>
                         )}
-                        {visibleNotes.slice().reverse().map(n => (
+                        {visibleNotes.map(n => (
                             <div
                                 key={n.id}
                                 style={{ ...enterpriseRowStyle, borderLeft: `3px solid ${n.source === 'manual' ? '#f5a623' : '#35AF6D'}` }}
                             >
                                 <div style={notesRowHeadingStyle}>
                                     <div style={notesRowHeaderContentStyle}>
-                                      <span style={noteListCategoryStyle}>{n.category}</span>
+                                      <span style={noteListCategoryStyle}>{n.title?.trim() || n.category}</span>
                                       <span style={notesRowMetaStyle}>{new Date(n.createdAt).toLocaleString(locale)}</span>
                                 <span style={{ fontSize: 10, color: n.sharedStatus === "failed" ? "#ffb8a6" : "#9ed9df" }}>{n.sharedStatus === "saving" ? t('uiSavingToOrganization') : n.sharedStatus === "shared" ? t('uiSharedLocalCopy') : n.sharedStatus === "failed" ? t('uiShareFailedLocalDraftPreserved') : t('uiLocalDraft')}
                                   {props.sharingEnabled && n.sharedStatus !== "shared" && <button className="mly-text-action" type="button" disabled={n.sharedStatus === "saving"} onClick={event => { event.stopPropagation(); props.onShareNote?.(n.id); }} title={n.sharedStatus === "failed" ? t('uiRetrySavingThisLocalDraftToYourOrganization') : t('uiSaveThisLocalNoteToYourOrganizationS')} style={noteListShareStyle}>{n.sharedStatus === "failed" ? t('uiRetrySharing') : t('uiShare')}</button>}

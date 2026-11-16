@@ -1,6 +1,19 @@
 import type { SettingsMessages } from '../settingsMessages';
 /** Korean presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const ko: SettingsMessages = {
+  "builderMapConnection": "지도 연결",
+  "builderCoverageDefaults": "커버리지 기본값",
+  "builderEnableServiceHint": "위 옵션을 활성화하여 서비스를 설정하세요. 기존 값은 유지됩니다.",
+
+  "hideMapFollowButton": "이미지 표시 유지 / 이미지에 고정 버튼 숨기기",
+  "appearanceShowAll": "모두 표시",
+  "appearanceHideAll": "모두 숨기기",
+  "appearanceImageDetails": "이미지 정보",
+  "appearanceNavigation": "지도 탐색",
+  "appearanceExploration": "탐색 및 내보내기",
+  "appearanceVisibilityHint": "표시 여부만 변경합니다. 활성 기능, 서비스 및 지도 추적 동작은 바뀌지 않습니다.",
+  "appearanceMapFollowHint": "지도와 이미지 동기화가 활성화되어 있을 때 사용할 수 있습니다. 버튼을 숨겨도 동기화는 비활성화되지 않습니다.",
+
   "source": "원본",
   "selectMapWidget": "지도 위젯 선택",
   "lockMapToView": "지도를 뷰에 고정",

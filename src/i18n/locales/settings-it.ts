@@ -1,6 +1,19 @@
 import type { SettingsMessages } from '../settingsMessages';
 /** Italian presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const it: SettingsMessages = {
+  "builderMapConnection": "Connessione mappa",
+  "builderCoverageDefaults": "Valori predefiniti di copertura",
+  "builderEnableServiceHint": "Attivare l’opzione sopra per configurare il servizio. I valori esistenti vengono mantenuti.",
+
+  "hideMapFollowButton": "Nascondi pulsante Mantieni immagine visibile / Blocca su immagine",
+  "appearanceShowAll": "Mostra tutto",
+  "appearanceHideAll": "Nascondi tutto",
+  "appearanceImageDetails": "Dettagli immagine",
+  "appearanceNavigation": "Navigazione mappa",
+  "appearanceExploration": "Esplorazione ed esportazione",
+  "appearanceVisibilityHint": "Modifica solo la visibilità. Funzioni, servizi e inseguimento della mappa restano invariati.",
+  "appearanceMapFollowHint": "Disponibile con la sincronizzazione mappa-immagine attiva. Nascondere il pulsante non disattiva la sincronizzazione.",
+
   "source": "Origine",
   "selectMapWidget": "Seleziona Widget Mappa",
   "lockMapToView": "Blocca Mappa sulla Vista",

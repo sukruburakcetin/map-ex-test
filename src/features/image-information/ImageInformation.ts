@@ -35,6 +35,7 @@ export function viewerImageInformation(image: InformationViewerImage): ImageInfo
 export interface InformationEvents { on(type: string, listener: (event: any) => void): unknown; off?(type: string, listener: (event: any) => void): unknown; }
 export interface InformationViewer extends InformationEvents { getImage(): Promise<InformationViewerImage>; getComponent(name: string): InformationEvents; }
 export interface ImageInformationHost {
+  hasImage?(): boolean;
   isPaused(): boolean; isVisible(): boolean; scope(): unknown;
   isCurrent(viewer: InformationViewer, id: string): boolean;
   seed(image: InformationViewerImage): ImageInformation;
@@ -81,6 +82,7 @@ export class ImageInformationController {
   refresh(): void {
     this.cancel(); const viewer = this.viewer, revision = this.revision;
     if (!viewer) return;
+    if (this.host.hasImage?.() === false) { this.emit({ kind: 'empty' }); return; }
     if (!this.allowed()) { this.emit({ kind: 'deferred' }); return; }
     this.emit({ kind: 'loading' });
     void Promise.resolve().then(() => viewer.getImage()).then(image => { if (revision === this.revision && this.viewer === viewer && this.allowed()) this.accept(image); }, () => { if (revision === this.revision) this.emit({ kind: 'empty' }); });

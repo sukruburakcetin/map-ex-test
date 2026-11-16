@@ -1,5 +1,18 @@
 import type { SettingsMessages } from '../settingsMessages';
 const tr: SettingsMessages = {
+  "builderMapConnection": "Harita bağlantısı",
+  "builderCoverageDefaults": "Kapsama varsayılanları",
+  "builderEnableServiceHint": "Hizmeti yapılandırmak için yukarıdaki seçeneği etkinleştirin. Mevcut değerler korunur.",
+
+  "hideMapFollowButton": "Görüntüyü görünümde tut / Görüntüye kilitle düğmesini gizle",
+  "appearanceShowAll": "Tümünü göster",
+  "appearanceHideAll": "Tümünü gizle",
+  "appearanceImageDetails": "Görüntü ayrıntıları",
+  "appearanceNavigation": "Harita gezinmesi",
+  "appearanceExploration": "Keşif ve dışa aktarma",
+  "appearanceVisibilityHint": "Yalnızca görünürlük değişir. Etkin özellikler, hizmetler ve harita takibi değişmez.",
+  "appearanceMapFollowHint": "Bu denetim, harita-görüntü eşitlemesi etkinken kullanılabilir. Düğmeyi gizlemek eşitlemeyi kapatmaz.",
+
  "source": "Kaynak",
  "selectMapWidget": "Harita Bileşeni Seç",
  "lockMapToView": "Haritayı Görünüme Kilitle",

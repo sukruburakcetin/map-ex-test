@@ -111,3 +111,9 @@ export function getCoverageResultsMapToggleStyle(coverageSegmentsVisible: boolea
         padding: "3px 0",
     };
 }
+
+/** English launch label fits the compact 96px rail without forcing long translations onto one line. */
+export const coverageAnalysisTriggerCss = `
+.mly-info-panel .mly-coverage-analysis-trigger button.mly-coverage-single-line.mly-text-action { padding-inline:2px !important; white-space:nowrap !important; overflow-wrap:normal !important; }
+.mly-info-panel .mly-coverage-analysis-trigger button.mly-coverage-single-line.mly-text-action > span { white-space:nowrap !important; overflow-wrap:normal !important; }
+`;

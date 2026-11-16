@@ -2,6 +2,7 @@
 // Exported as a named constant. Human-readable labels for Mapillary object classification codes.
 
 export const objectNameMap: Record<string, string> = {
+    "construction--flat--flat-driveway": "Driveway",
     "construction--barrier--temporary": "Temporary Barrier",
     "construction--flat--crosswalk-plain": "Crosswalk - Plain",
     "construction--flat--driveway": "Driveway",

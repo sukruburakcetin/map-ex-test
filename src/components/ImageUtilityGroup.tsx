@@ -29,7 +29,7 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
     const cloudMode = props.is3D && !props.hidePointCloud;
     const hasMore = allowSwitch || !props.hideShareButton || !props.hideImageDownload;
     const close = (focus = false) => { setOpen(null); if (focus) trigger.current?.focus(); };
-    const hasNavigation = !!props.mapFollowEnabled || !props.hideCenterMapButton || (!props.hideTimeTravel && props.hasTimeTravel);
+    const hasNavigation = (!!props.mapFollowEnabled && !props.hideMapFollowButton) || !props.hideCenterMapButton || (!props.hideTimeTravel && props.hasTimeTravel);
     const hasSceneTools = props.is3D && (!props.hideSyncHeadingButton || !props.hidePointCloud);
     const toolsActive = (props.is3D && !props.hidePointCloud && cloudOn) || (props.is3D && !props.hideSyncHeadingButton && props.syncHeading);
     React.useLayoutEffect(() => {
@@ -100,7 +100,7 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
     return <div lang={locale} ref={dock} className={`glass-image-utility-panel mly-utility-dock${mobile && collapsed ? ' is-collapsed' : ''}`} data-mobile={mobile ? 'true' : undefined} role="group" aria-label={t('imageActions')}>
         <style>{utilityDockCss}</style>
         {!props.hideCenterMapButton && <button type="button" className="utility-button" title={t('centerMap')} aria-label={t('centerMap')} onClick={props.onCenterMap}><Icons.Crosshair size={16}/></button>}
-        {props.mapFollowEnabled && <button type="button" className="utility-button" aria-label={t('lockImage')} aria-pressed={!!props.lockToImage}
+        {props.mapFollowEnabled && !props.hideMapFollowButton && <button type="button" className="utility-button" aria-label={t('lockImage')} aria-pressed={!!props.lockToImage}
             title={props.lockToImage ? t('lockOn') : t('lockOff')}
             onClick={props.onToggleImageLock}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d={props.lockToImage ? 'M8 10V6a4 4 0 0 1 8 0v4' : 'M8 10V6a4 4 0 0 1 8 0'}/></svg></button>}
         {!props.hideTimeTravel && props.hasTimeTravel && <button ref={travelTrigger} type="button" className="utility-button" aria-haspopup="dialog" aria-expanded={travelOpen} title={t('otherDates')} aria-label={t('timeTravel')} disabled={!currentImage}

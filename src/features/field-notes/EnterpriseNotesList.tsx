@@ -6,6 +6,7 @@ import type { DetectionPreviewLoader } from '../detections/detectionPreview';
 import { React, jsx } from 'jimu-core';
 import { NotesSearchControls } from './NotesSearchControls';
 import { filterNotes } from './noteSearch';
+import { sortNotes, type NoteSort } from './noteSort';
 import { FIELD_NOTE_STATUSES } from '../../components/types';
 import type { FieldNote } from '../../components/types';
 import type { EnterpriseNotesLoader } from './enterpriseList';
@@ -55,15 +56,16 @@ export const EnterpriseNotesList: React.FC<EnterpriseNotesListProps> = props => 
     return () => { request.current?.abort(); };
   }, [load, props.context, props.layerUrl]);
   const [query, setQuery] = React.useState('');
-  const visibleNotes = React.useMemo(() => filterNotes(notes, query, locale, {
+  const [sort, setSort] = React.useState<NoteSort>('date-desc');
+  const visibleNotes = React.useMemo(() => sortNotes(filterNotes(notes, query, locale, {
     open: t('uiStatusOpen'), in_progress: t('uiStatusProgress'), completed: t('uiStatusCompleted'), dismissed: t('uiStatusDismissed'),
-  }), [notes, query, locale, t]);
+  }), sort, locale, note => ({ name: note.title?.trim() || note.category, date: note.createdAt, status: note.status })), [notes, query, locale, t, sort]);
   return <div role="tabpanel" aria-label={t('uiEnterpriseNotes')} className="mly-notes-scroll" tabIndex={0} style={enterprisePanelStyle}>
     <div style={enterpriseContentStyle}>
-    <div style={enterpriseToolbarStyle}><span>{t(notes.length===1?'uiEnterpriseCountOne':'uiEnterpriseCountMany',{count:new Intl.NumberFormat(locale).format(notes.length)})} </span>
+    <div className="mly-notes-toolbar" style={enterpriseToolbarStyle}><span>{t(notes.length===1?'uiEnterpriseCountOne':'uiEnterpriseCountMany',{count:new Intl.NumberFormat(locale).format(notes.length)})} </span>
       <div><button className="mly-text-action" type="button" style={noteActionStyle} disabled={busy} onClick={() => void load(0)}> {t('uiRefresh')} </button></div>
     </div>
-    <NotesSearchControls query={query} onChange={setQuery} shown={visibleNotes.length} total={notes.length} loadedOnly help={t('uiOrganizationRecordsRefreshForLatestClearLocalKeeps')} />
+    <NotesSearchControls sort={sort} onSort={setSort} query={query} onChange={setQuery} shown={visibleNotes.length} total={notes.length} loadedOnly help={t('uiOrganizationRecordsRefreshForLatestClearLocalKeeps')} />
     {query.trim() && notes.length > 0 && visibleNotes.length === 0 && <div style={notesSourceHintStyle}>{t('notesSearchEmpty')}</div>}
     {busy && <div role="status" style={notesSourceHintStyle}> {t('uiLoadingEnterpriseNotes')} </div>}
     {error && <div role="alert" style={enterpriseErrorStyle}>{t('uiEnterpriseLoadError')} <button className="mly-text-action" type="button" style={noteActionStyle} disabled={busy} onClick={() => void load(failedOffset)}> {t('uiRetry')} </button></div>}
@@ -72,7 +74,7 @@ export const EnterpriseNotesList: React.FC<EnterpriseNotesListProps> = props => 
       const validPosition = Number.isFinite(note.lon) && Number.isFinite(note.lat);
       const canManage = !!note.sharedGlobalId && !!note.sharedLayerUrl;
       return <div key={note.id} style={enterpriseRowStyle}>
-        <div style={notesRowHeadingStyle}><div style={notesRowHeaderContentStyle}><strong style={noteListCategoryStyle}>{note.category}</strong><span style={notesRowMetaStyle}>{Number.isFinite(note.createdAt) && new Date(note.createdAt).toLocaleString(locale)}</span></div></div>
+        <div style={notesRowHeadingStyle}><div style={notesRowHeaderContentStyle}><strong style={noteListCategoryStyle}>{note.title?.trim() || note.category}</strong><span style={notesRowMetaStyle}>{Number.isFinite(note.createdAt) && new Date(note.createdAt).toLocaleString(locale)}</span></div></div>
 
         <div style={enterpriseActionsStyle}>
           <div style={notesWorkflowStatusStyle}><span>{t('uiStatus')}:</span><span style={getNoteStatusBadgeStyle(note.status)}>{t(note.status==='in_progress'?'uiStatusProgress':note.status==='completed'?'uiStatusCompleted':note.status==='dismissed'?'uiStatusDismissed':'uiStatusOpen')}</span></div>

@@ -99,10 +99,11 @@ export const GRAPH_API = {
 } as const;
 
 
-// Sprite sheet URLs (hosted on GitHub with CORS enabled)
-export const SPRITE_URLS = {
-  TRAFFIC_SIGNS: 'https://raw.githubusercontent.com/sukruburakcetin/mapillary-explorer-sprite-source/main/sprites/package_signs/package_signs',
-  OBJECTS: 'https://raw.githubusercontent.com/sukruburakcetin/mapillary-explorer-sprite-source/main/sprites/package_objects/package_objects',
+// Widget-local sprite paths. Experience Builder copies src/runtime/assets into dist/runtime/assets.
+// Pin the asset directory with its source commit so published versions cannot drift.
+export const SPRITE_ASSET_PATHS = {
+  TRAFFIC_SIGNS: 'dist/runtime/assets/sprites/mapillary-9aa64280d622/package_signs/package_signs',
+  OBJECTS: 'dist/runtime/assets/sprites/mapillary-9aa64280d622/package_objects/package_objects',
 } as const;
 
 

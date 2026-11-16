@@ -41,11 +41,14 @@ export const infoFooterHintCss = `
           `;
 
 /** InfoBox shell, viewport and status-card geometry. Overflow observation stays component-owned. */
-export function infoPanelShellStyle(isOverflowing: boolean): React.CSSProperties {
+export function infoPanelShellStyle(_isOverflowing: boolean, direction: 'ltr' | 'rtl' = 'ltr'): React.CSSProperties {
     return {
         position: "absolute",
         top: "2px",
-        right: isOverflowing ? "0" : "4px",
+        right: direction === "rtl" ? "auto" : "4px",
+        left: direction === "rtl" ? "4px" : "auto",
+        direction,
+        textAlign: "start",
         zIndex: 10002,
         maxHeight: "calc(100% - 170px)",
         display: "flex",

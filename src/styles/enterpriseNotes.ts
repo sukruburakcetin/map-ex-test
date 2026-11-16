@@ -23,7 +23,7 @@ export const notesLocalPanelStyle: React.CSSProperties = { display: 'flex', flex
 /** Source-independent sheet height; the active source owns its scroll viewport beneath the tabs. */
 export const notesSheetStyle: React.CSSProperties = { position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 999999990,
   height: 'min(300px, 65%)', boxSizing: 'border-box', background: 'rgba(12,12,12,0.92)', backdropFilter: 'blur(10px)',
-  borderTop: '1px solid rgba(255,255,255,0.1)', padding: '6px 8px 8px', display: 'flex', flexDirection: 'column', gap: 6,
+  borderTop: '1px solid rgba(255,255,255,0.1)', padding: '4px 8px 6px', display: 'flex', flexDirection: 'column', gap: 4,
   minHeight: 0, maxHeight: '100%', overflow: 'hidden', animation: 'nearbySlideUp 0.2s ease-out' };
 export const notesRowHeadingStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between', minHeight: 32, minWidth: 0 };
 export const notesRowMetaStyle: React.CSSProperties = { fontSize: 9, color: '#a0ada5' };

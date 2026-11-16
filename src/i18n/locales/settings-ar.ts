@@ -1,6 +1,19 @@
 import type { SettingsMessages } from '../settingsMessages';
 /** Modern Standard Arabic. Assisted draft; community native review is welcome. */
 const ar: SettingsMessages = {
+  "builderMapConnection": "اتصال الخريطة",
+  "builderCoverageDefaults": "إعدادات التغطية الافتراضية",
+  "builderEnableServiceHint": "فعّل الخيار أعلاه لإعداد خدمته. تُحفظ القيم الحالية.",
+
+  "hideMapFollowButton": "إخفاء زر إبقاء الصورة في العرض / التثبيت على الصورة",
+  "appearanceShowAll": "إظهار الكل",
+  "appearanceHideAll": "إخفاء الكل",
+  "appearanceImageDetails": "تفاصيل الصورة",
+  "appearanceNavigation": "التنقل في الخريطة",
+  "appearanceExploration": "الاستكشاف والتصدير",
+  "appearanceVisibilityHint": "يغيّر الظهور فقط. لا تتغير الميزات والخدمات المفعّلة أو سلوك تتبع الخريطة.",
+  "appearanceMapFollowHint": "يتوفر هذا الزر عند تفعيل مزامنة الخريطة مع الصورة. إخفاؤه لا يعطّل المزامنة.",
+
   "source": "المصدر",
   "selectMapWidget": "اختيار أداة الخريطة",
   "lockMapToView": "تثبيت الخريطة على العرض",

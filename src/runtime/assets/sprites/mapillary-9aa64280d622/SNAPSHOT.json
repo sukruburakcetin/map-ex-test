@@ -1,0 +1,48 @@
+{
+  "schema": "mapillary-explorer-sprite-snapshot-v1",
+  "repository": "https://github.com/sukruburakcetin/mapillary-explorer-sprite-source",
+  "commit": "9aa64280d622e90e92cfcb29f0e68567a0ab1e54",
+  "upstreamDirectory": "sprites",
+  "files": [
+    {
+      "path": "package_signs/package_signs.json",
+      "bytes": 167968,
+      "sha256": "18622fb9fe8f34514d1f9418d49caad3ef8f30675128ad49c63aa933003dd421"
+    },
+    {
+      "path": "package_signs/package_signs.png",
+      "bytes": 1513793,
+      "sha256": "939ade8d55dfa402f43138798186e46641b75db081612d18b4806469bbfdc945"
+    },
+    {
+      "path": "package_signs/package_signs@2x.json",
+      "bytes": 167968,
+      "sha256": "18622fb9fe8f34514d1f9418d49caad3ef8f30675128ad49c63aa933003dd421"
+    },
+    {
+      "path": "package_signs/package_signs@2x.png",
+      "bytes": 1513793,
+      "sha256": "939ade8d55dfa402f43138798186e46641b75db081612d18b4806469bbfdc945"
+    },
+    {
+      "path": "package_objects/package_objects.json",
+      "bytes": 5207,
+      "sha256": "dd06dffaeca079319e5a62879983834190ee52f8836d0e3e20cf7b2e74798df2"
+    },
+    {
+      "path": "package_objects/package_objects.png",
+      "bytes": 20030,
+      "sha256": "c3e5e369160e2dfb1c1e7a9bb7d7804168f53e6c4bb5b9e95298be17c2ec5ee8"
+    },
+    {
+      "path": "package_objects/package_objects@2x.json",
+      "bytes": 5207,
+      "sha256": "dd06dffaeca079319e5a62879983834190ee52f8836d0e3e20cf7b2e74798df2"
+    },
+    {
+      "path": "package_objects/package_objects@2x.png",
+      "bytes": 20030,
+      "sha256": "c3e5e369160e2dfb1c1e7a9bb7d7804168f53e6c4bb5b9e95298be17c2ec5ee8"
+    }
+  ]
+}
