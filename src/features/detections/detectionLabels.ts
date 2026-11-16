@@ -7,8 +7,17 @@ export function shortDetectionLabel(code: string, kind: 'signs' | 'objects'): st
   if (kind === 'objects') return objectNameMap[code] || '';
   const parts = code.split('--');
   if (parts.length < 2) return '';
-  const name = parts.slice(1).filter(part => !/^g\d+$/i.test(part)).join(' ').replace(/-/g,' ').trim();
-  return name ? name[0].toUpperCase() + name.slice(1) : '';
+  // Keep the category: "Traffic signals" alone could be mistaken for an
+  // actual traffic light rather than a warning sign about one.
+  const words = (part: string) => part.replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
+  const title = (part: string) => part ? part[0].toUpperCase() + part.slice(1) : '';
+  const category = words(parts[0]);
+  const name = parts.slice(1).filter(part => !/^g\d+$/i.test(part)).map(words).filter(Boolean).join(' ');
+  if (!category || !name) return '';
+  // These codes describe a text-bearing sign, not OCR of its inscription.
+  const description = /^(text|texts|other)$/i.test(name)
+    ? (/^other$/i.test(name) ? 'Other sign' : 'Text sign') : title(name);
+  return `${title(category)}: ${description}`;
 }
 /** Use a native minzoom label layer: no zoom-dependent text-field evaluation. */
 export function detectionLabelStyle(style: any, iconId: string, kind: 'signs' | 'objects', codes: Iterable<string>, selected: MapCategoryFilter, all: string, enabled: boolean): any {

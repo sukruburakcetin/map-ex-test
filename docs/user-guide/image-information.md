@@ -10,6 +10,6 @@ The section shows capture date and time in UTC, contributor, organization, camer
 
 The details use the panel’s shared scroll area. Scroll, swipe, or focus the scroll area and use arrow keys to reach the lower tools. The width toggle gives long values more room.
 
-The section starts collapsed. It reuses available metadata, and requests missing details only while expanded, visible, and playback is paused. A short settling delay avoids requests while quickly browsing images. Resuming playback or closing the section cancels its pending work. Successful details for up to 16 images stay in memory for reuse while the panel remains mounted.
+Selecting a coverage point opens the image, not this panel. The section starts collapsed and opens only when you expand it. Closing it keeps it closed when you select another image. If you leave it open, it can follow the selected image while paused. It reuses available metadata, and requests missing details only while expanded, visible, and playback is paused. A short settling delay avoids requests while quickly browsing images. Resuming playback or closing the section cancels its pending work. Successful details for up to 16 images stay in memory for reuse while the panel remains mounted.
 
 If loading fails, select **Retry** while paused. Image exploration remains available independently of this optional information.

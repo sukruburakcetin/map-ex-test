@@ -79,3 +79,9 @@ test('a superseded SDK opening does not record successful viewer latency',async(
  now=50;moves.get('2').resolve({id:'2',originalLngLat:{lng:1,lat:2}});await second;
  assert.equal(w._sequencePerformance.snapshot().timings['viewer-open'].count,1);
 });
+
+test('a coverage click opens imagery without requesting image-info disclosure or forcing a panel render',async()=>{
+ const {w,moves}=setup();w.props={config:{hideInfoBox:false}};w._imageInformationRequest=0;let forced=0;w.forceUpdate=()=>forced++;
+ const task=w.loadSequenceById('A','1',undefined,false,false,0);await flush();moves.get('1').resolve({id:'1',originalLngLat:{lng:1,lat:2},capturedAt:123});await task;
+ assert.equal(w.state.imageId,'1');assert.equal(w.state.isLoading,false);assert.equal(w._imageInformationRequest,0);assert.equal(forced,0);
+});

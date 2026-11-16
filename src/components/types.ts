@@ -95,7 +95,6 @@ export const FIELD_NOTE_CATEGORIES = DEFAULT_FIELD_NOTE_CATEGORIES;
 
 // InfoBox props
 export interface InfoBoxProps {
-  imageInformationRequest?: number;
   imageInformationHost?: ImageInformationHost;
   imageInformationViewer?: InformationViewer | null;
   imageInformationActive?: boolean;
@@ -251,6 +250,7 @@ export interface InfoBoxProps {
 
 // FilterBar props
 export interface FilterBarProps {
+    detectionLabelZoom?: number;
     signDisplayMode?: 'selected' | 'highlight';
     objectDisplayMode?: 'selected' | 'highlight';
     onDetectionDisplayModeChange?: (kind: 'signs' | 'objects', mode: 'selected' | 'highlight') => void;

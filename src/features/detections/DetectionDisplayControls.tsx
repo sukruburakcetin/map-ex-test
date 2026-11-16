@@ -3,9 +3,9 @@ import { React, jsx } from 'jimu-core';
 import ReactDOM from 'react-dom';
 import { useWidgetLocale } from '../../i18n/WidgetLocale';
 
-interface Props { labels?: boolean; onLabels?(enabled:boolean):void; reduceOverlap?: boolean; onOverlap?(reduce:boolean):void; mode?: 'selected' | 'highlight'; onMode?(value: 'selected' | 'highlight'):void; label: string; scale: number; opacity: number; onScale(value: number): void; onOpacity(value: number): void; onReset(): void; }
+interface Props { zoom?: number; labels?: boolean; onLabels?(enabled:boolean):void; reduceOverlap?: boolean; onOverlap?(reduce:boolean):void; mode?: 'selected' | 'highlight'; onMode?(value: 'selected' | 'highlight'):void; label: string; scale: number; opacity: number; onScale(value: number): void; onOpacity(value: number): void; onReset(): void; }
 /** User-opened local styling controls; no map listeners or data requests. */
-export function DetectionDisplayControls({label,scale,opacity,onScale,onOpacity,onReset,mode='selected',onMode,reduceOverlap=false,onOverlap,labels=false,onLabels}: Props) {
+export function DetectionDisplayControls({zoom,label,scale,opacity,onScale,onOpacity,onReset,mode='selected',onMode,reduceOverlap=false,onOverlap,labels=false,onLabels}: Props) {
   const {t,owned,direction,formatLocale}=useWidgetLocale();
   const [open,setOpen]=React.useState(false),[position,setPosition]=React.useState<React.CSSProperties>({});
   const anchor=React.useRef<HTMLButtonElement>(null),menu=React.useRef<HTMLDivElement>(null);
@@ -44,6 +44,7 @@ export function DetectionDisplayControls({label,scale,opacity,onScale,onOpacity,
         {[false,true].map(reduce=><button key={String(reduce)} type="button" aria-pressed={reduce===reduceOverlap} onClick={()=>onOverlap?.(reduce)} style={{...button,background:reduce===reduceOverlap?'#347852':'#244633'}}>{owned(reduce?'Reduce overlap':'Show all icons')}</button>)}
       </div>
       <button type="button" aria-pressed={labels} onClick={()=>onLabels?.(!labels)} style={{...button,width:'100%',marginTop:8,background:labels?'#347852':'#244633'}}>{owned('Show labels at zoom 18+')}</button>
+      {labels && (zoom === undefined || zoom < 18) && <div role="status" style={{fontSize:11,opacity:.8,marginTop:6}}>{owned('Zoom to 18+ to see labels.')}</div>}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginTop:8}}><button type="button" onClick={onReset} style={button}>{owned('Reset all')}</button><button type="button" onClick={close} style={button}>{owned('Close')}</button></div>
     </div>,anchor.current?.ownerDocument.fullscreenElement||anchor.current?.ownerDocument.body||document.body)}
   </div>;

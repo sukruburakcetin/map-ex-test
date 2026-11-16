@@ -1,3 +1,4 @@
+import { shortDetectionLabel } from '../features/detections/detectionLabels';
 import { Presentation, englishPresentation } from '../i18n/PresentationText';
 /**
  * geoUtils.ts
@@ -139,15 +140,13 @@ export function debounce<T extends (...args: any[]) => void>(func: T, wait: numb
 }
 
 /**
- * Formats a Mapillary traffic sign code (e.g. "warning--yield-ahead--g3")
- * into a human-readable label ("Warning Yield Ahead G3").
+ * Full display name shared by map labels, filters and detection tooltips.
+ * Sprite variant identifiers do not describe the sign's meaning.
  */
 export function formatTrafficSignName(code: string, l10n: Presentation = englishPresentation): string {
   if (!code) return l10n.text("Unknown");
-  return code
-    .split("--")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+  const object = /^(object|construction|marking)--/.test(code);
+  return shortDetectionLabel(code, object ? 'objects' : 'signs') || code;
 }
 
 /**

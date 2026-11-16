@@ -1021,7 +1021,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _mapFeatureTiles = new TurboTileCache(4 * 1024 * 1024);
   private _mapFeatureIndexes = new TurboIndexCache(8 * 1024 * 1024);
   private _selectedMapFeature: any = null;
-  private _imageInformationRequest=0;
   private _detectionToolsRequest=0;
   private revealDetectionTools=()=>{++this._detectionToolsRequest;this.forceUpdate();};
   private _selectedMapFeatureKind: "signs" | "objects" | null = null;
@@ -2437,10 +2436,6 @@ private syncMapLegendLayer() {
       if (!current() || this.mapillaryViewer !== viewer) return;
       imageTiming?.finish();
       this._imageryOpeningRequest = null;
-      if (clickStartedAt !== undefined && !this.props.config.hideInfoBox) {
-        ++this._imageInformationRequest;
-        this.forceUpdate();
-      }
 
         this._places?.controller.sync();
       this._backgroundRequests?.setPaused(false);
@@ -14230,7 +14225,7 @@ private stopSafePlayback = () => {
 
         {/* INFO BOX */}
         {!this.state.isFullscreen && <InfoBox
-          imageInformationRequest={this._imageInformationRequest} imageInformationHost={this._imageInformationHost} imageInformationViewer={this.mapillaryViewer}
+          imageInformationHost={this._imageInformationHost} imageInformationViewer={this.mapillaryViewer}
           imageInformationActive={this.props.state !== 'CLOSED' && this.props.visible !== false}
           detectionToolsRequest={this._detectionToolsRequest}
           hideInfoBox={this.props.config.hideInfoBox}
@@ -14382,6 +14377,7 @@ private stopSafePlayback = () => {
 
         {/* UNIFIED FILTER BAR */}
         <FilterBar
+          detectionLabelZoom={this.state.currentZoom}
           signSpriteScale={this.state.signSpriteScale || 1}
           objectSpriteScale={this.state.objectSpriteScale || 1}
           signLabels={this.state.signLabels === true} objectLabels={this.state.objectLabels === true}

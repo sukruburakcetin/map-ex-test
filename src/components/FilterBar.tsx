@@ -21,6 +21,7 @@ import { organizationFilterId } from "../utils/organizationFilter";
 */
 export const FilterBar: React.FC<FilterBarProps> = ({
     signSpriteScale = 1, objectSpriteScale = 1, onSpriteScaleChange,
+    detectionLabelZoom,
     signLabels = false, objectLabels = false, onDetectionLabelsChange,
     signReduceOverlap = false, objectReduceOverlap = false, onDetectionOverlapChange,
     signDisplayMode = 'selected', objectDisplayMode = 'selected', onDetectionDisplayModeChange,
@@ -230,7 +231,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                         accentColor="#63c38e"
                         menuPlacement="top"
                     />}
-                    {onSpriteScaleChange && <DetectionDisplayControls label={t('sign')} scale={signSpriteScale} opacity={signOpacity} labels={signLabels} onLabels={enabled=>onDetectionLabelsChange?.('signs',enabled)} reduceOverlap={signReduceOverlap} onOverlap={reduce=>onDetectionOverlapChange?.('signs',reduce)} mode={signDisplayMode} onMode={mode=>changeDisplayMode('signs',mode)} onScale={value=>onSpriteScaleChange('signs',value)} onOpacity={value=>onDetectionOpacityChange?.('signs',value)} onReset={()=>onDetectionDisplayReset?.('signs')} />}
+                    {onSpriteScaleChange && <DetectionDisplayControls zoom={detectionLabelZoom} label={t('sign')} scale={signSpriteScale} opacity={signOpacity} labels={signLabels} onLabels={enabled=>onDetectionLabelsChange?.('signs',enabled)} reduceOverlap={signReduceOverlap} onOverlap={reduce=>onDetectionOverlapChange?.('signs',reduce)} mode={signDisplayMode} onMode={mode=>changeDisplayMode('signs',mode)} onScale={value=>onSpriteScaleChange('signs',value)} onOpacity={value=>onDetectionOpacityChange?.('signs',value)} onReset={()=>onDetectionDisplayReset?.('signs')} />}
                 </div>
             )}
 
@@ -244,7 +245,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                         accentColor="#63c38e"
                         menuPlacement="top"
                     />}
-                    {onSpriteScaleChange && <DetectionDisplayControls label={t('object')} scale={objectSpriteScale} opacity={objectOpacity} labels={objectLabels} onLabels={enabled=>onDetectionLabelsChange?.('objects',enabled)} reduceOverlap={objectReduceOverlap} onOverlap={reduce=>onDetectionOverlapChange?.('objects',reduce)} mode={objectDisplayMode} onMode={mode=>changeDisplayMode('objects',mode)} onScale={value=>onSpriteScaleChange('objects',value)} onOpacity={value=>onDetectionOpacityChange?.('objects',value)} onReset={()=>onDetectionDisplayReset?.('objects')} />}
+                    {onSpriteScaleChange && <DetectionDisplayControls zoom={detectionLabelZoom} label={t('object')} scale={objectSpriteScale} opacity={objectOpacity} labels={objectLabels} onLabels={enabled=>onDetectionLabelsChange?.('objects',enabled)} reduceOverlap={objectReduceOverlap} onOverlap={reduce=>onDetectionOverlapChange?.('objects',reduce)} mode={objectDisplayMode} onMode={mode=>changeDisplayMode('objects',mode)} onScale={value=>onSpriteScaleChange('objects',value)} onOpacity={value=>onDetectionOpacityChange?.('objects',value)} onReset={()=>onDetectionDisplayReset?.('objects')} />}
                 </div>
             )}
         </FilterScrollRegion>
