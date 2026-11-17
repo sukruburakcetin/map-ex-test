@@ -1,3 +1,16 @@
+import { CaptureSolveHistory } from "../features/routing/CaptureSolveHistory";
+import { normalizeCaptureRoutePaths } from "../features/routing/captureRouteGeometry";
+import { planAdaptiveNetworkRemoval } from "../features/routing/adaptiveNetworkRemoval";
+import {
+  chooseNetworkBudgetProbe, chooseProgressBudgetProbe, chooseFittingBudgetProbe,
+  type NetworkBudgetProbe, type ProgressBudgetProbe, type FittingBudgetProbe,
+} from "../features/routing/budgetProbeComparison";
+import { scoreCaptureNetworkPenalties } from "../features/routing/captureNetworkPenalties";
+import { rankCaptureReplacementPairs } from "../features/routing/replacementPairRanking";
+import { hasBrokenTrialOpportunity } from "../features/routing/trialPreflightQuality";
+import { buildPreflightSnapDiagnostics, buildPreflightLegDiagnostics } from "../features/routing/preflightDiagnostics";
+import { planPreflightBatchPruning } from "../features/routing/preflightBatchPruning";
+import { planFinalSolveBatchPruning } from "../features/routing/finalSolveBatchPruning";
 import { selectAdaptiveCaptureOpportunities } from "../features/routing/adaptiveCaptureSelection";
 import {
   scoreCaptureTargets, captureStopOwners, captureAnchorDistribution,
@@ -31,7 +44,7 @@ import { PlacesCoordinator } from "../features/places/PlacesCoordinator";
 import { PlacesVectorLayer } from "../features/places/PlacesVectorLayer";
 import { isTileCategory, TileCategoryId } from '../features/places/tileCategories';
 import { tilePlace, normalizeTilePlaces } from "../features/places/tilePlace";
-import { tilePlacePreferenceKey,readTilePlacePreferences,saveTilePlacePreferences } from '../features/places/placePreferences';
+import { tilePlacePreferenceKey, readTilePlacePreferences, saveTilePlacePreferences } from '../features/places/placePreferences';
 import { paddedPlacesExtent } from '../features/places/publishedPlacesExtent';
 import { placeCameraDistanceLabel } from '../features/places/placeListUtils';
 import { SelectedPlaceCard } from '../components/SelectedPlaceCard';
@@ -261,14 +274,14 @@ const PUBLIC_OSRM_BASE_URL = "https://router.project-osrm.org";
 // and temporary interaction information like clicks or loading flags.
 interface State {
   placesActive: boolean;
-  placesAutoUpdate:boolean;
-  placeNotePhase:'idle'|'capturing'|'picking';
+  placesAutoUpdate: boolean;
+  placeNotePhase: 'idle' | 'capturing' | 'picking';
   placesPanelOpen: boolean;
   placesTileCategory: TileCategoryId;
-  placesSourceLoading:boolean;
+  placesSourceLoading: boolean;
   placesStatus: PlacesState;
   selectedPlace: Place | null;
-  placesHoveredId:string|null;placesRevealRequest:number;
+  placesHoveredId: string | null; placesRevealRequest: number;
   placesShowLink: boolean;
   placesList: readonly Place[];
   placesCameraDistance: string | null;
@@ -339,8 +352,8 @@ interface State {
   turboFilterOrganization: string;
   organizationName: { id: string; name: string } | null;
   showTurboFilterBox: boolean;
-  signSpritesStatus:MapSpriteStatus;
-  objectSpritesStatus:MapSpriteStatus;
+  signSpritesStatus: MapSpriteStatus;
+  objectSpritesStatus: MapSpriteStatus;
   trafficSignsOptions: Array<{ value: string; label: string; iconUrl: string | null }>;
   showTrafficSignsFilterBox: boolean;
   objectsOptions: Array<{ value: string; label: string; iconUrl: string | null }>;
@@ -421,7 +434,7 @@ interface State {
   pendingFieldNote: PendingFieldNote | null;
   viewerDetectionNote: DetectionNoteSelection | null;
   detectionNotePicking: boolean;
-  detectionNoteCapturing:boolean;
+  detectionNoteCapturing: boolean;
   detectionWorkspaceDraft: ExternalContributionSeed | null;
   fieldNotesListOpen: boolean;
   isGeneratingRoute?: boolean;
@@ -460,7 +473,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private currentGreenGraphic: __esri.Graphic | null = null;
   private clickedLocationGraphic: __esri.Graphic | null = null;
   private _directionHighlight: DirectionHoverMarker<__esri.Graphic> | null = null;
-  private _nearbyHoverAbort:AbortController|null=null;
+  private _nearbyHoverAbort: AbortController | null = null;
   private _nearbyHighlight: NearbyImageHighlight<__esri.Graphic> | null = null;
   private _routeGraphicLayer: __esri.GraphicsLayer | null = null;
   private _routePointAGraphic: __esri.Graphic | null = null;
@@ -497,16 +510,16 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _placesVectorLayer: PlacesVectorLayer | null = null;
   private _placesLifecycle: { startService(base: string): Promise<void>; stop(keepEnabled?: boolean): void } | null = null;
   private _placesTilesView: any = null;
-  private _placesTilesPreferenceKey:string|null=null;
+  private _placesTilesPreferenceKey: string | null = null;
   private _placesTilesOwner: PlacesCoordinator | null = null;
   private _placesTilesStartRevision = 0;
-  private _placesConfiguredUrl:string|null=null;
-  private _placesConfiguredRequest:{url:string;view:any}|null=null;
-  private selectedPlaceChanged = (selectedPlace: Place | null, origin: 'map'|'list'|'card' = 'map') => {
-    if(selectedPlace!==this.state.selectedPlace)this._placeNoteReview?.cancel();
+  private _placesConfiguredUrl: string | null = null;
+  private _placesConfiguredRequest: { url: string; view: any } | null = null;
+  private selectedPlaceChanged = (selectedPlace: Place | null, origin: 'map' | 'list' | 'card' = 'map') => {
+    if (selectedPlace !== this.state.selectedPlace) this._placeNoteReview?.cancel();
     const frame = this._liveSequenceFrames.current;
     const placesCameraDistance = selectedPlace && frame ? placeCameraDistanceLabel(distanceMeters(frame.lat, frame.lon, selectedPlace.lat, selectedPlace.lon), this._presentation) : null;
-    this.setState(previous=>({ selectedPlace, placesCameraDistance, ...(origin==='map'&&selectedPlace?{placesRevealRequest:previous.placesRevealRequest+1}:{}),...(!selectedPlace ? { placesShowLink: false } : {}) }));
+    this.setState(previous => ({ selectedPlace, placesCameraDistance, ...(origin === 'map' && selectedPlace ? { placesRevealRequest: previous.placesRevealRequest + 1 } : {}), ...(!selectedPlace ? { placesShowLink: false } : {}) }));
     if (selectedPlace && frame) this._places?.selection.updateCamera(frame.lon, frame.lat);
   };
   /** Owns the configured service lifecycle privately; startup follows an explicit Places action. */
@@ -514,7 +527,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const control = {
       startService: async (base: string) => {
         const portalMode = placesSourceKind(this.props.config) === 'portal';
-        const endpoints = portalMode ? { base, style:this.props.config.placesPortalTilesUrl!, query:this.props.config.placesPortalQueryUrl! } : placesApiEndpoints(base);
+        const endpoints = portalMode ? { base, style: this.props.config.placesPortalTilesUrl!, query: this.props.config.placesPortalQueryUrl! } : placesApiEndpoints(base);
         const preferences = readTilePlacePreferences(() => window.localStorage,
           tilePlacePreferenceKey(this.props.id, window.location.pathname, endpoints.base));
         const revision = ++this._placesTilesStartRevision;
@@ -522,7 +535,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         this._placesVectorLayer?.stop(); this._placesVectorLayer = null;
         const view = this.state.jimuMapView?.view;
         if (!view?.ready || view.destroyed) throw new Error('Open a ready map first');
-        this.setState({placesSourceLoading:true,placesStatus:{kind:'loading',count:0}});
+        this.setState({ placesSourceLoading: true, placesStatus: { kind: 'loading', count: 0 } });
         await this.ensureArcGISModules();
         if (revision !== this._placesTilesStartRevision || view !== this.state.jimuMapView?.view || view.destroyed) return;
         this._placeNoteReview?.cancel(); this._places?.dispose();
@@ -531,12 +544,13 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         if (portalMode) {
           const [request] = await loadArcGISJSAPIModules(['esri/request']);
           if (revision !== this._placesTilesStartRevision || view !== this.state.jimuMapView?.view || view.destroyed) return;
-          portal = new PortalPlacesSource(endpoints.style,endpoints.query,request);
-          portal.filters = { family:preferences.family,minimum:preferences.minimum,hideClosed:preferences.hideClosed };
+          portal = new PortalPlacesSource(endpoints.style, endpoints.query, request);
+          portal.filters = { family: preferences.family, minimum: preferences.minimum, hideClosed: preferences.hideClosed };
         }
         let layer: PlacesVectorLayer;
         let sourceErrorReported = false;
-        const owner = new PlacesCoordinator({ manualSearch: true, hybridSearch: preferences.autoUpdate, id: String(this.props.id),
+        const owner = new PlacesCoordinator({
+          manualSearch: true, hybridSearch: preferences.autoUpdate, id: String(this.props.id),
           presentation: this._presentation, modules: this.ArcGISModules, view: () => this.state.jimuMapView?.view,
           geographic: extent => webMercatorUtils.webMercatorToGeographic(extent),
           searchOrigin: () => this.placesListOrigin(),
@@ -548,11 +562,13 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
           hovered: placesHoveredId => this.setState(previous => previous.placesHoveredId === placesHoveredId ? null : { placesHoveredId }),
           selected: this.selectedPlaceChanged, busy: this.placesBusy, pauseReason: this.placesPauseReason,
           status: placesStatus => this.setState({ placesStatus }), explore: (place, radius, signal) => this.explorePlace(place, radius, signal),
-          openImagery: image => { void this.openPlaceImagery(image); } });
+          openImagery: image => { void this.openPlaceImagery(image); }
+        });
         this._places = this._placesTilesOwner = owner; this._placesView = view;
-        layer = new PlacesVectorLayer({ portal, id: String(this.props.id), view, modules: this.ArcGISModules, busy: this.placesBusy,
+        layer = new PlacesVectorLayer({
+          portal, id: String(this.props.id), view, modules: this.ArcGISModules, busy: this.placesBusy,
           sourceChanging: preserve => { if (preserve) owner.resetResults(); else owner.controller.setEnabled(false); },
-          loading: placesSourceLoading => this.setState({placesSourceLoading}, () => owner.controller.sync()),
+          loading: placesSourceLoading => this.setState({ placesSourceLoading }, () => owner.controller.sync()),
           sourceReady: bbox => {
             owner.setCoverageExtent(bbox);
             owner.controller.setEnabled(true); owner.controller.searchArea();
@@ -563,11 +579,14 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
             sourceErrorReported = true; console.warn('[Overture Places]', error);
             const code = (error as any)?.code;
             this.showToast(this._t(code === 'dense' ? 'uiPoiDensePick' : code === 'filter' ? 'uiPoiFilterFailed' : code === 'source' ? 'uiPoiSourceFailed' : 'uiPoiPickFailed'), 4500);
-          } });
+          }
+        });
         this._placesTilesView = view; this._placesVectorLayer = layer;
-        this.setState({ placesActive: true, placesAutoUpdate: preferences.autoUpdate,
+        this.setState({
+          placesActive: true, placesAutoUpdate: preferences.autoUpdate,
           placesTileCategory: preferences.family as TileCategoryId, selectedPlace: null,
-          placesShowLink: false, placesList: [], placesCameraDistance: null });
+          placesShowLink: false, placesList: [], placesCameraDistance: null
+        });
         const style = new URL(endpoints.style), details = new URL(endpoints.query);
         for (const url of [style, details]) {
           if (preferences.family !== 'all') url.searchParams.set('family', preferences.family);
@@ -586,99 +605,102 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         this._placeNoteReview?.cancel(); this._placesTilesOwner?.dispose();
         if (this._places === this._placesTilesOwner) { this._places = null; this._placesView = null; }
         this._placesTilesOwner = null; this._placesTilesPreferenceKey = null;
-        this.setState({placesSourceLoading:false,placesActive:keepEnabled,placesPanelOpen:keepEnabled?this.state.placesPanelOpen:false,
-          selectedPlace:null,placesShowLink:false,placesList:[],placesCameraDistance:null}, keepEnabled?undefined:this.syncPlaces);
+        this.setState({
+          placesSourceLoading: false, placesActive: keepEnabled, placesPanelOpen: keepEnabled ? this.state.placesPanelOpen : false,
+          selectedPlace: null, placesShowLink: false, placesList: [], placesCameraDistance: null
+        }, keepEnabled ? undefined : this.syncPlaces);
       },
     };
     this._placesLifecycle = control;
   }
 
-  private _placesImageryCache:PlaceImageryCache|null=null;
+  private _placesImageryCache: PlaceImageryCache | null = null;
   private _placesExploreAbort: AbortController | null = null;
   private placesPauseReason = (): string => {
     if (this.props.state === 'CLOSED') return this._owned("Open the widget to load nearby places.");
     if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return this._owned("Return to this tab to load nearby places.");
     if (this.state.isFullscreen) return this._owned("Return to the main map to load nearby places.");
     if (this.state.isLoading || this._imageryOpeningRequest != null) return this._owned("Places will update after the image finishes loading.");
-    if(this.state.placeNotePhase==='capturing'||this.state.placeNotePhase==='picking')return this._owned('Finish preparing the place note to update places.');
+    if (this.state.placeNotePhase === 'capturing' || this.state.placeNotePhase === 'picking') return this._owned('Finish preparing the place note to update places.');
     if (this._userPaused === false) return this._owned("Pause image playback to update nearby places.");
     if (this._placesExploreAbort && !this._placesExploreAbort.signal.aborted) return this._owned("Finding imagery near the selected place…");
     return '';
   };
   private placesBusy = () => !!this.placesPauseReason();
   private syncPlaces = () => {
-    const view=this.state.jimuMapView?.view;
-    const url=placesSourceKey(this.props.config);
-    if(!this.state.placesActive||this.props.config.enablePlaces!==true||!url||this.props.state==='CLOSED'){
-      if(this._placesVectorLayer||this._placesConfiguredRequest||this._placesConfiguredUrl)this._placesLifecycle?.stop();
-      if(this.state.placesActive&&(this.props.config.enablePlaces!==true||!url))this.setState({placesActive:false,placesPanelOpen:false});
+    const view = this.state.jimuMapView?.view;
+    const url = placesSourceKey(this.props.config);
+    if (!this.state.placesActive || this.props.config.enablePlaces !== true || !url || this.props.state === 'CLOSED') {
+      if (this._placesVectorLayer || this._placesConfiguredRequest || this._placesConfiguredUrl) this._placesLifecycle?.stop();
+      if (this.state.placesActive && (this.props.config.enablePlaces !== true || !url)) this.setState({ placesActive: false, placesPanelOpen: false });
       return;
     }
-    if(!view?.ready||view.destroyed){if(this._placesVectorLayer||this._placesConfiguredRequest)this._placesLifecycle?.stop(true);return;}
-    if(this._placesConfiguredRequest?.url===url&&this._placesConfiguredRequest.view===view)return;
-    if(this._placesVectorLayer&&this._placesConfiguredUrl===url&&this._placesTilesView===view&&this._places&&this._places===this._placesTilesOwner){this._places?.controller.sync();return;}
-    if(!this._placesLifecycle)return;
-    if(this._placesVectorLayer||this._placesConfiguredRequest)this._placesLifecycle.stop(true);
-    const request={url,view};this._placesConfiguredRequest=request;this._placesConfiguredUrl=url;
-    void this._placesLifecycle.startService(url).then(()=>{
-      if(this._placesConfiguredRequest!==request)return;this._placesConfiguredRequest=null;this.syncPlaces();
-    }).catch(error=>{
-      if(this._placesConfiguredRequest!==request)return;this._placesConfiguredRequest=null;this._placesLifecycle?.stop();
-      console.warn('[Overture Places]',error);this.showToast(this._t('uiPoiSourceFailed'),4500);
+    if (!view?.ready || view.destroyed) { if (this._placesVectorLayer || this._placesConfiguredRequest) this._placesLifecycle?.stop(true); return; }
+    if (this._placesConfiguredRequest?.url === url && this._placesConfiguredRequest.view === view) return;
+    if (this._placesVectorLayer && this._placesConfiguredUrl === url && this._placesTilesView === view && this._places && this._places === this._placesTilesOwner) { this._places?.controller.sync(); return; }
+    if (!this._placesLifecycle) return;
+    if (this._placesVectorLayer || this._placesConfiguredRequest) this._placesLifecycle.stop(true);
+    const request = { url, view }; this._placesConfiguredRequest = request; this._placesConfiguredUrl = url;
+    void this._placesLifecycle.startService(url).then(() => {
+      if (this._placesConfiguredRequest !== request) return; this._placesConfiguredRequest = null; this.syncPlaces();
+    }).catch(error => {
+      if (this._placesConfiguredRequest !== request) return; this._placesConfiguredRequest = null; this._placesLifecycle?.stop();
+      console.warn('[Overture Places]', error); this.showToast(this._t('uiPoiSourceFailed'), 4500);
     });
   };
-  private placesListOrigin():PlaceListOrigin|null {
-    const frame=this._liveSequenceFrames.current;
-    if(frame&&frame.id===String(this.state.imageId)&&Number.isFinite(frame.lon)&&Number.isFinite(frame.lat))return{lon:frame.lon,lat:frame.lat,kind:'image'};
-    const center=this.state.jimuMapView?.view?.center;
-    return center&&Number.isFinite(center.longitude)&&Number.isFinite(center.latitude)?{lon:center.longitude,lat:center.latitude,kind:'map'}:null;
+  private placesListOrigin(): PlaceListOrigin | null {
+    const frame = this._liveSequenceFrames.current;
+    if (frame && frame.id === String(this.state.imageId) && Number.isFinite(frame.lon) && Number.isFinite(frame.lat)) return { lon: frame.lon, lat: frame.lat, kind: 'image' };
+    const center = this.state.jimuMapView?.view?.center;
+    return center && Number.isFinite(center.longitude) && Number.isFinite(center.latitude) ? { lon: center.longitude, lat: center.latitude, kind: 'map' } : null;
   }
-  private _placeNoteDisposed=false;
-  private _placeNoteReview=new PlaceNoteReview({
-    context:()=>({place:this.state.selectedPlace,view:this.state.jimuMapView?.view||null,imageId:this.state.imageId?String(this.state.imageId):null,enabled:!!this.state.placesActive&&this.props.state!=='CLOSED'&&!this._placeNoteDisposed&&!!this.state.jimuMapView?.view?.ready}),
-    blocked:destination=>{if(destination==='enterprise'&&!(this.props.config.sharedFieldNotesEnabled&&this.props.config.sharedFieldNotesUrl))return true;if(this.state.pendingFieldNote||this.state.detectionWorkspaceDraft||this._detectionWorkspaceMarkerOwner||this.state.detectionNoteCapturing){this.showToast(this._owned('Finish or cancel the current note draft first.'));return true;}this.dismissViewerDetection();this.state.jimuMapView?.view?.closePopup();return false;},
-    capture:async(image,signal)=>{const data=await captureDetectionCrop(image,this.loadDetectionPreview,signal),id=crypto.randomUUID();await storeDetectionCrop(id,data);return id;},
-    remove:deleteDetectionCrop,
-    draw:point=>this.drawPendingNoteGraphic(point.lon,point.lat),clear:()=>this.clearPendingNoteGraphic(),
-    phase:placeNotePhase=>{if(!this._placeNoteDisposed)this.setState({placeNotePhase},()=>this._places?.controller.sync());},error:message=>this.showToast(this._owned(message)),
-    pick:(picked,cancelled)=>{let stopped=false,release:(()=>void)|null=null;const key=(event:KeyboardEvent)=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();stop();cancelled();}};const cleanup=()=>window.removeEventListener('keydown',key,true);const stop=()=>{stopped=true;cleanup();release?.();release=null;};const begin=()=>{if(stopped)return;window.addEventListener('keydown',key,true);release=this.requestWorkspaceNoteLocation(point=>{cleanup();release=null;picked(point);},()=>{cleanup();release=null;cancelled();});};if(this.state.isFullscreen)void this.toggleFullscreen().then(begin,()=>{stop();cancelled();});else begin();return stop;},
-    open:(seed,destination)=>this.openPlaceFieldNote(seed,destination)
+  private _placeNoteDisposed = false;
+  private _placeNoteReview = new PlaceNoteReview({
+    context: () => ({ place: this.state.selectedPlace, view: this.state.jimuMapView?.view || null, imageId: this.state.imageId ? String(this.state.imageId) : null, enabled: !!this.state.placesActive && this.props.state !== 'CLOSED' && !this._placeNoteDisposed && !!this.state.jimuMapView?.view?.ready }),
+    blocked: destination => { if (destination === 'enterprise' && !(this.props.config.sharedFieldNotesEnabled && this.props.config.sharedFieldNotesUrl)) return true; if (this.state.pendingFieldNote || this.state.detectionWorkspaceDraft || this._detectionWorkspaceMarkerOwner || this.state.detectionNoteCapturing) { this.showToast(this._owned('Finish or cancel the current note draft first.')); return true; } this.dismissViewerDetection(); this.state.jimuMapView?.view?.closePopup(); return false; },
+    capture: async (image, signal) => { const data = await captureDetectionCrop(image, this.loadDetectionPreview, signal), id = crypto.randomUUID(); await storeDetectionCrop(id, data); return id; },
+    remove: deleteDetectionCrop,
+    draw: point => this.drawPendingNoteGraphic(point.lon, point.lat), clear: () => this.clearPendingNoteGraphic(),
+    phase: placeNotePhase => { if (!this._placeNoteDisposed) this.setState({ placeNotePhase }, () => this._places?.controller.sync()); }, error: message => this.showToast(this._owned(message)),
+    pick: (picked, cancelled) => { let stopped = false, release: (() => void) | null = null; const key = (event: KeyboardEvent) => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); stop(); cancelled(); } }; const cleanup = () => window.removeEventListener('keydown', key, true); const stop = () => { stopped = true; cleanup(); release?.(); release = null; }; const begin = () => { if (stopped) return; window.addEventListener('keydown', key, true); release = this.requestWorkspaceNoteLocation(point => { cleanup(); release = null; picked(point); }, () => { cleanup(); release = null; cancelled(); }); }; if (this.state.isFullscreen) void this.toggleFullscreen().then(begin, () => { stop(); cancelled(); }); else begin(); return stop; },
+    open: (seed, destination) => this.openPlaceFieldNote(seed, destination)
   });
-  private cancelPlaceNotePreparation=()=>this._placeNoteReview?.cancel();
-  private getPlaceNoteImage=async():Promise<PlaceNoteImageContext|null>=>{
-    const viewer=this.mapillaryViewer,id=String(this.state.imageId||'');if(!viewer||!/^\d+$/.test(id))return null;
-    try{const image=await viewer.getImage();let center:any=[.5,.5];try{center=await viewer.getCenter();}catch{}if(viewer!==this.mapillaryViewer||String(this.state.imageId)!==id||String(image?.id)!==id)return null;
-      const pair:Array<number>=Array.isArray(center)&&center.length===2&&center.every(value=>Number.isFinite(value)&&value>=0&&value<=1)?center:[.5,.5];
-      const capturedAt=image.capturedAt||this._liveSequenceFrames.find(id)?.captured_at;
-      return{imageId:id,center:[pair[0],pair[1]],...(typeof capturedAt==='number'&&Number.isFinite(new Date(capturedAt).getTime())?{capturedAt}:{})};
-    }catch{return null;}
+  private cancelPlaceNotePreparation = () => this._placeNoteReview?.cancel();
+  private getPlaceNoteImage = async (): Promise<PlaceNoteImageContext | null> => {
+    const viewer = this.mapillaryViewer, id = String(this.state.imageId || ''); if (!viewer || !/^\d+$/.test(id)) return null;
+    try {
+      const image = await viewer.getImage(); let center: any = [.5, .5]; try { center = await viewer.getCenter(); } catch { } if (viewer !== this.mapillaryViewer || String(this.state.imageId) !== id || String(image?.id) !== id) return null;
+      const pair: Array<number> = Array.isArray(center) && center.length === 2 && center.every(value => Number.isFinite(value) && value >= 0 && value <= 1) ? center : [.5, .5];
+      const capturedAt = image.capturedAt || this._liveSequenceFrames.find(id)?.captured_at;
+      return { imageId: id, center: [pair[0], pair[1]], ...(typeof capturedAt === 'number' && Number.isFinite(new Date(capturedAt).getTime()) ? { capturedAt } : {}) };
+    } catch { return null; }
   };
-  private createPlaceFieldNote=(destination:PlaceNoteDestination,options?:PlaceNoteOptions)=>{void this._placeNoteReview.begin(destination,options);};
-  private openPlaceFieldNote=(seed:PlaceContributionSeed,destination:PlaceNoteDestination)=>{
-    this._placesExploreAbort?.abort();this.state.jimuMapView?.view?.closePopup();
-    if(destination==='workspace'){this._placeWorkspaceCrop=seed.attachmentId||null;this._detectionWorkspaceMarkerOwner=seed.requestId;this._detectionWorkspaceImage=seed.attachmentId||null;this.drawPendingNoteGraphic(seed.lon,seed.lat);this.setState({detectionWorkspaceDraft:seed,fieldNotesListOpen:true,nearbyStripOpen:false});}
-    else{const place=this.state.selectedPlace;if(!place)throw Error('Place selection changed.');this._fieldNoteDraft.openPlace({...place,lon:seed.lon,lat:seed.lat},destination,seed.description,seed.imageId?{imageId:seed.imageId,bounds:seed.bounds,attachmentId:seed.attachmentId}:undefined);}
+  private createPlaceFieldNote = (destination: PlaceNoteDestination, options?: PlaceNoteOptions) => { void this._placeNoteReview.begin(destination, options); };
+  private openPlaceFieldNote = (seed: PlaceContributionSeed, destination: PlaceNoteDestination) => {
+    this._placesExploreAbort?.abort(); this.state.jimuMapView?.view?.closePopup();
+    if (destination === 'workspace') { this._placeWorkspaceCrop = seed.attachmentId || null; this._detectionWorkspaceMarkerOwner = seed.requestId; this._detectionWorkspaceImage = seed.attachmentId || null; this.drawPendingNoteGraphic(seed.lon, seed.lat); this.setState({ detectionWorkspaceDraft: seed, fieldNotesListOpen: true, nearbyStripOpen: false }); }
+    else { const place = this.state.selectedPlace; if (!place) throw Error('Place selection changed.'); this._fieldNoteDraft.openPlace({ ...place, lon: seed.lon, lat: seed.lat }, destination, seed.description, seed.imageId ? { imageId: seed.imageId, bounds: seed.bounds, attachmentId: seed.attachmentId } : undefined); }
   };
   private togglePlaces = () => {
-    if(this.state.placesActive||this._placesVectorLayer||this._placesConfiguredRequest){this._placesLifecycle?.stop();return;}
-    const url=placesSourceKey(this.props.config);
-    if(!url){this.showToast(this._t('uiPoiServiceSetup'),5000);return;}
-    if(!this.state.jimuMapView?.view?.ready||!this._placesLifecycle){this.showToast(this._t('appTheMapIsPreparingTryPlacesAgainShortly'),3500);return;}
-    const preferences=readTilePlacePreferences(()=>window.localStorage,tilePlacePreferenceKey(this.props.id,window.location.pathname,url));
-    this.setState({placesActive:true,placesPanelOpen:true,placesAutoUpdate:preferences.autoUpdate,placesTileCategory:preferences.family as TileCategoryId},this.syncPlaces);
+    if (this.state.placesActive || this._placesVectorLayer || this._placesConfiguredRequest) { this._placesLifecycle?.stop(); return; }
+    const url = placesSourceKey(this.props.config);
+    if (!url) { this.showToast(this._t('uiPoiServiceSetup'), 5000); return; }
+    if (!this.state.jimuMapView?.view?.ready || !this._placesLifecycle) { this.showToast(this._t('appTheMapIsPreparingTryPlacesAgainShortly'), 3500); return; }
+    const preferences = readTilePlacePreferences(() => window.localStorage, tilePlacePreferenceKey(this.props.id, window.location.pathname, url));
+    this.setState({ placesActive: true, placesPanelOpen: true, placesAutoUpdate: preferences.autoUpdate, placesTileCategory: preferences.family as TileCategoryId }, this.syncPlaces);
   };
-  private savePlacesTilePreferences=()=>{const p=this._placesVectorLayer;if(!p?.supportsFamilyFilter)return;saveTilePlacePreferences(()=>window.localStorage,this._placesTilesPreferenceKey,{family:this.state.placesTileCategory,autoUpdate:this.state.placesAutoUpdate,...p.quality});};
-  private checkPlacesTileSelection=()=>{const p=this._placesVectorLayer,place=this.state.selectedPlace;if(p&&place&&!p.matches(place)){this._places?.clearSelection();this.showToast(this._t('uiPoiSelectionExcluded'),3500);}};
-  private setPlacesAutoUpdate=(value:boolean)=>{
-    this.setState({placesAutoUpdate:value},()=>{this._places?.controller.setAutoUpdate(value);this.savePlacesTilePreferences();});
+  private savePlacesTilePreferences = () => { const p = this._placesVectorLayer; if (!p?.supportsFamilyFilter) return; saveTilePlacePreferences(() => window.localStorage, this._placesTilesPreferenceKey, { family: this.state.placesTileCategory, autoUpdate: this.state.placesAutoUpdate, ...p.quality }); };
+  private checkPlacesTileSelection = () => { const p = this._placesVectorLayer, place = this.state.selectedPlace; if (p && place && !p.matches(place)) { this._places?.clearSelection(); this.showToast(this._t('uiPoiSelectionExcluded'), 3500); } };
+  private setPlacesAutoUpdate = (value: boolean) => {
+    this.setState({ placesAutoUpdate: value }, () => { this._places?.controller.setAutoUpdate(value); this.savePlacesTilePreferences(); });
   };
   private setPlacesTileQuality = (minimum: number | null, hideClosed: boolean) => {
-    const p=this._placesVectorLayer;if(!p)return;const task=p.setQuality(minimum,hideClosed),version=p.version;
-    void task.then(()=>{if(this._placesVectorLayer===p&&p.version===version){this.checkPlacesTileSelection();this.savePlacesTilePreferences();}}).catch(error=>console.warn('[Overture quality]',error));
+    const p = this._placesVectorLayer; if (!p) return; const task = p.setQuality(minimum, hideClosed), version = p.version;
+    void task.then(() => { if (this._placesVectorLayer === p && p.version === version) { this.checkPlacesTileSelection(); this.savePlacesTilePreferences(); } }).catch(error => console.warn('[Overture quality]', error));
   };
   private setPlacesTileCategory = (family: string) => {
-    if(!isTileCategory(family))return;const p=this._placesVectorLayer;if(!p)return;const task=p.setFamily(family),version=p.version;
-    void task.then(()=>{if(this._placesVectorLayer===p&&p.version===version)this.setState({placesTileCategory:family},()=>{this.checkPlacesTileSelection();this.savePlacesTilePreferences();});}).catch(error=>console.warn('[Overture category]',error));
+    if (!isTileCategory(family)) return; const p = this._placesVectorLayer; if (!p) return; const task = p.setFamily(family), version = p.version;
+    void task.then(() => { if (this._placesVectorLayer === p && p.version === version) this.setState({ placesTileCategory: family }, () => { this.checkPlacesTileSelection(); this.savePlacesTilePreferences(); }); }).catch(error => console.warn('[Overture category]', error));
   };
   private goToPlacesArea = () => {
     const view = this.state.jimuMapView?.view, bounds = this._places?.coverageExtent;
@@ -688,15 +710,15 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this.navigateMapView(view, { target: [new Point({ longitude: west, latitude: south, spatialReference: { wkid: 4326 } }), new Point({ longitude: east, latitude: north, spatialReference: { wkid: 4326 } })] }, { animate: false });
   };
   private goToSelectedPlace = () => this.centerPlaceOnMap(this.state.selectedPlace);
-  private showListedPlaceOnMap = (id:string) => {
-    const place=this.state.placesList.find(value=>value.id===id);
-    if(place&&this._places?.open([],id,false,'list'))this.centerPlaceOnMap(place);
+  private showListedPlaceOnMap = (id: string) => {
+    const place = this.state.placesList.find(value => value.id === id);
+    if (place && this._places?.open([], id, false, 'list')) this.centerPlaceOnMap(place);
   };
-  private centerPlaceOnMap = (place:Place|null) => {
-    const view=this.state.jimuMapView?.view;
-    if(!this.state.placesActive||!place||!view?.ready||view.destroyed||!this.ArcGISModules?.Point||!Number.isFinite(place.lon)||!Number.isFinite(place.lat)||Math.abs(place.lon)>180||Math.abs(place.lat)>85.051129)return;
-    const target=new this.ArcGISModules.Point({longitude:place.lon,latitude:place.lat,spatialReference:{wkid:4326}});
-    this.navigateMapView(view,{target,zoom:Number.isFinite(view.zoom)?Math.max(view.zoom,16):16},{animate:false});
+  private centerPlaceOnMap = (place: Place | null) => {
+    const view = this.state.jimuMapView?.view;
+    if (!this.state.placesActive || !place || !view?.ready || view.destroyed || !this.ArcGISModules?.Point || !Number.isFinite(place.lon) || !Number.isFinite(place.lat) || Math.abs(place.lon) > 180 || Math.abs(place.lat) > 85.051129) return;
+    const target = new this.ArcGISModules.Point({ longitude: place.lon, latitude: place.lat, spatialReference: { wkid: 4326 } });
+    this.navigateMapView(view, { target, zoom: Number.isFinite(view.zoom) ? Math.max(view.zoom, 16) : 16 }, { animate: false });
   };
   private updatePlacesCamera(lon: number, lat: number): void {
     this._places?.selection.updateCamera(lon, lat);
@@ -713,18 +735,18 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const abort = () => controller.abort(); signal.addEventListener('abort', abort, { once: true });
     const timeout = setTimeout(abort, 12000);
     const request = this._selectionRequestId;
-    const current = () => !controller.signal.aborted && !view.destroyed && this._placesExploreAbort===controller && this.state.jimuMapView?.view === view && request === this._selectionRequestId;
+    const current = () => !controller.signal.aborted && !view.destroyed && this._placesExploreAbort === controller && this.state.jimuMapView?.view === view && request === this._selectionRequestId;
     this._places?.controller.sync();
     try {
       const bbox = placeImageryBbox(place, radius);
-      const cache=this._placesImageryCache||(this._placesImageryCache=new PlaceImageryCache());
-      cache.scope(view,this.accessToken,placesSourceKey(this.props.config)||'');
-      const cached=cache.get(place,radius);
-      if(cached!==undefined){if(!current())throw new DOMException('Cancelled','AbortError');return cached;}
+      const cache = this._placesImageryCache || (this._placesImageryCache = new PlaceImageryCache());
+      cache.scope(view, this.accessToken, placesSourceKey(this.props.config) || '');
+      const cached = cache.get(place, radius);
+      if (cached !== undefined) { if (!current()) throw new DOMException('Cancelled', 'AbortError'); return cached; }
       const data = await this.fetchMapillaryJson(`${GRAPH_API.BASE}/images?fields=id,sequence,geometry,computed_geometry,compass_angle,computed_compass_angle,is_pano,captured_at&bbox=${bbox.join(',')}&limit=40`, this.accessToken, controller.signal);
       if (!current()) throw new DOMException('Cancelled', 'AbortError');
-      const images=rankPlaceImagery(place, Array.isArray(data.data) ? data.data : [], radius, distanceMeters);
-      cache.put(place,radius,images);return images;
+      const images = rankPlaceImagery(place, Array.isArray(data.data) ? data.data : [], radius, distanceMeters);
+      cache.put(place, radius, images); return images;
     } finally {
       clearTimeout(timeout); signal.removeEventListener('abort', abort);
       if (this._placesExploreAbort === controller) { this._placesExploreAbort = null; this._places?.controller.sync(); }
@@ -758,23 +780,29 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private readonly _detectionLayers = new DetectionLayerController<__esri.VectorTileLayer, __esri.MapView | __esri.SceneView>({
     view: () => this.state.jimuMapView?.view || null,
     disposed: () => this._sharedNotesDisposed || this._startupDisposed,
-    appearance: kind => { const signs = kind === 'signs'; return {
-      scale: (signs ? this.state.signSpriteScale : this.state.objectSpriteScale) || 1,
-      opacity: (signs ? this.state.signOpacity : this.state.objectOpacity) ?? 1,
-      reduceOverlap: (signs ? this.state.signReduceOverlap : this.state.objectReduceOverlap) === true,
-      labels: (signs ? this.state.signLabels : this.state.objectLabels) === true,
-      mode: (signs ? this.state.signDisplayMode : this.state.objectDisplayMode) || 'selected',
-    }; },
+    appearance: kind => {
+      const signs = kind === 'signs'; return {
+        scale: (signs ? this.state.signSpriteScale : this.state.objectSpriteScale) || 1,
+        opacity: (signs ? this.state.signOpacity : this.state.objectOpacity) ?? 1,
+        reduceOverlap: (signs ? this.state.signReduceOverlap : this.state.objectReduceOverlap) === true,
+        labels: (signs ? this.state.signLabels : this.state.objectLabels) === true,
+        mode: (signs ? this.state.signDisplayMode : this.state.objectDisplayMode) || 'selected',
+      };
+    },
     selection: kind => this._mapFeatureFilterCodes.get(kind),
     codes: kind => kind === 'signs' ? this._detectionSignCodes : Object.keys(objectNameMap),
-    source: kind => ({tiles:`${kind === 'signs' ? TILE_URLS.TRAFFIC_SIGNS : TILE_URLS.OBJECTS}?access_token=${this.accessToken}`,
-      sprite: kind === 'signs' ? this.spriteUrls.TRAFFIC_SIGNS : this.spriteUrls.OBJECTS}),
+    source: kind => ({
+      tiles: `${kind === 'signs' ? TILE_URLS.TRAFFIC_SIGNS : TILE_URLS.OBJECTS}?access_token=${this.accessToken}`,
+      sprite: kind === 'signs' ? this.spriteUrls.TRAFFIC_SIGNS : this.spriteUrls.OBJECTS
+    }),
     create: properties => new this.ArcGISModules.VectorTileLayer(properties),
     own: layer => { this._ownedMapResources.ownLayer(layer); },
     loading: (kind, view, layer) => this._mapSpriteLoading.start(kind, view as any, layer),
     clearLoading: kind => this._mapSpriteLoading.clear(kind),
-    error: (kind, phase, error) => { if (phase === 'appearance') this.showToast(this._t('appIconSizeCouldNotBeAppliedTryAgainAfter'),4000);
-      else console.error(`Error applying ${kind} filter:`,error); },
+    error: (kind, phase, error) => {
+      if (phase === 'appearance') this.showToast(this._t('appIconSizeCouldNotBeAppliedTryAgainAfter'), 4000);
+      else console.error(`Error applying ${kind} filter:`, error);
+    },
   });
   private get mapillaryTrafficSignsLayer() { return this._detectionLayers.layer('signs'); }
   private get mapillaryObjectsLayer() { return this._detectionLayers.layer('objects'); }
@@ -785,78 +813,78 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _detectionLoadRequest = 0;
   private _detectionAbort: AbortController | null = null;
 
-  private _detectionImageData: {imageId:string; data:any; viewer:any} | null = null;
+  private _detectionImageData: { imageId: string; data: any; viewer: any } | null = null;
   private _detectionSignCodes = new Set<string>();
   private _detectionObjectCodes = new Set<string>(Object.keys(objectNameMap));
   private changeDetectionExplorer = (options: DetectionExplorerOptions) => {
-    this.setState({detectionExplorer: options}, () => this.refreshDetectionExploration());
+    this.setState({ detectionExplorer: options }, () => this.refreshDetectionExploration());
   };
   private refreshDetectionExploration() {
     if (this.state.detectionsActive && this.state.imageId) void this.loadDetections(this.state.imageId);
   }
   private _panoramaDetectionLabels: PanoramaDetectionLabels | null = null;
 
-  private _pendingDetectionImageId:string|null=null;
-  private _detectionCropAbort:AbortController|null=null;
-  private _focusedViewerNote:FieldNote|null=null;
-  private _detectionViewerMarkers:PanoramaDetectionLabels|null=null;
-  private _detectionWorkspaceImage:string|null=null;
-  private _placeWorkspaceCrop:string|null=null;
-  private _detectionNoteAfterFullscreen: (()=>void) | null = null;
+  private _pendingDetectionImageId: string | null = null;
+  private _detectionCropAbort: AbortController | null = null;
+  private _focusedViewerNote: FieldNote | null = null;
+  private _detectionViewerMarkers: PanoramaDetectionLabels | null = null;
+  private _detectionWorkspaceImage: string | null = null;
+  private _placeWorkspaceCrop: string | null = null;
+  private _detectionNoteAfterFullscreen: (() => void) | null = null;
   private _detectionWorkspaceMarkerOwner: string | null = null;
-  private moveDetectionWorkspaceMarker = (requestId:string,point:{lon:number;lat:number}) => {if(this._detectionWorkspaceMarkerOwner===requestId&&validDetectionNoteLocation(point))this.drawPendingNoteGraphic(point.lon,point.lat);};
-  private finishDetectionWorkspaceMarker = (requestId:string) => {if(this._detectionWorkspaceMarkerOwner===requestId){this._detectionWorkspaceMarkerOwner=null;this.clearPendingNoteGraphic();this._detectionWorkspaceImage=null;const crop=this._placeWorkspaceCrop;this._placeWorkspaceCrop=null;if(crop)void deleteDetectionCrop(crop).catch(()=>{});}};
-  private _detectionNotePickCancel: (()=>void) | null = null;
-  private cancelDetectionNoteLocation = () => { if(this._pendingDetectionImageId){void deleteDetectionCrop(this._pendingDetectionImageId).catch(()=>{});this._pendingDetectionImageId=null;}if(this._detectionCropAbort)this.setState({detectionNoteCapturing:false});this._detectionCropAbort?.abort(); this._detectionCropAbort=null; this._detectionNoteAfterFullscreen=null; this._detectionNotePickCancel?.(); this._detectionNotePickCancel=null; };
-  private dismissViewerDetection = () => { this.cancelDetectionNoteLocation(); if(!this.state.pendingFieldNote&&!this.state.detectionWorkspaceDraft&&!this._detectionWorkspaceMarkerOwner)this.clearPendingNoteGraphic(); this.setState({viewerDetectionNote:null,detectionNotePicking:false}); };
-  private chooseDetectionNoteLocation = async (destination:DetectionNoteDestination, includePreview=false) => {
-    const selection=this.state.viewerDetectionNote;
-    if (!selection || selection.imageId!==String(this.state.imageId) || !this.state.detectionsActive) return;
-    if (destination==='enterprise' && !(this.props.config.sharedFieldNotesEnabled && this.props.config.sharedFieldNotesUrl)) return;
+  private moveDetectionWorkspaceMarker = (requestId: string, point: { lon: number; lat: number }) => { if (this._detectionWorkspaceMarkerOwner === requestId && validDetectionNoteLocation(point)) this.drawPendingNoteGraphic(point.lon, point.lat); };
+  private finishDetectionWorkspaceMarker = (requestId: string) => { if (this._detectionWorkspaceMarkerOwner === requestId) { this._detectionWorkspaceMarkerOwner = null; this.clearPendingNoteGraphic(); this._detectionWorkspaceImage = null; const crop = this._placeWorkspaceCrop; this._placeWorkspaceCrop = null; if (crop) void deleteDetectionCrop(crop).catch(() => { }); } };
+  private _detectionNotePickCancel: (() => void) | null = null;
+  private cancelDetectionNoteLocation = () => { if (this._pendingDetectionImageId) { void deleteDetectionCrop(this._pendingDetectionImageId).catch(() => { }); this._pendingDetectionImageId = null; } if (this._detectionCropAbort) this.setState({ detectionNoteCapturing: false }); this._detectionCropAbort?.abort(); this._detectionCropAbort = null; this._detectionNoteAfterFullscreen = null; this._detectionNotePickCancel?.(); this._detectionNotePickCancel = null; };
+  private dismissViewerDetection = () => { this.cancelDetectionNoteLocation(); if (!this.state.pendingFieldNote && !this.state.detectionWorkspaceDraft && !this._detectionWorkspaceMarkerOwner) this.clearPendingNoteGraphic(); this.setState({ viewerDetectionNote: null, detectionNotePicking: false }); };
+  private chooseDetectionNoteLocation = async (destination: DetectionNoteDestination, includePreview = false) => {
+    const selection = this.state.viewerDetectionNote;
+    if (!selection || selection.imageId !== String(this.state.imageId) || !this.state.detectionsActive) return;
+    if (destination === 'enterprise' && !(this.props.config.sharedFieldNotesEnabled && this.props.config.sharedFieldNotesUrl)) return;
     if (this.state.pendingFieldNote || this.state.detectionWorkspaceDraft || this._detectionWorkspaceMarkerOwner) { this.showToast(this._owned('Finish or cancel the current note draft first.')); return; }
     this.cancelDetectionNoteLocation();
-    let attachmentId:string|undefined;
-    if(includePreview){
-      const controller=new AbortController();this._detectionCropAbort=controller;this.setState({detectionNoteCapturing:true});
-      try{const data=await captureDetectionCrop(selection,this.loadDetectionPreview,controller.signal);if(controller.signal.aborted||this.state.viewerDetectionNote!==selection)return;attachmentId=crypto.randomUUID();await storeDetectionCrop(attachmentId,data);this._pendingDetectionImageId=attachmentId;if(controller.signal.aborted||this.state.viewerDetectionNote!==selection){await deleteDetectionCrop(attachmentId);return;}}
-      catch(error){if(!controller.signal.aborted)this.showToast(this._owned('The detection image could not be saved. Retry or turn off the image attachment.'));return;}
-      finally{if(this._detectionCropAbort===controller){this._detectionCropAbort=null;this.setState({detectionNoteCapturing:false});}}
+    let attachmentId: string | undefined;
+    if (includePreview) {
+      const controller = new AbortController(); this._detectionCropAbort = controller; this.setState({ detectionNoteCapturing: true });
+      try { const data = await captureDetectionCrop(selection, this.loadDetectionPreview, controller.signal); if (controller.signal.aborted || this.state.viewerDetectionNote !== selection) return; attachmentId = crypto.randomUUID(); await storeDetectionCrop(attachmentId, data); this._pendingDetectionImageId = attachmentId; if (controller.signal.aborted || this.state.viewerDetectionNote !== selection) { await deleteDetectionCrop(attachmentId); return; } }
+      catch (error) { if (!controller.signal.aborted) this.showToast(this._owned('The detection image could not be saved. Retry or turn off the image attachment.')); return; }
+      finally { if (this._detectionCropAbort === controller) { this._detectionCropAbort = null; this.setState({ detectionNoteCapturing: false }); } }
     }
-    const finish=(point:{lon:number;lat:number})=>{
-      this._detectionNotePickCancel=null;
-      if(this.state.viewerDetectionNote!==selection||selection.imageId!==String(this.state.imageId)||!this.state.detectionsActive||!validDetectionNoteLocation(point))return;
-      this._pendingDetectionImageId=null;
-      const draft={...selection,includePreview,attachmentId};
-      this.setState({viewerDetectionNote:null,detectionNotePicking:false});
-      if(destination==='workspace'){const seed={...draft,...point,requestId:crypto.randomUUID()};this._detectionWorkspaceMarkerOwner=seed.requestId;this._detectionWorkspaceImage=attachmentId||null;this.drawPendingNoteGraphic(point.lon,point.lat);this.setState({detectionWorkspaceDraft:seed,fieldNotesListOpen:true,nearbyStripOpen:false});}
-      else this._fieldNoteDraft.open(point.lon,point.lat,undefined,{...draft,destination});
+    const finish = (point: { lon: number; lat: number }) => {
+      this._detectionNotePickCancel = null;
+      if (this.state.viewerDetectionNote !== selection || selection.imageId !== String(this.state.imageId) || !this.state.detectionsActive || !validDetectionNoteLocation(point)) return;
+      this._pendingDetectionImageId = null;
+      const draft = { ...selection, includePreview, attachmentId };
+      this.setState({ viewerDetectionNote: null, detectionNotePicking: false });
+      if (destination === 'workspace') { const seed = { ...draft, ...point, requestId: crypto.randomUUID() }; this._detectionWorkspaceMarkerOwner = seed.requestId; this._detectionWorkspaceImage = attachmentId || null; this.drawPendingNoteGraphic(point.lon, point.lat); this.setState({ detectionWorkspaceDraft: seed, fieldNotesListOpen: true, nearbyStripOpen: false }); }
+      else this._fieldNoteDraft.open(point.lon, point.lat, undefined, { ...draft, destination });
     };
-    if(selection.location&&validDetectionNoteLocation(selection.location)){finish(selection.location);return;}
+    if (selection.location && validDetectionNoteLocation(selection.location)) { finish(selection.location); return; }
     // Only detections without a verified map-feature association require ground picking.
-    const begin=()=>{
-      if(this.state.viewerDetectionNote!==selection)return;
-      this.setState({detectionNotePicking:true});
-      this._detectionNotePickCancel=this.requestWorkspaceNoteLocation(finish,()=>{this._detectionNotePickCancel=null;this.setState({detectionNotePicking:false});});
+    const begin = () => {
+      if (this.state.viewerDetectionNote !== selection) return;
+      this.setState({ detectionNotePicking: true });
+      this._detectionNotePickCancel = this.requestWorkspaceNoteLocation(finish, () => { this._detectionNotePickCancel = null; this.setState({ detectionNotePicking: false }); });
     };
-    if(this.state.isFullscreen){this._detectionNoteAfterFullscreen=begin;void this.toggleFullscreen().catch(()=>{this._detectionNoteAfterFullscreen=null;this.showToast(this._owned('Exit fullscreen, then choose the note location.'));});}else begin();
+    if (this.state.isFullscreen) { this._detectionNoteAfterFullscreen = begin; void this.toggleFullscreen().catch(() => { this._detectionNoteAfterFullscreen = null; this.showToast(this._owned('Exit fullscreen, then choose the note location.')); }); } else begin();
   };
-  private loadDetectionNoteAttachment = async (note:FieldNote,id:string,signal:AbortSignal):Promise<string> => {
-    try{return await readDetectionCrop(id);}catch{ /* Remote Enterprise readers use the real layer attachment. */ }
-    if(!note.sharedGlobalId||!note.sharedLayerUrl||note.sharedLayerUrl!==this.sharedNotesUrl())throw Error('Image unavailable for this Enterprise configuration.');
-    const layer=new this.ArcGISModules.FeatureLayer({url:note.sharedLayerUrl});
-    try{await layer.load();const field=layer.fields.find(item=>item.type==='global-id')?.name;if(!field||!/^\{[0-9a-f-]{36}\}$/i.test(note.sharedGlobalId))throw Error('Invalid note.');const result=await layer.queryFeatures({where:`${field} = '${note.sharedGlobalId}'`,outFields:[layer.objectIdField],returnGeometry:false,num:1},{signal});const oid=result.features[0]?.attributes[layer.objectIdField];if(!Number.isFinite(oid))throw Error('Note unavailable.');const files=await layer.queryAttachments({objectIds:[oid]});const file=files[oid]?.find(item=>item.name===`detection-${id}.jpg`);if(!file)throw Error('Attachment unavailable.');const [request]=await loadArcGISJSAPIModules(['esri/request']);const response=await request(`${note.sharedLayerUrl}/${oid}/attachments/${file.id}`,{responseType:'blob',signal});return await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);reader.readAsDataURL(response.data);});}finally{layer.destroy();}
+  private loadDetectionNoteAttachment = async (note: FieldNote, id: string, signal: AbortSignal): Promise<string> => {
+    try { return await readDetectionCrop(id); } catch { /* Remote Enterprise readers use the real layer attachment. */ }
+    if (!note.sharedGlobalId || !note.sharedLayerUrl || note.sharedLayerUrl !== this.sharedNotesUrl()) throw Error('Image unavailable for this Enterprise configuration.');
+    const layer = new this.ArcGISModules.FeatureLayer({ url: note.sharedLayerUrl });
+    try { await layer.load(); const field = layer.fields.find(item => item.type === 'global-id')?.name; if (!field || !/^\{[0-9a-f-]{36}\}$/i.test(note.sharedGlobalId)) throw Error('Invalid note.'); const result = await layer.queryFeatures({ where: `${field} = '${note.sharedGlobalId}'`, outFields: [layer.objectIdField], returnGeometry: false, num: 1 }, { signal }); const oid = result.features[0]?.attributes[layer.objectIdField]; if (!Number.isFinite(oid)) throw Error('Note unavailable.'); const files = await layer.queryAttachments({ objectIds: [oid] }); const file = files[oid]?.find(item => item.name === `detection-${id}.jpg`); if (!file) throw Error('Attachment unavailable.'); const [request] = await loadArcGISJSAPIModules(['esri/request']); const response = await request(`${note.sharedLayerUrl}/${oid}/attachments/${file.id}`, { responseType: 'blob', signal }); return await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(reader.error); reader.readAsDataURL(response.data); }); } finally { layer.destroy(); }
   };
-  private loadDetectionPreview:DetectionPreviewLoader = async (imageId,signal) => {
-    if(!/^\d+$/.test(imageId))throw new Error('Invalid image reference.');
-    const token=this.accessToken;
-    const data=await this.runSequenceBackground(requestSignal=>this.fetchMapillaryJson(`${GRAPH_API.BASE}/${imageId}?fields=thumb_1024_url`,token,requestSignal),signal);
-    if(typeof data.thumb_1024_url!=='string')throw new Error('Preview unavailable.');
+  private loadDetectionPreview: DetectionPreviewLoader = async (imageId, signal) => {
+    if (!/^\d+$/.test(imageId)) throw new Error('Invalid image reference.');
+    const token = this.accessToken;
+    const data = await this.runSequenceBackground(requestSignal => this.fetchMapillaryJson(`${GRAPH_API.BASE}/${imageId}?fields=thumb_1024_url`, token, requestSignal), signal);
+    if (typeof data.thumb_1024_url !== 'string') throw new Error('Preview unavailable.');
     return data.thumb_1024_url;
   };
   private clearDetectionOverlays() {
     this.cancelDetectionNoteLocation();
-    if(this.state.viewerDetectionNote&&!this.state.pendingFieldNote&&!this.state.detectionWorkspaceDraft&&!this._detectionWorkspaceMarkerOwner)this.clearPendingNoteGraphic();
-    if(this.state.viewerDetectionNote)this.setState({viewerDetectionNote:null,detectionNotePicking:false});
+    if (this.state.viewerDetectionNote && !this.state.pendingFieldNote && !this.state.detectionWorkspaceDraft && !this._detectionWorkspaceMarkerOwner) this.clearPendingNoteGraphic();
+    if (this.state.viewerDetectionNote) this.setState({ viewerDetectionNote: null, detectionNotePicking: false });
 
     this._detectionImageData = null;
     this._panoramaDetectionLabels?.dispose(); this._panoramaDetectionLabels = null;
@@ -924,7 +952,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         const timeout = setTimeout(abort, 12000);
         try {
           const source = kind === "signs" ? TILE_URLS.TRAFFIC_SIGNS : TILE_URLS.OBJECTS;
-          const response = await fetch(`${source.replace("{z}",String(z)).replace("{x}",String(x)).replace("{y}",String(y))}?access_token=${token}`, { signal: controller.signal });
+          const response = await fetch(`${source.replace("{z}", String(z)).replace("{x}", String(x)).replace("{y}", String(y))}?access_token=${token}`, { signal: controller.signal });
           if (response.status === 404 || response.status === 204) buffer = new ArrayBuffer(0);
           else { if (!response.ok) throw new Error(`Export tile request failed (${response.status}). Try again.`); buffer = await response.arrayBuffer(); }
           if (signal.aborted) throw new DOMException("Export cancelled", "AbortError");
@@ -974,18 +1002,23 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         for (const key of Object.keys(value)) {
           const next = path ? `${path}.${key}` : key;
           const item = value[key];
-          if (/popup|dock/i.test(next) && /dock|position|breakpoint|enabled|width|height/i.test(key) && (item === null || ['string','number','boolean'].includes(typeof item))) settings[next] = item;
+          if (/popup|dock/i.test(next) && /dock|position|breakpoint|enabled|width|height/i.test(key) && (item === null || ['string', 'number', 'boolean'].includes(typeof item))) settings[next] = item;
           else if (item && typeof item === 'object') collect(item, next, depth + 1);
         }
       };
       collect(config?.toJS ? config.toJS() : config, '', 0);
       const popup = view.popup;
-      console.info('[Mapillary popup docking]', JSON.stringify({phase, mapWidgetId:widgetId,
-        mapSettings:settings, viewSize:{width:view.width,height:view.height},
-        popup:popup ? {dockEnabled:popup.dockEnabled,dockOptions:{
-          position:typeof popup.dockOptions?.position === 'function' ? '[function]' : popup.dockOptions?.position,
-          breakpoint:popup.dockOptions?.breakpoint,buttonEnabled:popup.dockOptions?.buttonEnabled},
-          visible:popup.visible} : null}));
+      console.info('[Mapillary popup docking]', JSON.stringify({
+        phase, mapWidgetId: widgetId,
+        mapSettings: settings, viewSize: { width: view.width, height: view.height },
+        popup: popup ? {
+          dockEnabled: popup.dockEnabled, dockOptions: {
+            position: typeof popup.dockOptions?.position === 'function' ? '[function]' : popup.dockOptions?.position,
+            breakpoint: popup.dockOptions?.breakpoint, buttonEnabled: popup.dockOptions?.buttonEnabled
+          },
+          visible: popup.visible
+        } : null
+      }));
     } catch { /* Diagnostics must never affect map interaction. */ }
   }
 
@@ -993,7 +1026,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const widgetId = this.props.useMapWidgetIds?.[0];
     const config = widgetId ? getAppStore().getState().appConfig?.widgets?.[widgetId]?.config : null;
     const position = config?.popupDockPosition;
-    if (!view.popup || !['top-left','top-center','top-right','bottom-left','bottom-center','bottom-right'].includes(position)) return;
+    if (!view.popup || !['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'].includes(position)) return;
     // openPopup lazily creates the SDK Popup in current Experience Builder versions.
     // Preserve its responsive breakpoint and other options; apply the Map widget's corner.
     view.popup.dockOptions = { ...view.popup.dockOptions, position };
@@ -1014,7 +1047,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       if (view.destroyed || this._objectPopupView !== view || view.popup?.content !== this._objectPopupContent) return;
       this.applyObjectPopupDocking(view);
       this.traceObjectPopupDocking(view, 'after-open');
-    }, () => {});
+    }, () => { });
   }
 
   private updateSelectedObjectPopup() {
@@ -1031,11 +1064,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }
     if (this.state.featureMetadataLoading || this.state.featureMetadataError) {
       const status = document.createElement("p");
-      this._presentation.bind(status,"textContent",()=>this.state.featureMetadataLoading ? this._owned("Loading dates…") : this.state.featureMetadataError);
+      this._presentation.bind(status, "textContent", () => this.state.featureMetadataLoading ? this._owned("Loading dates…") : this.state.featureMetadataError);
       status.setAttribute("role", "status"); content.appendChild(status);
     }
     const button = document.createElement("button");
-    button.type = "button"; button.className = "mly-text-action"; this._presentation.bind(button,"textContent",()=>this._owned("Associated images"));
+    button.type = "button"; button.className = "mly-text-action"; this._presentation.bind(button, "textContent", () => this._owned("Associated images"));
     button.style.cssText = "padding:3px 7px;font-size:12px;white-space:nowrap;cursor:pointer";
     button.onclick = () => this.setState({ nearbyStripOpen: true, imageTrayTab: "object", fieldNotesListOpen: false });
     content.appendChild(button);
@@ -1056,22 +1089,24 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _mapFeatureTiles = new TurboTileCache(4 * 1024 * 1024);
   private _mapFeatureIndexes = new TurboIndexCache(8 * 1024 * 1024);
   private _selectedMapFeature: any = null;
-  private _detectionToolsRequest=0;
-  private revealDetectionTools=()=>{++this._detectionToolsRequest;this.forceUpdate();};
+  private _detectionToolsRequest = 0;
+  private revealDetectionTools = () => { ++this._detectionToolsRequest; this.forceUpdate(); };
   private _selectedMapFeatureKind: "signs" | "objects" | null = null;
   private selectedMapFeatureEnabled(): boolean {
-    return this._selectedMapFeatureKind==='signs'?!!this.state.trafficSignsActive:this._selectedMapFeatureKind==='objects'?!!this.state.objectsActive:false;
+    return this._selectedMapFeatureKind === 'signs' ? !!this.state.trafficSignsActive : this._selectedMapFeatureKind === 'objects' ? !!this.state.objectsActive : false;
   }
-  private clearSelectedMapFeature(kind?:"signs"|"objects"):void {
-    if(kind&&this._selectedMapFeatureKind!==kind)return;
-    this._objectDetailsAbort?.abort();++this._objectDetailsRequest;
-    this._alternateNavigationAbort?.abort();++this._alternateNavigationRequest;
-    this._pendingDetectionFocus=null;this._selectedMapFeature=null;this._selectedMapFeatureKind=null;
-    if(this._objectPopupContent&&this._objectPopupView?.popup?.content===this._objectPopupContent)this._objectPopupView.closePopup();
-    this._objectPopupContent=null;this._objectPopupView=null;
-    this.setState({selectedFeatureMetadata:null,selectedFeatureLocation:null,alternateImages:[],isFetchingAlternates:false,
-      featureMetadataLoading:false,featureMetadataError:'',alternateImagesError:'',targetDetectionId:null,imageTrayTab:'nearby',
-      ...(this.state.imageTrayTab==='object'?{nearbyStripOpen:false}:{})});
+  private clearSelectedMapFeature(kind?: "signs" | "objects"): void {
+    if (kind && this._selectedMapFeatureKind !== kind) return;
+    this._objectDetailsAbort?.abort(); ++this._objectDetailsRequest;
+    this._alternateNavigationAbort?.abort(); ++this._alternateNavigationRequest;
+    this._pendingDetectionFocus = null; this._selectedMapFeature = null; this._selectedMapFeatureKind = null;
+    if (this._objectPopupContent && this._objectPopupView?.popup?.content === this._objectPopupContent) this._objectPopupView.closePopup();
+    this._objectPopupContent = null; this._objectPopupView = null;
+    this.setState({
+      selectedFeatureMetadata: null, selectedFeatureLocation: null, alternateImages: [], isFetchingAlternates: false,
+      featureMetadataLoading: false, featureMetadataError: '', alternateImagesError: '', targetDetectionId: null, imageTrayTab: 'nearby',
+      ...(this.state.imageTrayTab === 'object' ? { nearbyStripOpen: false } : {})
+    });
   }
   private _mapFeatureFilterCodes = new Map<string, MapCategoryFilter>();
   private _mapFeatureClickAbort: AbortController | null = null;
@@ -1117,11 +1152,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     try {
       const extent = view.extent;
       const geo = extent?.spatialReference?.isGeographic ? extent : webMercatorUtils.webMercatorToGeographic(extent) as __esri.Extent;
-      if (!geo || ![geo.xmin,geo.xmax,geo.ymin,geo.ymax].every(Number.isFinite)) return;
+      if (!geo || ![geo.xmin, geo.xmax, geo.ymin, geo.ymax].every(Number.isFinite)) return;
       const width = geo.xmax - geo.xmin, height = geo.ymax - geo.ymin;
-      const south = Math.max(-90,geo.ymin-height*.1), north = Math.min(90,geo.ymax+height*.1);
-      const wrap = (lon: number) => ((lon+180)%360+360)%360-180;
-      const boxes: [number,number,number,number][] = width*1.2 >= 180 ? [[-180,south,180,north]] : turboFootprintBboxes([{lon:wrap(geo.xmin-width*.1),lat:south},{lon:wrap(geo.xmax+width*.1),lat:north}]);
+      const south = Math.max(-90, geo.ymin - height * .1), north = Math.min(90, geo.ymax + height * .1);
+      const wrap = (lon: number) => ((lon + 180) % 360 + 360) % 360 - 180;
+      const boxes: [number, number, number, number][] = width * 1.2 >= 180 ? [[-180, south, 180, north]] : turboFootprintBboxes([{ lon: wrap(geo.xmin - width * .1), lat: south }, { lon: wrap(geo.xmax + width * .1), lat: north }]);
       const display = await buildCoverageDisplayPaths(this._coverageSegments, this._coverageSegmentTiers, this._coverageCoveredFlags, boxes, controller.signal);
       if (!current()) return;
       if (display.limited) {
@@ -1131,16 +1166,16 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       }
       this._coverageRenderLimited = false;
       const styles = {
-        fresh: { color: [55,213,130,.9], width: 2, style: "solid" },
-        aging: { color: [255,193,7,.95], width: 2, style: "solid" },
-        stale: { color: [255,110,50,1], width: 3, style: "solid" },
-        none: { color: [220,50,50,1], width: 3, style: "dash" },
+        fresh: { color: [55, 213, 130, .9], width: 2, style: "solid" },
+        aging: { color: [255, 193, 7, .95], width: 2, style: "solid" },
+        stale: { color: [255, 110, 50, 1], width: 3, style: "solid" },
+        none: { color: [220, 50, 50, 1], width: 3, style: "dash" },
       };
       const graphics: __esri.Graphic[] = [];
-      for (const tier of ["fresh","aging","stale","none"] as const) {
+      for (const tier of ["fresh", "aging", "stale", "none"] as const) {
         const paths = display.groups[tier];
-        for (let i=0;i<paths.length;i+=512) graphics.push(new this.ArcGISModules.Graphic({
-          geometry: { type: "polyline", paths: paths.slice(i,i+512), spatialReference: { wkid:4326 } },
+        for (let i = 0; i < paths.length; i += 512) graphics.push(new this.ArcGISModules.Graphic({
+          geometry: { type: "polyline", paths: paths.slice(i, i + 512), spatialReference: { wkid: 4326 } },
           symbol: { type: "simple-line", ...styles[tier] }, attributes: { coverage_tier: tier },
         }));
       }
@@ -1242,15 +1277,15 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _screenDirectionCone: ScreenDirectionCone | null = null;
   private readonly _currentImagePresentation = new CurrentImagePresentationOwner();
   private claimCurrentImagePresentation(view: __esri.MapView | __esri.SceneView): void {
-    if(!view?.map||view.destroyed||this.props.visible===false||this.props.state==='CLOSED')return;
-    this._currentImagePresentation.activate(view.map,String(this.props.id),()=>{
+    if (!view?.map || view.destroyed || this.props.visible === false || this.props.state === 'CLOSED') return;
+    this._currentImagePresentation.activate(view.map, String(this.props.id), () => {
       this._stopRoutePreview?.();
       this._nearbyDiscovery?.cancel();
       this.highlightNearbyPin?.(null);
-      this._nativeImageAnchorAbort?.abort();this._nativeImageAnchorAbort=null;this._nativeImageAnchorKey='';
-      if(this._coneRedrawRaf!=null){cancelAnimationFrame(this._coneRedrawRaf);this._coneRedrawRaf=null;}
-      this._nativeCurrentImageMarker?.clear();this._screenDirectionCone?.clear();
-      this._selectionPulse?.dispose();this._cameraCone?.dispose(view);
+      this._nativeImageAnchorAbort?.abort(); this._nativeImageAnchorAbort = null; this._nativeImageAnchorKey = '';
+      if (this._coneRedrawRaf != null) { cancelAnimationFrame(this._coneRedrawRaf); this._coneRedrawRaf = null; }
+      this._nativeCurrentImageMarker?.clear(); this._screenDirectionCone?.clear();
+      this._selectionPulse?.dispose(); this._cameraCone?.dispose(view);
     });
   }
   private _cameraCone: CameraConeGraphics<__esri.Graphic, __esri.GraphicsLayer, __esri.MapView | __esri.SceneView> | null = null;
@@ -1286,9 +1321,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _pointCloudCache = new PointCloudClusterCache();
   /** Bind lazy host adapters once; construction starts no network, timer or SDK work. */
   private _pointCloudAcquisition = new PointCloudAcquisition<__esri.MapView | __esri.SceneView, PointCloudResult>({
-    read: () => ({ view: this.state.jimuMapView?.view, imageId: this.state.imageId, sequenceImages: this.state.sequenceImages,
+    read: () => ({
+      view: this.state.jimuMapView?.view, imageId: this.state.imageId, sequenceImages: this.state.sequenceImages,
       fullscreen: this.state.isFullscreen, visible: !!this.state.pointCloudVisible, loading: !!this.state.pointCloudLoading,
-      follow: !!this.state.pointCloudFollowImages, paused: !!this.state.pointCloudAutoPaused }),
+      follow: !!this.state.pointCloudFollowImages, paused: !!this.state.pointCloudAutoPaused
+    }),
     readSequence: () => ({ complete: this._liveSequenceFrames.complete, sequenceId: this.state.sequenceId }),
     nearby: (id, imageId, signal) => this._sequenceDemand.corridor(id, imageId, signal, (a, b) => distanceMeters(a.lat, a.lon, b.lat, b.lon)),
     loadTransport: (session, corridor, onProgress) => loadPointCloud(session.imageId, this.accessToken, {
@@ -1313,7 +1350,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       this.clearPointCloud(true);
       this.showToast(this._t('appPointCloudClosedForBrowsingChooseAutoFollowIn'), 3500);
     },
-    waitForMapEdits: () => this._pointCloudMapLayer?.pending.catch(() => {}) || Promise.resolve(),
+    waitForMapEdits: () => this._pointCloudMapLayer?.pending.catch(() => { }) || Promise.resolve(),
     schedule: (callback, delay) => setTimeout(callback, delay),
     cancelTimer: handle => clearTimeout(handle),
   });
@@ -1343,15 +1380,15 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   });
   private _workspaceNoteLocation = new WorkspaceLocationPicker<__esri.MapView | __esri.SceneView>();
   /** Map intent only; workspace auth, categories and draft content remain feature-owned. */
-  private requestWorkspaceNoteLocation: WorkspaceLocationRequest = (picked,cancelled) => {
+  private requestWorkspaceNoteLocation: WorkspaceLocationRequest = (picked, cancelled) => {
     this._workspaceNoteLocation.cancel();
-    const view=this.state.jimuMapView?.view;
-    if(!view||view.destroyed||!view.map){this.showToast(this._owned('Connect a map before choosing a contribution location.'));cancelled();return()=>{};}
-    this._fieldNoteMap.clearHighlight();this._coverageHoverResume?.leave();this._turboHoverPickAbort?.abort();this.clearTurboHover();
-    const container=view.container as HTMLElement,previous=container?.style.cursor;
-    if(container)container.style.cursor='crosshair';
-    const restore=()=>{if(container?.style.cursor==='crosshair')container.style.cursor=previous||'';};
-    return this._workspaceNoteLocation.begin(view,point=>{restore();this.drawClickRipple(point.lon,point.lat,[245,166,35]);picked(point);},()=>{restore();cancelled();});
+    const view = this.state.jimuMapView?.view;
+    if (!view || view.destroyed || !view.map) { this.showToast(this._owned('Connect a map before choosing a contribution location.')); cancelled(); return () => { }; }
+    this._fieldNoteMap.clearHighlight(); this._coverageHoverResume?.leave(); this._turboHoverPickAbort?.abort(); this.clearTurboHover();
+    const container = view.container as HTMLElement, previous = container?.style.cursor;
+    if (container) container.style.cursor = 'crosshair';
+    const restore = () => { if (container?.style.cursor === 'crosshair') container.style.cursor = previous || ''; };
+    return this._workspaceNoteLocation.begin(view, point => { restore(); this.drawClickRipple(point.lon, point.lat, [245, 166, 35]); picked(point); }, () => { restore(); cancelled(); });
   };
   /** Bind file intent to local state/persistence/renderers; conversion and browser work stay in feature. */
   private _fieldNoteFiles = new FieldNoteFiles({
@@ -1572,8 +1609,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   // Debounced function
   private debouncedTurboFilter: (() => void) & { cancel?: () => void };
-  private _debouncedBearingUrlUpdate: (() => void) & { cancel?: () => void } = Object.assign(() => {}, { cancel: () => {} });
-  private _debouncedZoomUrlUpdate: (() => void) & { cancel?: () => void } = Object.assign(() => {}, { cancel: () => {} });
+  private _debouncedBearingUrlUpdate: (() => void) & { cancel?: () => void } = Object.assign(() => { }, { cancel: () => { } });
+  private _debouncedZoomUrlUpdate: (() => void) & { cancel?: () => void } = Object.assign(() => { }, { cancel: () => { } });
   private zoomDisplayHandle: __esri.WatchHandle | null = null;
   private _sequenceRequests = new SharedSequenceRequests((id, token, signal, progress) => this.fetchSequenceWithCoords(id, token, signal, progress));
   private _sequenceDemand = new SequenceDemandData((url, signal) => this.runSequenceBackground(requestSignal => this.fetchMapillaryJson(url, this.accessToken, requestSignal), signal));
@@ -1611,8 +1648,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   /** Saved heading is applied to the ready image; final URL writes wait for the flight. */
   private readonly _sharedViewerBearingHost: SharedViewerBearingHost = {
     getViewer: () => this.mapillaryViewer,
-    onBearing: bearing => { this._lastBearing = bearing;const view=this.state.jimuMapView?.view;if(view)this.requestConeRedraw(view);this.updateMinimapTracking(); },
-    updateUrl: (imageId, latitude, longitude) => { if(!this._isFlyInActive)this.updateUrlWithCurrentImage(imageId, latitude, longitude); },
+    onBearing: bearing => { this._lastBearing = bearing; const view = this.state.jimuMapView?.view; if (view) this.requestConeRedraw(view); this.updateMinimapTracking(); },
+    updateUrl: (imageId, latitude, longitude) => { if (!this._isFlyInActive) this.updateUrlWithCurrentImage(imageId, latitude, longitude); },
     warn: error => console.warn("Could not set shared bearing on viewer:", error),
   };
 
@@ -1634,20 +1671,20 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _mapSymbolLegend: MapSymbolLegend<__esri.FeatureLayer, __esri.MapView | __esri.SceneView> | null = null;
   private _solarMapOverlay: SolarMapOverlay<__esri.GraphicsLayer, __esri.MapView | __esri.SceneView> | null = null;
 
-private clearMapLegendLayer() {
+  private clearMapLegendLayer() {
     this._mapSymbolLegend?.clear();
   }
 
-private syncMapLegendLayer() {
+  private syncMapLegendLayer() {
     const view = this.state.jimuMapView?.view;
     if (!view || !this.ArcGISModules?.FeatureLayer || this.props.config.hideLegend) { this.clearMapLegendLayer(); return; }
     if (view.destroyed || view.ready === false) return;
     const targetType = this._startupUrlParameters?.get(SHARE_PARAMS.MAP_TYPE);
     // The host may expose its default 3D view before switching to a shared 2D view.
     if (!this._sharedStateRestoreComplete && (targetType === "2d" || targetType === "3d") && view.type !== targetType) return;
-    this._mapSymbolLegend ??= new MapSymbolLegend(properties => new this.ArcGISModules.FeatureLayer(properties),this._presentation);
+    this._mapSymbolLegend ??= new MapSymbolLegend(properties => new this.ArcGISModules.FeatureLayer(properties), this._presentation);
     this._mapSymbolLegend.sync(view, this.props.id);
-    this._mapSymbolLegend.setCommunityCategories(this._fieldNoteMap.workspaceCategories,this._fieldNoteMap.workspaceName);
+    this._mapSymbolLegend.setCommunityCategories(this._fieldNoteMap.workspaceCategories, this._fieldNoteMap.workspaceName);
   }
 
   private _solarViewer: SolarViewerRenderer | null = null;
@@ -1686,7 +1723,7 @@ private syncMapLegendLayer() {
       this.showToast(
         <span style={{ display: "flex", alignItems: "center", gap: "6px", color: "#ffc107" }}>
           <Icons.Warning size={14} />
-           {this._t('app403SkippingUnavailableFrame')} </span>,
+          {this._t('app403SkippingUnavailableFrame')} </span>,
         2000,
       );
     },
@@ -1728,7 +1765,7 @@ private syncMapLegendLayer() {
     turboFilterStartDate: "",
     turboFilterEndDate: "",
     turboFilterIsPano: undefined,
-        turboFilterOnFoot: undefined,
+    turboFilterOnFoot: undefined,
     showTurboFilterBox: false,
     turboYearLegend: [],
     qualityViewActive: false,
@@ -1737,20 +1774,20 @@ private syncMapLegendLayer() {
     trafficSignsSelectedCodes: null,
     objectsSelectedCodes: null,
     trafficSignsFilterValue: { value: DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS, label: DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS, iconUrl: null },
-    signSpritesStatus:'idle',objectSpritesStatus:'idle',
+    signSpritesStatus: 'idle', objectSpritesStatus: 'idle',
     trafficSignsOptions: [{ value: DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS, label: DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS, iconUrl: null }],
     showObjectsFilterBox: false,
     objectsFilterValue: { value: DEFAULT_FILTER_LABELS.OBJECTS, label: DEFAULT_FILTER_LABELS.OBJECTS, iconUrl: null },
     objectsOptions: [{ value: DEFAULT_FILTER_LABELS.OBJECTS, label: DEFAULT_FILTER_LABELS.OBJECTS, iconUrl: null }],
     filtersLoaded: false,
     showIntro: true,
-    placesActive: false, placesAutoUpdate:true,placeNotePhase:'idle',placesPanelOpen: false, placesTileCategory: 'all', placesSourceLoading:false,placesStatus: { kind: 'off', count: 0 }, selectedPlace: null, placesHoveredId:null,placesRevealRequest:0,placesShowLink: false, placesList: [], placesCameraDistance: null,
+    placesActive: false, placesAutoUpdate: true, placeNotePhase: 'idle', placesPanelOpen: false, placesTileCategory: 'all', placesSourceLoading: false, placesStatus: { kind: 'off', count: 0 }, selectedPlace: null, placesHoveredId: null, placesRevealRequest: 0, placesShowLink: false, placesList: [], placesCameraDistance: null,
     hasTimeTravel: false,
     showMinimap: true,
     detectionsActive: false,
     showAiTags: true,
-    detectionExplorer: {...defaultDetectionExplorer, groups:[...defaultDetectionExplorer.groups]},
-    detectionSummary: {total:0,shown:0,counts:{}},
+    detectionExplorer: { ...defaultDetectionExplorer, groups: [...defaultDetectionExplorer.groups] },
+    detectionSummary: { total: 0, shown: 0, counts: {} },
     isSharedState: false,
     alternateImages: [],
     selectedFeatureLocation: null,
@@ -1784,7 +1821,7 @@ private syncMapLegendLayer() {
     isAnnotationMode: false,
     fieldNotes: [],
     pendingFieldNote: null,
-    viewerDetectionNote:null, detectionNotePicking:false, detectionNoteCapturing:false, detectionWorkspaceDraft:null,
+    viewerDetectionNote: null, detectionNotePicking: false, detectionNoteCapturing: false, detectionWorkspaceDraft: null,
     fieldNotesListOpen: false,
     isGeneratingRoute: false,
     routeData: null,
@@ -2021,14 +2058,14 @@ private syncMapLegendLayer() {
         this.applyCustomCameraAngle();
       }
       const newId = String(event.image.id);
-      if(newId!==String(this.state.imageId))this._placeNoteReview?.cancel();
+      if (newId !== String(this.state.imageId)) this._placeNoteReview?.cancel();
       this._stopRoutePreview?.();
-      if(this.state.viewerDetectionNote && this.state.viewerDetectionNote.imageId!==newId){
+      if (this.state.viewerDetectionNote && this.state.viewerDetectionNote.imageId !== newId) {
         this.cancelDetectionNoteLocation();
-        if(!this.state.pendingFieldNote&&!this.state.detectionWorkspaceDraft&&!this._detectionWorkspaceMarkerOwner)this.clearPendingNoteGraphic();
-        this.setState({viewerDetectionNote:null,detectionNotePicking:false});
+        if (!this.state.pendingFieldNote && !this.state.detectionWorkspaceDraft && !this._detectionWorkspaceMarkerOwner) this.clearPendingNoteGraphic();
+        this.setState({ viewerDetectionNote: null, detectionNotePicking: false });
       }
-      this._detectionViewerMarkers?.dispose();this._detectionViewerMarkers=null;
+      this._detectionViewerMarkers?.dispose(); this._detectionViewerMarkers = null;
       this._detectionImageData = null;
       this._panoramaDetectionLabels?.dispose(); this._panoramaDetectionLabels = null;
       this._detectionAbort?.abort();
@@ -2058,17 +2095,21 @@ private syncMapLegendLayer() {
         this._localSequenceDeferredRequest = routeRequestId;
         const controller = new AbortController(); this._selectionAbort = controller;
         this.clearActiveSequenceLayer();
-        this.setState(() => !this._liveSequenceFrames.isCurrent(frame) || this.state.jimuMapView?.view !== view || this.mapillaryViewer !== profileEventViewer ? null : ({ sequenceId: frame.sequenceId, selectedSequenceId: frame.sequenceId,
+        this.setState(() => !this._liveSequenceFrames.isCurrent(frame) || this.state.jimuMapView?.view !== view || this.mapillaryViewer !== profileEventViewer ? null : ({
+          sequenceId: frame.sequenceId, selectedSequenceId: frame.sequenceId,
           sequenceImages: [frame], sequenceRouteLoading: false, sequenceRouteProgress: undefined,
-          isLoading: false, imageryRepresentative: false, selectionError: undefined, selectionCanRetry: false }), () => {
+          isLoading: false, imageryRepresentative: false, selectionError: undefined, selectionCanRetry: false
+        }), () => {
           if (routeRequestId === this._selectionRequestId && !controller.signal.aborted && this._liveSequenceFrames.sequenceId === frame.sequenceId && this.state.jimuMapView?.view === view)
             void this.prepareDemandSequence(frame.sequenceId, routeRequestId, controller, view);
         });
       }
 
       // Update State with New ID
-      this.setState(() => !this._liveSequenceFrames.isCurrent(frame) || this.state.jimuMapView?.view !== view || this.mapillaryViewer !== profileEventViewer ? null : ({ imageId: newId,
-        sequenceImages: this._liveSequenceFrames.visible(frame) }), () => {
+      this.setState(() => !this._liveSequenceFrames.isCurrent(frame) || this.state.jimuMapView?.view !== view || this.mapillaryViewer !== profileEventViewer ? null : ({
+        imageId: newId,
+        sequenceImages: this._liveSequenceFrames.visible(frame)
+      }), () => {
         if (this.mapillaryViewer !== profileEventViewer || this.state.jimuMapView?.view !== view || !this._liveSequenceFrames.isCurrent(frame)) return;
         this._nearbySelectedId = null; // real imageId is now in state, clear the optimistic selection
 
@@ -2306,11 +2347,11 @@ private syncMapLegendLayer() {
   // Resolves the selected image independently of optional complete route data,
   // updates the viewer, re-draws map markers,
   // and attaches Mapillary event listeners for bearing/image changes.
-  private async getSelectedImageCoords(sequenceId: string, imageId: string, signal: AbortSignal): Promise<{id:string;lon:number;lat:number;captured_at?:number}> {
+  private async getSelectedImageCoords(sequenceId: string, imageId: string, signal: AbortSignal): Promise<{ id: string; lon: number; lat: number; captured_at?: number }> {
     const live = this._liveSequenceFrames.sequenceId === sequenceId ? this._liveSequenceFrames.find(imageId) : undefined;
     if (live) return live;
     const nearby = this._sequenceDemand.find(sequenceId, String(imageId)); if (nearby) return nearby;
-    const cached: {id:string;lon:number;lat:number;captured_at?:number}[] = this.sequenceCoordsCache[sequenceId] || (this.state.sequenceId === sequenceId ? this.state.sequenceImages : []);
+    const cached: { id: string; lon: number; lat: number; captured_at?: number }[] = this.sequenceCoordsCache[sequenceId] || (this.state.sequenceId === sequenceId ? this.state.sequenceImages : []);
     const found = cached.find(p => String(p.id) === String(imageId));
     if (found && Number.isFinite(found.lon) && Number.isFinite(found.lat)) return { ...found, id: String(imageId) };
     const preview = this._turboMetadataCache.get(String(imageId));
@@ -2375,8 +2416,8 @@ private syncMapLegendLayer() {
     this._nearbyDiscovery?.cancel();
     this.highlightNearbyPin?.(null);
     this._stopRoutePreview?.();
-    if(this._sharedStartupImageId&&String(startImageId)!==this._sharedStartupImageId){
-      this._sharedStartupImageId=null;this._sharedStartupBearing=null;this._isFlyInActive=false;
+    if (this._sharedStartupImageId && String(startImageId) !== this._sharedStartupImageId) {
+      this._sharedStartupImageId = null; this._sharedStartupBearing = null; this._isFlyInActive = false;
       (this.state.jimuMapView?.view as any)?.animation?.stop();
     }
     // Reuse completed geometry in its current view. Other selections open first,
@@ -2448,8 +2489,10 @@ private syncMapLegendLayer() {
       const seed = this._liveSequenceFrames.complete || [];
       await new Promise<void>(resolve => {
         const cancelled = () => resolve(); controller.signal.addEventListener("abort", cancelled, { once: true });
-        this.setState(() => !current() ? null : ({ sequenceImages: seed, imageId: startImageId, sequenceId,
-          selectedSequenceId: sequenceId, hasTimeTravel: false }), () => {
+        this.setState(() => !current() ? null : ({
+          sequenceImages: seed, imageId: startImageId, sequenceId,
+          selectedSequenceId: sequenceId, hasTimeTravel: false
+        }), () => {
           controller.signal.removeEventListener("abort", cancelled); resolve();
         });
       });
@@ -2472,7 +2515,7 @@ private syncMapLegendLayer() {
       imageTiming?.finish();
       this._imageryOpeningRequest = null;
 
-        this._places?.controller.sync();
+      this._places?.controller.sync();
       this._backgroundRequests?.setPaused(false);
       this.updateNativeSequenceSelection();
       const location = openedImage?.originalLngLat ?? openedImage?.lngLat;
@@ -2677,8 +2720,10 @@ private syncMapLegendLayer() {
         if (this.state.turboModeActive || !this._userPaused || view.stationary === false || points.length < 2 || previewCount >= LIVE_SEQUENCE_LIMITS.previewSegments || !this.ArcGISModules?.Graphic) return;
         ++previewCount;
         const paths = points.map(p => { const display = this.getCoverageDisplayPosition(p.id, p.lon, p.lat); return [display.lon, display.lat]; });
-        const graphic = new this.ArcGISModules.Graphic({ geometry: { type: 'polyline', paths: [paths], spatialReference: { wkid: 4326 } },
-          symbol: { type: 'simple-line', color: [0,0,255,.65], width: 3 }, attributes: { sequence_preview: true, sequence_batch: batch, sequenceId } });
+        const graphic = new this.ArcGISModules.Graphic({
+          geometry: { type: 'polyline', paths: [paths], spatialReference: { wkid: 4326 } },
+          symbol: { type: 'simple-line', color: [0, 0, 255, .65], width: 3 }, attributes: { sequence_preview: true, sequence_batch: batch, sequenceId }
+        });
         (graphic as any).__isSequenceOverlay = true; this.ensureActiveSequenceLayer(view).add(graphic);
       });
       if (!current()) return;
@@ -2694,8 +2739,10 @@ private syncMapLegendLayer() {
       if (!current()) return;
       const retryImageId = this._liveSequenceFrames.current?.id || this.state.imageId;
       if (retryImageId) this._selectionRetry = { sequenceId, imageId: retryImageId };
-      this.setState({ sequenceRouteLoading: false, sequenceRouteProgress: undefined,
-        selectionError: this._owned("Image tracking is active, but the sequence route could not load. Retry or choose another point."), selectionCanRetry: true });
+      this.setState({
+        sequenceRouteLoading: false, sequenceRouteProgress: undefined,
+        selectionError: this._owned("Image tracking is active, but the sequence route could not load. Retry or choose another point."), selectionCanRetry: true
+      });
       console.warn('[Mapillary sequence] Background route unavailable:', error);
     }
   }
@@ -2717,8 +2764,10 @@ private syncMapLegendLayer() {
       const layer = this.state.turboModeActive ? null : this.ensureActiveSequenceLayer(view);
       if (layer) layer.removeMany(layer.graphics.toArray().filter(graphic => graphic.attributes?.sequence_preview));
       if (path.length > 1) {
-        const graphic = new this.ArcGISModules.Graphic({ geometry: { type: 'polyline', paths: [path], spatialReference: { wkid: 4326 } },
-          symbol: { type: 'simple-line', color: [0,0,255,.8], width: 3 }, attributes: { sequenceId } });
+        const graphic = new this.ArcGISModules.Graphic({
+          geometry: { type: 'polyline', paths: [path], spatialReference: { wkid: 4326 } },
+          symbol: { type: 'simple-line', color: [0, 0, 255, .8], width: 3 }, attributes: { sequenceId }
+        });
         (graphic as any).__isSequenceOverlay = true; layer?.add(graphic);
         this._liveSequenceLine = { sequenceId, geometry: graphic.geometry }; this.updateMinimapTracking();
       }
@@ -2756,7 +2805,7 @@ private syncMapLegendLayer() {
       for (const image of window.points) {
         if (!current()) return;
         const p = this.getCoverageDisplayPosition(String(image.id), image.lon, image.lat);
-        this.drawPointWithoutRemoving(p.lon, p.lat, [0,0,255,1], sequenceId, image.id, batch);
+        this.drawPointWithoutRemoving(p.lon, p.lat, [0, 0, 255, 1], sequenceId, image.id, batch);
         if (batch.length >= 16 || performance.now() >= deadline) {
           if (batch.length) this.ensureActiveSequenceLayer(view).addMany(batch); batch = [];
           await yieldSequenceWork(controller.signal); deadline = performance.now() + 3;
@@ -2919,7 +2968,7 @@ private syncMapLegendLayer() {
     this._liveSequenceFrames.cancelPending(); this._liveFrameDetails.clear();
     this._selectionAbort?.abort(); this._selectionAbort = null;
     this._imageryOpeningRequest = null;
-        this._places?.controller.sync();
+    this._places?.controller.sync();
     this._backgroundRequests?.setPaused(false);
     this._selectionRetry = null;
     this.clearGreenPulse(); this.clearConeGraphics();
@@ -3050,7 +3099,7 @@ private syncMapLegendLayer() {
     ++this._selectionRequestId;
     this._selectionAbort?.abort(); this._selectionAbort = null;
     this._imageryOpeningRequest = null;
-        this._places?.controller.sync();
+    this._places?.controller.sync();
     this._reverseGeocodeAbort?.abort(); this._reverseGeocodeAbort = null;
     this._detectionAbort?.abort(); this._detectionAbort = null;
     this._backgroundRequests?.clear(); this._backgroundRequests?.setPaused(false);
@@ -3176,8 +3225,8 @@ private syncMapLegendLayer() {
     this.cancelCaptureRouteGeneration();
     this._mapSpriteLoading.clearAll();
     this._stopRoutePreview?.();
-    this._sharedStartupImageId=null;this._sharedStartupBearing=null;this._isFlyInActive=false;
-    if(resetState||fullRemove)this.clearSelectedMapFeature?.();
+    this._sharedStartupImageId = null; this._sharedStartupBearing = null; this._isFlyInActive = false;
+    if (resetState || fullRemove) this.clearSelectedMapFeature?.();
     this._currentImagePresentation?.release();
     if (resetState || fullRemove) { this._placesExploreAbort?.abort(); this._places?.dispose(); this._places = null; this._placesView = null; }
     this.highlightNearbyPin(null);
@@ -3188,7 +3237,7 @@ private syncMapLegendLayer() {
     this._timeTravelAvailability?.clear(); this._cachedSequencePreview?.clear();
     this._reverseGeocodeAbort?.abort(); this._reverseGeocodeAbort = null;
     this._imageryOpeningRequest = null;
-        this._places?.controller.sync();
+    this._places?.controller.sync();
     this._backgroundRequests?.clear(); this._backgroundRequests?.setPaused(false);
     this._sharedTileRequests?.clear(); this._sequenceTileIndex?.clear();
     this._sequencePerformance?.playbackFrame(false);
@@ -3200,7 +3249,8 @@ private syncMapLegendLayer() {
     if (fullRemove) {
       ++this._viewStartupRevision;
       this._isFlyInActive = false;
-      this._sequenceRequests?.dispose(); this.clearSharedNotesView(); this.clearFieldNotesGroup(); }
+      this._sequenceRequests?.dispose(); this.clearSharedNotesView(); this.clearFieldNotesGroup();
+    }
     if (this._routingLoginExpiry) clearTimeout(this._routingLoginExpiry);
     this._routingLoginExpiry = null; this._routingLoginView = null;
     this._lasso?.clear();
@@ -3344,7 +3394,7 @@ private syncMapLegendLayer() {
         this._lasso?.cancelGesture();
         this._measurement?.detachViewer();
         this.mapillaryViewer.remove();
-      } catch (err) {}
+      } catch (err) { }
       this.mapillaryViewer = null;
     }
     if (this.viewerContainer.current) {
@@ -3559,21 +3609,21 @@ private syncMapLegendLayer() {
         try {
           const styleCopy = JSON.parse(JSON.stringify(this.mapillaryVTLayer.style));
           layersToAdd.push(new VectorTileLayer({ style: styleCopy, opacity: 0.6 }));
-        } catch (e) {}
+        } catch (e) { }
       }
       // B. Traffic Signs
       if (isLayerActive(this.mapillaryTrafficSignsLayer)) {
         try {
           const styleCopy = JSON.parse(JSON.stringify(this.mapillaryTrafficSignsLayer.style));
           layersToAdd.push(new VectorTileLayer({ style: styleCopy, opacity: 0.6 }));
-        } catch (e) {}
+        } catch (e) { }
       }
       // C. Objects
       if (isLayerActive(this.mapillaryObjectsLayer)) {
         try {
           const styleCopy = JSON.parse(JSON.stringify(this.mapillaryObjectsLayer.style));
           layersToAdd.push(new VectorTileLayer({ style: styleCopy, opacity: 0.6 }));
-        } catch (e) {}
+        } catch (e) { }
       }
 
       // D. Mapillary coverage VectorTileLayer for minimap
@@ -3727,7 +3777,7 @@ private syncMapLegendLayer() {
     if (this.minimapWatchHandle) {
       try {
         this.minimapWatchHandle.remove();
-      } catch (err) {}
+      } catch (err) { }
       this.minimapWatchHandle = null;
     }
 
@@ -3737,7 +3787,7 @@ private syncMapLegendLayer() {
     if (this.minimapGraphicsLayer) {
       try {
         this.minimapGraphicsLayer.removeAll();
-      } catch (err) {}
+      } catch (err) { }
     }
 
     // Destroy the view first (nulls this.minimapView immediately so updateMinimapTracking
@@ -3748,7 +3798,7 @@ private syncMapLegendLayer() {
 
       try {
         (viewToDestroy as any).container = null;
-      } catch (err) {}
+      } catch (err) { }
 
       try {
         viewToDestroy.destroy();
@@ -3761,7 +3811,7 @@ private syncMapLegendLayer() {
     if (this.minimapGraphicsLayer) {
       try {
         this.minimapGraphicsLayer.destroy();
-      } catch (err) {}
+      } catch (err) { }
       this.minimapGraphicsLayer = null;
     }
 
@@ -3796,7 +3846,7 @@ private syncMapLegendLayer() {
     } else if (this._minimapFrameId !== String(image.id)) this._minimapFrameDot.geometry = point as any;
     const cone = createConeGeometry(image.lon, image.lat, this._lastBearing || 0, 30, 60);
     if (!this._minimapFrameCone) {
-      this._minimapFrameCone = new Graphic({ geometry: cone, symbol: { type: 'simple-fill', color: [255,165,0,.6], outline: { color: [255,165,0,1], width: 1 } } });
+      this._minimapFrameCone = new Graphic({ geometry: cone, symbol: { type: 'simple-fill', color: [255, 165, 0, .6], outline: { color: [255, 165, 0, 1], width: 1 } } });
       layer.add(this._minimapFrameCone!);
     } else this._minimapFrameCone.geometry = cone;
     const route = this._liveSequenceLine?.sequenceId === this.state.sequenceId ? this._liveSequenceLine.geometry : null;
@@ -3804,7 +3854,7 @@ private syncMapLegendLayer() {
       if (this._minimapSequenceLine) layer.remove(this._minimapSequenceLine);
       this._minimapSequenceGeometry = route; this._minimapSequenceLine = null;
       if (route) {
-        this._minimapSequenceLine = new Graphic({ geometry: route, symbol: { type: 'simple-line', color: [0,0,255,.8], width: 2 } });
+        this._minimapSequenceLine = new Graphic({ geometry: route, symbol: { type: 'simple-line', color: [0, 0, 255, .8], width: 2 } });
         layer.add(this._minimapSequenceLine!); layer.graphics.reorder(this._minimapSequenceLine!, 0);
       }
     }
@@ -3863,7 +3913,7 @@ private syncMapLegendLayer() {
               this._lastBearing = b;
             }
           })
-          .catch(() => {});
+          .catch(() => { });
 
         this._playbackBindings?.clear();
         this._lasso?.cancelGesture();
@@ -3965,7 +4015,7 @@ private syncMapLegendLayer() {
         }
       }
       // Begin the user-picked note location only after fullscreen camera restoration.
-      if(!this.state.isFullscreen){const next=this._detectionNoteAfterFullscreen;this._detectionNoteAfterFullscreen=null;next?.();}
+      if (!this.state.isFullscreen) { const next = this._detectionNoteAfterFullscreen; this._detectionNoteAfterFullscreen = null; next?.(); }
     });
   };
 
@@ -4020,7 +4070,7 @@ private syncMapLegendLayer() {
     try {
       const url = `${GRAPH_API.BASE}/${imageId}/detections?fields=id,value,geometry&access_token=${this.accessToken}`;
       const cached = this._detectionImageData?.imageId === String(imageId) && this._detectionImageData.viewer === viewer ? this._detectionImageData.data : null;
-      if (!cached) this.setState({detectionSummary:{total:0,shown:0,counts:{},loading:true}});
+      if (!cached) this.setState({ detectionSummary: { total: 0, shown: 0, counts: {}, loading: true } });
       const data = cached || await this.runSequenceBackground(async signal => {
         const resp = await fetch(url, { signal });
         if (!resp.ok) throw new Error(`Detection request failed (${resp.status})`);
@@ -4030,11 +4080,11 @@ private syncMapLegendLayer() {
       const activeImage = await viewer.getImage();
       if (controller.signal.aborted || request !== this._detectionLoadRequest || String(activeImage.id) !== String(imageId)) return;
 
-      this._detectionImageData = {imageId:String(imageId),data,viewer};
+      this._detectionImageData = { imageId: String(imageId), data, viewer };
       const options = this.state.detectionExplorer;
       const counts: DetectionSummary['counts'] = {};
-      const detections = (Array.isArray(data.data) ? data.data : []).filter((det:any) => typeof det.value === 'string' && !!det.geometry);
-      detections.forEach((det:any) => { const group=detectionGroup(det.value,this._detectionSignCodes); counts[group]=(counts[group]||0)+1; });
+      const detections = (Array.isArray(data.data) ? data.data : []).filter((det: any) => typeof det.value === 'string' && !!det.geometry);
+      detections.forEach((det: any) => { const group = detectionGroup(det.value, this._detectionSignCodes); counts[group] = (counts[group] || 0) + 1; });
       const tagComponent = this.mapillaryViewer.getComponent("tag");
       if (!tagComponent || !data.data) return;
 
@@ -4058,10 +4108,12 @@ private syncMapLegendLayer() {
           .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, " "))
           .join(" ");
 
-        const group = detectionGroup(det.value,this._detectionSignCodes);
+        const group = detectionGroup(det.value, this._detectionSignCodes);
         const isTarget = String(det.id) === String(this.state.targetDetectionId);
-        if (!isTarget && !showDetection(det.value,group,options,{signs:!!this.state.trafficSignsActive,objects:!!this.state.objectsActive,
-          signCode:this._mapFeatureFilterCodes.get('signs'),objectCode:this._mapFeatureFilterCodes.get('objects'),knownObjects:this._detectionObjectCodes})) return;
+        if (!isTarget && !showDetection(det.value, group, options, {
+          signs: !!this.state.trafficSignsActive, objects: !!this.state.objectsActive,
+          signCode: this._mapFeatureFilterCodes.get('signs'), objectCode: this._mapFeatureFilterCodes.get('objects'), knownObjects: this._detectionObjectCodes
+        })) return;
 
         this.detectionTagMap.set(det.id, det.value);
 
@@ -4093,7 +4145,7 @@ private syncMapLegendLayer() {
         }
       });
 
-      this.setState({detectionSummary:{total:detections.length,shown:tags.length,counts}});
+      this.setState({ detectionSummary: { total: detections.length, shown: tags.length, counts } });
       this.updateViewerFieldNoteMarkers?.();
       if (tags.length > 0) {
         tagComponent.add(tags);
@@ -4103,15 +4155,17 @@ private syncMapLegendLayer() {
         this.setupDetectionHover(tagComponent, tags);
         if (activeImage.cameraType === 'spherical' && this.viewerContainer.current) {
           this._panoramaDetectionLabels = new PanoramaDetectionLabels(viewer, this.viewerContainer.current,
-            tags.map(tag => ({ id:tag.id, text: this.getDetectionValueFromTagId(tag.id).split('--').map(part => part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, ' ')).join(' '),
+            tags.map(tag => ({
+              id: tag.id, text: this.getDetectionValueFromTagId(tag.id).split('--').map(part => part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, ' ')).join(' '),
               point: (tag.geometry as PolygonGeometry).getPoleOfInaccessibility2d(),
-              target: String(tag.id) === String(this.state.targetDetectionId) })), this.state.showAiTags);
+              target: String(tag.id) === String(this.state.targetDetectionId)
+            })), this.state.showAiTags);
         }
         (tagComponent as any)._refreshDetectionLabels?.();
       }
     } catch (err) {
       if (!controller.signal.aborted && request === this._detectionLoadRequest && (err as any)?.name !== 'AbortError') {
-        this.setState({detectionSummary:{total:0,shown:0,counts:{},error:true}});
+        this.setState({ detectionSummary: { total: 0, shown: 0, counts: {}, error: true } });
         console.error("Failed to load image detections:", err);
       }
     } finally { if (this._detectionAbort === controller) this._detectionAbort = null; }
@@ -4129,7 +4183,7 @@ private syncMapLegendLayer() {
     const detectionImageId = String(this.state.imageId);
 
     // Store original tag configurations
-    const tagConfigs = new Map<string, { text: string; color: number; bounds?:{x:number;y:number;width:number;height:number} }>();
+    const tagConfigs = new Map<string, { text: string; color: number; bounds?: { x: number; y: number; width: number; height: number } }>();
     tags.forEach((tag) => {
       const detectionValue = this.getDetectionValueFromTagId(tag.id);
       const labelFull = detectionValue
@@ -4138,7 +4192,7 @@ private syncMapLegendLayer() {
         .join(" ");
       const color = getDetectionColor(detectionValue) || 0x72b8dc;
 
-      tagConfigs.set(tag.id, { text: labelFull, color, bounds:detectionThumbnailBounds((tag.geometry as PolygonGeometry).polygon) });
+      tagConfigs.set(tag.id, { text: labelFull, color, bounds: detectionThumbnailBounds((tag.geometry as PolygonGeometry).polygon) });
     });
 
     let currentHoveredId: string | null = null;
@@ -4157,7 +4211,7 @@ private syncMapLegendLayer() {
       currentHoveredId = hoveredId;
 
       if (disposed) return;
-      const activeIds = new Set([hoveredId,selectedId,this.state.targetDetectionId].filter(Boolean) as string[]);
+      const activeIds = new Set([hoveredId, selectedId, this.state.targetDetectionId].filter(Boolean) as string[]);
       const allLabels = (this.state.detectionExplorer?.labelMode ?? 'all') === 'all';
       this._panoramaDetectionLabels?.setActive(allLabels ? null : activeIds);
       tagComponent.removeAll();
@@ -4261,34 +4315,34 @@ private syncMapLegendLayer() {
       const revision = ++hitRevision;
       try {
         const canvas = container.querySelector('canvas'); if (!canvas) return;
-        const rect=canvas.getBoundingClientRect();
-        const ids=await tagComponent.getTagIdsAt([event.clientX-rect.left,event.clientY-rect.top]);
-        if (disposed || revision !== hitRevision || this.mapillaryViewer!==detectionViewer || String(this.state.imageId)!==detectionImageId || !this.state.detectionsActive) return;
-        selectedId=ids[0]||null;
-        const config=selectedId?tagConfigs.get(selectedId):null;
+        const rect = canvas.getBoundingClientRect();
+        const ids = await tagComponent.getTagIdsAt([event.clientX - rect.left, event.clientY - rect.top]);
+        if (disposed || revision !== hitRevision || this.mapillaryViewer !== detectionViewer || String(this.state.imageId) !== detectionImageId || !this.state.detectionsActive) return;
+        selectedId = ids[0] || null;
+        const config = selectedId ? tagConfigs.get(selectedId) : null;
         this.cancelDetectionNoteLocation();
-        const selection:DetectionNoteSelection|null=config&&selectedId?{imageId:detectionImageId,detectionId:selectedId,title:config.text,bounds:config.bounds}:null;
-        if(selection)selection.location=mappedDetectionLocation(selection,{featureId:this.state.selectedFeatureMetadata?.id,point:this.state.selectedFeatureLocation,images:this.state.alternateImages});
-        if(!this.state.pendingFieldNote&&!this.state.detectionWorkspaceDraft&&!this._detectionWorkspaceMarkerOwner){
-          if(selection?.location)this.drawPendingNoteGraphic(selection.location.lon,selection.location.lat);
+        const selection: DetectionNoteSelection | null = config && selectedId ? { imageId: detectionImageId, detectionId: selectedId, title: config.text, bounds: config.bounds } : null;
+        if (selection) selection.location = mappedDetectionLocation(selection, { featureId: this.state.selectedFeatureMetadata?.id, point: this.state.selectedFeatureLocation, images: this.state.alternateImages });
+        if (!this.state.pendingFieldNote && !this.state.detectionWorkspaceDraft && !this._detectionWorkspaceMarkerOwner) {
+          if (selection?.location) this.drawPendingNoteGraphic(selection.location.lon, selection.location.lat);
           else this.clearPendingNoteGraphic();
         }
-        this.setState({viewerDetectionNote:selection,detectionNotePicking:false});
-        updateTags(currentHoveredId,true);
+        this.setState({ viewerDetectionNote: selection, detectionNotePicking: false });
+        updateTags(currentHoveredId, true);
       } catch { /* A failed pick leaves the existing selection intact. */ }
     };
     // Click includes touch taps; this listener never consumes viewer gestures.
-    container.addEventListener('click',handleClick);
+    container.addEventListener('click', handleClick);
     // Attach listeners
     container.addEventListener("mousemove", handleMouseMove);
     container.addEventListener("mouseleave", handleMouseLeave);
 
     // Store cleanup function
     const cleanup = () => {
-      if(disposed)return;
-      disposed=true; ++hitRevision;
-      detectionViewer?.off?.('remove',cleanup);
-      container.removeEventListener('click',handleClick);
+      if (disposed) return;
+      disposed = true; ++hitRevision;
+      detectionViewer?.off?.('remove', cleanup);
+      container.removeEventListener('click', handleClick);
       if (updateTimeout) clearTimeout(updateTimeout);
       if (flashInterval) clearInterval(flashInterval); // Kill the flashing interval
       container.removeEventListener("mousemove", handleMouseMove);
@@ -4296,8 +4350,8 @@ private syncMapLegendLayer() {
       delete (tagComponent as any)._refreshDetectionLabels;
       tagConfigs.clear();
     };
-    (tagComponent as any)._detectionHoverCleanup=cleanup;
-    detectionViewer?.on?.('remove',cleanup);
+    (tagComponent as any)._detectionHoverCleanup = cleanup;
+    detectionViewer?.on?.('remove', cleanup);
   }
 
   // Retrieves the detection label/value associated with a given tag ID.
@@ -4350,19 +4404,21 @@ private syncMapLegendLayer() {
     ++this._alternateNavigationRequest;
     this._pendingDetectionFocus = null;
     this._alternateNavigationAbort?.abort();
-    const layerId=this._selectedMapFeature?.layer?.id||this._selectedMapFeature?.graphic?.layer?.id;
-    this._selectedMapFeatureKind=[LAYER_IDS.TRAFFIC_SIGNS_VT,LAYER_IDS.TRAFFIC_SIGNS_FL].includes(layerId)?'signs':
-      [LAYER_IDS.OBJECTS_VT,LAYER_IDS.OBJECTS_FL].includes(layerId)?'objects':null;
-    if(!this.selectedMapFeatureEnabled())return;
+    const layerId = this._selectedMapFeature?.layer?.id || this._selectedMapFeature?.graphic?.layer?.id;
+    this._selectedMapFeatureKind = [LAYER_IDS.TRAFFIC_SIGNS_VT, LAYER_IDS.TRAFFIC_SIGNS_FL].includes(layerId) ? 'signs' :
+      [LAYER_IDS.OBJECTS_VT, LAYER_IDS.OBJECTS_FL].includes(layerId) ? 'objects' : null;
+    if (!this.selectedMapFeatureEnabled()) return;
     this.revealDetectionTools();
     const attrs = this._selectedMapFeature?.graphic?.attributes || {};
     const metadata = { id: String(featureId), name: attrs.name || attrs.value || "Selected object", firstSeen: attrs.first_seen_at, lastSeen: attrs.last_seen_at };
-    const current = () => !controller.signal.aborted && request === this._objectDetailsRequest&&this.selectedMapFeatureEnabled();
+    const current = () => !controller.signal.aborted && request === this._objectDetailsRequest && this.selectedMapFeatureEnabled();
     const cached = this._objectDetailsCache.get(String(featureId));
-    this.setState({ selectedFeatureMetadata: cached?.metadata || metadata, featureMetadataLoading: !cached,
+    this.setState({
+      selectedFeatureMetadata: cached?.metadata || metadata, featureMetadataLoading: !cached,
       featureMetadataError: "", alternateImagesError: "", isFetchingAlternates: !cached,
       selectedFeatureLocation: { lat: featureLat, lon: featureLon }, alternateImages: cached?.images || [],
-      nearbyStripOpen: true, imageTrayTab: "object", fieldNotesListOpen: false }, () => this.showSelectedObjectPopup());
+      nearbyStripOpen: true, imageTrayTab: "object", fieldNotesListOpen: false
+    }, () => this.showSelectedObjectPopup());
     if (cached) return;
     let resolvedMetadata = metadata;
     let resolvedImages: any[] = [];
@@ -4402,9 +4458,11 @@ private syncMapLegendLayer() {
                 const det = await this.findImageDetection(img.id, img.detectionId, controller.signal);
                 if (!current()) return;
                 const bounds = typeof det?.geometry === "string" ? detectionThumbnailBounds(decodeAndNormalizeGeometry(det.geometry)) : undefined;
-                resolvedImages = resolvedImages.map(item => item.id === img.id ? { ...item,
+                resolvedImages = resolvedImages.map(item => item.id === img.id ? {
+                  ...item,
                   detectionLabel: det?.value ? formatTrafficSignName(det.value) : item.detectionLabel,
-                  detectionBounds: bounds || item.detectionBounds } : item);
+                  detectionBounds: bounds || item.detectionBounds
+                } : item);
                 this.setState({ alternateImages: resolvedImages });
               } catch { /* Keep captures available even if their detection query fails. */ }
             }));
@@ -4435,7 +4493,7 @@ private syncMapLegendLayer() {
     capturedAt: number;
     geometry: { type: "Point"; coordinates: [number, number] };
   }) => {
-    if(!this.selectedMapFeatureEnabled())return;
+    if (!this.selectedMapFeatureEnabled()) return;
     this._nearbyDiscovery?.cancel();
     this.revealDetectionTools();
     this._alternateNavigationAbort?.abort();
@@ -4444,7 +4502,7 @@ private syncMapLegendLayer() {
     const request = ++this._alternateNavigationRequest;
     this._pendingDetectionFocus = { imageId: String(img.id), detectionId: String(img.detectionId), request };
     const featureLocation = this.state.selectedFeatureLocation;
-    const current = () => !navigation.signal.aborted && request === this._alternateNavigationRequest&&this.selectedMapFeatureEnabled();
+    const current = () => !navigation.signal.aborted && request === this._alternateNavigationRequest && this.selectedMapFeatureEnabled();
     try {
       this.setState({ targetDetectionId: img.detectionId, detectionsActive: !!(this.state.trafficSignsActive || this.state.objectsActive) });
 
@@ -4588,7 +4646,7 @@ private syncMapLegendLayer() {
               trafficSignsOptions: fullList,
               trafficSignsFilterValue: allOption,
             },
-            () => { this.checkFiltersLoaded(); if(this.state.signLabels&&this.state.trafficSignsActive)this.filterTrafficSignsVTLayer(this._mapFeatureFilterCodes.get('signs')); },
+            () => { this.checkFiltersLoaded(); if (this.state.signLabels && this.state.trafficSignsActive) this.filterTrafficSignsVTLayer(this._mapFeatureFilterCodes.get('signs')); },
           );
         },
         signal,
@@ -4643,7 +4701,7 @@ private syncMapLegendLayer() {
               objectsOptions: fullList,
               objectsFilterValue: allOption,
             },
-            () => { this.checkFiltersLoaded(); if(this.state.objectLabels&&this.state.objectsActive)this.filterObjectsVTLayer(this._mapFeatureFilterCodes.get('objects')); },
+            () => { this.checkFiltersLoaded(); if (this.state.objectLabels && this.state.objectsActive) this.filterObjectsVTLayer(this._mapFeatureFilterCodes.get('objects')); },
           );
         },
         signal,
@@ -4673,15 +4731,15 @@ private syncMapLegendLayer() {
     }
   }
 
-  private onTrafficSignCategoriesChange = (codes: CategorySelection) => this.applyMapFeatureCategories('signs',codes);
-  private onObjectCategoriesChange = (codes: CategorySelection) => this.applyMapFeatureCategories('objects',codes);
+  private onTrafficSignCategoriesChange = (codes: CategorySelection) => this.applyMapFeatureCategories('signs', codes);
+  private onObjectCategoriesChange = (codes: CategorySelection) => this.applyMapFeatureCategories('objects', codes);
 
   /** Commit one immutable selection and retire obsolete map-picking feedback. */
   private applyMapFeatureCategories = (kind: 'signs' | 'objects', codes: CategorySelection) => {
     const selection = codes === null ? null : Object.freeze([...new Set(codes)]);
     this._mapFeatureClickAbort?.abort(); this._turboHoverPickAbort?.abort();
     this.clearSelectedMapFeature(kind); this.clearTurboHoverDetails();
-    this.setState(kind === 'signs' ? {trafficSignsSelectedCodes:selection} : {objectsSelectedCodes:selection});
+    this.setState(kind === 'signs' ? { trafficSignsSelectedCodes: selection } : { objectsSelectedCodes: selection });
     if (kind === 'signs') this.filterTrafficSignsVTLayer(selection);
     else this.filterObjectsVTLayer(selection);
   };
@@ -5054,18 +5112,18 @@ private syncMapLegendLayer() {
         * Detection tile resources are owned by DetectionLayerController
     */
   /** Native tiles own all sprites; no per-viewport FeatureLayer is constructed. */
-  private _mapSpriteLoading=new MapSpriteLoading((kind,status)=>{if(!this._sharedNotesDisposed)this.setState(kind==='signs'?{signSpritesStatus:status}:{objectSpritesStatus:status});});
+  private _mapSpriteLoading = new MapSpriteLoading((kind, status) => { if (!this._sharedNotesDisposed) this.setState(kind === 'signs' ? { signSpritesStatus: status } : { objectSpritesStatus: status }); });
   private async syncMapFeatureCoverage(kind: "signs" | "objects") {
     const view = this.state.jimuMapView?.view;
-    if (!view) {this._mapSpriteLoading.clear(kind);return;}
+    if (!view) { this._mapSpriteLoading.clear(kind); return; }
     const signs = kind === "signs", active = signs ? this.state.trafficSignsActive : this.state.objectsActive;
     const oldFeature = view.map.findLayerById(signs ? LAYER_IDS.TRAFFIC_SIGNS_FL : LAYER_IDS.OBJECTS_FL);
     if (oldFeature) { view.map.remove(oldFeature); oldFeature.destroy(); }
     if (signs) { this.mapillaryTrafficSignsFeatureLayer = null; this.trafficSignsZoomHandle?.remove(); this.trafficSignsStationaryHandle?.remove(); }
     else { this.mapillaryObjectsFeatureLayer = null; this.objectsZoomHandle?.remove(); this.objectsStationaryHandle?.remove(); }
-    this._detectionLayers.sync(kind,active);
+    this._detectionLayers.sync(kind, active);
     if (!active) {
-      this.setState(signs ? {showTrafficSignsFilterBox:false} : {showObjectsFilterBox:false});
+      this.setState(signs ? { showTrafficSignsFilterBox: false } : { showObjectsFilterBox: false });
       this._mapFeatureClickAbort?.abort(); this._turboHoverPickAbort?.abort(); this.clearTurboHoverDetails();
       return;
     }
@@ -5073,27 +5131,27 @@ private syncMapLegendLayer() {
   }
 
   /** Inspect only pointer-local source tiles; keep bytes, not decoded feature collections. */
-  private openPickedMapDetection(feature:any) {
-    this._selectedMapFeature=feature;
-    const attrs=feature.graphic.attributes,featureId=attrs.id||attrs.value;
-    const geoPt=webMercatorUtils.webMercatorToGeographic(feature.graphic.geometry) as __esri.Point;
-    this.drawPoint(geoPt.longitude,geoPt.latitude);
-    void this.fetchAlternateImages(featureId,geoPt.latitude,geoPt.longitude);
+  private openPickedMapDetection(feature: any) {
+    this._selectedMapFeature = feature;
+    const attrs = feature.graphic.attributes, featureId = attrs.id || attrs.value;
+    const geoPt = webMercatorUtils.webMercatorToGeographic(feature.graphic.geometry) as __esri.Point;
+    this.drawPoint(geoPt.longitude, geoPt.latitude);
+    void this.fetchAlternateImages(featureId, geoPt.latitude, geoPt.longitude);
   }
-  private offerNoteObjectChoice(view:__esri.MapView|__esri.SceneView,graphic:__esri.Graphic,openNote:()=>void,current:()=>boolean):boolean {
-    if(!(this.state.trafficSignsActive||this.state.objectsActive))return false;
-    let content:HTMLElement;
-    const choiceCurrent=()=>current()&&(!view.popup||(view.popup.visible&&view.popup.content===content));
-    content=createNoteObjectChoice(document,source=>this._owned(source),()=>{if(!choiceCurrent())return;view.closePopup();openNote();},async()=>{
-      if(!choiceCurrent()||!(this.state.trafficSignsActive||this.state.objectsActive))return false;
-      const screen=view.toScreen(graphic.geometry as __esri.Point);
-      if(!screen||!Number.isFinite(screen.x)||!Number.isFinite(screen.y)||screen.x<0||screen.y<0||screen.x>view.width||screen.y>view.height)return false;
-      this._mapFeatureClickAbort?.abort();const controller=new AbortController();this._mapFeatureClickAbort=controller;
-      const picked=await this.pickMapFeature({x:screen.x,y:screen.y},view,controller.signal);
-      if(!choiceCurrent()||controller.signal.aborted||!picked?.graphic)return false;
-      view.closePopup();this.openPickedMapDetection(picked);return true;
-    },choiceCurrent);
-    view.openPopup({title:this._owned('Note and map objects'),content,location:graphic.geometry as __esri.Point});return true;
+  private offerNoteObjectChoice(view: __esri.MapView | __esri.SceneView, graphic: __esri.Graphic, openNote: () => void, current: () => boolean): boolean {
+    if (!(this.state.trafficSignsActive || this.state.objectsActive)) return false;
+    let content: HTMLElement;
+    const choiceCurrent = () => current() && (!view.popup || (view.popup.visible && view.popup.content === content));
+    content = createNoteObjectChoice(document, source => this._owned(source), () => { if (!choiceCurrent()) return; view.closePopup(); openNote(); }, async () => {
+      if (!choiceCurrent() || !(this.state.trafficSignsActive || this.state.objectsActive)) return false;
+      const screen = view.toScreen(graphic.geometry as __esri.Point);
+      if (!screen || !Number.isFinite(screen.x) || !Number.isFinite(screen.y) || screen.x < 0 || screen.y < 0 || screen.x > view.width || screen.y > view.height) return false;
+      this._mapFeatureClickAbort?.abort(); const controller = new AbortController(); this._mapFeatureClickAbort = controller;
+      const picked = await this.pickMapFeature({ x: screen.x, y: screen.y }, view, controller.signal);
+      if (!choiceCurrent() || controller.signal.aborted || !picked?.graphic) return false;
+      view.closePopup(); this.openPickedMapDetection(picked); return true;
+    }, choiceCurrent);
+    view.openPopup({ title: this._owned('Note and map objects'), content, location: graphic.geometry as __esri.Point }); return true;
   }
 
   private async pickMapFeature(screen: { x: number; y: number }, view: __esri.MapView | __esri.SceneView, signal: AbortSignal): Promise<any | null> {
@@ -5103,8 +5161,8 @@ private syncMapLegendLayer() {
     const radius = 12;
     const ground = view.toMap(screen) as __esri.Point;
     if (!ground) return null;
-    const corners = [[-radius,-radius],[radius,-radius],[radius,radius],[-radius,radius]].map(([x,y]) => view.toMap({x:screen.x+x,y:screen.y+y}) as __esri.Point).filter(p => p && Number.isFinite(p.longitude) && Number.isFinite(p.latitude));
-    const boxes = turboFootprintBboxes(corners.map(p => ({lon:p.longitude!,lat:p.latitude!})));
+    const corners = [[-radius, -radius], [radius, -radius], [radius, radius], [-radius, radius]].map(([x, y]) => view.toMap({ x: screen.x + x, y: screen.y + y }) as __esri.Point).filter(p => p && Number.isFinite(p.longitude) && Number.isFinite(p.latitude));
+    const boxes = turboFootprintBboxes(corners.map(p => ({ lon: p.longitude!, lat: p.latitude! })));
     let nearest: any = null, distance = radius * radius;
     for (const kind of ["signs", "objects"] as const) {
       const signs = kind === "signs";
@@ -5114,7 +5172,7 @@ private syncMapLegendLayer() {
       const code = this._mapFeatureFilterCodes.get(kind), all = signs ? DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS : DEFAULT_FILTER_LABELS.OBJECTS;
       const matchesCategory = categoryMatcher(code, all);
       const seen = new Set<string>(); let count = 0;
-      for (const box of boxes) for (const [x,y,z] of turboTiles(box, ZOOM.TILE_FETCH)) {
+      for (const box of boxes) for (const [x, y, z] of turboTiles(box, ZOOM.TILE_FETCH)) {
         const key = `${kind}:${z}/${x}/${y}`;
         if (seen.has(key)) continue; seen.add(key);
         if (++count > 4) return null; // Never enumerate a tilted scene's broad footprint.
@@ -5123,11 +5181,11 @@ private syncMapLegendLayer() {
         let buffer = index?.buffer || this._mapFeatureTiles.get(key);
         if (!buffer) {
           const controller = new AbortController(), abort = () => controller.abort();
-          signal.addEventListener("abort", abort, {once:true});
+          signal.addEventListener("abort", abort, { once: true });
           const timer = setTimeout(abort, 12000);
           try {
             const source = signs ? TILE_URLS.TRAFFIC_SIGNS : TILE_URLS.OBJECTS;
-            const response = await fetch(`${source.replace("{z}",String(z)).replace("{x}",String(x)).replace("{y}",String(y))}?access_token=${this.accessToken}`, {signal:controller.signal});
+            const response = await fetch(`${source.replace("{z}", String(z)).replace("{x}", String(x)).replace("{y}", String(y))}?access_token=${this.accessToken}`, { signal: controller.signal });
             if (response.status === 404 || response.status === 204) buffer = new ArrayBuffer(0);
             else { if (!response.ok) throw new Error(`Map feature tile: HTTP ${response.status}`); buffer = await response.arrayBuffer(); }
             if (signal.aborted) return null;
@@ -5143,23 +5201,23 @@ private syncMapLegendLayer() {
           if (!matchesCategory(attrs.value)) return;
           const p = feature.loadGeometry()?.[0]?.[0]; if (!p) return;
           const n = 2 ** z, extent = Number(feature.extent) || 4096;
-          const lon = (x+p.x/extent)/n*360-180, lat = Math.atan(Math.sinh(Math.PI*(1-2*(y+p.y/extent)/n)))*180/Math.PI;
-          const coordinates = lonLatToWebMercator(lon,lat); if (!coordinates) return;
-          const geometry = new this.ArcGISModules.Point({...coordinates,...(view.type === "3d" ? {z:ground.z || 0} : {})});
+          const lon = (x + p.x / extent) / n * 360 - 180, lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + p.y / extent) / n))) * 180 / Math.PI;
+          const coordinates = lonLatToWebMercator(lon, lat); if (!coordinates) return;
+          const geometry = new this.ArcGISModules.Point({ ...coordinates, ...(view.type === "3d" ? { z: ground.z || 0 } : {}) });
           const pixel = view.toScreen(geometry); if (!pixel) return;
-          const delta = (pixel.x-screen.x)**2+(pixel.y-screen.y)**2;
-          if (delta < distance) { distance=delta; nearest={layer,kind,code,geometry,attributes:{...attrs,id:String(attrs.id),name:signs ? formatTrafficSignName(attrs.value) : objectNameMap[attrs.value] || attrs.value}}; }
+          const delta = (pixel.x - screen.x) ** 2 + (pixel.y - screen.y) ** 2;
+          if (delta < distance) { distance = delta; nearest = { layer, kind, code, geometry, attributes: { ...attrs, id: String(attrs.id), name: signs ? formatTrafficSignName(attrs.value) : objectNameMap[attrs.value] || attrs.value } }; }
         };
         if (!index) {
           const bytes = TurboSpatialIndex.bytes(buffer, source.length);
           if (this._mapFeatureIndexes.reserve(bytes)) {
-            index = new TurboSpatialIndex(buffer, [x,y,z], source.length);
+            index = new TurboSpatialIndex(buffer, [x, y, z], source.length);
             await index.build(source, signal); this._mapFeatureIndexes.set(key, index);
           }
         }
         if (index) await index.visitIndices(box, signal, consider);
-        else for (let i=0;i<source.length;i++) {
-          if (i % 100 === 0) { await new Promise(resolve => setTimeout(resolve,0)); if (signal.aborted) return null; }
+        else for (let i = 0; i < source.length; i++) {
+          if (i % 100 === 0) { await new Promise(resolve => setTimeout(resolve, 0)); if (signal.aborted) return null; }
           consider(i);
         }
 
@@ -5168,15 +5226,15 @@ private syncMapLegendLayer() {
     }
     if (signal.aborted || this.state.jimuMapView?.view !== view || !nearest || !stationary() || view.zoom + 1e-4 < ZOOM.FEATURES_INTERACTIVE) return null;
     if (!(nearest.kind === "signs" ? this.state.trafficSignsActive : this.state.objectsActive) || nearest.code !== this._mapFeatureFilterCodes.get(nearest.kind)) return null;
-    return {layer:nearest.layer,graphic:new this.ArcGISModules.Graphic({geometry:nearest.geometry,attributes:nearest.attributes})};
+    return { layer: nearest.layer, graphic: new this.ArcGISModules.Graphic({ geometry: nearest.geometry, attributes: nearest.attributes }) };
   }
 
   private changeDetectionDisplayMode = (kind: 'signs' | 'objects', mode: CategoryDisplayMode) => {
-    try{if(sessionStorage.getItem('mlyDisplayDebug')==='1')console.info('[Mapillary display mode]',JSON.stringify({stage:'widget-handler',kind,requested:mode,current:kind==='signs'?this.state.signDisplayMode:this.state.objectDisplayMode}));}catch{}
+    try { if (sessionStorage.getItem('mlyDisplayDebug') === '1') console.info('[Mapillary display mode]', JSON.stringify({ stage: 'widget-handler', kind, requested: mode, current: kind === 'signs' ? this.state.signDisplayMode : this.state.objectDisplayMode })); } catch { }
     if (mode !== 'selected' && mode !== 'highlight') return;
     this._mapFeatureClickAbort?.abort(); this._turboHoverPickAbort?.abort();
-    this.setState(kind === 'signs' ? {signDisplayMode:mode} : {objectDisplayMode:mode}, () => {
-      try{if(sessionStorage.getItem('mlyDisplayDebug')==='1')console.info('[Mapillary display mode]',JSON.stringify({stage:'state-committed',kind,current:kind==='signs'?this.state.signDisplayMode:this.state.objectDisplayMode}));}catch{}
+    this.setState(kind === 'signs' ? { signDisplayMode: mode } : { objectDisplayMode: mode }, () => {
+      try { if (sessionStorage.getItem('mlyDisplayDebug') === '1') console.info('[Mapillary display mode]', JSON.stringify({ stage: 'state-committed', kind, current: kind === 'signs' ? this.state.signDisplayMode : this.state.objectDisplayMode })); } catch { }
       const selection = this._mapFeatureFilterCodes.get(kind);
       if (kind === 'signs') this.filterTrafficSignsVTLayer(selection);
       else this.filterObjectsVTLayer(selection);
@@ -5185,25 +5243,25 @@ private syncMapLegendLayer() {
 
   private changeDetectionLabels = (kind: 'signs' | 'objects', enabled: boolean) => {
     if (typeof enabled !== 'boolean') return;
-    this.setState(kind === 'signs' ? {signLabels:enabled} : {objectLabels:enabled}, () => {
+    this.setState(kind === 'signs' ? { signLabels: enabled } : { objectLabels: enabled }, () => {
       if (kind === 'signs') this.filterTrafficSignsVTLayer(this._mapFeatureFilterCodes.get(kind));
       else this.filterObjectsVTLayer(this._mapFeatureFilterCodes.get(kind));
     });
   };
   private changeDetectionOverlap = (kind: 'signs' | 'objects', reduce: boolean) => {
     if (typeof reduce !== 'boolean') return;
-    this.setState(kind === 'signs' ? {signReduceOverlap:reduce} : {objectReduceOverlap:reduce}, () => {
+    this.setState(kind === 'signs' ? { signReduceOverlap: reduce } : { objectReduceOverlap: reduce }, () => {
       void this.applyMapFeatureSpriteScale(kind);
     });
   };
   private changeDetectionOpacity = (kind: 'signs' | 'objects', opacity: number) => {
     if (!Number.isFinite(opacity) || opacity < .2 || opacity > 1) return;
-    this._detectionLayers.setOpacity(kind,opacity);
-    this.setState(kind === 'signs' ? {signOpacity:opacity} : {objectOpacity:opacity});
+    this._detectionLayers.setOpacity(kind, opacity);
+    this.setState(kind === 'signs' ? { signOpacity: opacity } : { objectOpacity: opacity });
   };
   private resetDetectionDisplay = (kind: 'signs' | 'objects') => {
-    this.setState(kind === 'signs' ? {signSpriteScale:1,signOpacity:1,signDisplayMode:'selected',signReduceOverlap:false,signLabels:false} : {objectSpriteScale:1,objectOpacity:1,objectDisplayMode:'selected',objectReduceOverlap:false,objectLabels:false}, () => {
-      this.applyMapFeatureCategories(kind,null);
+    this.setState(kind === 'signs' ? { signSpriteScale: 1, signOpacity: 1, signDisplayMode: 'selected', signReduceOverlap: false, signLabels: false } : { objectSpriteScale: 1, objectOpacity: 1, objectDisplayMode: 'selected', objectReduceOverlap: false, objectLabels: false }, () => {
+      this.applyMapFeatureCategories(kind, null);
       void this.applyMapFeatureSpriteScale(kind);
     });
   };
@@ -5220,7 +5278,7 @@ private syncMapLegendLayer() {
   private initMapillaryTrafficSignsLayer() { this._detectionLayers.initialize('signs'); }
   private toggleMapillaryTrafficSigns = async () => {
     const next = !this.state.trafficSignsActive;
-    this.setState({ trafficSignsActive: next,signSpritesStatus:next?'loading':'idle' }, () => { if(!next)this.clearSelectedMapFeature("signs");void this.syncMapFeatureCoverage("signs"); this.syncDetectionLayerAvailability(); });
+    this.setState({ trafficSignsActive: next, signSpritesStatus: next ? 'loading' : 'idle' }, () => { if (!next) this.clearSelectedMapFeature("signs"); void this.syncMapFeatureCoverage("signs"); this.syncDetectionLayerAvailability(); });
   };
 
 
@@ -5232,7 +5290,7 @@ private syncMapLegendLayer() {
   private initMapillaryObjectsLayer() { this._detectionLayers.initialize('objects'); }
   private toggleMapillaryObjects = async () => {
     const next = !this.state.objectsActive;
-    this.setState({ objectsActive: next,objectSpritesStatus:next?'loading':'idle' }, () => { if(!next)this.clearSelectedMapFeature("objects");void this.syncMapFeatureCoverage("objects"); this.syncDetectionLayerAvailability(); });
+    this.setState({ objectsActive: next, objectSpritesStatus: next ? 'loading' : 'idle' }, () => { if (!next) this.clearSelectedMapFeature("objects"); void this.syncMapFeatureCoverage("objects"); this.syncDetectionLayerAvailability(); });
   };
 
 
@@ -5398,10 +5456,10 @@ private syncMapLegendLayer() {
     const sharedView = this.state.jimuMapView?.view;
     if (!sharedView?.map || sharedView.destroyed) return;
     const sharedMap = sharedView.map;
-    const startupClickRevision=this._mapClickRevision;
-    const current = () => this._mapClickRevision===startupClickRevision && isStartupCurrent() && this.state.jimuMapView?.view === sharedView &&
-      sharedView.map === sharedMap && !sharedView.destroyed&&this.props.state!=='CLOSED'&&this.props.visible!==false&&
-      (!this._currentImagePresentation||this._currentImagePresentation.owns(sharedMap));
+    const startupClickRevision = this._mapClickRevision;
+    const current = () => this._mapClickRevision === startupClickRevision && isStartupCurrent() && this.state.jimuMapView?.view === sharedView &&
+      sharedView.map === sharedMap && !sharedView.destroyed && this.props.state !== 'CLOSED' && this.props.visible !== false &&
+      (!this._currentImagePresentation || this._currentImagePresentation.owns(sharedMap));
     if (!current()) return;
     // 1. Get the query string.
     // We attempt to read the PARENT window (the main browser URL),
@@ -5464,25 +5522,25 @@ private syncMapLegendLayer() {
 
           if (seqId && coords) {
             // Pin the saved heading while the SDK opens/centers the image.
-            this._isFlyInActive=true;this._sharedStartupImageId=String(sharedId);this._sharedStartupBearing=bearing;this._lastBearing=bearing;
+            this._isFlyInActive = true; this._sharedStartupImageId = String(sharedId); this._sharedStartupBearing = bearing; this._lastBearing = bearing;
             try {
-              await this.loadSequenceById(seqId,sharedId);
-              const restoreCurrent=()=>current()&&String(this.state.imageId)===String(sharedId);
-              if(!restoreCurrent())return;
-              await restoreSharedViewerBearing(sharedId,coords,bearing,this._sharedViewerBearingHost,restoreCurrent);
-              if(!restoreCurrent())return;
+              await this.loadSequenceById(seqId, sharedId);
+              const restoreCurrent = () => current() && String(this.state.imageId) === String(sharedId);
+              if (!restoreCurrent()) return;
+              await restoreSharedViewerBearing(sharedId, coords, bearing, this._sharedViewerBearingHost, restoreCurrent);
+              if (!restoreCurrent()) return;
               // Anchoring can run in parallel with the camera flight when detail
               // coverage is already available; it never blocks imagery or flight.
               this.refreshActivePulseAnchor(sharedView);
-              if(this.ArcGISModules){
-                const {Point}=this.ArcGISModules;
-                await restoreSharedMapCamera(sharedView,coords,bearing,mapZoom,properties=>new Point(properties),restoreCurrent);
+              if (this.ArcGISModules) {
+                const { Point } = this.ArcGISModules;
+                await restoreSharedMapCamera(sharedView, coords, bearing, mapZoom, properties => new Point(properties), restoreCurrent);
               }
-              if(!restoreCurrent())return;
+              if (!restoreCurrent()) return;
               this.refreshActivePulseAnchor(sharedView);
               this.requestConeRedraw(sharedView);
             } finally {
-              if(current()){this._sharedStartupImageId=null;this._sharedStartupBearing=null;this._isFlyInActive=false;}
+              if (current()) { this._sharedStartupImageId = null; this._sharedStartupBearing = null; this._isFlyInActive = false; }
             }
           }
         }
@@ -5510,7 +5568,7 @@ private syncMapLegendLayer() {
       const zoom = zoomText?.trim() ? Number(zoomText) : sharedView.zoom;
       const bearing = bearingText?.trim() ? Number(bearingText) : 0;
       if (Number.isFinite(latitude) && Math.abs(latitude) <= 90 && Number.isFinite(longitude) && Math.abs(longitude) <= 180 &&
-          Number.isFinite(zoom) && Number.isFinite(bearing)) {
+        Number.isFinite(zoom) && Number.isFinite(bearing)) {
         this._isFlyInActive = true;
         try {
           const { Point } = this.ArcGISModules;
@@ -5760,12 +5818,14 @@ private syncMapLegendLayer() {
     if (!this.state.turboModeActive || !view?.map || !this.canInitializeCoverage(view)) return;
     // Startup and stationary callbacks must not cancel the same unfinished style.
     // Creator resolution belongs to that task; key by its input, not its result.
-    const key = JSON.stringify({ ...this.getTurboFilters(), creatorId: undefined,
+    const key = JSON.stringify({
+      ...this.getTurboFilters(), creatorId: undefined,
       username: (forceUsernameFilter ?? (this.state.turboFilterUsername || this.props.config.turboCreator || "")).trim(),
-      colorByDate: !!this.state.turboColorByDate, token: this.accessToken });
+      colorByDate: !!this.state.turboColorByDate, token: this.accessToken
+    });
     const pending = this._turboCoveragePending;
     if (pending && pending.view === view && pending.map === view.map && pending.key === key &&
-        !pending.controller.signal.aborted) return pending.promise;
+      !pending.controller.signal.aborted) return pending.promise;
     this._turboAbortController?.abort();
     this._turboHoverPickAbort?.abort();
     this.clearTurboHoverDetails();
@@ -5796,7 +5856,7 @@ private syncMapLegendLayer() {
             // A current layer-view creation can abort during startup. Retry once;
             // detached layers and superseded views are owned by their newer request.
             if (attempt === 0 && current() && attached() &&
-                (name === "AbortError" || name === "view:no-layerview-for-layer")) {
+              (name === "AbortError" || name === "view:no-layerview-for-layer")) {
               this._loadedTurboFiltersKey = "";
               continue;
             }
@@ -5910,7 +5970,8 @@ private syncMapLegendLayer() {
         if (!layer && graphics.length) {
           layer = layers[role] = new this.ArcGISModules.GraphicsLayer({
             id: `mapillary-tile-${role}`, title: `Mapillary ${role} sequence`, listMode: 'hide',
-            elevationInfo: { mode: 'on-the-ground' } });
+            elevationInfo: { mode: 'on-the-ground' }
+          });
           const baseIndex = this.turboCoverageLayer ? view.map.layers.indexOf(this.turboCoverageLayer) : -1;
           const hoverIndex = view.map.layers.indexOf(layers.hover as __esri.GraphicsLayer);
           view.map.add(layer, role === 'selected' && hoverIndex >= 0 ? hoverIndex + 1 : baseIndex < 0 ? undefined : baseIndex + 1);
@@ -6106,7 +6167,7 @@ private syncMapLegendLayer() {
       background: { ...this._backgroundRequests.stats, limit: this._backgroundRequests.concurrency },
       routes: sequenceRouteMemoryStats(this.sequenceCoordsCache),
       nearby: this._sequenceDemand.memoryStats,
-      nearbyDiscovery:this._nearbyDiscovery?.stats??null,
+      nearbyDiscovery: this._nearbyDiscovery?.stats ?? null,
       view: this.state.jimuMapView?.view?.type ?? null,
       imageTiling: this._viewerImageTiling ?? null,
       places: { active: !!this.state.placesActive, status: this.state.placesStatus?.kind ?? 'off', ...this._places?.stats },
@@ -6124,7 +6185,7 @@ private syncMapLegendLayer() {
     this.clearSequenceDiagnostics();
     if (!this.props.config.debugMode || this.props.state === 'CLOSED' || typeof window === 'undefined') return;
     const registry = (window as any).__mapillarySequencePerformance ??= Object.create(null);
-    const entry = { snapshot: () => this.sequenceDiagnosticsSnapshot(), reset: () => {this._sequencePerformance.reset();this._nearbyDiscovery?.resetStats();} };
+    const entry = { snapshot: () => this.sequenceDiagnosticsSnapshot(), reset: () => { this._sequencePerformance.reset(); this._nearbyDiscovery?.resetStats(); } };
     registry[this.props.id] = entry; this._sequenceDiagnosticsEntry = entry;
     if (typeof PerformanceObserver !== 'undefined' && PerformanceObserver.supportedEntryTypes?.includes('longtask')) {
       this._sequenceLongTaskObserver = new PerformanceObserver(list => {
@@ -6260,9 +6321,11 @@ private syncMapLegendLayer() {
   /** Scope display anchors to the active coverage source and filter revision. */
   private coverageSelectionContext() {
     const view = this.state.jimuMapView?.view;
-    return { view: view || this, layer: this._nativeSequenceSelection,
+    return {
+      view: view || this, layer: this._nativeSequenceSelection,
       revision: this._turboRequestCount, enabled: !!view && this.state.turboModeActive,
-      individual: !!view && view.zoom >= 14, stationary: !!view && view.stationary !== false };
+      individual: !!view && view.zoom >= 14, stationary: !!view && view.stationary !== false
+    };
   }
 
   /** Match selection visuals to the accepted tile point; API coordinates remain unchanged. */
@@ -6338,10 +6401,10 @@ private syncMapLegendLayer() {
     const zoom = view?.zoom ?? 0;
     if (this.state.coverageFrameResolving) return { text: this._t('appFindingNearbyImage'), busy: true };
     if (this.state.isLoading) return { text: this._t('appOpeningImage'), busy: true };
-    const signsLoading=this.state.trafficSignsActive&&this.state.signSpritesStatus==='loading',objectsLoading=this.state.objectsActive&&this.state.objectSpritesStatus==='loading';
-    if(signsLoading||objectsLoading)return{text:this._owned(signsLoading&&objectsLoading?'Loading traffic sign and object icons…':signsLoading?'Loading traffic sign icons…':'Loading object icons…'),busy:true};
-    if((this.state.trafficSignsActive&&this.state.signSpritesStatus==='error')||(this.state.objectsActive&&this.state.objectSpritesStatus==='error'))return{text:this._owned('Map icons could not load. Toggle the affected layer off and on to retry.')};
-    if (this.state.imageId && this.state.sequenceRouteLoading) return { text: this.state.sequenceRouteProgress ? this._t('uiProfileRoute',{progress:this.state.sequenceRouteProgress}) : this._t('uiLoadingProfileRoute'), busy: true };
+    const signsLoading = this.state.trafficSignsActive && this.state.signSpritesStatus === 'loading', objectsLoading = this.state.objectsActive && this.state.objectSpritesStatus === 'loading';
+    if (signsLoading || objectsLoading) return { text: this._owned(signsLoading && objectsLoading ? 'Loading traffic sign and object icons…' : signsLoading ? 'Loading traffic sign icons…' : 'Loading object icons…'), busy: true };
+    if ((this.state.trafficSignsActive && this.state.signSpritesStatus === 'error') || (this.state.objectsActive && this.state.objectSpritesStatus === 'error')) return { text: this._owned('Map icons could not load. Toggle the affected layer off and on to retry.') };
+    if (this.state.imageId && this.state.sequenceRouteLoading) return { text: this.state.sequenceRouteProgress ? this._t('uiProfileRoute', { progress: this.state.sequenceRouteProgress }) : this._t('uiLoadingProfileRoute'), busy: true };
     if (this.state.turboLoading || this.state.turboUpdatingVisible) return { text: this._t('appLoadingCoverage'), busy: !!this.state.turboUpdatingVisible };
     if (this.state.turboModeActive && this.getTurboOrganizationId() === -1) return { text: this._t('appEnterAValidOrganizationId') };
     if (this.state.turboModeActive && this.getTurboOrganizationId() !== undefined && zoom < 6) return { text: this._t('appZoomCloserForOrganizationCoverage'), action: "show", label: this._t('appZoomToCoverage') };
@@ -6378,25 +6441,25 @@ private syncMapLegendLayer() {
   private getExplorerGuideContext(): string[] {
     const context: string[] = [];
     const creator = this.state.turboFilterUsername || this.props.config.turboCreator;
-    if (creator) context.push(this._t('uiCreator',{name:creator}));
+    if (creator) context.push(this._t('uiCreator', { name: creator }));
     const organization = this.getTurboOrganizationId();
-    if (organization !== undefined) context.push(organization > 0 ? this._t('uiOrganization',{name:organization}) : this._t('uiInvalidOrganization'));
+    if (organization !== undefined) context.push(organization > 0 ? this._t('uiOrganization', { name: organization }) : this._t('uiInvalidOrganization'));
     const start = this.state.turboFilterStartDate, end = this.state.turboFilterEndDate;
-    if (start || end) context.push(this._t('uiDateRange',{start:start || this._t('uiAnyDate'),end:end || this._t('uiLatest')}));
+    if (start || end) context.push(this._t('uiDateRange', { start: start || this._t('uiAnyDate'), end: end || this._t('uiLatest') }));
     if (this.state.turboFilterOnFoot !== undefined) context.push(this.state.turboFilterOnFoot ? this._t('uiTravelFoot') : this._t('uiTravelOther'));
     if (this.state.turboFilterIsPano === true) context.push(this._t('uiPanoOnly'));
     else if (this.state.turboFilterIsPano === false) context.push(this._t('uiNonPanoOnly'));
-    if (this.state.turboColorByDate) context.push(this.state.selectedTurboYear ? this._t('uiYear',{year:this.state.selectedTurboYear}) : this._t('uiColorYear'));
-    if (this.state.qualityViewActive) context.push(this.state.selectedQualityBand ? this._t('uiQualityBand',{band:this.state.selectedQualityBand}) : this._t('uiQualityOn'));
+    if (this.state.turboColorByDate) context.push(this.state.selectedTurboYear ? this._t('uiYear', { year: this.state.selectedTurboYear }) : this._t('uiColorYear'));
+    if (this.state.qualityViewActive) context.push(this.state.selectedQualityBand ? this._t('uiQualityBand', { band: this.state.selectedQualityBand }) : this._t('uiQualityOn'));
     if (this.state.trafficSignsActive) {
       const code = this._mapFeatureFilterCodes.get("signs");
       const codes = selectedCategoryCodes(code, DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS);
-      context.push(codes === null ? this._t('uiSignsOn') : this._t('uiSigns',{name:codes.length===1?formatTrafficSignName(codes[0]):codes.length?this._t('featureSelectedCount',{count:codes.length}):this._t('featureNoneSelected')}));
+      context.push(codes === null ? this._t('uiSignsOn') : this._t('uiSigns', { name: codes.length === 1 ? formatTrafficSignName(codes[0]) : codes.length ? this._t('featureSelectedCount', { count: codes.length }) : this._t('featureNoneSelected') }));
     }
     if (this.state.objectsActive) {
       const code = this._mapFeatureFilterCodes.get("objects");
       const codes = selectedCategoryCodes(code, DEFAULT_FILTER_LABELS.OBJECTS);
-      context.push(codes === null ? this._t('uiObjectsOn') : this._t('uiObjectsFilter',{name:codes.length===1?objectNameMap[codes[0]]||codes[0]:codes.length?this._t('featureSelectedCount',{count:codes.length}):this._t('featureNoneSelected')}));
+      context.push(codes === null ? this._t('uiObjectsOn') : this._t('uiObjectsFilter', { name: codes.length === 1 ? objectNameMap[codes[0]] || codes[0] : codes.length ? this._t('featureSelectedCount', { count: codes.length }) : this._t('featureNoneSelected') }));
     }
     return context;
   }
@@ -6410,9 +6473,9 @@ private syncMapLegendLayer() {
     if (this.state.trafficSignsActive || this.state.objectsActive) {
       const feature = this.state.trafficSignsActive && this.state.objectsActive ? "sign or object" : this.state.trafficSignsActive ? "traffic sign" : "object";
       if (zoom + 1e-4 < ZOOM.FEATURES_INTERACTIVE) return touch
-        ? this._owned("Zoom closer, then tap a {value0}",{value0:String(feature)})
-        : this._owned("Zoom closer, then hover or click a {value0}",{value0:String(feature)});
-      return touch ? this._owned("Tap a {value0} for details",{value0:String(feature)}) : this._owned("Hover or click a {value0} for details",{value0:String(feature)});
+        ? this._owned("Zoom closer, then tap a {value0}", { value0: String(feature) })
+        : this._owned("Zoom closer, then hover or click a {value0}", { value0: String(feature) });
+      return touch ? this._owned("Tap a {value0} for details", { value0: String(feature) }) : this._owned("Hover or click a {value0} for details", { value0: String(feature) });
     }
     if (zoom < 14) return touch ? this._owned("Tap a coverage line to open imagery") : this._owned("Click a coverage line to open a representative image");
     return touch ? this._owned("Tap a point to open imagery") : this._owned("Hover to preview · Click to open");
@@ -6575,17 +6638,17 @@ private syncMapLegendLayer() {
   }
 
   /** Click-only overview/sequence selection; never fabricates an image hover. */
-  private async pickTurboRepresentative(screen: {x:number;y:number}, view: __esri.MapView | __esri.SceneView, signal: AbortSignal, preview = false, searchRadius?: number): Promise<__esri.Graphic | null> {
+  private async pickTurboRepresentative(screen: { x: number; y: number }, view: __esri.MapView | __esri.SceneView, signal: AbortSignal, preview = false, searchRadius?: number): Promise<__esri.Graphic | null> {
     if (!this.turboCoverageLayer || view.zoom >= 14 || view.stationary === false || signal.aborted) return null;
     if (view.zoom < 6 && (this.state.turboFilterOnFoot !== undefined || this.getTurboOrganizationId() !== undefined)) return null;
     const revision = this._turboRequestCount;
     const radius = searchRadius ?? TURBO_LIMITS.pickRadiusPx;
     const ground = view.toMap(screen) as __esri.Point;
     if (!ground) return null;
-    const samples = [[-radius,-radius],[radius,-radius],[radius,radius],[-radius,radius]].map(([x,y]) => view.toMap({x:screen.x+x,y:screen.y+y}) as __esri.Point).filter(Boolean);
-    const boxes = turboFootprintBboxes(samples.filter(p => p.longitude != null && p.latitude != null).map(p => ({lon:p.longitude!,lat:p.latitude!})));
+    const samples = [[-radius, -radius], [radius, -radius], [radius, radius], [-radius, radius]].map(([x, y]) => view.toMap({ x: screen.x + x, y: screen.y + y }) as __esri.Point).filter(Boolean);
+    const boxes = turboFootprintBboxes(samples.filter(p => p.longitude != null && p.latitude != null).map(p => ({ lon: p.longitude!, lat: p.latitude! })));
     let best = radius * radius;
-    let selected: {id:string;sequence?:string;pixel:{x:number;y:number};geometry:__esri.Point} | null = null;
+    let selected: { id: string; sequence?: string; pixel: { x: number; y: number }; geometry: __esri.Point } | null = null;
     const filters = this.getTurboFilters();
     const zoom = Math.max(0, Math.min(14, Math.floor(view.zoom)));
     const seen = new Set<string>();
@@ -6606,11 +6669,11 @@ private syncMapLegendLayer() {
       if (signal.aborted) return null;
       if (!indexed) continue;
       const source = indexed.query(boxes, tileCoordinates);
-      const [tx,ty,tz] = tileCoordinates, n = 2 ** tz;
+      const [tx, ty, tz] = tileCoordinates, n = 2 ** tz;
       let pickDeadline = performance.now() + 8, vertexChecks = 0;
-      for (let i=0; i<source.length; i++) {
+      for (let i = 0; i < source.length; i++) {
         if ((i & 31) === 0 && performance.now() >= pickDeadline) {
-          await new Promise(resolve=>setTimeout(resolve,0)); if (signal.aborted) return null; pickDeadline = performance.now() + 8;
+          await new Promise(resolve => setTimeout(resolve, 0)); if (signal.aborted) return null; pickDeadline = performance.now() + 8;
         }
         const feature = source.feature(i), props = feature.properties;
         if (!turboPointMatches(props, filters)) continue;
@@ -6618,27 +6681,27 @@ private syncMapLegendLayer() {
         if (id === undefined || id === null) continue;
         const extent = Number(feature.extent) || 4096;
         for (const path of feature.loadGeometry()) {
-          let previous: {x:number;y:number} | null = null;
+          let previous: { x: number; y: number } | null = null;
           for (const vertex of path) {
             if ((++vertexChecks & 255) === 0 && performance.now() >= pickDeadline) {
-              await new Promise(resolve=>setTimeout(resolve,0)); if (signal.aborted) return null; pickDeadline = performance.now() + 8;
+              await new Promise(resolve => setTimeout(resolve, 0)); if (signal.aborted) return null; pickDeadline = performance.now() + 8;
             }
             const lon = (tx + vertex.x / extent) / n * 360 - 180;
             const lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * (ty + vertex.y / extent) / n))) * 180 / Math.PI;
-            const coords = lonLatToWebMercator(lon,lat);
-            if (!coords) { previous=null; continue; }
-            const geometry = new this.ArcGISModules.Point({ ...coords, ...(view.type === "3d" ? {z:ground.z || 0} : {}) });
+            const coords = lonLatToWebMercator(lon, lat);
+            if (!coords) { previous = null; continue; }
+            const geometry = new this.ArcGISModules.Point({ ...coords, ...(view.type === "3d" ? { z: ground.z || 0 } : {}) });
             const pixel = view.toScreen(geometry);
-            if (!pixel) { previous=null; continue; }
+            if (!pixel) { previous = null; continue; }
             let nearest = pixel;
             if (previous && !overview) {
-              const dx=pixel.x-previous.x, dy=pixel.y-previous.y;
-              const fraction=Math.max(0,Math.min(1,((screen.x-previous.x)*dx+(screen.y-previous.y)*dy)/(dx*dx+dy*dy || 1)));
-              nearest={x:previous.x+fraction*dx,y:previous.y+fraction*dy};
+              const dx = pixel.x - previous.x, dy = pixel.y - previous.y;
+              const fraction = Math.max(0, Math.min(1, ((screen.x - previous.x) * dx + (screen.y - previous.y) * dy) / (dx * dx + dy * dy || 1)));
+              nearest = { x: previous.x + fraction * dx, y: previous.y + fraction * dy };
             }
-            const distance=(nearest.x-screen.x)**2+(nearest.y-screen.y)**2;
-            if (distance<=best) { best=distance; selected={id:String(id),sequence:overview ? undefined : String(props.id || ""),pixel:nearest,geometry:overview ? geometry : (view.toMap(nearest) as __esri.Point || ground)}; }
-            previous=pixel;
+            const distance = (nearest.x - screen.x) ** 2 + (nearest.y - screen.y) ** 2;
+            if (distance <= best) { best = distance; selected = { id: String(id), sequence: overview ? undefined : String(props.id || ""), pixel: nearest, geometry: overview ? geometry : (view.toMap(nearest) as __esri.Point || ground) }; }
+            previous = pixel;
           }
         }
       }
@@ -6646,7 +6709,7 @@ private syncMapLegendLayer() {
     if (signal.aborted || revision !== this._turboRequestCount || this.state.jimuMapView?.view !== view || !selected) return null;
     // A line selects its representative image, not the frame at the clicked coordinate.
     // Representative guidance is shown inside the imagery loading card, not a competing toast.
-    return new this.ArcGISModules.Graphic({ geometry:selected.geometry, attributes:{ image_id:selected.id, sequence_id:selected.sequence, turbo_representative:true, turbo_nearest_sequence:!!selected.sequence, turbo_sequence_hover:preview && !!selected.sequence, turbo_screen_x:selected.pixel.x, turbo_screen_y:selected.pixel.y } });
+    return new this.ArcGISModules.Graphic({ geometry: selected.geometry, attributes: { image_id: selected.id, sequence_id: selected.sequence, turbo_representative: true, turbo_nearest_sequence: !!selected.sequence, turbo_sequence_hover: preview && !!selected.sequence, turbo_screen_x: selected.pixel.x, turbo_screen_y: selected.pixel.y } });
   }
 
   private async pickTurboGraphic(screen: { x: number; y: number }, view: __esri.MapView | __esri.SceneView, signal: AbortSignal, radius: number = TURBO_LIMITS.pickRadiusPx): Promise<__esri.Graphic | null> {
@@ -6685,8 +6748,10 @@ private syncMapLegendLayer() {
     const selected = nearest as TurboPoint;
     return new this.ArcGISModules.Graphic({
       geometry: nearestGeometry,
-      attributes: { oid: selected.imageId, image_id: selected.imageId, sequence_id: selected.sequenceId, captured_at: selected.capturedAt, date_category: selected.year,
-        turbo_screen_x: (nearestScreen as { x: number; y: number }).x, turbo_screen_y: (nearestScreen as { x: number; y: number }).y },
+      attributes: {
+        oid: selected.imageId, image_id: selected.imageId, sequence_id: selected.sequenceId, captured_at: selected.capturedAt, date_category: selected.year,
+        turbo_screen_x: (nearestScreen as { x: number; y: number }).x, turbo_screen_y: (nearestScreen as { x: number; y: number }).y
+      },
     });
   }
 
@@ -6711,10 +6776,12 @@ private syncMapLegendLayer() {
       read: () => {
         const view = this.state.jimuMapView?.view;
         if (!view) return null;
-        return { view, layer: this.turboCoverageLayer, revision: this._turboRequestCount,
+        return {
+          view, layer: this.turboCoverageLayer, revision: this._turboRequestCount,
           geometry: this._turboHoverGraphic?.geometry, overlay: this._turboHoverOverlay,
           sourceZoom: ZOOM.TILE_FETCH, closeZoom: TURBO_LIMITS.closeZoom,
-          hybridReady: false, hybridVisible: false, hybridFallback: false };
+          hybridReady: false, hybridVisible: false, hybridFallback: false
+        };
       },
       cached: tile => {
         const key = tile.join("/");
@@ -6727,8 +6794,10 @@ private syncMapLegendLayer() {
       project: (context, lon, lat) => {
         const coordinates = lonLatToWebMercator(lon, lat);
         if (!coordinates || !this.ArcGISModules?.Point) return null;
-        const point = new this.ArcGISModules.Point({ ...coordinates,
-          ...(context.view.type === "3d" ? { z: context.geometry?.z || 0 } : {}) });
+        const point = new this.ArcGISModules.Point({
+          ...coordinates,
+          ...(context.view.type === "3d" ? { z: context.geometry?.z || 0 } : {})
+        });
         return context.view.toScreen(point);
       },
     });
@@ -6795,11 +6864,11 @@ private syncMapLegendLayer() {
     const geometry = graphic.geometry as __esri.Point;
     const location = frameTarget?.location || (Number.isFinite(geometry?.longitude) && Number.isFinite(geometry?.latitude)
       ? { lon: geometry.longitude, lat: geometry.latitude } : undefined);
-    const localKey = localRoute && location ? JSON.stringify([sequenceId,location.lon,location.lat]) : undefined;
+    const localKey = localRoute && location ? JSON.stringify([sequenceId, location.lon, location.lat]) : undefined;
     // Tile hints cannot override the active-route click policy; local hints also bind to the route array.
     const cachedPreviewId = localKey ? this._hoverBearingHints.peek(view, frames, localKey)
       : regionalHover && frameTarget ? this._coverageFrameLookup?.peek(view, sequenceId!, frameTarget.location)
-      : !regionalHover && !localRoute ? imageId : undefined;
+        : !regionalHover && !localRoute ? imageId : undefined;
     const present = (previewId: string, data: any, fallbackDate: any) => {
       if (!isCurrent()) return;
       if (String(data.id) === previewId && this._turboHoverAnchor) {
@@ -6833,11 +6902,13 @@ private syncMapLegendLayer() {
       this._hoverTimeout = null;
       if (!isCurrent()) return;
       try {
-        const previewId = cachedPreviewId || await hoverBearingImageId({ imageId, sequenceId,
+        const previewId = cachedPreviewId || await hoverBearingImageId({
+          imageId, sequenceId,
           representative: !!attrs.turbo_representative, zoom: view?.zoom ?? 0, location,
           activeSequence: this.state.sequenceId, loadedRoute: !!this._liveSequenceFrames.complete,
           frames, organizationId, signal: controller.signal,
-          distance: distanceMeters, lookup: (sequence, point, signal) => this.ensureCoverageFrameLookup().resolve(view, sequence, point, signal) });
+          distance: distanceMeters, lookup: (sequence, point, signal) => this.ensureCoverageFrameLookup().resolve(view, sequence, point, signal)
+        });
         if (!isCurrent() || !previewId) { finishPreview?.(); return; }
         if (localKey) this._hoverBearingHints.remember(view, frames, localKey, previewId);
         const fallbackDate = previewId === imageId ? attrs.captured_at : undefined;
@@ -6923,9 +6994,11 @@ private syncMapLegendLayer() {
     const oid = graphic.attributes?.oid ?? graphic.attributes?.image_id;
     if (this._lastHoveredTurboOid === oid && this._turboHoverGraphic) { this._turboHoverGraphic.geometry = graphic.geometry; return; }
     this.clearTurboHover(); this._lastHoveredTurboOid = oid;
-    const hover = new this.ArcGISModules.Graphic({ geometry: graphic.geometry, symbol: view.type === "3d" ? {
-      type: "point-3d", symbolLayers: [{ type: "icon", resource: { primitive: "circle" }, material: { color: [165,42,42,0.95] }, size: 6, outline: { color: "white", size: 1.5 } }],
-    } : { type: "simple-marker", style: "circle", color: [165,42,42,0.95], size: 6, outline: { color: "white", width: 1.5 } } });
+    const hover = new this.ArcGISModules.Graphic({
+      geometry: graphic.geometry, symbol: view.type === "3d" ? {
+        type: "point-3d", symbolLayers: [{ type: "icon", resource: { primitive: "circle" }, material: { color: [165, 42, 42, 0.95] }, size: 6, outline: { color: "white", size: 1.5 } }],
+      } : { type: "simple-marker", style: "circle", color: [165, 42, 42, 0.95], size: 6, outline: { color: "white", width: 1.5 } }
+    });
     (hover as any).__isTurboHover = true;
     this._turboHoverGraphic = hover;
     const host = view.container as HTMLElement;
@@ -7084,7 +7157,7 @@ private syncMapLegendLayer() {
       return;
     }
     if (Date.now() < this._coverageRoadRetryAt) {
-      this.showToast(<OwnedMessage source={"Road server is rate-limited. Try again in {value0} seconds."} values={{value0:String(Math.ceil((this._coverageRoadRetryAt - Date.now()) / 1000))}}/>, 5000);
+      this.showToast(<OwnedMessage source={"Road server is rate-limited. Try again in {value0} seconds."} values={{ value0: String(Math.ceil((this._coverageRoadRetryAt - Date.now()) / 1000)) }} />, 5000);
       return;
     }
 
@@ -7095,8 +7168,10 @@ private syncMapLegendLayer() {
     const signal = controller.signal;
     const view = jimuMapView.view;
     const filters = this.getTurboFilters();
-    const inputKey = () => JSON.stringify({ filters: this.getTurboFilters(), username: this.state.turboFilterUsername,
-      configuredUsername: this.props.config.turboCreator, token: this.accessToken });
+    const inputKey = () => JSON.stringify({
+      filters: this.getTurboFilters(), username: this.state.turboFilterUsername,
+      configuredUsername: this.props.config.turboCreator, token: this.accessToken
+    });
     const key = inputKey();
     const extentKey = () => view.extent ? [view.extent.xmin, view.extent.ymin, view.extent.xmax, view.extent.ymax].join('/') : '';
     const area = extentKey();
@@ -7171,8 +7246,10 @@ private syncMapLegendLayer() {
         STREET_COVERAGE_CONFIG.MIN_POINTS_PER_SEGMENT,
         STREET_COVERAGE_CONFIG.HIGHWAY_THRESHOLDS,
         pointTimestamps,
-        { signal, onProgress: (completed: number, total: number) => progress(completed === 0 ? "Indexing imagery…" : `Classifying roads: ${this._presentation.number(completed)} / ${this._presentation.number(total)}`),
-          onTransferred: () => { points = []; pointTimestamps = []; } },
+        {
+          signal, onProgress: (completed: number, total: number) => progress(completed === 0 ? "Indexing imagery…" : `Classifying roads: ${this._presentation.number(completed)} / ${this._presentation.number(total)}`),
+          onTransferred: () => { points = []; pointTimestamps = []; }
+        },
       );
       if (!current()) return;
 
@@ -7196,7 +7273,7 @@ private syncMapLegendLayer() {
         : err instanceof TypeError && /fetch|network/i.test(err.message)
           ? stage === "roads" ? "Could not reach the road server. Check your connection or try again later."
             : stage === "imagery" ? "Mapillary imagery coverage could not load. Check your connection or try again later."
-            : "Background analysis could not finish. Please retry."
+              : "Background analysis could not finish. Please retry."
           : err instanceof Error ? err.message : "Coverage analysis failed. Please retry.";
       this.showToast(message, 5000);
     } finally {
@@ -7220,12 +7297,12 @@ private syncMapLegendLayer() {
       const [GraphicsLayer] = await loadArcGISJSAPIModules(["esri/layers/GraphicsLayer"]);
       if (revision !== this._coverageRenderRevision || this.state.jimuMapView?.view !== view || !this.state.coverageSegmentsVisible) return;
       this._coverageRenderView = view;
-      this._coverageSegmentsLayer = new GraphicsLayer({ id:"coverage-segments-layer", title:"Classified Street Coverage", listMode:"hide" });
+      this._coverageSegmentsLayer = new GraphicsLayer({ id: "coverage-segments-layer", title: "Classified Street Coverage", listMode: "hide" });
       view.map.add(this._coverageSegmentsLayer);
       this._coverageRenderWatch = view.watch("stationary", (stationary: boolean) => { if (stationary) void this.refreshCoverageViewport(view); });
       await this.refreshCoverageViewport(view);
     } catch (error) {
-      if (revision === this._coverageRenderRevision) { this.stopCoverageRendering(); this.setState({ coverageSegmentsVisible: false }); this.showToast(this._t('appUnableToInitializeClassifiedStreets'),4000); }
+      if (revision === this._coverageRenderRevision) { this.stopCoverageRendering(); this.setState({ coverageSegmentsVisible: false }); this.showToast(this._t('appUnableToInitializeClassifiedStreets'), 4000); }
     }
   }
 
@@ -7327,7 +7404,7 @@ private syncMapLegendLayer() {
     if (this._routePointAGraphic) {
       try {
         oldView?.graphics?.remove(this._routePointAGraphic);
-      } catch (e) {}
+      } catch (e) { }
 
       this._routePointAGraphic = null;
     }
@@ -7335,7 +7412,7 @@ private syncMapLegendLayer() {
     if (this._routePointBGraphic) {
       try {
         oldView?.graphics?.remove(this._routePointBGraphic);
-      } catch (e) {}
+      } catch (e) { }
 
       this._routePointBGraphic = null;
     }
@@ -7460,6 +7537,8 @@ private syncMapLegendLayer() {
     if (!view?.map || view.destroyed || !this.ArcGISModules) return;
     const routeMap = view.map;
 
+    const polylinePaths = normalizeCaptureRoutePaths(pathsData);
+    if (!polylinePaths) return;
     if (!this._routeGraphicLayer) {
       const [GraphicsLayer] = await loadArcGISJSAPIModules(["esri/layers/GraphicsLayer"]);
       if (!current() || this.state.jimuMapView?.view !== view || view.map !== routeMap || view.destroyed) return;
@@ -7472,15 +7551,6 @@ private syncMapLegendLayer() {
     this._routeGraphicLayer.removeAll();
 
     const { Graphic } = this.ArcGISModules;
-
-    // Normalize input into a 3D paths array whether it is an array of paths or GeoJSON
-    let polylinePaths: number[][][] = [];
-    if (Array.isArray(pathsData)) {
-      polylinePaths = Array.isArray(pathsData[0][0]) ? pathsData : [pathsData];
-    } else if (pathsData?.coordinates) {
-      polylinePaths = Array.isArray(pathsData.coordinates[0][0]) ? pathsData.coordinates : [pathsData.coordinates];
-    }
-    if (polylinePaths.length === 0) return;
 
     // 1. Outer Glow Effect
     this._routeGraphicLayer.add(
@@ -7507,7 +7577,7 @@ private syncMapLegendLayer() {
   };
 
   // Exports the generated route as a GPX file.
-  private _stopRoutePreview:(()=>void)|null=null;
+  private _stopRoutePreview: (() => void) | null = null;
   private downloadRouteGPX = () => downloadCaptureRouteGPX(this.state.routeData);
 
   /**
@@ -7834,7 +7904,7 @@ private syncMapLegendLayer() {
   private cancelCaptureRouteGeneration = () => {
     if (!this._routeGeneration.cancel()) return;
     this.releaseCaptureRouteLoginView();
-    if (!this._startupDisposed) this.setState({isGeneratingRoute:false,routeGenerationProgress:null});
+    if (!this._startupDisposed) this.setState({ isGeneratingRoute: false, routeGenerationProgress: null });
   };
 
   private _routingLoginExpiry: ReturnType<typeof setTimeout> | null = null;
@@ -7938,14 +8008,14 @@ private syncMapLegendLayer() {
 
         coverageTiers: this._coverageSegmentTiers
           ? {
-              fresh: this._coverageSegmentTiers.filter((tier) => tier === "fresh").length,
+            fresh: this._coverageSegmentTiers.filter((tier) => tier === "fresh").length,
 
-              aging: this._coverageSegmentTiers.filter((tier) => tier === "aging").length,
+            aging: this._coverageSegmentTiers.filter((tier) => tier === "aging").length,
 
-              stale: this._coverageSegmentTiers.filter((tier) => tier === "stale").length,
+            stale: this._coverageSegmentTiers.filter((tier) => tier === "stale").length,
 
-              none: this._coverageSegmentTiers.filter((tier) => tier === "none").length,
-            }
+            none: this._coverageSegmentTiers.filter((tier) => tier === "none").length,
+          }
           : null,
       });
 
@@ -8084,7 +8154,7 @@ private syncMapLegendLayer() {
       this.log(`[CaptureRoute] Rejected by anchor cap: ` + `${selection.rejectedForAnchorCount}`);
 
       if (!selection.opportunities.length) {
-        this.showToast(<OwnedMessage source={"No beneficial capture detour found within {value0} minutes."} values={{value0:String(spareMinutes)}}/>, 4000);
+        this.showToast(<OwnedMessage source={"No beneficial capture detour found within {value0} minutes."} values={{ value0: String(spareMinutes) }} />, 4000);
 
         return;
       }
@@ -8164,11 +8234,11 @@ private syncMapLegendLayer() {
        *
        * Keep the best actual ArcGIS result as a safety fallback.
        */
-      let bestRoute: RoutingResult | null = null;
+      const captureSolveHistory = new CaptureSolveHistory<RoutingResult, CaptureOpportunity>();
 
-      let bestRouteOpportunities: CaptureOpportunity[] = [];
+      
 
-      let bestActualExtraMinutes = Infinity;
+      
 
       let finalAttemptCount = 0;
 
@@ -8220,37 +8290,9 @@ private syncMapLegendLayer() {
 
             const preflight = await routingProvider.preflightOrderedStops(preflightStops, run.signal);
             run.check();
-            /*
-             * Convert preflight stop indices back to the
-             * opportunity that supplied each capture anchor.
-             *
-             * preflightStops:
-             *
-             *   0      = START
-             *   1..N   = capture anchors
-             *   N + 1  = END
-             */
-            const ownerForStop = (stopIndex: number): string => {
-              if (stopIndex === 0) {
-                return "START";
-              }
-
-              if (stopIndex === captureStopOwners.length + 1) {
-                return "END";
-              }
-
-              return captureStopOwners[stopIndex - 1] ?? "UNKNOWN";
-            };
-
-            const snapDiagnostics = (preflight.waypointSnapDistancesMeters ?? [])
-              .map((snapDistanceMeters, index) => ({
-                stopIndex: index,
-                owner: ownerForStop(index),
-
-                snapDistanceMeters: Number(snapDistanceMeters.toFixed(1)),
-              }))
-              .filter((item) => item.stopIndex > 0 && item.stopIndex < preflightStops.length - 1)
-              .sort((a, b) => b.snapDistanceMeters - a.snapDistanceMeters);
+            const snapDiagnostics = buildPreflightSnapDiagnostics(
+              preflight.waypointSnapDistancesMeters, preflightStops.length, captureStopOwners,
+            );
 
             const badSnapDiagnostics = snapDiagnostics.filter((item) => item.snapDistanceMeters > 40);
 
@@ -8293,27 +8335,9 @@ private syncMapLegendLayer() {
 
             lastPreflightExtraMinutes = projectedExtraMinutes;
 
-            const preflightLegs = preflight.legDurationMinutes.map((durationMinutes, index) => {
-              const fromPoint = preflightStops[index];
-
-              const toPoint = preflightStops[index + 1];
-
-              const directMeters = fromPoint && toPoint ? distanceMeters(fromPoint[1], fromPoint[0], toPoint[1], toPoint[0]) : 0;
-
-              return {
-                fromStop: index,
-                fromOwner: ownerForStop(index),
-
-                toStop: index + 1,
-                toOwner: ownerForStop(index + 1),
-
-                directMeters: Math.round(directMeters),
-
-                durationMinutes: Number(durationMinutes.toFixed(2)),
-              };
-            });
-
-            const worstPreflightLegs = [...preflightLegs].sort((a, b) => b.durationMinutes - a.durationMinutes).slice(0, 10);
+            const { preflightLegs, worstPreflightLegs } = buildPreflightLegDiagnostics(
+              preflight.legDurationMinutes, preflightStops, captureStopOwners,
+            );
 
             this.log(
               `[CaptureRoute] OSRM preflight ${preflightPass + 1}: ` + `${preflight.durationMinutes.toFixed(1)} min total / ` + `${projectedExtraMinutes.toFixed(1)} min extra`,
@@ -8392,79 +8416,10 @@ private syncMapLegendLayer() {
               if (osrmReplacementPassesUsed < maxOsrmReplacementPasses) {
                 const allowedExtraMinutes = spareMinutes + preflightTolerance;
 
-                const activeIds = new Set(activeOpportunities.map((opportunity) => opportunity.id));
-
-                /*
-                 * Highest-value excluded opportunities first.
-                 *
-                 * Permanently bad opportunities are excluded.
-                 */
-                const addCandidates = replacementCandidatePool
-                  .filter((opportunity) => !activeIds.has(opportunity.id) && !permanentlyRejectedOpportunityIds.has(opportunity.id) && opportunity.valueMeters > 0)
-                  .sort((a, b) => b.valueMeters - a.valueMeters)
-                  .slice(0, 5);
-
-                /*
-                 * Lowest-value retained opportunities are the most
-                 * natural things to trade away.
-                 */
-                const removeCandidates = [...activeOpportunities].sort((a, b) => a.valueMeters - b.valueMeters).slice(0, 5);
-
-                const activeAnchorCount = activeOpportunities.reduce((sum, opportunity) => sum + opportunity.routePoints.length, 0);
-
-                const replacementPairs: Array<{
-                  add: CaptureOpportunity;
-
-                  remove: CaptureOpportunity;
-
-                  valueGain: number;
-
-                  baselineGap: number;
-                }> = [];
-
-                for (const add of addCandidates) {
-                  for (const remove of removeCandidates) {
-                    const valueGain = add.valueMeters - remove.valueMeters;
-
-                    /*
-                     * Require a meaningful improvement.
-                     */
-                    if (valueGain <= 25) {
-                      continue;
-                    }
-
-                    /*
-                     * Do not create a trial that exceeds our
-                     * configured route-anchor capacity.
-                     */
-                    const trialAnchorCount = activeAnchorCount - remove.routePoints.length + add.routePoints.length;
-
-                    if (trialAnchorCount > this.CAPTURE_ROUTE_CONFIG.maxFinalStops) {
-                      continue;
-                    }
-
-                    replacementPairs.push({
-                      add,
-
-                      remove,
-
-                      valueGain,
-
-                      baselineGap: Math.abs(add.baselinePosition - remove.baselinePosition),
-                    });
-                  }
-                }
-
-                /*
-                 * Prefer the largest capture-value improvement.
-                 *
-                 * For similar gains, prefer geographically/local-baseline
-                 * replacements because they are less likely to cause
-                 * severe topology changes.
-                 */
-                replacementPairs.sort((a, b) => b.valueGain - a.valueGain || a.baselineGap - b.baselineGap);
-
-                const probePairs = replacementPairs.slice(0, 5);
+                const probePairs = rankCaptureReplacementPairs({
+                  activeOpportunities, replacementCandidatePool, permanentlyRejectedOpportunityIds,
+                  maxFinalStops: this.CAPTURE_ROUTE_CONFIG.maxFinalStops,
+                });
 
                 let bestReplacement: {
                   opportunities: CaptureOpportunity[];
@@ -8495,21 +8450,11 @@ private syncMapLegendLayer() {
                   const trialStops: [number, number][] = [startPt, ...trialCaptureStops, endPt];
 
                   const trialPreflight = await routingProvider.preflightOrderedStops!(trialStops, run.signal);
-                run.check();
+                  run.check();
 
                   const trialExtraMinutes = trialPreflight.durationMinutes - baselineMinutes;
 
-                  const trialOwnerForStop = (stopIndex: number): string => {
-                    if (stopIndex === 0) {
-                      return "START";
-                    }
 
-                    if (stopIndex === trialCaptureOwners.length + 1) {
-                      return "END";
-                    }
-
-                    return trialCaptureOwners[stopIndex - 1] ?? "UNKNOWN";
-                  };
 
                   /*
                    * Reject newly introduced >60 m snapping.
@@ -8524,38 +8469,20 @@ private syncMapLegendLayer() {
                    * Same rule as the normal quality gate:
                    * the failure must occur INSIDE one opportunity.
                    */
-                  const trialHasBrokenOpportunity = trialPreflight.legDurationMinutes.some((durationMinutes, index) => {
-                    const fromOwner = trialOwnerForStop(index);
-
-                    const toOwner = trialOwnerForStop(index + 1);
-
-                    if (fromOwner === "START" || fromOwner === "END" || fromOwner === "UNKNOWN" || fromOwner !== toOwner) {
-                      return false;
-                    }
-
-                    const fromPoint = trialStops[index];
-
-                    const toPoint = trialStops[index + 1];
-
-                    if (!fromPoint || !toPoint) {
-                      return false;
-                    }
-
-                    const directMeters = distanceMeters(fromPoint[1], fromPoint[0], toPoint[1], toPoint[0]);
-
-                    return directMeters <= 450 && durationMinutes >= 4.5;
-                  });
+                  const trialHasBrokenOpportunity = hasBrokenTrialOpportunity(
+                    trialPreflight.legDurationMinutes, trialStops, trialCaptureOwners,
+                  );
 
                   const trialFits = trialExtraMinutes <= allowedExtraMinutes;
 
                   this.log(
                     `[CaptureRoute] OSRM replacement probe: ` +
-                      `remove ${pair.remove.id} / ` +
-                      `add ${pair.add.id} → ` +
-                      `${trialExtraMinutes.toFixed(1)} min extra · ` +
-                      `weighted value +${pair.valueGain.toFixed(0)} · ` +
-                      `snap=${trialHasBadSnap ? "bad" : "ok"} · ` +
-                      `quality=${trialHasBrokenOpportunity ? "bad" : "ok"}`,
+                    `remove ${pair.remove.id} / ` +
+                    `add ${pair.add.id} → ` +
+                    `${trialExtraMinutes.toFixed(1)} min extra · ` +
+                    `weighted value +${pair.valueGain.toFixed(0)} · ` +
+                    `snap=${trialHasBadSnap ? "bad" : "ok"} · ` +
+                    `quality=${trialHasBrokenOpportunity ? "bad" : "ok"}`,
                   );
 
                   /*
@@ -8605,10 +8532,10 @@ private syncMapLegendLayer() {
                 if (bestReplacement) {
                   this.log(
                     `[CaptureRoute] OSRM chosen replacement: ` +
-                      `remove ${bestReplacement.removeId} / ` +
-                      `add ${bestReplacement.addId} → ` +
-                      `${bestReplacement.extraMinutes.toFixed(1)} min extra · ` +
-                      `value +${bestReplacement.valueGain.toFixed(0)}`,
+                    `remove ${bestReplacement.removeId} / ` +
+                    `add ${bestReplacement.addId} → ` +
+                    `${bestReplacement.extraMinutes.toFixed(1)} min extra · ` +
+                    `value +${bestReplacement.valueGain.toFixed(0)}`,
                   );
 
                   activeOpportunities = bestReplacement.opportunities;
@@ -8655,108 +8582,9 @@ private syncMapLegendLayer() {
              * This runs BEFORE the generic value/time pruning below.
              */
 
-            const badLegThresholdMinutes = Math.max(2.0, Math.min(4.0, spareMinutes * 0.08));
-
-            const networkPenaltyByOpportunity = new Map<string, number>();
-
-            const addNetworkPenalty = (owner: string, minutes: number) => {
-              if (!owner || owner === "START" || owner === "END" || owner === "UNKNOWN") {
-                return;
-              }
-
-              networkPenaltyByOpportunity.set(owner, (networkPenaltyByOpportunity.get(owner) ?? 0) + minutes);
-            };
-
-            for (const leg of preflightLegs) {
-              /*
-               * Once the time budget already fits, we are no longer
-               * trying to make the route shorter generally.
-               *
-               * We are only repairing pathological internal topology.
-               * Do not penalize START/END access during this phase.
-               */
-              if (qualityCleanupMode && (leg.fromOwner === "START" || leg.fromOwner === "END" || leg.toOwner === "START" || leg.toOwner === "END")) {
-                continue;
-              }
-              const excessMinutes = leg.durationMinutes - badLegThresholdMinutes;
-
-              if (excessMinutes <= 0) {
-                continue;
-              }
-
-              /*
-               * Same opportunity on both ends:
-               *
-               * this is the strongest evidence that the opportunity's
-               * own anchor chain is expensive on the OSRM road network.
-               */
-              if (leg.fromOwner === leg.toOwner) {
-                addNetworkPenalty(leg.fromOwner, excessMinutes);
-
-                continue;
-              }
-
-              /*
-               * START/END transition:
-               *
-               * assign the complete penalty to the capture opportunity.
-               */
-              if (leg.fromOwner === "START" || leg.fromOwner === "END" || leg.fromOwner === "UNKNOWN") {
-                addNetworkPenalty(leg.toOwner, excessMinutes);
-
-                continue;
-              }
-
-              if (leg.toOwner === "START" || leg.toOwner === "END" || leg.toOwner === "UNKNOWN") {
-                addNetworkPenalty(leg.fromOwner, excessMinutes);
-
-                continue;
-              }
-
-              /*
-               * Transition between two capture opportunities.
-               *
-               * We cannot know which endpoint alone caused the
-               * topology penalty, so split the penalty between them.
-               */
-              addNetworkPenalty(leg.fromOwner, excessMinutes * 0.5);
-
-              addNetworkPenalty(leg.toOwner, excessMinutes * 0.5);
-            }
-
-            /*
-             * Prioritize large network penalty relative to the
-             * useful target metres supplied by the opportunity.
-             */
-            const networkPruneCandidates = activeOpportunities
-              .map((opportunity) => {
-                const networkPenaltyMinutes = networkPenaltyByOpportunity.get(opportunity.id) ?? 0;
-
-                const penaltyPer100Meters = (networkPenaltyMinutes / Math.max(100, opportunity.valueMeters)) * 100;
-
-                return {
-                  opportunity,
-                  networkPenaltyMinutes,
-                  penaltyPer100Meters,
-                };
-              })
-              .filter((candidate) => {
-                if (candidate.networkPenaltyMinutes <= 0) {
-                  return false;
-                }
-
-                /*
-                 * If the budget already fits, only consider
-                 * opportunities directly participating in a
-                 * pathological internal transition.
-                 */
-                if (qualityCleanupMode && !pathologicalOwnerIds.has(candidate.opportunity.id)) {
-                  return false;
-                }
-
-                return true;
-              })
-              .sort((a, b) => b.penaltyPer100Meters - a.penaltyPer100Meters || b.networkPenaltyMinutes - a.networkPenaltyMinutes);
+            const { networkPruneCandidates } = scoreCaptureNetworkPenalties({
+              preflightLegs, activeOpportunities, spareMinutes, qualityCleanupMode, pathologicalOwnerIds,
+            });
 
             /*
              * Do not batch-delete a dozen opportunities.
@@ -8787,13 +8615,7 @@ private syncMapLegendLayer() {
               if (budgetOverrunMinutes > 0 && budgetOverrunMinutes <= 5 && networkPruneCandidates.length > 1) {
                 const probeCandidates = networkPruneCandidates.slice(0, Math.min(5, networkPruneCandidates.length));
 
-                let bestProbe: {
-                  opportunityId: string;
-                  extraMinutes: number;
-                  valueLostMeters: number;
-                  reliefMinutes: number;
-                  valueLossPerReliefMinute: number;
-                } | null = null;
+                let bestProbe: NetworkBudgetProbe | null = null;
 
                 for (const probeCandidate of probeCandidates) {
                   if (activeOpportunities.length <= 1) {
@@ -8811,101 +8633,48 @@ private syncMapLegendLayer() {
                   const trialStops: [number, number][] = [startPt, ...trialCaptureStops, endPt];
 
                   const trialPreflight = await routingProvider.preflightOrderedStops!(trialStops, run.signal);
-                run.check();
+                  run.check();
 
                   const trialExtraMinutes = trialPreflight.durationMinutes - baselineMinutes;
 
-                  const trialOwnerForStop = (stopIndex: number): string => {
-                    if (stopIndex === 0) {
-                      return "START";
-                    }
 
-                    if (stopIndex === trialCaptureOwners.length + 1) {
-                      return "END";
-                    }
-
-                    return trialCaptureOwners[stopIndex - 1] ?? "UNKNOWN";
-                  };
 
                   /*
                    * Reject a trial if one selected opportunity
                    * still contains an absurd internal traversal.
                    */
-                  const trialHasBrokenOpportunity = trialPreflight.legDurationMinutes.some((durationMinutes, index) => {
-                    const fromOwner = trialOwnerForStop(index);
-
-                    const toOwner = trialOwnerForStop(index + 1);
-
-                    if (fromOwner === "START" || fromOwner === "END" || fromOwner === "UNKNOWN" || fromOwner !== toOwner) {
-                      return false;
-                    }
-
-                    const fromPoint = trialStops[index];
-
-                    const toPoint = trialStops[index + 1];
-
-                    if (!fromPoint || !toPoint) {
-                      return false;
-                    }
-
-                    const directMeters = distanceMeters(fromPoint[1], fromPoint[0], toPoint[1], toPoint[0]);
-
-                    return directMeters <= 450 && durationMinutes >= 4.5;
-                  });
+                  const trialHasBrokenOpportunity = hasBrokenTrialOpportunity(
+                    trialPreflight.legDurationMinutes, trialStops, trialCaptureOwners,
+                  );
 
                   const trialFits = trialExtraMinutes <= allowedExtraMinutes;
 
                   this.log(
                     `[CaptureRoute] OSRM near-budget probe: ` +
-                      `remove ${probeCandidate.opportunity.id} → ` +
-                      `${trialExtraMinutes.toFixed(1)} min extra · ` +
-                      `weighted value lost=${probeCandidate.opportunity.valueMeters.toFixed(0)}m · ` +
-                      `quality=${trialHasBrokenOpportunity ? "bad" : "ok"}`,
+                    `remove ${probeCandidate.opportunity.id} → ` +
+                    `${trialExtraMinutes.toFixed(1)} min extra · ` +
+                    `weighted value lost=${probeCandidate.opportunity.valueMeters.toFixed(0)}m · ` +
+                    `quality=${trialHasBrokenOpportunity ? "bad" : "ok"}`,
                   );
 
                   if (!trialFits || trialHasBrokenOpportunity) {
                     continue;
                   }
 
-                  const reliefMinutes = projectedExtraMinutes - trialExtraMinutes;
-
-                  const valueLostMeters = probeCandidate.opportunity.valueMeters;
-
-                  /*
-                   * How much useful-road value must we sacrifice
-                   * for each minute of route time recovered?
-                   *
-                   * Lower is better.
-                   */
-                  const valueLossPerReliefMinute = valueLostMeters / Math.max(0.25, reliefMinutes);
-
-                  if (
-                    !bestProbe ||
-                    valueLossPerReliefMinute < bestProbe.valueLossPerReliefMinute - 0.5 ||
-                    (Math.abs(valueLossPerReliefMinute - bestProbe.valueLossPerReliefMinute) <= 0.5 && trialExtraMinutes > bestProbe.extraMinutes)
-                  ) {
-                    bestProbe = {
-                      opportunityId: probeCandidate.opportunity.id,
-
-                      extraMinutes: trialExtraMinutes,
-
-                      valueLostMeters,
-
-                      reliefMinutes,
-
-                      valueLossPerReliefMinute,
-                    };
-                  }
+                  bestProbe = chooseNetworkBudgetProbe(
+                    bestProbe, probeCandidate.opportunity.id, trialExtraMinutes,
+                    probeCandidate.opportunity.valueMeters, projectedExtraMinutes,
+                  );
                 }
 
                 if (bestProbe) {
                   this.log(
                     `[CaptureRoute] OSRM near-budget chosen removal: ` +
-                      `${bestProbe.opportunityId} → ` +
-                      `${bestProbe.extraMinutes.toFixed(1)} min extra · ` +
-                      `lost=${bestProbe.valueLostMeters.toFixed(0)}m · ` +
-                      `relief=${bestProbe.reliefMinutes.toFixed(1)} min · ` +
-                      `cost=${bestProbe.valueLossPerReliefMinute.toFixed(1)}m/min`,
+                    `${bestProbe.opportunityId} → ` +
+                    `${bestProbe.extraMinutes.toFixed(1)} min extra · ` +
+                    `lost=${bestProbe.valueLostMeters.toFixed(0)}m · ` +
+                    `relief=${bestProbe.reliefMinutes.toFixed(1)} min · ` +
+                    `cost=${bestProbe.valueLossPerReliefMinute.toFixed(1)}m/min`,
                   );
 
                   activeOpportunities = activeOpportunities
@@ -8930,41 +8699,23 @@ private syncMapLegendLayer() {
                * As we approach the budget, pruning becomes conservative
                * again because road-network topology is non-linear.
                */
-              let targetedRemovalLimit = 1;
-
-              if (overrunRatio >= 3.0) {
-                targetedRemovalLimit = 6;
-              } else if (overrunRatio >= 2.0) {
-                targetedRemovalLimit = 4;
-              } else if (overrunRatio >= 1.4) {
-                targetedRemovalLimit = 2;
-              }
+              const { targetedRemovalLimit, networkRemoveIds, removals } = planAdaptiveNetworkRemoval(
+                networkPruneCandidates, activeOpportunities.length, overrunRatio,
+              );
 
               this.log(
                 `[CaptureRoute] OSRM adaptive prune: ` +
-                  `${projectedExtraMinutes.toFixed(1)}/${allowedExtraMinutes.toFixed(1)} min ` +
-                  `(${overrunRatio.toFixed(2)}x) → ` +
-                  `remove up to ${targetedRemovalLimit}`,
+                `${projectedExtraMinutes.toFixed(1)}/${allowedExtraMinutes.toFixed(1)} min ` +
+                `(${overrunRatio.toFixed(2)}x) → ` +
+                `remove up to ${targetedRemovalLimit}`,
               );
 
-              const networkRemoveIds = new Set<string>();
-
-              for (const candidate of networkPruneCandidates) {
-                if (networkRemoveIds.size >= targetedRemovalLimit) {
-                  break;
-                }
-
-                if (activeOpportunities.length - networkRemoveIds.size <= 1) {
-                  break;
-                }
-
-                networkRemoveIds.add(candidate.opportunity.id);
-
+              for (const candidate of removals) {
                 this.log(
                   `[CaptureRoute] OSRM network removing: ` +
-                    `${candidate.opportunity.id} · ` +
-                    `penalty=${candidate.networkPenaltyMinutes.toFixed(1)} min · ` +
-                    `${candidate.penaltyPer100Meters.toFixed(2)} min/100m`,
+                  `${candidate.opportunity.id} · ` +
+                  `penalty=${candidate.networkPenaltyMinutes.toFixed(1)} min · ` +
+                  `${candidate.penaltyPer100Meters.toFixed(2)} min/100m`,
                 );
               }
 
@@ -9032,24 +8783,14 @@ private syncMapLegendLayer() {
                 .sort((a, b) => a.efficiency - b.efficiency)
                 .slice(0, 5);
 
-              let bestFittingProbe: {
-                opportunityId: string;
-                extraMinutes: number;
-                valueLost: number;
-                reliefMinutes: number;
-                costPerReliefMinute: number;
-              } | null = null;
+              let bestFittingProbe: FittingBudgetProbe | null = null;
 
               /*
                * If none of the five removals gets completely
                * under budget, still remember the best SINGLE
                * removal so we make progress without batch pruning.
                */
-              let bestProgressProbe: {
-                opportunityId: string;
-                extraMinutes: number;
-                valueLost: number;
-              } | null = null;
+              let bestProgressProbe: ProgressBudgetProbe | null = null;
 
               for (const candidate of genericProbeCandidates) {
                 const trialOpportunities = activeOpportunities
@@ -9067,49 +8808,21 @@ private syncMapLegendLayer() {
 
                 const trialExtraMinutes = trialPreflight.durationMinutes - baselineMinutes;
 
-                const trialOwnerForStop = (stopIndex: number): string => {
-                  if (stopIndex === 0) {
-                    return "START";
-                  }
 
-                  if (stopIndex === trialCaptureOwners.length + 1) {
-                    return "END";
-                  }
-
-                  return trialCaptureOwners[stopIndex - 1] ?? "UNKNOWN";
-                };
 
                 /*
                  * Preserve the same full-road quality rule.
                  */
-                const trialHasBrokenOpportunity = trialPreflight.legDurationMinutes.some((durationMinutes, index) => {
-                  const fromOwner = trialOwnerForStop(index);
-
-                  const toOwner = trialOwnerForStop(index + 1);
-
-                  if (fromOwner === "START" || fromOwner === "END" || fromOwner === "UNKNOWN" || fromOwner !== toOwner) {
-                    return false;
-                  }
-
-                  const fromPoint = trialStops[index];
-
-                  const toPoint = trialStops[index + 1];
-
-                  if (!fromPoint || !toPoint) {
-                    return false;
-                  }
-
-                  const directMeters = distanceMeters(fromPoint[1], fromPoint[0], toPoint[1], toPoint[0]);
-
-                  return directMeters <= 450 && durationMinutes >= 4.5;
-                });
+                const trialHasBrokenOpportunity = hasBrokenTrialOpportunity(
+                  trialPreflight.legDurationMinutes, trialStops, trialCaptureOwners,
+                );
 
                 this.log(
                   `[CaptureRoute] OSRM generic near-budget probe: ` +
-                    `remove ${candidate.opportunity.id} → ` +
-                    `${trialExtraMinutes.toFixed(1)} min extra · ` +
-                    `weighted value lost=${candidate.opportunity.valueMeters.toFixed(0)} · ` +
-                    `quality=${trialHasBrokenOpportunity ? "bad" : "ok"}`,
+                  `remove ${candidate.opportunity.id} → ` +
+                  `${trialExtraMinutes.toFixed(1)} min extra · ` +
+                  `weighted value lost=${candidate.opportunity.valueMeters.toFixed(0)} · ` +
+                  `quality=${trialHasBrokenOpportunity ? "bad" : "ok"}`,
                 );
 
                 if (trialHasBrokenOpportunity) {
@@ -9120,43 +8833,19 @@ private syncMapLegendLayer() {
                  * Track the best one-removal improvement even
                  * when it does not completely fit yet.
                  */
-                if (trialExtraMinutes < projectedExtraMinutes - 0.1 && (!bestProgressProbe || trialExtraMinutes < bestProgressProbe.extraMinutes)) {
-                  bestProgressProbe = {
-                    opportunityId: candidate.opportunity.id,
-
-                    extraMinutes: trialExtraMinutes,
-
-                    valueLost: candidate.opportunity.valueMeters,
-                  };
-                }
+                bestProgressProbe = chooseProgressBudgetProbe(
+                  bestProgressProbe, candidate.opportunity.id, trialExtraMinutes,
+                  candidate.opportunity.valueMeters, projectedExtraMinutes,
+                );
 
                 if (trialExtraMinutes > nearBudgetAllowedExtraMinutes) {
                   continue;
                 }
 
-                const reliefMinutes = projectedExtraMinutes - trialExtraMinutes;
-
-                const valueLost = candidate.opportunity.valueMeters;
-
-                const costPerReliefMinute = valueLost / Math.max(0.25, reliefMinutes);
-
-                if (
-                  !bestFittingProbe ||
-                  costPerReliefMinute < bestFittingProbe.costPerReliefMinute - 0.5 ||
-                  (Math.abs(costPerReliefMinute - bestFittingProbe.costPerReliefMinute) <= 0.5 && trialExtraMinutes > bestFittingProbe.extraMinutes)
-                ) {
-                  bestFittingProbe = {
-                    opportunityId: candidate.opportunity.id,
-
-                    extraMinutes: trialExtraMinutes,
-
-                    valueLost,
-
-                    reliefMinutes,
-
-                    costPerReliefMinute,
-                  };
-                }
+                bestFittingProbe = chooseFittingBudgetProbe(
+                  bestFittingProbe, candidate.opportunity.id, trialExtraMinutes,
+                  candidate.opportunity.valueMeters, projectedExtraMinutes,
+                );
               }
 
               /*
@@ -9169,8 +8858,8 @@ private syncMapLegendLayer() {
               if (chosenNearBudgetProbe) {
                 this.log(
                   `[CaptureRoute] OSRM generic near-budget chosen removal: ` +
-                    `${chosenNearBudgetProbe.opportunityId} → ` +
-                    `${chosenNearBudgetProbe.extraMinutes.toFixed(1)} min extra`,
+                  `${chosenNearBudgetProbe.opportunityId} → ` +
+                  `${chosenNearBudgetProbe.extraMinutes.toFixed(1)} min extra`,
                 );
 
                 activeOpportunities = activeOpportunities
@@ -9212,82 +8901,30 @@ private syncMapLegendLayer() {
 
               break;
             }
-            const activeEstimatedMinutes = activeOpportunities.reduce((sum, opportunity) => sum + Math.max(0, opportunity.estimatedDetourMinutes), 0);
-
-            /*
-             * Calibrate the local opportunity estimate against
-             * what OSRM says this ordered waypoint chain costs.
-             */
-            const preflightRatio = projectedExtraMinutes / Math.max(0.25, activeEstimatedMinutes);
-
-            const correctionFactor = Math.min(6.0, Math.max(1.0, preflightRatio));
-
-            const allowedExtraMinutes = spareMinutes + preflightTolerance;
-
-            /*
-             * Leave a reserve because removing opportunities can
-             * change network topology in non-linear ways.
-             */
-            const preflightSafetyFactor = 0.85;
-
-            const targetEstimatedMinutes = Math.max(0, (allowedExtraMinutes / correctionFactor) * preflightSafetyFactor);
-
-            const estimatedMinutesToRemove = Math.max(0.25, activeEstimatedMinutes - targetEstimatedMinutes);
+            const preflightPruning = planPreflightBatchPruning({
+              opportunities: activeOpportunities, projectedExtraMinutes, spareMinutes, preflightTolerance,
+            });
 
             this.log(
               `[CaptureRoute] OSRM preflight prune: ` +
-                `actual/local=${correctionFactor.toFixed(2)}, ` +
-                `active=${activeEstimatedMinutes.toFixed(1)} min, ` +
-                `target=${targetEstimatedMinutes.toFixed(1)} min, ` +
-                `remove≈${estimatedMinutesToRemove.toFixed(1)} min`,
+              `actual/local=${preflightPruning.correctionFactor.toFixed(2)}, ` +
+              `active=${preflightPruning.activeEstimatedMinutes.toFixed(1)} min, ` +
+              `target=${preflightPruning.targetEstimatedMinutes.toFixed(1)} min, ` +
+              `remove≈${preflightPruning.estimatedMinutesToRemove.toFixed(1)} min`,
             );
 
-            /*
-             * Remove the least efficient opportunities first.
-             *
-             * IMPORTANT:
-             * sort a COPY, not activeOpportunities itself,
-             * because activeOpportunities must remain A → B ordered.
-             */
-            const pruneCandidates = activeOpportunities
-              .map((opportunity) => ({
-                opportunity,
-
-                efficiency: opportunity.valueMeters / Math.max(0.25, opportunity.estimatedDetourMinutes),
-              }))
-              .sort((a, b) => a.efficiency - b.efficiency);
-
-            const removeIds = new Set<string>();
-
-            let removedEstimatedMinutes = 0;
-
-            for (const candidate of pruneCandidates) {
-              /*
-               * Always leave at least one opportunity.
-               */
-              if (activeOpportunities.length - removeIds.size <= 1) {
-                break;
-              }
-
-              removeIds.add(candidate.opportunity.id);
-
-              removedEstimatedMinutes += Math.max(0, candidate.opportunity.estimatedDetourMinutes);
-
-              this.log(`[CaptureRoute] OSRM preflight removing: ` + `${candidate.opportunity.id} ` + `(${candidate.opportunity.estimatedDetourMinutes.toFixed(1)} min est)`);
-
-              if (removedEstimatedMinutes >= estimatedMinutesToRemove) {
-                break;
-              }
+            for (const opportunity of preflightPruning.removals) {
+              this.log(`[CaptureRoute] OSRM preflight removing: ` + `${opportunity.id} ` + `(${opportunity.estimatedDetourMinutes.toFixed(1)} min est)`);
             }
 
             /*
              * Safety: if nothing was removable, stop preflight pruning.
              */
-            if (!removeIds.size) {
+            if (!preflightPruning.removeIds.size) {
               break;
             }
 
-            activeOpportunities = activeOpportunities.filter((opportunity) => !removeIds.has(opportunity.id)).sort((a, b) => a.baselinePosition - b.baselinePosition);
+            activeOpportunities = preflightPruning.opportunities;
 
             /*
              * Rebuild the actual anchor list from the surviving
@@ -9296,9 +8933,9 @@ private syncMapLegendLayer() {
             captureStops = buildFinalRouteStops(activeOpportunities);
             captureStopOwners = buildCaptureStopOwners(activeOpportunities);
 
-            this.log(`[CaptureRoute] OSRM preflight pruned ` + `${removeIds.size} opportunities / ` + `${removedEstimatedMinutes.toFixed(1)} estimated minutes.`);
+            this.log(`[CaptureRoute] OSRM preflight pruned ` + `${preflightPruning.removeIds.size} opportunities / ` + `${preflightPruning.removedEstimatedMinutes.toFixed(1)} estimated minutes.`);
 
-            this.log(`[CaptureRoute] OSRM preflight pruned ` + `${removeIds.size} opportunities / ` + `${removedEstimatedMinutes.toFixed(1)} estimated minutes.`);
+            this.log(`[CaptureRoute] OSRM preflight pruned ` + `${preflightPruning.removeIds.size} opportunities / ` + `${preflightPruning.removedEstimatedMinutes.toFixed(1)} estimated minutes.`);
 
             if (!captureStops.length) {
               break;
@@ -9346,13 +8983,7 @@ private syncMapLegendLayer() {
         /*
          * REMEMBER BEST ACTUAL SOLVE
          */
-        if (actualExtraMinutes < bestActualExtraMinutes) {
-          bestActualExtraMinutes = actualExtraMinutes;
-
-          bestRoute = finalRoute;
-
-          bestRouteOpportunities = [...solvedOpportunities];
-        }
+        captureSolveHistory.record(finalRoute, solvedOpportunities, actualExtraMinutes);
 
         this.log(`[CaptureRoute] Final: ` + `${finalMinutes.toFixed(1)} min`);
 
@@ -9406,92 +9037,25 @@ private syncMapLegendLayer() {
          * Local estimated cost of the opportunities represented by
          * this ArcGIS solve.
          */
-        const activeEstimatedMinutes = activeOpportunities.reduce((sum, opportunity) => sum + Math.max(0, opportunity.estimatedDetourMinutes), 0);
-
-        /*
-         * ArcGIS tells us how optimistic our local estimate was
-         * for THIS particular route.
-         */
-        const actualToEstimatedRatio = actualExtraMinutes / Math.max(0.25, activeEstimatedMinutes);
-
-        /*
-         * Preserve the real calibration signal from the
-         * authoritative routing engine.
-         *
-         * Dense street networks can produce actual/local ratios
-         * above 2.0 because local opportunity costs are not fully
-         * additive once all waypoints are solved together.
-         *
-         * Keep a defensive upper bound, but do not truncate useful
-         * calibration as aggressively as before.
-         */
-        const correctionFactor = Math.min(6.0, Math.max(1.0, actualToEstimatedRatio));
-
-        const allowedActualExtraMinutes = spareMinutes + budgetTolerance;
-
-        /*
-         * Network topology may change after opportunities are
-         * removed, so retain a modest reserve for the one remaining
-         * authoritative solve.
-         */
-        const calibrationSafetyFactor = 0.96;
-
-        const targetEstimatedMinutes = Math.max(0, (allowedActualExtraMinutes / correctionFactor) * calibrationSafetyFactor);
-
-        const estimatedMinutesToRemove = Math.max(0.25, activeEstimatedMinutes - targetEstimatedMinutes);
+        const pruning = planFinalSolveBatchPruning({
+          opportunities: activeOpportunities, actualExtraMinutes, spareMinutes, budgetTolerance,
+        });
 
         this.log(
           `[CaptureRoute] Batch prune calibration: ` +
-            `actual/local=${correctionFactor.toFixed(2)}, ` +
-            `active estimate=${activeEstimatedMinutes.toFixed(1)} min, ` +
-            `target estimate=${targetEstimatedMinutes.toFixed(1)} min, ` +
-            `remove≈${estimatedMinutesToRemove.toFixed(1)} min`,
+          `actual/local=${pruning.correctionFactor.toFixed(2)}, ` +
+          `active estimate=${pruning.activeEstimatedMinutes.toFixed(1)} min, ` +
+          `target estimate=${pruning.targetEstimatedMinutes.toFixed(1)} min, ` +
+          `remove≈${pruning.estimatedMinutesToRemove.toFixed(1)} min`,
         );
 
-        /*
-         * Rank using a COPY.
-         *
-         * Never sort activeOpportunities itself by efficiency,
-         * because activeOpportunities must remain in A → B order.
-         */
-        const pruneCandidates = activeOpportunities
-          .map((opportunity) => ({
-            opportunity,
-
-            efficiency: opportunity.valueMeters / Math.max(0.25, opportunity.estimatedDetourMinutes),
-          }))
-          .sort((a, b) => a.efficiency - b.efficiency);
-
-        const removeIds = new Set<string>();
-
-        let removedEstimatedMinutes = 0;
-
-        for (const candidate of pruneCandidates) {
-          /*
-           * Always leave at least one capture opportunity.
-           */
-          if (activeOpportunities.length - removeIds.size <= 1) {
-            break;
-          }
-
-          removeIds.add(candidate.opportunity.id);
-
-          removedEstimatedMinutes += Math.max(0, candidate.opportunity.estimatedDetourMinutes);
-
-          this.log(`[CaptureRoute] Batch removing: ` + `${candidate.opportunity.id} ` + `(${candidate.opportunity.estimatedDetourMinutes.toFixed(1)} min est)`);
-
-          if (removedEstimatedMinutes >= estimatedMinutesToRemove) {
-            break;
-          }
+        for (const opportunity of pruning.removals) {
+          this.log(`[CaptureRoute] Batch removing: ` + `${opportunity.id} ` + `(${opportunity.estimatedDetourMinutes.toFixed(1)} min est)`);
         }
 
-        /*
-         * Remove candidates while preserving the relative A → B
-         * ordering of everything that survives.
-         */
-        activeOpportunities = activeOpportunities.filter((opportunity) => !removeIds.has(opportunity.id)).sort((a, b) => a.baselinePosition - b.baselinePosition);
+        activeOpportunities = pruning.opportunities;
 
-        this.log(`[CaptureRoute] Batch pruned ` + `${removeIds.size} opportunities / ` + `${removedEstimatedMinutes.toFixed(1)} estimated minutes.`);
+        this.log(`[CaptureRoute] Batch pruned ` + `${pruning.removeIds.size} opportunities / ` + `${pruning.removedEstimatedMinutes.toFixed(1)} estimated minutes.`);
       }
 
       /*
@@ -9502,6 +9066,7 @@ private syncMapLegendLayer() {
         throw new Error("Final capture route could not be generated.");
       }
 
+      const { route: bestRoute, opportunities: bestRouteOpportunities, extraMinutes: bestActualExtraMinutes } = captureSolveHistory.best;
       const finalBudgetTolerance = this.CAPTURE_ROUTE_CONFIG.finalBudgetToleranceMinutes ?? 0.25;
 
       const lastRouteMinutes = finalRoute.durationMinutes;
@@ -9515,10 +9080,10 @@ private syncMapLegendLayer() {
       if (lastRouteExtraMinutes > spareMinutes + finalBudgetTolerance && bestRoute && bestActualExtraMinutes < lastRouteExtraMinutes) {
         console.warn(
           `[CaptureRoute] Final retry was worse. ` +
-            `Restoring best solve: ` +
-            `${bestActualExtraMinutes.toFixed(1)} min extra ` +
-            `instead of ` +
-            `${lastRouteExtraMinutes.toFixed(1)} min.`,
+          `Restoring best solve: ` +
+          `${bestActualExtraMinutes.toFixed(1)} min extra ` +
+          `instead of ` +
+          `${lastRouteExtraMinutes.toFixed(1)} min.`,
         );
 
         finalRoute = bestRoute;
@@ -9554,9 +9119,9 @@ private syncMapLegendLayer() {
        * 6. DRAW FINAL ROUTE
        */
 
-      const finalPaths = finalRoute.paths;
+      const finalPaths = normalizeCaptureRoutePaths(finalRoute.paths);
 
-      if (!finalPaths.length) {
+      if (!finalPaths) {
         throw new Error("Final route geometry is empty.");
       }
 
@@ -9778,7 +9343,7 @@ private syncMapLegendLayer() {
        */
 
       this.showToast(
-        <OwnedMessage source="🚗 Capture Route Ready · {minutes} min detour · {distance} km useful coverage" values={{minutes:this._presentation.number(actualExtraMinutes,{maximumFractionDigits:0}),distance:this._presentation.number(incrementalCoverage.incrementalCoveredMeters/1000,{minimumFractionDigits:1,maximumFractionDigits:1})}}/>,
+        <OwnedMessage source="🚗 Capture Route Ready · {minutes} min detour · {distance} km useful coverage" values={{ minutes: this._presentation.number(actualExtraMinutes, { maximumFractionDigits: 0 }), distance: this._presentation.number(incrementalCoverage.incrementalCoveredMeters / 1000, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }} />,
         5000,
       );
     } catch (err) {
@@ -9790,7 +9355,7 @@ private syncMapLegendLayer() {
       if (message.startsWith("Routing is not configured") || message.startsWith("No routing service is configured")) {
         this.showToast(message, 6000);
       } else if (this.isRoutingAuthenticationError(err)) {
-        this.showToast(<OwnedMessage source="Routing authorization failed. Sign in to ArcGIS or ask the Experience author to configure a routing API key."/>,6500);
+        this.showToast(<OwnedMessage source="Routing authorization failed. Sign in to ArcGIS or ask the Experience author to configure a routing API key." />, 6500);
       } else {
         this.showToast(this._t('appCouldNotGenerateCaptureRoute'), 4000);
       }
@@ -9810,7 +9375,7 @@ private syncMapLegendLayer() {
         if (this._routeGeneration.finish(run)) {
           if (!stillCurrent) this.releaseCaptureRouteLoginView();
           this._captureRouteLoginView = null;
-          if (!this._startupDisposed) this.setState({isGeneratingRoute:false,routeGenerationProgress:null});
+          if (!this._startupDisposed) this.setState({ isGeneratingRoute: false, routeGenerationProgress: null });
         }
       }
     }
@@ -9831,26 +9396,26 @@ private syncMapLegendLayer() {
 
     const symbol = is3D
       ? {
-          type: "point-3d",
-          symbolLayers: [
-            {
-              type: "icon",
-              resource: { primitive: "circle" },
-              material: { color: pointColor },
-              size: 16,
-              outline: { color: [255, 255, 255, 1], size: 2 },
-            },
-          ],
-          verticalOffset: { screenLength: 40, maxWorldLength: 150, minWorldLength: 10 },
-          callout: { type: "line", size: 2, color: pointColor, border: { color: [0, 0, 0, 0.4] } },
-        }
+        type: "point-3d",
+        symbolLayers: [
+          {
+            type: "icon",
+            resource: { primitive: "circle" },
+            material: { color: pointColor },
+            size: 16,
+            outline: { color: [255, 255, 255, 1], size: 2 },
+          },
+        ],
+        verticalOffset: { screenLength: 40, maxWorldLength: 150, minWorldLength: 10 },
+        callout: { type: "line", size: 2, color: pointColor, border: { color: [0, 0, 0, 0.4] } },
+      }
       : {
-          type: "simple-marker",
-          style: "circle",
-          color: pointColor,
-          size: 12,
-          outline: { color: [255, 255, 255, 1], width: 2 },
-        };
+        type: "simple-marker",
+        style: "circle",
+        color: pointColor,
+        size: 12,
+        outline: { color: [255, 255, 255, 1], width: 2 },
+      };
 
     const pointGraphic = new Graphic({
       geometry: new Point({ x: lon, y: lat, spatialReference: { wkid: 4326 } }),
@@ -9980,11 +9545,11 @@ private syncMapLegendLayer() {
    * A retained previous cloud remains visible while the status card offers recovery.
    */
   private recordPointCloudIssue = (message: string, automatic: boolean, toastMessage = message) => {
-    this._localizedCloudSummary=undefined;
+    this._localizedCloudSummary = undefined;
     const paused = this._pointCloudAcquisition.recordIssue(automatic);
     const text = paused ? "Auto-follow paused after 3 problem images. Resume to try again. " + message : message;
     this.setState({ pointCloudAutoPaused: !!paused, pointCloudLoading: false, pointCloudVisible: !!this._pointCloudAcquisition.result, pointCloudPrevious: !!this._pointCloudAcquisition.result && this._pointCloudAcquisition.result.imageId !== this.state.imageId, pointCloudAvailable: undefined, pointCloudIncomplete: true, pointCloudSummary: text });
-    this.showToast(paused ? <OwnedMessage source={"Auto-follow paused after 3 problem images. Use Resume in the cloud status card."}/> : toastMessage, 5000);
+    this.showToast(paused ? <OwnedMessage source={"Auto-follow paused after 3 problem images. Use Resume in the cloud status card."} /> : toastMessage, 5000);
   };
 
   /** Forward load intent; acquisition serializes transport and waits for pending map edits. */
@@ -10025,13 +9590,13 @@ private syncMapLegendLayer() {
       applyEdits: (layer, edits) => layer.applyEdits(edits as __esri.FeatureLayerApplyEditsEdits),
       readView: () => this.state.jimuMapView?.view,
       diff: diffPointCloudFeatures,
-      onSummary: (result, count) => { const imageId=result.imageId; this._localizedCloudSummary=()=>this._pointCloudAcquisition.result?.imageId === imageId ? summarizePointCloud(this._pointCloudAcquisition.result,count,this._presentation) : ""; this.setState({ pointCloudSummary: this._localizedCloudSummary() }); },
+      onSummary: (result, count) => { const imageId = result.imageId; this._localizedCloudSummary = () => this._pointCloudAcquisition.result?.imageId === imageId ? summarizePointCloud(this._pointCloudAcquisition.result, count, this._presentation) : ""; this.setState({ pointCloudSummary: this._localizedCloudSummary() }); },
       onLayerReady: () => this.updatePointCloudDisplay(),
       onSettled: () => {
         if (this.state.isLassoMode && this.state.lassoPolygon?.length >= 3) this.calculateLassoSelection();
         else if (this.state.lassoSelectedObjectIds?.length) this.highlightLassoInArcGIS();
       },
-      onToast: count => this.showToast(<OwnedMessage source={"3D scene updated ({value0} points)"} values={{value0:String(this._presentation.number(count))}}/>, 2500),
+      onToast: count => this.showToast(<OwnedMessage source={"3D scene updated ({value0} points)"} values={{ value0: String(this._presentation.number(count)) }} />, 2500),
       onError: error => this.setState({ pointCloudIncomplete: true, pointCloudSummary: (error as Error).message }),
       yieldEdits: () => new Promise<void>(resolve => setTimeout(resolve, 0)),
     });
@@ -10054,8 +9619,10 @@ private syncMapLegendLayer() {
 
     const activeRenderer = pointCloudMapRenderer(this.state.pointCloudColorMode, colors);
 
-    owner.update({ request: renderRequest, view, result, features, renderer: activeRenderer, silent,
-      definitionExpression: this._groundMode ? `relativeHeight < ${POINT_CLOUD_CONFIG.GROUND_MODE_HEIGHT_M}` : "1=1" });
+    owner.update({
+      request: renderRequest, view, result, features, renderer: activeRenderer, silent,
+      definitionExpression: this._groundMode ? `relativeHeight < ${POINT_CLOUD_CONFIG.GROUND_MODE_HEIGHT_M}` : "1=1"
+    });
 
     // 4. Draw the Concentric Distance Rings
     this.drawConcentricRings(this.state.pointCloudLength <= 0 ? this.state.pointCloudActualLength : this.state.pointCloudLength);
@@ -10093,14 +9660,14 @@ private syncMapLegendLayer() {
               .then((c: number[]) => {
                 this.mapillaryViewer.setCenter([c[0] + 0.000001, c[1]]);
               })
-              .catch(() => {});
+              .catch(() => { });
           }
         }
 
         this.showToast(
           <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <Icons.GroundGrid size={14} />
-            <b> {this._t('appGroundMode')} </b> {this._groundMode ? <OwnedMessage source={"ON (Buildings > {value0}m Hidden)"} values={{value0:String(POINT_CLOUD_CONFIG.GROUND_MODE_HEIGHT_M)}}/> : this._t('appOffFullCloud')}
+            <b> {this._t('appGroundMode')} </b> {this._groundMode ? <OwnedMessage source={"ON (Buildings > {value0}m Hidden)"} values={{ value0: String(POINT_CLOUD_CONFIG.GROUND_MODE_HEIGHT_M) }} /> : this._t('appOffFullCloud')}
           </span>,
           3000,
         );
@@ -10231,8 +9798,10 @@ private syncMapLegendLayer() {
   /** Bind the SceneView-only SDK constructor and live point/state adapters once. */
   private ensureSightOwner() {
     return this._sight ??= new PointCloudSight<__esri.LineOfSightViewModel, __esri.MapView | __esri.SceneView, __esri.Point>({
-      read: () => ({ view: this.state.jimuMapView?.view, enabled: this.state.isSightMode,
-        observer: this.state.sightObserver, targets: this.state.sightTargets }),
+      read: () => ({
+        view: this.state.jimuMapView?.view, enabled: this.state.isSightMode,
+        observer: this.state.sightObserver, targets: this.state.sightTargets
+      }),
       loadFactory: async () => {
         const [LineOfSightViewModel] = await loadArcGISJSAPIModules(['esri/widgets/LineOfSight/LineOfSightViewModel']);
         // The owner validates 3D before invoking this constructor.
@@ -10412,8 +9981,10 @@ private syncMapLegendLayer() {
   private ensureRingsOwner() {
     return this._rings ??= new PointCloudRings<__esri.Graphic, __esri.GraphicsLayer, __esri.MapView | __esri.SceneView, PointCloudResult>({
       readContext: () => ({ view: this.state.jimuMapView?.view, result: this._pointCloudAcquisition.result, graphicsReady: !!this.ArcGISModules }),
-      readGeometry: () => ({ cameraLon: this._cameraLon, cameraLat: this._cameraLat, nudgeX: this._nudgeX, nudgeY: this._nudgeY,
-        halfWidth: this.state.pointCloudWidth, actualLength: this.state.pointCloudActualLength, actualWidth: this.state.pointCloudActualWidth }),
+      readGeometry: () => ({
+        cameraLon: this._cameraLon, cameraLat: this._cameraLat, nudgeX: this._nudgeX, nudgeY: this._nudgeY,
+        halfWidth: this.state.pointCloudWidth, actualLength: this.state.pointCloudActualLength, actualWidth: this.state.pointCloudActualWidth
+      }),
       readBearing: () => this.getStreetBearing(),
       loadFactory: async () => {
         const [GraphicsLayer] = await loadArcGISJSAPIModules(['esri/layers/GraphicsLayer']);
@@ -10493,7 +10064,7 @@ private syncMapLegendLayer() {
   }
 
   /** Release the group from its creating view after stopping the pending note marker. */
-  private clearFieldNotesGroup() { this._detectionViewerMarkers?.dispose();this._detectionViewerMarkers=null; this._workspaceNoteLocation?.cancel(); this._fieldNoteMap.clear(); }
+  private clearFieldNotesGroup() { this._detectionViewerMarkers?.dispose(); this._detectionViewerMarkers = null; this._workspaceNoteLocation?.cancel(); this._fieldNoteMap.clear(); }
 
   private readonly loadEnterpriseIdentityManager = async () => {
     const [manager] = await loadArcGISJSAPIModules(['esri/identity/IdentityManager']);
@@ -10527,9 +10098,11 @@ private syncMapLegendLayer() {
     if (this._sharedNotesView === view && matchesEnterpriseLayerUrl(this._sharedNotesLayer, url) && !this._sharedNotesLayer.destroyed) { if (force) this._sharedNotesLayer.refresh(); return; }
     this.clearSharedNotesView();
     const revision = this._sharedNotesRevision;
-    const layer: __esri.FeatureLayer = new this.ArcGISModules.FeatureLayer({ url, id: "mapillary-shared-field-notes", title: "Enterprise Field Notes", outFields: ["category", "note_text", "image_id", "created_at"], refreshInterval: 0,
+    const layer: __esri.FeatureLayer = new this.ArcGISModules.FeatureLayer({
+      url, id: "mapillary-shared-field-notes", title: "Enterprise Field Notes", outFields: ["category", "note_text", "image_id", "created_at"], refreshInterval: 0,
       elevationInfo: { mode: "on-the-ground" }, renderer: { type: "simple", symbol: buildNoteSymbol("#35b7c4", view.type === "3d") },
-      popupTemplate: { title: this._owned("Enterprise Field Note"), content: [{ type: "fields", fieldInfos: [{ fieldName: "category", label: this._owned("Category") }, { fieldName: "note_text", label: this._owned("Note") }, { fieldName: "created_at", label: this._owned("Created"), format: { dateFormat: "short-date-short-time" } }, { fieldName: "image_id", label: this._owned("Mapillary image") }] }] } });
+      popupTemplate: { title: this._owned("Enterprise Field Note"), content: [{ type: "fields", fieldInfos: [{ fieldName: "category", label: this._owned("Category") }, { fieldName: "note_text", label: this._owned("Note") }, { fieldName: "created_at", label: this._owned("Created"), format: { dateFormat: "short-date-short-time" } }, { fieldName: "image_id", label: this._owned("Mapillary image") }] }] }
+    });
     this._sharedNotesLayer = layer; this._sharedNotesView = view;
     this.setState({ sharedNotesMessage: this._owned("Loading enterprise notes…") });
     try {
@@ -10539,19 +10112,25 @@ private syncMapLegendLayer() {
       const workflow = ["status", "resolution_note"].every(name => layer.fields.some(field => field.name === name));
       if (workflow) {
         layer.outFields = ["*"];
-        layer.renderer = { type: "unique-value", field: "status", defaultSymbol: { type: "simple-marker", style: "diamond", color: "#35b7c4", size: 12, outline: { color: "white", width: 1 } }, uniqueValueInfos: [
-          { value: "open", label: this._owned("Open"), symbol: { type: "simple-marker", style: "diamond", color: "#35b7c4", size: 12 } },
-          { value: "in_progress", label: this._owned("In progress"), symbol: { type: "simple-marker", style: "diamond", color: "#f5a623", size: 12 } },
-          { value: "completed", label: this._owned("Completed"), symbol: { type: "simple-marker", style: "circle", color: "#05a056", size: 10 } },
-          { value: "dismissed", label: this._owned("Dismissed"), symbol: { type: "simple-marker", style: "circle", color: "#888888", size: 10 } }
-        ] } as any;
-        layer.popupTemplate = { title: this._owned("Enterprise Field Note"), content: [{ type: "fields", fieldInfos: [
-          { fieldName: "category", label: this._owned("Category") }, { fieldName: "note_text", label: this._owned("Note") },
-          { fieldName: "status", label: this._owned("Status") }, { fieldName: "resolution_note", label: this._owned("Resolution") },
-          { fieldName: "created_at", label: this._owned("Created"), format: { dateFormat: "short-date-short-time" } }
-        ] }], actions: [{ type: "button", id: "edit-enterprise-note", title: this._owned("Update note"), className: "esri-icon-edit" }, { type: "button", id: "enterprise-note-attachments", title: this._owned("Attachments"), className: "esri-icon-attachment" }] };
+        layer.renderer = {
+          type: "unique-value", field: "status", defaultSymbol: { type: "simple-marker", style: "diamond", color: "#35b7c4", size: 12, outline: { color: "white", width: 1 } }, uniqueValueInfos: [
+            { value: "open", label: this._owned("Open"), symbol: { type: "simple-marker", style: "diamond", color: "#35b7c4", size: 12 } },
+            { value: "in_progress", label: this._owned("In progress"), symbol: { type: "simple-marker", style: "diamond", color: "#f5a623", size: 12 } },
+            { value: "completed", label: this._owned("Completed"), symbol: { type: "simple-marker", style: "circle", color: "#05a056", size: 10 } },
+            { value: "dismissed", label: this._owned("Dismissed"), symbol: { type: "simple-marker", style: "circle", color: "#888888", size: 10 } }
+          ]
+        } as any;
+        layer.popupTemplate = {
+          title: this._owned("Enterprise Field Note"), content: [{
+            type: "fields", fieldInfos: [
+              { fieldName: "category", label: this._owned("Category") }, { fieldName: "note_text", label: this._owned("Note") },
+              { fieldName: "status", label: this._owned("Status") }, { fieldName: "resolution_note", label: this._owned("Resolution") },
+              { fieldName: "created_at", label: this._owned("Created"), format: { dateFormat: "short-date-short-time" } }
+            ]
+          }], actions: [{ type: "button", id: "edit-enterprise-note", title: this._owned("Update note"), className: "esri-icon-edit" }, { type: "button", id: "enterprise-note-attachments", title: this._owned("Attachments"), className: "esri-icon-attachment" }]
+        };
       }
-      if(layer.popupTemplate)layer.popupTemplate.content=enterprisePopupContent(this._presentation,workflow) as any;
+      if (layer.popupTemplate) layer.popupTemplate.content = enterprisePopupContent(this._presentation, workflow) as any;
       if (!workflow && layer.capabilities?.data?.supportsAttachment && layer.popupTemplate) layer.popupTemplate.actions?.add({ type: "button", id: "enterprise-note-attachments", title: this._owned("Attachments"), className: "esri-icon-attachment" } as any);
       const group = await this.ensureFieldNotesGroup(view);
       if (!group || revision !== this._sharedNotesRevision || layer.destroyed) return;
@@ -10623,12 +10202,12 @@ private syncMapLegendLayer() {
         const added = result.addFeatureResults?.[0];
         if (!added || added.error) throw new Error(added?.error?.message || "The layer did not confirm the save. Retry safely after checking your connection.");
       }
-      const crop=attachmentMetadata(note.note).reference;
-      if(crop?.attachmentId){
-        if(!writer.capabilities?.data?.supportsAttachment)throw Error('The note was saved, but image attachments are not enabled on the Enterprise layer. Enable them and retry sharing.');
-        const saved=await writer.queryFeatures({where:`${globalIdField} = '${globalId}'`,outFields:[writer.objectIdField],returnGeometry:false,num:1});const feature=saved.features[0],oid=feature?.attributes[writer.objectIdField];if(!Number.isFinite(oid))throw Error('The saved note could not be confirmed for its image attachment.');
-        const files=await writer.queryAttachments({objectIds:[oid]}),name=`detection-${crop.attachmentId}.jpg`;
-        if(!files[oid]?.some(file=>file.name===name)){const data=await readDetectionCrop(crop.attachmentId),blob=new Blob([Uint8Array.from(atob(data.split(',')[1]),char=>char.charCodeAt(0))],{type:'image/jpeg'}),form=new FormData();form.append('attachment',new File([blob],name,{type:'image/jpeg'}));const added=await writer.addAttachment(feature,form);if(!added||added.error)throw Error('The note was saved, but its image attachment was not confirmed. Retry sharing to check before uploading again.');}
+      const crop = attachmentMetadata(note.note).reference;
+      if (crop?.attachmentId) {
+        if (!writer.capabilities?.data?.supportsAttachment) throw Error('The note was saved, but image attachments are not enabled on the Enterprise layer. Enable them and retry sharing.');
+        const saved = await writer.queryFeatures({ where: `${globalIdField} = '${globalId}'`, outFields: [writer.objectIdField], returnGeometry: false, num: 1 }); const feature = saved.features[0], oid = feature?.attributes[writer.objectIdField]; if (!Number.isFinite(oid)) throw Error('The saved note could not be confirmed for its image attachment.');
+        const files = await writer.queryAttachments({ objectIds: [oid] }), name = `detection-${crop.attachmentId}.jpg`;
+        if (!files[oid]?.some(file => file.name === name)) { const data = await readDetectionCrop(crop.attachmentId), blob = new Blob([Uint8Array.from(atob(data.split(',')[1]), char => char.charCodeAt(0))], { type: 'image/jpeg' }), form = new FormData(); form.append('attachment', new File([blob], name, { type: 'image/jpeg' })); const added = await writer.addAttachment(feature, form); if (!added || added.error) throw Error('The note was saved, but its image attachment was not confirmed. Retry sharing to check before uploading again.'); }
       }
       await this.patchSharedFieldNote(id, { sharedStatus: "shared", sharedError: undefined });
       this._sharedNotesLayer?.refresh();
@@ -10681,8 +10260,12 @@ private syncMapLegendLayer() {
       const attrs = result.features[0]?.attributes;
       if (!attrs) throw new Error("This note is missing or your account cannot read it.");
       if (revision !== this._noteEditorRevision || this._sharedNotesDisposed) return;
-      this.setState({ fieldNoteEditor: { key: `shared:${globalId}:${revision}`, localId: local?.id, globalId, url,
-        category: attrs.category || "Other", note: attrs.note_text || "", status: attrs.status || "open", resolutionNote: attrs.resolution_note || "", baseline: { ...attrs } } });
+      this.setState({
+        fieldNoteEditor: {
+          key: `shared:${globalId}:${revision}`, localId: local?.id, globalId, url,
+          category: attrs.category || "Other", note: attrs.note_text || "", status: attrs.status || "open", resolutionNote: attrs.resolution_note || "", baseline: { ...attrs }
+        }
+      });
     } catch (error) { if (revision === this._noteEditorRevision && !this._sharedNotesDisposed) this.showToast((error as Error).message, 6000); }
     finally {
       writer?.destroy();
@@ -10709,7 +10292,7 @@ private syncMapLegendLayer() {
         if (!url || url !== editor.url) throw new Error("The configured enterprise layer changed. Reopen the note before updating.");
         if (!this.state.isGeneratingRoute) { this.rememberRoutingLoginView(); loginSnapshot = this._routingLoginView; }
         const activeWriter: __esri.FeatureLayer = new this.ArcGISModules.FeatureLayer({ url });
-      writer = activeWriter; await activeWriter.load();
+        writer = activeWriter; await activeWriter.load();
         const field = writer.fields.find(item => item.type === "global-id")?.name;
         if (!field || !writer.capabilities?.editing?.supportsGlobalId || !writer.capabilities?.operations?.supportsUpdate) throw new Error("Your account or this layer does not allow note updates.");
         const latest = await writer.queryFeatures({ where: `${field} = '${editor.globalId}'`, outFields: ["*"], returnGeometry: false, num: 1 });
@@ -10729,7 +10312,7 @@ private syncMapLegendLayer() {
         if (!await this.patchSharedFieldNote(editor.localId, patch)) throw new Error("Browser storage is unavailable. Export your notes before refreshing the page.");
       }
       if (revision === this._noteEditorRevision && !this._sharedNotesDisposed) {
-        this.setState({ fieldNoteEditor: null }); this.showToast(editor.globalId ? <OwnedMessage source={"Shared note updated."}/> : <OwnedMessage source={"Local note updated. Enterprise record unchanged."}/>, 3000);
+        this.setState({ fieldNoteEditor: null }); this.showToast(editor.globalId ? <OwnedMessage source={"Shared note updated."} /> : <OwnedMessage source={"Local note updated. Enterprise record unchanged."} />, 3000);
       }
     } catch (error) {
       if (revision === this._noteEditorRevision && !this._sharedNotesDisposed) this.setState({ fieldNoteEditor: { ...editor, saving: false, error: (error as Error).message } });
@@ -10914,7 +10497,7 @@ private syncMapLegendLayer() {
   /**
    * Cancels the currently pending field note creation and closes the entry modal.
    */
-  private cancelPendingFieldNote = () => {const pending=this.state.pendingFieldNote;if(pending?.attachmentId)void deleteDetectionCrop(pending.attachmentId).catch(()=>{});this._fieldNoteDraft.cancel();};
+  private cancelPendingFieldNote = () => { const pending = this.state.pendingFieldNote; if (pending?.attachmentId) void deleteDetectionCrop(pending.attachmentId).catch(() => { }); this._fieldNoteDraft.cancel(); };
   /**
    * Deletes a field note by its unique identifier and synchronizes state, storage, and graphics.
    * @param id Unique identifier of the note to remove.
@@ -10930,7 +10513,7 @@ private syncMapLegendLayer() {
    * @param note The target field note to focus.
    */
   private focusFieldNote = (note: FieldNote) => {
-    this._focusedViewerNote=this.state.fieldNotes.some(item=>item.id===note.id)?null:note;
+    this._focusedViewerNote = this.state.fieldNotes.some(item => item.id === note.id) ? null : note;
     this.updateViewerFieldNoteMarkers();
     const view = this.state.jimuMapView?.view;
     if (!view) return;
@@ -10942,7 +10525,7 @@ private syncMapLegendLayer() {
     // If the note has an associated image, jump the viewer there too
     if (note.imageId && note.imageId !== this.state.imageId) {
       if (this.mapillaryViewer) {
-        this.mapillaryViewer.moveTo(note.imageId).catch(() => {});
+        this.mapillaryViewer.moveTo(note.imageId).catch(() => { });
       }
     }
   };
@@ -10954,9 +10537,9 @@ private syncMapLegendLayer() {
   private async drawFieldNoteGraphics() { await this._fieldNoteMap.draw(); await this._fieldNoteMap.drawWorkspace(); }
 
   /** Receive only authorized loaded results; the notes feature owns auth/search. */
-  private updateWorkspaceMapNotes = (notes: FieldNote[], categories: readonly {name:string;color:string}[], workspaceName:string) => {
-    if(this._focusedViewerNote?.workspace&&!notes.some(note=>note.id===this._focusedViewerNote!.id)){this._focusedViewerNote=null;this.updateViewerFieldNoteMarkers();}
-    void this._fieldNoteMap.setWorkspaceNotes(notes,categories,workspaceName)
+  private updateWorkspaceMapNotes = (notes: FieldNote[], categories: readonly { name: string; color: string }[], workspaceName: string) => {
+    if (this._focusedViewerNote?.workspace && !notes.some(note => note.id === this._focusedViewerNote!.id)) { this._focusedViewerNote = null; this.updateViewerFieldNoteMarkers(); }
+    void this._fieldNoteMap.setWorkspaceNotes(notes, categories, workspaceName)
       .catch(() => this.showToast(this._owned('Workspace markers could not be displayed. Refresh contributions to retry.')));
     this.syncMapLegendLayer();
   };
@@ -10966,12 +10549,12 @@ private syncMapLegendLayer() {
    * Uses a custom WebGL renderer (field-notes-renderer) instead of DOM SimpleMarkers
    * to ensure proper 3D positioning, distance scaling, and alignment with Point Cloud data.
    */
-  private detectionNoteReference(note:FieldNote) {
-    const saved=attachmentMetadata(note.note).reference;if(saved?.detectionId)return saved;
-    if(note.source!=='mapillary-detection'||!note.detectionId||String(note.imageId)!==String(this.state.imageId)||this._detectionImageData?.imageId!==String(note.imageId))return null;
-    const det=this._detectionImageData.data?.data?.find((item:any)=>String(item.id)===String(note.detectionId));
-    const bounds=det?.geometry?detectionThumbnailBounds(decodeAndNormalizeGeometry(det.geometry)):undefined;
-    return bounds?{imageId:String(note.imageId),detectionId:note.detectionId,bounds}:null;
+  private detectionNoteReference(note: FieldNote) {
+    const saved = attachmentMetadata(note.note).reference; if (saved?.detectionId) return saved;
+    if (note.source !== 'mapillary-detection' || !note.detectionId || String(note.imageId) !== String(this.state.imageId) || this._detectionImageData?.imageId !== String(note.imageId)) return null;
+    const det = this._detectionImageData.data?.data?.find((item: any) => String(item.id) === String(note.detectionId));
+    const bounds = det?.geometry ? detectionThumbnailBounds(decodeAndNormalizeGeometry(det.geometry)) : undefined;
+    return bounds ? { imageId: String(note.imageId), detectionId: note.detectionId, bounds } : null;
   }
   private updateViewerFieldNoteMarkers = () => {
     if (!this.mapillaryViewer) return;
@@ -10980,19 +10563,19 @@ private syncMapLegendLayer() {
     try {
       const markerComponent = this.mapillaryViewer.getComponent("marker");
       if (markerComponent) markerComponent.removeAll();
-    } catch (e) {}
+    } catch (e) { }
 
-    this._detectionViewerMarkers?.dispose();this._detectionViewerMarkers=null;
-    const markerNotes=this._focusedViewerNote?[...this.state.fieldNotes,this._focusedViewerNote]:this.state.fieldNotes;
-    const anchored=markerNotes.map(note=>({note,ref:this.detectionNoteReference(note)})).filter(item=>item.ref&&item.ref.imageId===String(this.state.imageId));
-    if(anchored.length&&this.viewerContainer.current)this._detectionViewerMarkers=new PanoramaDetectionLabels(this.mapillaryViewer,this.viewerContainer.current,anchored.map(item=>({id:item.note.id,text:'',marker:true,point:[item.ref!.bounds.x+item.ref!.bounds.width/2,item.ref!.bounds.y+item.ref!.bounds.height/2]})),true);
-    const relevant = (selectViewerFieldNotes(this.state.fieldNotes, this.state.sequenceImages, this.state.imageId, FIELD_NOTE_CONFIG.VIEWER_MAX_DIST_M, distanceMeters) ?? []).filter(note=>note.source!=='mapillary-detection'&&!this.detectionNoteReference(note));
+    this._detectionViewerMarkers?.dispose(); this._detectionViewerMarkers = null;
+    const markerNotes = this._focusedViewerNote ? [...this.state.fieldNotes, this._focusedViewerNote] : this.state.fieldNotes;
+    const anchored = markerNotes.map(note => ({ note, ref: this.detectionNoteReference(note) })).filter(item => item.ref && item.ref.imageId === String(this.state.imageId));
+    if (anchored.length && this.viewerContainer.current) this._detectionViewerMarkers = new PanoramaDetectionLabels(this.mapillaryViewer, this.viewerContainer.current, anchored.map(item => ({ id: item.note.id, text: '', marker: true, point: [item.ref!.bounds.x + item.ref!.bounds.width / 2, item.ref!.bounds.y + item.ref!.bounds.height / 2] })), true);
+    const relevant = (selectViewerFieldNotes(this.state.fieldNotes, this.state.sequenceImages, this.state.imageId, FIELD_NOTE_CONFIG.VIEWER_MAX_DIST_M, distanceMeters) ?? []).filter(note => note.source !== 'mapillary-detection' && !this.detectionNoteReference(note));
 
     if (relevant.length === 0) {
       if ((this as any)._fieldNotesRendererActive) {
         try {
           this.mapillaryViewer.removeCustomRenderer("field-notes-renderer");
-        } catch (e) {}
+        } catch (e) { }
         (this as any)._fieldNotesRendererActive = false;
         (this as any)._fieldNotesViewerRenderer = null;
         this.mapillaryViewer.resize();
@@ -11018,7 +10601,7 @@ private syncMapLegendLayer() {
 
     const renderer: any = createFieldNoteViewerRenderer(relevantNotes, {
       getRelevantNotesOnReference: () => {
-        return selectViewerFieldNotes(this.state.fieldNotes, this.state.sequenceImages, this.state.imageId, 60, distanceMeters)?.filter(note=>note.source!=='mapillary-detection'&&!this.detectionNoteReference(note));
+        return selectViewerFieldNotes(this.state.fieldNotes, this.state.sequenceImages, this.state.imageId, 60, distanceMeters)?.filter(note => note.source !== 'mapillary-detection' && !this.detectionNoteReference(note));
       },
       getPointCloudVisible: () => this.state.pointCloudVisible,
       getBaseAltitude: () => this._baseAlt,
@@ -11171,7 +10754,7 @@ private syncMapLegendLayer() {
       if (next) {
         this._fullRouteFailure = '';
         this.updateElevationProfile();
-        this.showToast(this._liveSequenceFrames.complete ? <OwnedMessage source={"Elevation profile enabled."}/> : <OwnedMessage source={"Loading route for elevation profile…"}/>, 2500);
+        this.showToast(this._liveSequenceFrames.complete ? <OwnedMessage source={"Elevation profile enabled."} /> : <OwnedMessage source={"Loading route for elevation profile…"} />, 2500);
       } else {
         this.clearElevationProfile();
       }
@@ -11190,7 +10773,7 @@ private syncMapLegendLayer() {
     });
   };
 
-private clearElevationProfile = () => {
+  private clearElevationProfile = () => {
     this._fullRouteTask?.controller.abort(); this._fullRouteTask = null;
     if (!this._liveSequenceFrames.complete && this.state.sequenceId) this._liveSequenceFrames.setLocal(this.state.sequenceId, this._liveSequenceFrames.local);
     if (this.state.sequenceRouteLoading) this.setState({ sequenceRouteLoading: false, sequenceRouteProgress: undefined });
@@ -11206,7 +10789,7 @@ private clearElevationProfile = () => {
   }
 
   /** Feeds the active Mapillary sequence polyline into Esri's ElevationProfile widget */
-private updateElevationProfile = async () => {
+  private updateElevationProfile = async () => {
     const { jimuMapView, sequenceId, isElevationProfileActive } = this.state;
     if (this.props.config.enableElevationProfile !== true || !isElevationProfileActive || !jimuMapView || !sequenceId) return;
     const view = jimuMapView.view;
@@ -11228,7 +10811,7 @@ private updateElevationProfile = async () => {
   };
 
   /** Forward the current frame to the elevation chart's presentation module. */
-private updateProfileIndicator = () => {
+  private updateProfileIndicator = () => {
     const confirmed = this.state.isElevationProfileActive && this._profileConfirmedViewer === this.mapillaryViewer &&
       this._profileConfirmedImageId === String(this.state.imageId) ? this._profileConfirmedImageId : null;
     this._elevationProfile?.track(confirmed);
@@ -11242,7 +10825,7 @@ private updateProfileIndicator = () => {
    * loops forward until it finds a healthy image, and resumes native playback.
    */
   private _playbackRecoveryTask: { owner: AbortController | null; promise: Promise<void> } | null = null;
-private forceSkipNext = async () => {
+  private forceSkipNext = async () => {
     const owner = this._selectionAbort;
     if (this._playbackRecoveryTask?.owner === owner) return this._playbackRecoveryTask.promise;
     const entry = { owner, promise: skipUnavailableSequenceFrames(this._playbackRecoveryHost) };
@@ -11251,7 +10834,7 @@ private forceSkipNext = async () => {
   };
 
   /** Stop native playback and future recovery candidates, then refresh paused nearby imagery. */
-private stopSafePlayback = () => {
+  private stopSafePlayback = () => {
     stopSequencePlayback(this._playbackRecoveryHost);
   };
 
@@ -11278,37 +10861,37 @@ private stopSafePlayback = () => {
     if (this.ArcGISModules?.VectorTileLayer) return;
     if (!this._arcGISModulesReady) {
       this._arcGISModulesReady = (async () => {
-      const [Graphic, Point, SimpleMarkerSymbol, VectorTileLayer, FeatureLayer, GraphicsLayer, route, networkService, RouteParameters, FeatureSet, Multipoint, PointSymbol3D, Mesh] = await loadArcGISJSAPIModules([
-        "esri/Graphic",
-        "esri/geometry/Point",
-        "esri/symbols/SimpleMarkerSymbol",
-        "esri/layers/VectorTileLayer",
-        "esri/layers/FeatureLayer",
-        "esri/layers/GraphicsLayer",
-        "esri/rest/route",
-        "esri/rest/networkService",
-        "esri/rest/support/RouteParameters",
-        "esri/rest/support/FeatureSet",
-        "esri/geometry/Multipoint",
-        "esri/symbols/PointSymbol3D",
-        "esri/geometry/Mesh",
-      ]);
-      this.ArcGISModules = {
-        Graphic,
-        Point,
-        SimpleMarkerSymbol,
-        VectorTileLayer,
-        FeatureLayer,
-        GraphicsLayer,
-        route,
-        networkService,
-        RouteParameters,
-        FeatureSet,
-        Multipoint,
-        PointSymbol3D,
-        Mesh,
-      };
-      this.log("ArcGIS API modules loaded");
+        const [Graphic, Point, SimpleMarkerSymbol, VectorTileLayer, FeatureLayer, GraphicsLayer, route, networkService, RouteParameters, FeatureSet, Multipoint, PointSymbol3D, Mesh] = await loadArcGISJSAPIModules([
+          "esri/Graphic",
+          "esri/geometry/Point",
+          "esri/symbols/SimpleMarkerSymbol",
+          "esri/layers/VectorTileLayer",
+          "esri/layers/FeatureLayer",
+          "esri/layers/GraphicsLayer",
+          "esri/rest/route",
+          "esri/rest/networkService",
+          "esri/rest/support/RouteParameters",
+          "esri/rest/support/FeatureSet",
+          "esri/geometry/Multipoint",
+          "esri/symbols/PointSymbol3D",
+          "esri/geometry/Mesh",
+        ]);
+        this.ArcGISModules = {
+          Graphic,
+          Point,
+          SimpleMarkerSymbol,
+          VectorTileLayer,
+          FeatureLayer,
+          GraphicsLayer,
+          route,
+          networkService,
+          RouteParameters,
+          FeatureSet,
+          Multipoint,
+          PointSymbol3D,
+          Mesh,
+        };
+        this.log("ArcGIS API modules loaded");
       })();
     }
     const task = this._arcGISModulesReady;
@@ -11447,13 +11030,13 @@ private stopSafePlayback = () => {
   }
 
   componentDidUpdate(prevProps: AllWidgetProps<any>, prevState: State) {
-    const nearbyVisible=this.nearbyPanelVisible();
-    const wasNearbyVisible=this._nearbyDemandVisible;this._nearbyDemandVisible=nearbyVisible;
-    if(!nearbyVisible){
-      if(!this.state.nearbyStripOpen||this.state.imageTrayTab==='object'||this.props.visible===false||this.props.state==='CLOSED')this._nearbyPointerInside=false;
+    const nearbyVisible = this.nearbyPanelVisible();
+    const wasNearbyVisible = this._nearbyDemandVisible; this._nearbyDemandVisible = nearbyVisible;
+    if (!nearbyVisible) {
+      if (!this.state.nearbyStripOpen || this.state.imageTrayTab === 'object' || this.props.visible === false || this.props.state === 'CLOSED') this._nearbyPointerInside = false;
       this._nearbyDiscovery?.cancel();
-    }else if(!wasNearbyVisible||prevState.imageId!==this.state.imageId||prevState.isLoading!==this.state.isLoading)
-      this.refreshNearbyAfterPause(!prevState.nearbyStripOpen||prevState.imageTrayTab==='object');
+    } else if (!wasNearbyVisible || prevState.imageId !== this.state.imageId || prevState.isLoading !== this.state.isLoading)
+      this.refreshNearbyAfterPause(!prevState.nearbyStripOpen || prevState.imageTrayTab === 'object');
 
 
     if (this._routeGeneration.pending && !this._routeGeneration.current()) this.cancelCaptureRouteGeneration();
@@ -11468,7 +11051,7 @@ private stopSafePlayback = () => {
     if (prevState.isLoading !== this.state.isLoading) this._backgroundRequests?.setPaused(!!this.state.isLoading || this._imageryOpeningRequest != null);
     if (prevProps.config.debugMode !== this.props.config.debugMode || prevProps.state !== this.props.state) this.syncSequenceDiagnostics();
     if (prevState.selectedSequenceId !== this.state.selectedSequenceId || prevState.sequenceId !== this.state.sequenceId ||
-        prevState.turboModeActive !== this.state.turboModeActive || prevState.isLoading !== this.state.isLoading) this.updateNativeSequenceSelection();
+      prevState.turboModeActive !== this.state.turboModeActive || prevState.isLoading !== this.state.isLoading) this.updateNativeSequenceSelection();
     if (prevState.isLoading !== this.state.isLoading || prevState.coverageFrameResolving !== this.state.coverageFrameResolving ||
       prevState.sequenceRouteLoading !== this.state.sequenceRouteLoading || prevState.turboLoading !== this.state.turboLoading ||
       prevState.turboUpdatingVisible !== this.state.turboUpdatingVisible || prevState.coverageHelpOpen !== this.state.coverageHelpOpen)
@@ -11510,7 +11093,7 @@ private stopSafePlayback = () => {
       this.cleanupWidgetEnvironment(true, false);
     }
 
-    if(prevProps.visible===false&&this.props.visible!==false&&this.state.jimuMapView?.view)
+    if (prevProps.visible === false && this.props.visible !== false && this.state.jimuMapView?.view)
       this.claimCurrentImagePresentation(this.state.jimuMapView.view);
 
     // Closed: Full cleanup
@@ -11697,15 +11280,15 @@ private stopSafePlayback = () => {
   componentWillUnmount() {
     this.disposeStartupResources();
     this._hoverPreviewStatus?.dispose();
-    ++this._placesTilesStartRevision;this._placesConfiguredRequest=null;this._placesConfiguredUrl=null;
+    ++this._placesTilesStartRevision; this._placesConfiguredRequest = null; this._placesConfiguredUrl = null;
     this._placesVectorLayer?.stop(); this._placesVectorLayer = null;
-    this._placeNoteDisposed=true;this._placeNoteReview?.cancel();
-    const pendingPlaceCrop=this.state.pendingFieldNote?.placeId&&this.state.pendingFieldNote.attachmentId;
-    if(pendingPlaceCrop)void deleteDetectionCrop(pendingPlaceCrop).catch(()=>{});
-    if(this._placeWorkspaceCrop){void deleteDetectionCrop(this._placeWorkspaceCrop).catch(()=>{});this._placeWorkspaceCrop=null;}
+    this._placeNoteDisposed = true; this._placeNoteReview?.cancel();
+    const pendingPlaceCrop = this.state.pendingFieldNote?.placeId && this.state.pendingFieldNote.attachmentId;
+    if (pendingPlaceCrop) void deleteDetectionCrop(pendingPlaceCrop).catch(() => { });
+    if (this._placeWorkspaceCrop) { void deleteDetectionCrop(this._placeWorkspaceCrop).catch(() => { }); this._placeWorkspaceCrop = null; }
     this._coverageHoverResume?.dispose(); this._coverageHoverResume = null; this._coverageHoverHandler = null;
-    this._presentationHandle?.remove(); this._presentationHandle=null;
-    this._placesImageryCache?.clear();this._placesImageryCache=null;
+    this._presentationHandle?.remove(); this._presentationHandle = null;
+    this._placesImageryCache?.clear(); this._placesImageryCache = null;
     this._placesExploreAbort?.abort(); this._places?.dispose(); this._places = null;
     document.removeEventListener('visibilitychange', this._sequenceVisibilityChange);
     this._hoverTimingAbort?.abort();
@@ -11780,7 +11363,7 @@ private stopSafePlayback = () => {
     if (!view?.map || view.destroyed) return;
     this.syncSceneTerrain(view);
     const startupRevision = ++this._viewStartupRevision;
-    this._sharedStartupImageId=null;this._sharedStartupBearing=null;
+    this._sharedStartupImageId = null; this._sharedStartupBearing = null;
     this._startupUrlParameters ??= readSharedLinkParameters();
     this._isFlyInActive = false;
     const startupMap = view.map;
@@ -11801,7 +11384,7 @@ private stopSafePlayback = () => {
     if (this.mapClickHandle) {
       try {
         this.mapClickHandle.remove();
-      } catch (e) {}
+      } catch (e) { }
 
       this.mapClickHandle = null;
     }
@@ -11809,7 +11392,7 @@ private stopSafePlayback = () => {
     if (this.pointerMoveHandle) {
       try {
         this.pointerMoveHandle.remove();
-      } catch (e) {}
+      } catch (e) { }
 
       this.pointerMoveHandle = null;
     }
@@ -12141,7 +11724,7 @@ private stopSafePlayback = () => {
     // Push the interactive FeatureLayers (dots/icons) back to the absolute top once the view is ready
     view.when(() => {
       if (this.state.jimuMapView?.view === view && view.map && !view.destroyed) this.enforceMapillaryLayerOrder(view);
-    }).catch(() => {});
+    }).catch(() => { });
 
     // If the user swipes the mouse quickly across the map, this prevents lagging and too many hover fetchs
     let hoverHitTestTimeout: any = null;
@@ -12152,10 +11735,10 @@ private stopSafePlayback = () => {
     const mapContainer = view.container as HTMLElement;
     const hoverResume = new CoverageHoverResume(view, (revision, pointer) => {
       if (this.state.jimuMapView?.view !== view || view.destroyed || view.stationary === false || view.interacting || !mapContainer || mapContainer.isConnected === false ||
-          this.props.state === 'CLOSED' || !this.state.turboModeActive || revision !== this._turboRequestCount ||
-          !this.turboCoverageLayer || view.map?.findLayerById(LAYER_IDS.COVERAGE_VT) !== this.turboCoverageLayer ||
-          mapContainer?.ownerDocument?.visibilityState === 'hidden' || pointer.x < 0 || pointer.y < 0 ||
-          pointer.x > view.width || pointer.y > view.height) return false;
+        this.props.state === 'CLOSED' || !this.state.turboModeActive || revision !== this._turboRequestCount ||
+        !this.turboCoverageLayer || view.map?.findLayerById(LAYER_IDS.COVERAGE_VT) !== this.turboCoverageLayer ||
+        mapContainer?.ownerDocument?.visibilityState === 'hidden' || pointer.x < 0 || pointer.y < 0 ||
+        pointer.x > view.width || pointer.y > view.height) return false;
       // Do not revive map hover under an overlaid form, popup or a different container.
       const x = pointer.native?.clientX, y = pointer.native?.clientY;
       if (Number.isFinite(x) && Number.isFinite(y) && typeof mapContainer.ownerDocument?.elementFromPoint === 'function') {
@@ -12198,7 +11781,7 @@ private stopSafePlayback = () => {
       mapContainer.addEventListener("mouseleave", onMapLeave);
       this._turboMapLeaveCleanup = () => {
         touchHover.dispose();
-        if(this._coverageTouchHover===touchHover)this._coverageTouchHover=null;
+        if (this._coverageTouchHover === touchHover) this._coverageTouchHover = null;
         hoverResume.dispose();
         if (this._coverageHoverResume === hoverResume) { this._coverageHoverResume = null; this._coverageHoverHandler = null; }
         mapContainer.removeEventListener("mouseleave", onMapLeave);
@@ -12208,13 +11791,13 @@ private stopSafePlayback = () => {
 
     // CLICK HANDLER
     this.mapClickHandle = view.on("click", async (evt) => {
-      if (this.props.state === "CLOSED"||this.props.visible===false) return;
-      if(this._isFlyInActive)(view as any).animation?.stop();
-      this._sharedStartupImageId=null;this._sharedStartupBearing=null;this._isFlyInActive=false;this._sharedStateRestoreComplete=true;
+      if (this.props.state === "CLOSED" || this.props.visible === false) return;
+      if (this._isFlyInActive) (view as any).animation?.stop();
+      this._sharedStartupImageId = null; this._sharedStartupBearing = null; this._isFlyInActive = false; this._sharedStateRestoreComplete = true;
       this.claimCurrentImagePresentation?.(view);
-      if(this._workspaceNoteLocation?.active){
-        evt.stopPropagation();const point=view.toMap(evt);
-        this._workspaceNoteLocation.consume(view,point?{lon:point.longitude,lat:point.latitude}:null);
+      if (this._workspaceNoteLocation?.active) {
+        evt.stopPropagation(); const point = view.toMap(evt);
+        this._workspaceNoteLocation.consume(view, point ? { lon: point.longitude, lat: point.latitude } : null);
         return;
       }
       this._fieldNoteMap.clearHighlight();
@@ -12224,7 +11807,7 @@ private stopSafePlayback = () => {
       const clickRevision = this._mapClickRevision = (this._mapClickRevision ?? 0) + 1;
       const clickCurrent = () => this._mapClickRevision === clickRevision &&
         this.state.jimuMapView?.view === view && !view.destroyed && this.props.state !== "CLOSED" &&
-        (!this._currentImagePresentation||this._currentImagePresentation.owns(view.map));
+        (!this._currentImagePresentation || this._currentImagePresentation.owns(view.map));
       this._turboClickPickAbort?.abort();
       this._placesVectorLayer?.cancelPick();
       this._mapFeatureClickAbort?.abort();
@@ -12239,16 +11822,21 @@ private stopSafePlayback = () => {
       const hoveredPoint = this._coverageSelectionTargets.snapshot(this.coverageSelectionContext(), evt,
         TURBO_LIMITS.pickRadiusPx, geometry => view.toScreen(geometry));
       const pointPreviewAtClick = hoveredPoint ? new this.ArcGISModules.Graphic({
-        geometry: hoveredPoint.geometry, attributes: { image_id: hoveredPoint.imageId,
-          sequence_id: hoveredPoint.sequenceId || this._turboMetadataCache.get(hoveredPoint.imageId)?.sequence } }) : null;
+        geometry: hoveredPoint.geometry, attributes: {
+          image_id: hoveredPoint.imageId,
+          sequence_id: hoveredPoint.sequenceId || this._turboMetadataCache.get(hoveredPoint.imageId)?.sequence
+        }
+      }) : null;
       // Regional line previews keep their existing nearest-frame resolution.
       const hoverPixel = this._turboHoverGraphic?.geometry ? view.toScreen(this._turboHoverGraphic.geometry as __esri.Point) : null;
       const previewImageId = this._currentHoveredFeatureId;
       const coveragePreviewAtClick = pointPreviewAtClick || (this.state.turboModeActive && view.zoom < 14 && this.state.jimuMapView?.view === view &&
         this._turboHoveredScreen && hoverPixel && previewImageId && this._turboHoverGraphic?.geometry &&
         (evt.x - hoverPixel.x) ** 2 + (evt.y - hoverPixel.y) ** 2 <= TURBO_LIMITS.pickRadiusPx ** 2
-        ? new this.ArcGISModules.Graphic({ geometry: this._turboHoverGraphic.geometry.clone?.() || this._turboHoverGraphic.geometry,
-            attributes: { image_id: String(previewImageId), sequence_id: this._coverageFrameHoverTarget?.sequenceId || this._turboMetadataCache.get(String(previewImageId))?.sequence, turbo_representative: true } })
+        ? new this.ArcGISModules.Graphic({
+          geometry: this._turboHoverGraphic.geometry.clone?.() || this._turboHoverGraphic.geometry,
+          attributes: { image_id: String(previewImageId), sequence_id: this._coverageFrameHoverTarget?.sequenceId || this._turboMetadataCache.get(String(previewImageId))?.sequence, turbo_representative: true }
+        })
         : null);
 
       const point = (view.toMap(evt) || coveragePreviewAtClick?.geometry) as __esri.Point;
@@ -12280,27 +11868,27 @@ private stopSafePlayback = () => {
           places: !!this.state.placesActive,
           detectionFeatures: !!this.mapillaryObjectsFeatureLayer || !!this.mapillaryTrafficSignsFeatureLayer,
         }, () => view.hitTest(evt));
-        if(typeof (evt as any).defer==='function'&&(this.state.trafficSignsActive||this.state.objectsActive)&&(this._sharedNotesLayer||this._fieldNoteMap.hasPickTargets)){
-          deferNoteObjectPopup(evt as any,responsePromise,hit=>hit.results.some((result:any)=>
-            (!!this._sharedNotesLayer&&(result.layer||result.graphic?.layer)===this._sharedNotesLayer)||
-            (result.graphic&&!!this._fieldNoteMap.noteForGraphic(result.graphic))),clickCurrent);
+        if (typeof (evt as any).defer === 'function' && (this.state.trafficSignsActive || this.state.objectsActive) && (this._sharedNotesLayer || this._fieldNoteMap.hasPickTargets)) {
+          deferNoteObjectPopup(evt as any, responsePromise, hit => hit.results.some((result: any) =>
+            (!!this._sharedNotesLayer && (result.layer || result.graphic?.layer) === this._sharedNotesLayer) ||
+            (result.graphic && !!this._fieldNoteMap.noteForGraphic(result.graphic))), clickCurrent);
         }
-        const response=await responsePromise;
+        const response = await responsePromise;
         if (!clickCurrent()) return;
         const enterpriseNoteHit = response.results.find((result: any) => (result.layer || result.graphic?.layer) === this._sharedNotesLayer);
         if (enterpriseNoteHit && (enterpriseNoteHit as any).graphic) {
-          const openEnterpriseNote=()=>{
-          view.openPopup({ features: [(enterpriseNoteHit as any).graphic], location: (enterpriseNoteHit as any).graphic.geometry });
-          this._sharedNotesPopupHandle?.remove();
-          this._sharedNotesPopupHandle = view.popup?.on("trigger-action", event => {
-            if (event.action.id === "enterprise-note-attachments" && view.popup?.selectedFeature?.layer === this._sharedNotesLayer) void this.openFieldNoteAttachments(view.popup.selectedFeature);
-            if (event.action.id === "edit-enterprise-note" && view.popup?.selectedFeature?.layer === this._sharedNotesLayer) {
-              void this.openSharedFieldNoteEditor(view.popup.selectedFeature);
-            }
-          }) || null;
+          const openEnterpriseNote = () => {
+            view.openPopup({ features: [(enterpriseNoteHit as any).graphic], location: (enterpriseNoteHit as any).graphic.geometry });
+            this._sharedNotesPopupHandle?.remove();
+            this._sharedNotesPopupHandle = view.popup?.on("trigger-action", event => {
+              if (event.action.id === "enterprise-note-attachments" && view.popup?.selectedFeature?.layer === this._sharedNotesLayer) void this.openFieldNoteAttachments(view.popup.selectedFeature);
+              if (event.action.id === "edit-enterprise-note" && view.popup?.selectedFeature?.layer === this._sharedNotesLayer) {
+                void this.openSharedFieldNoteEditor(view.popup.selectedFeature);
+              }
+            }) || null;
           };
-          if((this.state.trafficSignsActive||this.state.objectsActive)&&this.offerNoteObjectChoice(view,(enterpriseNoteHit as any).graphic,openEnterpriseNote,clickCurrent))return;
-          openEnterpriseNote();return;
+          if ((this.state.trafficSignsActive || this.state.objectsActive) && this.offerNoteObjectChoice(view, (enterpriseNoteHit as any).graphic, openEnterpriseNote, clickCurrent)) return;
+          openEnterpriseNote(); return;
         }
 
 
@@ -12309,9 +11897,9 @@ private stopSafePlayback = () => {
         if (noteHit && (noteHit as any).graphic) {
           const graphic = (noteHit as any).graphic;
           const note = this._fieldNoteMap.noteForGraphic(graphic);
-          const openNote=()=>{if(note)void this._fieldNoteMap.focusNote(note).catch(()=>{});};
-          if(note&&(this.state.trafficSignsActive||this.state.objectsActive)&&this.offerNoteObjectChoice(view,graphic,()=>{openNote();const popupGraphic=graphic.clone();popupGraphic.attributes={...popupGraphic.attributes,note:attachmentMetadata(note.note).text};view.openPopup({features:[popupGraphic],location:graphic.geometry});},clickCurrent))return;
-          openNote();return;
+          const openNote = () => { if (note) void this._fieldNoteMap.focusNote(note).catch(() => { }); };
+          if (note && (this.state.trafficSignsActive || this.state.objectsActive) && this.offerNoteObjectChoice(view, graphic, () => { openNote(); const popupGraphic = graphic.clone(); popupGraphic.attributes = { ...popupGraphic.attributes, note: attachmentMetadata(note.note).text }; view.openPopup({ features: [popupGraphic], location: graphic.geometry }); }, clickCurrent)) return;
+          openNote(); return;
         }
 
         if (this._pointCloudHits.route(response.results)) return;
@@ -12327,10 +11915,10 @@ private stopSafePlayback = () => {
           catch (error) { if ((error as any)?.name !== 'AbortError') console.warn('[Overture tile pick]', error); }
           if (!clickCurrent()) return;
           if (this._placesVectorLayer === tilePlacesAtClick && this._places === placesOwnerAtClick && tileHit) {
-            if(tileHit.attributes?.cluster_count>=1){
+            if (tileHit.attributes?.cluster_count >= 1) {
               evt.stopPropagation();
-              if(view.zoom>=19)this.showToast(this._t('uiPoiClusterDense'),3500);
-              else void view.goTo({target:tileHit.geometry,zoom:Math.min(19,Math.max(15,Math.floor(view.zoom)+2))}).catch(()=>{});
+              if (view.zoom >= 19) this.showToast(this._t('uiPoiClusterDense'), 3500);
+              else void view.goTo({ target: tileHit.geometry, zoom: Math.min(19, Math.max(15, Math.floor(view.zoom) + 2)) }).catch(() => { });
               return;
             }
             const candidates: Place[] = (tileHit.candidates || [tileHit]).map((candidate: any) => tilePlace(candidate.attributes, candidate.geometry)).filter((place: Place | null): place is Place => !!place);
@@ -12537,8 +12125,8 @@ private stopSafePlayback = () => {
 
     // HOVER HANDLER
     this.pointerMoveHandle = view.on("pointer-move", this._coverageHoverHandler = (evt) => {
-      if(this._coverageTouchHover?.shouldIgnore(evt))return;
-      if(this._workspaceNoteLocation?.active)return;
+      if (this._coverageTouchHover?.shouldIgnore(evt)) return;
+      if (this._workspaceNoteLocation?.active) return;
       this._coverageHoverResume?.move(evt);
       this._coverageAlignmentDiagnostic?.pointer(view, { x: evt.x, y: evt.y });
       this._turboHoverPickAbort?.abort();
@@ -12682,7 +12270,7 @@ private stopSafePlayback = () => {
   private drawPulsingPoint(lon: number, lat: number, baseColor: any = [0, 255, 0, 1], imageId = this.state.imageId) {
     const view = this.state.jimuMapView?.view;
     if (!view || !this.ArcGISModules || !Number.isFinite(lon) || !Number.isFinite(lat)) return null;
-    if(this._currentImagePresentation&&!this._currentImagePresentation.owns(view.map))return null;
+    if (this._currentImagePresentation && !this._currentImagePresentation.owns(view.map)) return null;
     const anchor = this.getCoverageDisplayPosition(String(imageId), lon, lat);
     const graphic = this.ensureSelectionPulseOwner().show(view, anchor, lon, lat, baseColor, imageId, false);
     {
@@ -12752,7 +12340,8 @@ private stopSafePlayback = () => {
         latitude: lat,
         spatialReference: { wkid: 4326 },
       },
-      symbol: jimuMapView.view.type === "3d" ? { type: "point-3d", disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      symbol: jimuMapView.view.type === "3d" ? {
+        type: "point-3d", disableDepthTestDistance: Number.POSITIVE_INFINITY,
         verticalOffset: { screenLength: 1, minWorldLength: 0.05, maxWorldLength: 0.05 },
         symbolLayers: [{ type: "icon", resource: { primitive: "circle" }, material: { color }, size: 7, outline: { color: "#e3da30", size: 1 } }],
       } : {
@@ -12835,9 +12424,11 @@ private stopSafePlayback = () => {
     if (typeof document === 'undefined') return null;
     if (this.state.jimuMapView?.view.type === '3d') {
       return this._nativeCurrentImageMarker ??= new NativeCurrentImageMarker(
-        { point: p => new this.ArcGISModules.Point(p), mesh: p => new this.ArcGISModules.Mesh(p),
+        {
+          point: p => new this.ArcGISModules.Point(p), mesh: p => new this.ArcGISModules.Mesh(p),
           layer: p => new this.ArcGISModules.GraphicsLayer(p), graphic: p => new this.ArcGISModules.Graphic(p),
-          element: () => document.createElement('div') },
+          element: () => document.createElement('div')
+        },
         { request: cb => requestAnimationFrame(cb), cancel: frame => cancelAnimationFrame(frame) },
         (presented, view) => {
           if (this._selectionPulse?.view === view && this._selectionPulse.layer && this._selectionPulse.layer.visible === presented)
@@ -12865,7 +12456,7 @@ private stopSafePlayback = () => {
     const followAnchor = this.getCoverageDisplayPosition(String(activeImg.id), activeImg.lon, activeImg.lat);
     const followPoint = followAnchor.geometry || new this.ArcGISModules.Point({ longitude: followAnchor.lon, latitude: followAnchor.lat });
     if (this.props.config.syncMapWithImage === true && !this._isFlyInActive &&
-        shouldRecenterImage(view, followPoint, this.state.lockToImage)) {
+      shouldRecenterImage(view, followPoint, this.state.lockToImage)) {
       const position = this.props.config.syncMapPosition || "center";
       // Profile tracking follows the image position without letting goTo resolve a new zoom.
       const followScale = view.scale;
@@ -12959,7 +12550,7 @@ private stopSafePlayback = () => {
   private drawCone(lon: number, lat: number, heading: number, radiusMeters = 5, spreadDeg = 60) {
     const view = this.state.jimuMapView?.view;
     if (!view || !this.ArcGISModules || ![lon, lat, heading, radiusMeters, spreadDeg].every(Number.isFinite) || radiusMeters <= 0 || spreadDeg <= 0 || spreadDeg >= 180) return null;
-    if(this._currentImagePresentation&&!this._currentImagePresentation.owns(view.map))return null;
+    if (this._currentImagePresentation && !this._currentImagePresentation.owns(view.map)) return null;
     const screenCone = this.ensureScreenDirectionCone();
     if (screenCone) {
       const anchor = this.getCoverageDisplayPosition(String(this.state.imageId), lon, lat);
@@ -12979,8 +12570,10 @@ private stopSafePlayback = () => {
       const mercatorScale = 1 / Math.max(0.01, Math.cos(anchor.lat * Math.PI / 180));
       const measured = projectedConeRadius(radiusMeters, metres => {
         try {
-          const point = new this.ArcGISModules.Point({ x: center.x + metres * mercatorScale * Math.sin(angle),
-            y: center.y + metres * mercatorScale * Math.cos(angle), spatialReference: { wkid: 3857 } });
+          const point = new this.ArcGISModules.Point({
+            x: center.x + metres * mercatorScale * Math.sin(angle),
+            y: center.y + metres * mercatorScale * Math.cos(angle), spatialReference: { wkid: 3857 }
+          });
           const ground = renderedGroundPoint(view, point, properties => new this.ArcGISModules.Point(properties));
           return ground ? view.toScreen(ground) : null;
         } catch { return null; }
@@ -13211,7 +12804,7 @@ private stopSafePlayback = () => {
   private showToast(message: React.ReactNode, duration: number = 2500, owner?: "point-cloud-progress") {
     if (this._toastTimer) clearTimeout(this._toastTimer);
     this._toastOwner = owner;
-    this.setState({ toastMessage: typeof message === "string" ? <OwnedMessage source={message}/> : message });
+    this.setState({ toastMessage: typeof message === "string" ? <OwnedMessage source={message} /> : message });
     this._toastTimer = setTimeout(() => {
       this.setState({ toastMessage: undefined });
       this._toastOwner = undefined;
@@ -13290,30 +12883,30 @@ private stopSafePlayback = () => {
    * @param imageId - ID of the currently active image, excluded from results
    *                  so the viewer does not show the current image as a "nearby" suggestion.
    */
-  private refreshNearbyAfterPause = (immediate=false,expanded=false) => {
+  private refreshNearbyAfterPause = (immediate = false, expanded = false) => {
     const image = this._liveSequenceFrames.find(String(this.state.imageId)) || this.state.sequenceImages.find((img: { id: string; lat: number; lon: number }) => String(img.id) === this.state.imageId);
-    if (image && this._userPaused) this.fetchNearbyImages(image.lat, image.lon, String(image.id),immediate,expanded);
+    if (image && this._userPaused) this.fetchNearbyImages(image.lat, image.lon, String(image.id), immediate, expanded);
   };
-  private _nearbyDemandVisible=false;
-  private _nearbyPointerInside=false;
-  private nearbyPanelVisible=()=>!!this.state.nearbyStripOpen&&this.state.imageTrayTab!=='object'&&
-    this.props.state!=='CLOSED'&&this.props.visible!==false&&!this.state.isLoading&&this._imageryOpeningRequest==null&&
-    (!this._currentImagePresentation||!!this.state.jimuMapView?.view?.map&&this._currentImagePresentation.owns(this.state.jimuMapView.view.map));
-  private fetchNearbyImages(lat: number, lon: number, imageId: string,immediate=false,expanded=false) {
-    if(!this.nearbyPanelVisible())return;
+  private _nearbyDemandVisible = false;
+  private _nearbyPointerInside = false;
+  private nearbyPanelVisible = () => !!this.state.nearbyStripOpen && this.state.imageTrayTab !== 'object' &&
+    this.props.state !== 'CLOSED' && this.props.visible !== false && !this.state.isLoading && this._imageryOpeningRequest == null &&
+    (!this._currentImagePresentation || !!this.state.jimuMapView?.view?.map && this._currentImagePresentation.owns(this.state.jimuMapView.view.map));
+  private fetchNearbyImages(lat: number, lon: number, imageId: string, immediate = false, expanded = false) {
+    if (!this.nearbyPanelVisible()) return;
     this._nearbyDiscovery ??= new NearbyImageDiscovery({
       getState: () => this.state,
       update: patch => this.setState(patch),
       isPaused: () => this._userPaused,
-      isVisible:()=>this.nearbyPanelVisible(),
-      isInteracting:()=>this._nearbyPointerInside,
+      isVisible: () => this.nearbyPanelVisible(),
+      isInteracting: () => this._nearbyPointerInside,
       getToken: () => this.accessToken,
       isInitialLoad: () => this._isInitialImageLoad,
       markInitialLoadComplete: () => { this._isInitialImageLoad = false; },
       runBackground: (work, signal) => this.runSequenceBackground(work, signal),
     });
-    const anchor=this.getCoverageDisplayPosition(String(imageId),lon,lat);
-    this._nearbyDiscovery.schedule(anchor.lat, anchor.lon, imageId,immediate,expanded);
+    const anchor = this.getCoverageDisplayPosition(String(imageId), lon, lat);
+    this._nearbyDiscovery.schedule(anchor.lat, anchor.lon, imageId, immediate, expanded);
   }
 
   /**
@@ -13325,70 +12918,70 @@ private stopSafePlayback = () => {
    * @param img - The nearby image whose coordinates should be pinned, or
    *              `null` to remove the existing pin.
    */
-  private _nearbySelectionRevision=0;
-  private async selectNearbyImage(img:NearbyImage):Promise<void> {
-    const viewer=this.mapillaryViewer;if(!viewer)return;
+  private _nearbySelectionRevision = 0;
+  private async selectNearbyImage(img: NearbyImage): Promise<void> {
+    const viewer = this.mapillaryViewer; if (!viewer) return;
     this._nearbyDiscovery?.cancel();
-    const request=++this._nearbySelectionRevision;
-    const selection=this._selectionRequestId,view=this.state.jimuMapView?.view;
-    const current=()=>request===this._nearbySelectionRevision&&this.mapillaryViewer===viewer&&this._selectionRequestId===selection&&this.state.jimuMapView?.view===view;
-    this.highlightNearbyPin(null);this._nearbySelectedId=img.id;this.forceUpdate();
+    const request = ++this._nearbySelectionRevision;
+    const selection = this._selectionRequestId, view = this.state.jimuMapView?.view;
+    const current = () => request === this._nearbySelectionRevision && this.mapillaryViewer === viewer && this._selectionRequestId === selection && this.state.jimuMapView?.view === view;
+    this.highlightNearbyPin(null); this._nearbySelectedId = img.id; this.forceUpdate();
     try {
-      await viewer.moveTo(img.id);if(!current())return;
-      const image=await viewer.getImage();if(!current()||String(image.id)!==String(img.id))return;
-      const pose=nearbyImagePose(img);
-      if(pose?.heading!==null&&pose?.heading!==undefined){
-        const x=(((.5+(pose.heading-(image.compassAngle??0))/360)%1)+1)%1;
-        viewer.setCenter([x,.5]);this._lastBearing=pose.heading;if(view)this.requestConeRedraw(view);
+      await viewer.moveTo(img.id); if (!current()) return;
+      const image = await viewer.getImage(); if (!current() || String(image.id) !== String(img.id)) return;
+      const pose = nearbyImagePose(img);
+      if (pose?.heading !== null && pose?.heading !== undefined) {
+        const x = (((.5 + (pose.heading - (image.compassAngle ?? 0)) / 360) % 1) + 1) % 1;
+        viewer.setCenter([x, .5]); this._lastBearing = pose.heading; if (view) this.requestConeRedraw(view);
       }
-    }catch(error){if(current())this.log('[Mapillary nearby] Image selection failed:',error);}
+    } catch (error) { if (current()) this.log('[Mapillary nearby] Image selection failed:', error); }
   }
 
   private highlightNearbyPin(img: NearbyImage | null) {
-    this._nearbyHoverAbort?.abort();this._nearbyHoverAbort=null;
+    this._nearbyHoverAbort?.abort(); this._nearbyHoverAbort = null;
     this._nearbyHighlight ??= new NearbyImageHighlight<__esri.Graphic>();
-    const view=this.state.jimuMapView?.view,pose=img&&nearbyImagePose(img);
-    if(!view||!img||!pose||String(img.id)===String(this.state.imageId)||(this._currentImagePresentation&&!this._currentImagePresentation.owns(view.map))){
-      this._nearbyHighlight.update(view,this.ArcGISModules,this.state,null);return;
+    const view = this.state.jimuMapView?.view, pose = img && nearbyImagePose(img);
+    if (!view || !img || !pose || String(img.id) === String(this.state.imageId) || (this._currentImagePresentation && !this._currentImagePresentation.owns(view.map))) {
+      this._nearbyHighlight.update(view, this.ArcGISModules, this.state, null); return;
     }
-    const context=this.coverageSelectionContext();
-    const anchor=this._coverageSelectionTargets.anchor(context,String(img.id));
-    if(anchor||!context.enabled||!context.individual){
-      this._nearbyHighlight.update(view,this.ArcGISModules,this.state,img,anchor?{lon:anchor.lon,lat:anchor.lat}:undefined);return;
+    const context = this.coverageSelectionContext();
+    const anchor = this._coverageSelectionTargets.anchor(context, String(img.id));
+    if (anchor || !context.enabled || !context.individual) {
+      this._nearbyHighlight.update(view, this.ArcGISModules, this.state, img, anchor ? { lon: anchor.lon, lat: anchor.lat } : undefined); return;
     }
     // Resolve the exact ID from shared coverage bytes before displaying a new
     // preview; nearby API coordinates must never snap to a neighbouring image.
     this._nearbyHighlight.clear();
-    const controller=new AbortController();this._nearbyHoverAbort=controller;
-    void this.resolveNearbyPreviewAnchor(view,img,pose,controller);
+    const controller = new AbortController(); this._nearbyHoverAbort = controller;
+    void this.resolveNearbyPreviewAnchor(view, img, pose, controller);
   }
 
-  private async resolveNearbyPreviewAnchor(view:__esri.MapView|__esri.SceneView,img:NearbyImage,pose:{lon:number;lat:number},controller:AbortController):Promise<void>{
-    const context={...this.coverageSelectionContext()},token=this.accessToken;
-    const current=()=>this._nearbyHoverAbort===controller&&!controller.signal.aborted&&this.state.jimuMapView?.view===view&&!view.destroyed&&
-      this.accessToken===token&&this.state.turboModeActive&&this.props.state!=='CLOSED'&&this.props.visible!==false&&
-      (!this._currentImagePresentation||this._currentImagePresentation.owns(view.map))&&
-      this.coverageSelectionContext().revision===context.revision&&this.coverageSelectionContext().layer===context.layer;
-    try{
-      const zoom=ZOOM.TILE_FETCH,n=2**zoom,latitude=Math.max(-85.05112878,Math.min(85.05112878,pose.lat));
-      const x=Math.max(0,Math.min(n-1,Math.floor((pose.lon+180)/360*n))),y=Math.max(0,Math.min(n-1,Math.floor((1-Math.asinh(Math.tan(latitude*Math.PI/180))/Math.PI)/2*n)));
-      const tiles:[number,number,number][]=[[x,y,zoom]];
-      for(const [key] of this._turboTileCache.snapshot()){
-        const [z,tx,ty]=key.split('/').map(Number);if(z===zoom&&Math.abs(tx-x)<=1&&Math.abs(ty-y)<=1&&(tx!==x||ty!==y))tiles.push([tx,ty,z]);
+  private async resolveNearbyPreviewAnchor(view: __esri.MapView | __esri.SceneView, img: NearbyImage, pose: { lon: number; lat: number }, controller: AbortController): Promise<void> {
+    const context = { ...this.coverageSelectionContext() }, token = this.accessToken;
+    const current = () => this._nearbyHoverAbort === controller && !controller.signal.aborted && this.state.jimuMapView?.view === view && !view.destroyed &&
+      this.accessToken === token && this.state.turboModeActive && this.props.state !== 'CLOSED' && this.props.visible !== false &&
+      (!this._currentImagePresentation || this._currentImagePresentation.owns(view.map)) &&
+      this.coverageSelectionContext().revision === context.revision && this.coverageSelectionContext().layer === context.layer;
+    try {
+      const zoom = ZOOM.TILE_FETCH, n = 2 ** zoom, latitude = Math.max(-85.05112878, Math.min(85.05112878, pose.lat));
+      const x = Math.max(0, Math.min(n - 1, Math.floor((pose.lon + 180) / 360 * n))), y = Math.max(0, Math.min(n - 1, Math.floor((1 - Math.asinh(Math.tan(latitude * Math.PI / 180)) / Math.PI) / 2 * n)));
+      const tiles: [number, number, number][] = [[x, y, zoom]];
+      for (const [key] of this._turboTileCache.snapshot()) {
+        const [z, tx, ty] = key.split('/').map(Number); if (z === zoom && Math.abs(tx - x) <= 1 && Math.abs(ty - y) <= 1 && (tx !== x || ty !== y)) tiles.push([tx, ty, z]);
       }
-      for(const tile of tiles){
-        if(!current())return;
-        const [tx,ty,z]=tile,buffer=this._turboTileCache.get(`${z}/${tx}/${ty}`)??await this.runSequenceBackground(signal=>this.getTurboTileBuffer(tile,signal),controller.signal);
-        if(!current())return;if(!buffer.byteLength)continue;
-        const index=this._sequenceTileIndex.has(buffer)?await this.getSequenceTileIndex(buffer,controller.signal):await this.runSequenceBackground(signal=>this.getSequenceTileIndex(buffer,signal),controller.signal);if(!current())return;
-        const point=nativeImageAnchor(buffer,index,bytes=>new VectorTile(new Pbf(new Uint8Array(bytes))),tile,String(img.id));
-        if(!point)continue;
-        this._coverageSelectionTargets.retain(this.coverageSelectionContext(),String(img.id),new this.ArcGISModules.Point({...point,spatialReference:{wkid:3857}}));break;
+      for (const tile of tiles) {
+        if (!current()) return;
+        const [tx, ty, z] = tile, buffer = this._turboTileCache.get(`${z}/${tx}/${ty}`) ?? await this.runSequenceBackground(signal => this.getTurboTileBuffer(tile, signal), controller.signal);
+        if (!current()) return; if (!buffer.byteLength) continue;
+        const index = this._sequenceTileIndex.has(buffer) ? await this.getSequenceTileIndex(buffer, controller.signal) : await this.runSequenceBackground(signal => this.getSequenceTileIndex(buffer, signal), controller.signal); if (!current()) return;
+        const point = nativeImageAnchor(buffer, index, bytes => new VectorTile(new Pbf(new Uint8Array(bytes))), tile, String(img.id));
+        if (!point) continue;
+        this._coverageSelectionTargets.retain(this.coverageSelectionContext(), String(img.id), new this.ArcGISModules.Point({ ...point, spatialReference: { wkid: 3857 } })); break;
       }
-    }catch(error){if(current()&&(error as any)?.name!=='AbortError')this.log('[Mapillary nearby] Coverage alignment unavailable:',error);}
-    if(current()){
-      const anchor=this.getCoverageDisplayPosition(String(img.id),pose.lon,pose.lat);
-      this._nearbyHighlight?.update(view,this.ArcGISModules,this.state,img,anchor);
+    } catch (error) { if (current() && (error as any)?.name !== 'AbortError') this.log('[Mapillary nearby] Coverage alignment unavailable:', error); }
+    if (current()) {
+      const anchor = this.getCoverageDisplayPosition(String(img.id), pose.lon, pose.lat);
+      this._nearbyHighlight?.update(view, this.ArcGISModules, this.state, img, anchor);
     }
   }
 
@@ -13414,30 +13007,30 @@ private stopSafePlayback = () => {
   //   - Info box + legend (only when image loaded)
   private _runtimeLocale: LocaleValue | null = null;
   private get _presentation() { return this._runtimeLocale?.presentation || englishPresentation; }
-  private _owned = (source:string,values?:Record<string,string|number>) => this._runtimeLocale?.owned(source,values) ?? englishPresentation.text(source,values);
-  private _presentationHandle: {remove():void} | null = null;
+  private _owned = (source: string, values?: Record<string, string | number>) => this._runtimeLocale?.owned(source, values) ?? englishPresentation.text(source, values);
+  private _presentationHandle: { remove(): void } | null = null;
   private _presentationOwner: unknown = null;
-  private bindPresentation = (locale:LocaleValue) => {
-    if(this._presentationOwner===locale.presentation)return;
-    this._presentationHandle?.remove();this._presentationOwner=locale.presentation;
-    this._presentationHandle=locale.presentation.onChange(()=>this.refreshPresentation());
+  private bindPresentation = (locale: LocaleValue) => {
+    if (this._presentationOwner === locale.presentation) return;
+    this._presentationHandle?.remove(); this._presentationOwner = locale.presentation;
+    this._presentationHandle = locale.presentation.onChange(() => this.refreshPresentation());
   };
-  private _localizedCloudSummary?:()=>string;
+  private _localizedCloudSummary?: () => string;
   private refreshPresentation() {
-    const summary=this._localizedCloudSummary?.();if(summary && this.state.pointCloudVisible)this.setState({pointCloudSummary:summary});
-    this._mapSymbolLegend?.refreshLocale();this._places?.refreshLocale();this._elevationProfile?.refreshLocale();
-    const layer=this._sharedNotesLayer as any;
-    if(layer && !layer.destroyed){
-      const popup=layer.popupTemplate;
-      if(popup){popup.title=this._owned(popup.title);for(const section of popup.content?.toArray?.() || (Array.isArray(popup.content)?popup.content:[]))for(const info of section.fieldInfos || [])if(info.label)info.label=this._owned(info.label);for(const action of popup.actions?.toArray?.() || popup.actions || [])if(action.title)action.title=this._owned(action.title);}
-      const renderer=layer.renderer?.clone?.();if(renderer?.uniqueValueInfos){renderer.uniqueValueInfos=renderer.uniqueValueInfos.map((entry:any)=>({...entry,label:this._owned(entry.label)}));layer.renderer=renderer;}
+    const summary = this._localizedCloudSummary?.(); if (summary && this.state.pointCloudVisible) this.setState({ pointCloudSummary: summary });
+    this._mapSymbolLegend?.refreshLocale(); this._places?.refreshLocale(); this._elevationProfile?.refreshLocale();
+    const layer = this._sharedNotesLayer as any;
+    if (layer && !layer.destroyed) {
+      const popup = layer.popupTemplate;
+      if (popup) { popup.title = this._owned(popup.title); for (const section of popup.content?.toArray?.() || (Array.isArray(popup.content) ? popup.content : [])) for (const info of section.fieldInfos || []) if (info.label) info.label = this._owned(info.label); for (const action of popup.actions?.toArray?.() || popup.actions || []) if (action.title) action.title = this._owned(action.title); }
+      const renderer = layer.renderer?.clone?.(); if (renderer?.uniqueValueInfos) { renderer.uniqueValueInfos = renderer.uniqueValueInfos.map((entry: any) => ({ ...entry, label: this._owned(entry.label) })); layer.renderer = renderer; }
     }
   }
-  private _t = (key: MessageKey, values?: Record<string,string|number>) => this._runtimeLocale?.t(key, values) ?? message(en, key, values);
+  private _t = (key: MessageKey, values?: Record<string, string | number>) => this._runtimeLocale?.t(key, values) ?? message(en, key, values);
   private renderLocaleContent = (locale: LocaleValue) => { this._runtimeLocale = locale; return this.renderLocalizedContent(); };
   render() {
     return <WidgetLocaleProvider key={this.props.id} appLocale={this.props.intl?.locale} widgetId={this.props.id}
-      defaultLanguage={this.props.config.widgetLanguage || "auto"} allowUserChoice={this.props.config.allowUserLanguageChoice !== false}><LocaleContent render={this.renderLocaleContent} onCommit={this.bindPresentation}/></WidgetLocaleProvider>;
+      defaultLanguage={this.props.config.widgetLanguage || "auto"} allowUserChoice={this.props.config.allowUserLanguageChoice !== false}><LocaleContent render={this.renderLocaleContent} onCommit={this.bindPresentation} /></WidgetLocaleProvider>;
   }
 
   private renderLocalizedContent() {
@@ -13534,7 +13127,7 @@ private stopSafePlayback = () => {
                   backgroundClip: "text",
                 }}
               >
-                 {this._t('appClickAPointToViewImagery')} </span>
+                {this._t('appClickAPointToViewImagery')} </span>
 
               {/* Kept intact for TypeScript mapping, automatically hidden by glassStyles config */}
               <span style={glassStyles.initialStateTextSecondary}> {this._t('appMapillaryImageryWillAppearHere')} </span>
@@ -13596,18 +13189,18 @@ private stopSafePlayback = () => {
             hidePointCloud={this.state.isFullscreen || this.props.config.hidePointCloud}
             pointCloudLoading={this.state.pointCloudLoading}
             pointCloudSummary={this.state.pointCloudSummary}
-          pointCloudIncomplete={this.state.pointCloudIncomplete}
-          onRetryPointCloud={() => void this.loadPointCloudLayer(true, true)}
-          pointCloudAutoPaused={!!this.state.pointCloudAutoPaused}
-          pointCloudActive={!!this._pointCloudAcquisition.active}
-          pointCloudVisible={this.state.pointCloudVisible}
+            pointCloudIncomplete={this.state.pointCloudIncomplete}
+            onRetryPointCloud={() => void this.loadPointCloudLayer(true, true)}
+            pointCloudAutoPaused={!!this.state.pointCloudAutoPaused}
+            pointCloudActive={!!this._pointCloudAcquisition.active}
+            pointCloudVisible={this.state.pointCloudVisible}
             pointCloudAvailable={this.state.pointCloudAvailable}
-          pointCloudFollowImages={!!this.state.pointCloudFollowImages}
-          onPointCloudFollowImagesChange={(enabled: boolean) => {
-            this._pointCloudAcquisition.resetFailures();
-            this.setState({ pointCloudFollowImages: enabled, pointCloudAutoPaused: false });
-            if (!enabled) this._pointCloudAcquisition.cancelFollow();
-          }}
+            pointCloudFollowImages={!!this.state.pointCloudFollowImages}
+            onPointCloudFollowImagesChange={(enabled: boolean) => {
+              this._pointCloudAcquisition.resetFailures();
+              this.setState({ pointCloudFollowImages: enabled, pointCloudAutoPaused: false });
+              if (!enabled) this._pointCloudAcquisition.cancelFollow();
+            }}
             onTogglePointCloud={this.togglePointCloud}
           />
         )}
@@ -13657,14 +13250,14 @@ private stopSafePlayback = () => {
               }}
             >
               <div role="tablist" aria-label={this._t('appImageSources')} style={{ display: "flex", gap: 8 }}>
-                {(["nearby", "object"] as const).filter(tab=>tab==='nearby'||!!this.state.selectedFeatureMetadata).map(tab => <button className="mly-text-action" key={tab} role="tab" aria-selected={(this.state.imageTrayTab || "nearby") === tab} onClick={() => {this.highlightNearbyPin(null);if(tab==='object')this.revealDetectionTools();this.setState({ imageTrayTab: tab });}} style={{ background: "none", border: 0, color: (this.state.imageTrayTab || "nearby") === tab ? "#8bdbb7" : "#bbb", padding: "6px", cursor: "pointer" }}>{tab === "nearby" ? <OwnedMessage source={"Nearby ({value0})"} values={{value0:String((this.state.nearbyImages || []).length)}}/> : <OwnedMessage source={"Selected object ({value0})"} values={{value0:String(this.state.alternateImages.length)}}/>}</button>)}
+                {(["nearby", "object"] as const).filter(tab => tab === 'nearby' || !!this.state.selectedFeatureMetadata).map(tab => <button className="mly-text-action" key={tab} role="tab" aria-selected={(this.state.imageTrayTab || "nearby") === tab} onClick={() => { this.highlightNearbyPin(null); if (tab === 'object') this.revealDetectionTools(); this.setState({ imageTrayTab: tab }); }} style={{ background: "none", border: 0, color: (this.state.imageTrayTab || "nearby") === tab ? "#8bdbb7" : "#bbb", padding: "6px", cursor: "pointer" }}>{tab === "nearby" ? <OwnedMessage source={"Nearby ({value0})"} values={{ value0: String((this.state.nearbyImages || []).length) }} /> : <OwnedMessage source={"Selected object ({value0})"} values={{ value0: String(this.state.alternateImages.length) }} />}</button>)}
               </div>
-              {this.state.imageTrayTab!=='object'&&this.state.nearbyCanExpand&&<button className="mly-text-action" type="button" disabled={!!this.state.nearbyLoading}
+              {this.state.imageTrayTab !== 'object' && this.state.nearbyCanExpand && <button className="mly-text-action" type="button" disabled={!!this.state.nearbyLoading}
                 title={this._owned('Search a larger sample and show the nearest 20 captures')}
-                onClick={()=>this.refreshNearbyAfterPause(true,true)}
-                style={{fontSize:9,padding:'2px 5px',border:'1px solid #648b73',borderRadius:4,background:'#214233',color:'#e1eee5',cursor:'pointer'}}>{this._owned('Search more')}</button>}
+                onClick={() => this.refreshNearbyAfterPause(true, true)}
+                style={{ fontSize: 9, padding: '2px 5px', border: '1px solid #648b73', borderRadius: 4, background: '#214233', color: '#e1eee5', cursor: 'pointer' }}>{this._owned('Search more')}</button>}
               <button
-                onClick={() => {this.highlightNearbyPin(null);this.setState({ nearbyStripOpen: false });}}
+                onClick={() => { this.highlightNearbyPin(null); this.setState({ nearbyStripOpen: false }); }}
                 style={{
                   background: "none",
                   border: "none",
@@ -13681,8 +13274,8 @@ private stopSafePlayback = () => {
 
             {/* Rows stay mounted while switching tabs, preserving independent scroll positions. */}
             <div role="tabpanel" aria-label={this._t('appNearbyImages')} aria-busy={!!this.state.nearbyLoading}
-              onPointerEnter={event=>{if(event.pointerType==='mouse'||event.pointerType==='pen')this._nearbyPointerInside=true;}}
-              onPointerLeave={()=>{this._nearbyPointerInside=false;this._nearbyDiscovery?.flush();}}
+              onPointerEnter={event => { if (event.pointerType === 'mouse' || event.pointerType === 'pen') this._nearbyPointerInside = true; }}
+              onPointerLeave={() => { this._nearbyPointerInside = false; this._nearbyDiscovery?.flush(); }}
               style={{
                 display: this.state.imageTrayTab === "object" ? "none" : "flex",
                 flex: "1 1 0",
@@ -13697,7 +13290,7 @@ private stopSafePlayback = () => {
                 paddingBottom: "2px",
               }}
             >
-              {this.state.nearbyLoading&&!this.state.nearbyImages?.length&&<span role="status" style={{fontSize:11,padding:8,color:'#b5ccbf'}}>{this._owned('Loading nearby captures…')}</span>}
+              {this.state.nearbyLoading && !this.state.nearbyImages?.length && <span role="status" style={{ fontSize: 11, padding: 8, color: '#b5ccbf' }}>{this._owned('Loading nearby captures…')}</span>}
               {(this.state.nearbyImages ?? []).map((img) => {
                 // Use _nearbySelectedId for instant highlight on click,
                 // fall back to imageId so the current sequence image
@@ -13755,21 +13348,21 @@ private stopSafePlayback = () => {
                 );
               })}
             </div>
-            <div role="tabpanel" aria-label={this._t('appSelectedObjectImages')} style={{ display: this.state.imageTrayTab === "object"&&this.state.selectedFeatureMetadata ? "flex" : "none", gap: 6, flex: "1 1 0", minHeight: 0, overflowX: "auto", overflowY: "hidden", alignItems: "flex-start", color: "#ddd", fontSize: 12 }}>
+            <div role="tabpanel" aria-label={this._t('appSelectedObjectImages')} style={{ display: this.state.imageTrayTab === "object" && this.state.selectedFeatureMetadata ? "flex" : "none", gap: 6, flex: "1 1 0", minHeight: 0, overflowX: "auto", overflowY: "hidden", alignItems: "flex-start", color: "#ddd", fontSize: 12 }}>
               {this.state.isFetchingAlternates && <span style={{ alignSelf: "center" }} role="status"> {this._t('appLoadingAssociatedImages')} </span>}
-              {this.state.alternateImagesError && <span style={{ alignSelf: "center" }} role="alert">{<OwnedMessage source={String(this.state.alternateImagesError ?? "")}/>} <button className="mly-text-action" onClick={() => { const location = this.state.selectedFeatureLocation; const id = this.state.selectedFeatureMetadata?.id; if (location && id) void this.fetchAlternateImages(id, location.lat, location.lon); }}> {this._t('appRetry')} </button></span>}
+              {this.state.alternateImagesError && <span style={{ alignSelf: "center" }} role="alert">{<OwnedMessage source={String(this.state.alternateImagesError ?? "")} />} <button className="mly-text-action" onClick={() => { const location = this.state.selectedFeatureLocation; const id = this.state.selectedFeatureMetadata?.id; if (location && id) void this.fetchAlternateImages(id, location.lat, location.lon); }}> {this._t('appRetry')} </button></span>}
               {!this.state.isFetchingAlternates && !this.state.alternateImagesError && !this.state.alternateImages.length && <span> {this._t('appNoAssociatedImagesAvailableSelectASignOrObject')} </span>}
               {this.state.alternateImages.map(img => <button className="mly-text-action" key={img.id}
                 onMouseEnter={event => { event.currentTarget.style.transform = "scale(1.04)"; }}
                 onMouseLeave={event => { event.currentTarget.style.transform = "scale(1)"; }}
-                onClick={() => void this._handleSelectAlternateImage(img)} aria-label={this._owned("Open associated image {value0}",{value0:String(img.id)})} title={`${img.detectionLabel || "Detected object"} · ${Number.isFinite(img.capturedAt) ? new Date(img.capturedAt).toLocaleDateString(this._runtimeLocale?.formatLocale) : this._t('appDateUnavailable')}`} style={{ flex: "0 0 auto", width: "var(--tray-card-width)", padding: 0, transition: "transform 0.12s", background: "#182321", color: "#ddd", border: img.id === this.state.imageId ? "2px solid #05a056" : "2px solid transparent", borderRadius: 5, overflow: "hidden", cursor: "pointer" }}>
+                onClick={() => void this._handleSelectAlternateImage(img)} aria-label={this._owned("Open associated image {value0}", { value0: String(img.id) })} title={`${img.detectionLabel || "Detected object"} · ${Number.isFinite(img.capturedAt) ? new Date(img.capturedAt).toLocaleDateString(this._runtimeLocale?.formatLocale) : this._t('appDateUnavailable')}`} style={{ flex: "0 0 auto", width: "var(--tray-card-width)", padding: 0, transition: "transform 0.12s", background: "#182321", color: "#ddd", border: img.id === this.state.imageId ? "2px solid #05a056" : "2px solid transparent", borderRadius: 5, overflow: "hidden", cursor: "pointer" }}>
                 <span style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "var(--tray-image-height)", background: "#0f1618" }}>
                   <span style={{ display: "inline-block", position: "relative", lineHeight: 0 }}>
-                  <img src={img.thumbUrl} alt={this._t('appAssociatedCameraCapture')} loading="lazy" style={{ width: "auto", height: "auto", maxWidth: "var(--tray-card-width)", maxHeight: "var(--tray-image-height)", display: "block" }} />
-                  {img.detectionBounds && <svg aria-hidden="true" viewBox="0 0 1 1" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
-                    <rect {...img.detectionBounds} fill="none" stroke="#111" strokeWidth={4} vectorEffect="non-scaling-stroke" />
-                    <rect {...img.detectionBounds} fill="none" stroke="#ffe45e" strokeWidth={2} vectorEffect="non-scaling-stroke" />
-                  </svg>}
+                    <img src={img.thumbUrl} alt={this._t('appAssociatedCameraCapture')} loading="lazy" style={{ width: "auto", height: "auto", maxWidth: "var(--tray-card-width)", maxHeight: "var(--tray-image-height)", display: "block" }} />
+                    {img.detectionBounds && <svg aria-hidden="true" viewBox="0 0 1 1" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
+                      <rect {...img.detectionBounds} fill="none" stroke="#111" strokeWidth={4} vectorEffect="non-scaling-stroke" />
+                      <rect {...img.detectionBounds} fill="none" stroke="#ffe45e" strokeWidth={2} vectorEffect="non-scaling-stroke" />
+                    </svg>}
                   </span>
                 </span>
                 <span style={{ display: "block", padding: "3px 4px", height: 20, boxSizing: "border-box", fontSize: 10, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{img.detectionBounds ? this._t('appOutlined') : this._t('appOutlineUnavailable')}  {this._t('appCaptured')} {Number.isFinite(img.capturedAt) ? new Date(img.capturedAt).toLocaleDateString(this._runtimeLocale?.formatLocale) : this._t('appDateUnavailable')}</span>
@@ -13829,11 +13422,11 @@ private stopSafePlayback = () => {
                 <div style={glassStyles.missingMapInstructionsTitle}> {this._t('appHowToFix')} </div>
                 <ol style={glassStyles.missingMapInstructionsList}>
                   <li>
-                     {this._t('appOpenThisWidgetS')} <b> {this._t('appSettings')} </b>  {this._t('appPanel')} </li>
+                    {this._t('appOpenThisWidgetS')} <b> {this._t('appSettings')} </b>  {this._t('appPanel')} </li>
                   <li>
-                     {this._t('appGoToThe')} <b> {this._t('appSource')} </b>  {this._t('appTab')} </li>
+                    {this._t('appGoToThe')} <b> {this._t('appSource')} </b>  {this._t('appTab')} </li>
                   <li>
-                     {this._t('appClick')} <b> {this._t('appSelectMapWidget')} </b>
+                    {this._t('appClick')} <b> {this._t('appSelectMapWidget')} </b>
                   </li>
                   <li> {this._t('appSelectYourTargetMapName')} </li>
                 </ol>
@@ -13845,365 +13438,368 @@ private stopSafePlayback = () => {
         {/* Empty React-owned host: the SDK profile reserves its own space above imagery on mobile. */}
         <div ref={this.setProfileFlowHost} className="mly-profile-flow-dock" style={{ display: "none", flex: "0 0 auto", width: "100%", minHeight: 0, minWidth: 0, overflow: "hidden", boxSizing: "border-box", borderBottom: "1px solid rgba(127,127,127,0.25)" }} />
         <div className="mly-viewer-workspace" style={{ flex: "1 1 0", minHeight: 0, minWidth: 0, position: "relative", isolation: "isolate", zIndex: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        {viewerArea}
+          {viewerArea}
 
 
-        {(this.state.toastMessage || this.state.pointCloudLoading) && <div style={{ ...glassStyles.toastContainer, top: this.state.isLoading ? 12 : undefined, bottom: this.state.isLoading ? "auto" : glassStyles.toastContainer.bottom, display: "flex", alignItems: "center", gap: 10, maxWidth: "calc(100% - 24px)", width: "max-content", whiteSpace: "normal", boxSizing: "border-box" }}>
-          <div style={{ flex: "1 1 auto", minWidth: 0, maxWidth: "100%", whiteSpace: "normal", overflowWrap: "anywhere" }}>{this.state.toastMessage || <OwnedMessage source={"Loading point cloud…"}/>}</div>
+          {(this.state.toastMessage || this.state.pointCloudLoading) && <div style={{ ...glassStyles.toastContainer, top: this.state.isLoading ? 12 : undefined, bottom: this.state.isLoading ? "auto" : glassStyles.toastContainer.bottom, display: "flex", alignItems: "center", gap: 10, maxWidth: "calc(100% - 24px)", width: "max-content", whiteSpace: "normal", boxSizing: "border-box" }}>
+            <div style={{ flex: "1 1 auto", minWidth: 0, maxWidth: "100%", whiteSpace: "normal", overflowWrap: "anywhere" }}>{this.state.toastMessage || <OwnedMessage source={"Loading point cloud…"} />}</div>
 
-        </div>}
+          </div>}
 
-        {this.state.detectionsActive && this.state.viewerDetectionNote && <DetectionNoteAction key={this.state.viewerDetectionNote.imageId+':'+this.state.viewerDetectionNote.detectionId}
-          onLoadPreview={this.loadDetectionPreview} selection={this.state.viewerDetectionNote} enterpriseEnabled={!!(this.props.config.sharedFieldNotesEnabled&&this.props.config.sharedFieldNotesUrl)}
-          hasTray={this.state.nearbyStripOpen} busy={this.state.detectionNoteCapturing} picking={this.state.detectionNotePicking} onChoose={this.chooseDetectionNoteLocation} onCancel={this.cancelDetectionNoteLocation} onClose={this.dismissViewerDetection}/>}
-        <FieldNotesPanel
-          onLoadDetectionPreview={this.loadDetectionPreview}
-          onLoadDetectionAttachment={this.loadDetectionNoteAttachment}
-          onDetectionDraftFinished={this.finishDetectionWorkspaceMarker}
-          onDetectionDraftLocation={this.moveDetectionWorkspaceMarker}
-          detectionWorkspaceDraft={this.state.detectionWorkspaceDraft}
-          onClearDetectionWorkspaceDraft={applied=>{if(!applied&&this.state.detectionWorkspaceDraft)this.finishDetectionWorkspaceMarker(this.state.detectionWorkspaceDraft.requestId);this.setState({detectionWorkspaceDraft:null});}}
-          isAnnotationMode={this.state.isAnnotationMode}
-          pendingNote={this.state.pendingFieldNote}
-          notes={this.state.fieldNotes}
-          enterpriseEnabled={!!this.props.config.sharedFieldNotesEnabled}
-          onLoadEnterpriseNotes={this.loadEnterpriseNotesPage}
-          enterpriseContext={this.state.jimuMapView?.view}
-          enterpriseLayerUrl={String(this.props.config.sharedFieldNotesReadUrl || this.props.config.sharedFieldNotesUrl || "")}
-          enterpriseWriteUrl={String(this.props.config.sharedFieldNotesUrl || "")}
-          loadEnterpriseIdentityManager={this.loadEnterpriseIdentityManager}
-          sharingEnabled={!!(this.props.config.sharedFieldNotesEnabled && this.props.config.sharedFieldNotesUrl)}
-          sharedMessage={this.props.config.sharedFieldNotesEnabled ? this.state.sharedNotesMessage : undefined}
-          attachments={this.state.fieldNoteAttachments}
-          currentImageAvailable={!!this.state.imageId}
-          onAttachments={note => void this.openFieldNoteAttachments(note)}
-          onUploadAttachment={this.uploadFieldNoteAttachment}
-          onDownloadAttachment={this.downloadFieldNoteAttachment}
-          onCloseAttachments={this.closeFieldNoteAttachments}
-          editor={this.state.fieldNoteEditor}
-          onEditNote={this.editLocalFieldNote}
-          onEditSharedNote={note => void this.openSharedFieldNoteEditor(note)}
-          onSaveEdit={this.saveFieldNoteEdit}
-          onCancelEdit={this.cancelFieldNoteEdit}
-          onShareNote={this.publishFieldNote}
-          onRetrySharedDisplay={() => void this.syncSharedFieldNotes(true)}
-          listOpen={this.state.fieldNotesListOpen}
-          categories={this.props.config.fieldNoteCategories ? Array.from(this.props.config.fieldNoteCategories) : undefined}
-          onSubmitNote={this.submitFieldNote}
-          onCancelPending={this.cancelPendingFieldNote}
-          onDeleteNote={this.deleteFieldNote}
-          onClearAll={this.clearAllFieldNotes}
-          onExport={this.exportFieldNotes}
-          onImportFile={this.importFieldNotesFile}
-          onFocusNote={this.focusFieldNote}
-          onWorkspaceMapChange={this.updateWorkspaceMapNotes}
-          onWorkspacePickLocation={this.requestWorkspaceNoteLocation}
-          currentImageId={this.state.imageId}
-          onCloseList={() => this.setState({ fieldNotesListOpen: false })}
-        />
+          {this.state.detectionsActive && this.state.viewerDetectionNote && <DetectionNoteAction key={this.state.viewerDetectionNote.imageId + ':' + this.state.viewerDetectionNote.detectionId}
+            onLoadPreview={this.loadDetectionPreview} selection={this.state.viewerDetectionNote} enterpriseEnabled={!!(this.props.config.sharedFieldNotesEnabled && this.props.config.sharedFieldNotesUrl)}
+            hasTray={this.state.nearbyStripOpen} busy={this.state.detectionNoteCapturing} picking={this.state.detectionNotePicking} onChoose={this.chooseDetectionNoteLocation} onCancel={this.cancelDetectionNoteLocation} onClose={this.dismissViewerDetection} />}
+          <FieldNotesPanel
+            onLoadDetectionPreview={this.loadDetectionPreview}
+            onLoadDetectionAttachment={this.loadDetectionNoteAttachment}
+            onDetectionDraftFinished={this.finishDetectionWorkspaceMarker}
+            onDetectionDraftLocation={this.moveDetectionWorkspaceMarker}
+            detectionWorkspaceDraft={this.state.detectionWorkspaceDraft}
+            onClearDetectionWorkspaceDraft={applied => { if (!applied && this.state.detectionWorkspaceDraft) this.finishDetectionWorkspaceMarker(this.state.detectionWorkspaceDraft.requestId); this.setState({ detectionWorkspaceDraft: null }); }}
+            isAnnotationMode={this.state.isAnnotationMode}
+            pendingNote={this.state.pendingFieldNote}
+            notes={this.state.fieldNotes}
+            enterpriseEnabled={!!this.props.config.sharedFieldNotesEnabled}
+            onLoadEnterpriseNotes={this.loadEnterpriseNotesPage}
+            enterpriseContext={this.state.jimuMapView?.view}
+            enterpriseLayerUrl={String(this.props.config.sharedFieldNotesReadUrl || this.props.config.sharedFieldNotesUrl || "")}
+            enterpriseWriteUrl={String(this.props.config.sharedFieldNotesUrl || "")}
+            loadEnterpriseIdentityManager={this.loadEnterpriseIdentityManager}
+            sharingEnabled={!!(this.props.config.sharedFieldNotesEnabled && this.props.config.sharedFieldNotesUrl)}
+            sharedMessage={this.props.config.sharedFieldNotesEnabled ? this.state.sharedNotesMessage : undefined}
+            attachments={this.state.fieldNoteAttachments}
+            currentImageAvailable={!!this.state.imageId}
+            onAttachments={note => void this.openFieldNoteAttachments(note)}
+            onUploadAttachment={this.uploadFieldNoteAttachment}
+            onDownloadAttachment={this.downloadFieldNoteAttachment}
+            onCloseAttachments={this.closeFieldNoteAttachments}
+            editor={this.state.fieldNoteEditor}
+            onEditNote={this.editLocalFieldNote}
+            onEditSharedNote={note => void this.openSharedFieldNoteEditor(note)}
+            onSaveEdit={this.saveFieldNoteEdit}
+            onCancelEdit={this.cancelFieldNoteEdit}
+            onShareNote={this.publishFieldNote}
+            onRetrySharedDisplay={() => void this.syncSharedFieldNotes(true)}
+            listOpen={this.state.fieldNotesListOpen}
+            categories={this.props.config.fieldNoteCategories ? Array.from(this.props.config.fieldNoteCategories) : undefined}
+            onSubmitNote={this.submitFieldNote}
+            onCancelPending={this.cancelPendingFieldNote}
+            onDeleteNote={this.deleteFieldNote}
+            onClearAll={this.clearAllFieldNotes}
+            onExport={this.exportFieldNotes}
+            onImportFile={this.importFieldNotesFile}
+            onFocusNote={this.focusFieldNote}
+            onWorkspaceMapChange={this.updateWorkspaceMapNotes}
+            onWorkspacePickLocation={this.requestWorkspaceNoteLocation}
+            currentImageId={this.state.imageId}
+            onCloseList={() => this.setState({ fieldNotesListOpen: false })}
+          />
 
-        {/* INFO BOX */}
-        {!this.state.isFullscreen && <InfoBox
-          imageInformationHost={this._imageInformationHost} imageInformationViewer={this.mapillaryViewer}
-          imageInformationActive={this.props.state !== 'CLOSED' && this.props.visible !== false}
-          detectionToolsRequest={this._detectionToolsRequest}
-          hideInfoBox={this.props.config.hideInfoBox}
-          turboCreator={this.props.config.turboCreator}
-          turboOrganization={this.props.config.turboOrganization || this.state.turboFilterOrganization}
-          turboOrganizationName={this.getOrganizationDisplayName()}
-          imageId={this.state.imageId}
-          address={this.state.address}
-          currentZoom={this.state.currentZoom}
-          jimuMapViewZoom={this.state.jimuMapView?.view?.zoom}
-          qualityViewType={this.state.jimuMapView?.view?.type === '2d' ? '2d' : this.state.jimuMapView?.view?.type === '3d' ? '3d' : undefined}
-          sequenceImages={this.state.sequenceImages}
-          turboModeActive={this.state.turboModeActive}
-          turboColorByDate={this.state.turboColorByDate}
-          turboYearLegend={this.state.turboYearLegend}
-          selectedTurboYear={this.state.selectedTurboYear}
-          trafficSignsActive={this.state.trafficSignsActive}
-          objectsActive={this.state.objectsActive}
-          detectionsActive={this.state.detectionsActive}
-          showAiTags={this.state.showAiTags}
-          detectionExplorer={this.state.detectionExplorer}
-          detectionSummary={this.state.detectionSummary}
-          onChangeDetectionExplorer={this.changeDetectionExplorer}
-          alternateImages={this.state.alternateImages}
-          isFetchingAlternates={this.state.isFetchingAlternates}
-          accessToken={this.accessToken}
-          onYearLegendClick={this.handleYearLegendClick}
-          mapFeatureExportLoading={this.state.mapFeatureExportLoading}
-          onDownloadFeatures={this.downloadCurrentFeatures}
-          onToggleDetections={this.toggleDetections}
-          onToggleAiTags={this.toggleAiTags}
-          onCloseAlternates={() => this.setState({ alternateImages: [], targetDetectionId: null })}
-          onSelectAlternateImage={this._handleSelectAlternateImage}
-          coverageAnalysisLoading={this.state.coverageAnalysisLoading}
-          coverageAnalysisProgress={this.state.coverageAnalysisProgress}
-          onCancelCoverageAnalysis={this.cancelCoverageAnalysis}
-          coverageResult={this.state.coverageResult}
-          coverageSegmentsVisible={this.state.coverageSegmentsVisible}
-          turboPointsAvailable={!!this.turboCoverageLayer && !this.state.turboLoading}
-          turboMinZoom={ZOOM.TURBO_MIN}
-          onToggleCoverageSegments={this.toggleCoverageSegments}
-          onRunCoverageAnalysis={this.runCoverageAnalysis}
-          hideCoverageAnalysis={this.props.config.hideCoverageAnalysis}
-          onDismissCoverageResult={() => {
-            this.clearCoverageSegments(true);
-            this.setState({ coverageResult: null });
-          }}
-          onCopyCoordinates={this.copyImageCoordinates}
-          pointCloudSummary={this.state.pointCloudSummary}
-          pointCloudIncomplete={this.state.pointCloudIncomplete}
-          pointCloudAutoPaused={!!this.state.pointCloudAutoPaused}
-          pointCloudPrevious={!!this.state.pointCloudPrevious}
-          onRetryPointCloud={() => { this._pointCloudAcquisition.resetFailures(); this.setState({ pointCloudAutoPaused: false }, () => void this.loadPointCloudLayer(false, true)); }}
-          pointCloudLoading={this.state.pointCloudLoading}
-          pointCloudAdaptive={!!this.state.pointCloudAdaptive}
-          onPointCloudAdaptiveChange={(enabled: boolean) => this.setState({ pointCloudAdaptive: enabled })}
-          pointCloudVisible={this.state.pointCloudVisible}
-          isMeasureMode={this.state.isMeasureMode}
-          measurePoints={this.state.measurePoints}
-          onToggleMeasureMode={this.toggleMeasureMode}
-          onClearMeasurement={this.clearMeasurement}
-          isLassoMode={this.state.isLassoMode}
-          onToggleLassoMode={this.toggleLassoMode}
-          onClearLasso={this.clearLasso}
-          showCalibrationPanel={this.state.showCalibrationPanel}
-          pointCloudColorMode={this.state.pointCloudColorMode}
-          nudgeStep={this.state.nudgeStep}
-          onToggleCalibrationPanel={this.toggleCalibrationPanel}
-          onJoystickNudge={this.handleJoystickNudge}
-          onResetCalibration={this.resetCalibration}
-          onSetNudgeStep={(step) => this.setState({ nudgeStep: step })}
-          pointCloudLength={this.state.pointCloudLength}
-          pointCloudMaxLength={this.state.pointCloudMaxLength}
-          pointCloudActualLength={this.state.pointCloudActualLength}
-          pointCloudWidth={this.state.pointCloudWidth}
-          pointCloudMaxWidth={this.state.pointCloudMaxWidth}
-          pointCloudActualWidth={this.state.pointCloudActualWidth}
-          onWidthChange={this.handlePointCloudWidthChange}
-          onLengthChange={this.handlePointCloudLengthChange}
-          pointCloudExportLoading={!!this.state.pointCloudExportLoading}
-          onDownloadPointCloud={this.downloadPointCloud}
-          isSightMode={this.state.isSightMode}
-          sightObserver={this.state.sightObserver}
-          sightTargets={this.state.sightTargets}
-          isViewshedMode={this.state.isViewshedMode}
-          onToggleViewshedMode={this.toggleViewshedMode}
-          onClearViewshed={this.clearViewshed}
-          onToggleSightMode={this.toggleSightMode}
-          onClearSight={this.clearSight}
-          enableQualityView={this.props.config.enableQualityView}
-          qualityViewActive={this.state.qualityViewActive}
-          onToggleQualityView={this.toggleQualityView}
-          selectedQualityBand={this.state.selectedQualityBand}
-          onQualityLegendClick={this.handleQualityLegendClick}
-          nearbyCount={this.state.nearbyImages?.length ?? 0}
-          nearbyLoading={!!this.state.nearbyLoading}
-          nearbyStripOpen={!!this.state.nearbyStripOpen}
-          onToggleNearbyStrip={() => this.setState((prev) => ({ nearbyStripOpen: !(prev.nearbyStripOpen && prev.imageTrayTab !== "object"), imageTrayTab: "nearby", fieldNotesListOpen: false }))}
-          fieldNotesCount={this.state.fieldNotes.length}
-          isAnnotationMode={this.state.isAnnotationMode}
-          fieldNotesListOpen={this.state.fieldNotesListOpen}
-          onToggleAnnotationMode={this.toggleAnnotationMode}
-          onToggleFieldNotesList={() => this.setState((prev) => ({ fieldNotesListOpen: !prev.fieldNotesListOpen, nearbyStripOpen: false }))}
-          isGeneratingRoute={this.state.isGeneratingRoute}
-          routeData={this.state.routeData}
-          onGenerateRoute={this.generateCaptureRoute}
-          onClearRoute={this.clearCaptureRoute}
-          onDownloadRouteGPX={this.downloadRouteGPX}
-          routePreviewHost={this.state.jimuMapView?.view&&this.ArcGISModules?{
-            view:this.state.jimuMapView.view,interactionElement:this.viewerContainer.current,registerStop:stop=>{this._stopRoutePreview=stop;return()=>{if(this._stopRoutePreview===stop)this._stopRoutePreview=null;};},createLayer:properties=>new this.ArcGISModules.GraphicsLayer(properties),
-            createGraphic:properties=>new this.ArcGISModules.Graphic(properties)}:undefined}
-          routeStartPoint={this.state.routeStartPoint}
-          routeEndPoint={this.state.routeEndPoint}
-          routeSpareMinutes={this.state.routeSpareMinutes}
-          routePickMode={this.state.routePickMode}
-          runtimeRoutingEngine={["world", "osrm"].includes(this.getEffectiveRoutingEngine()) ? (this.getEffectiveRoutingEngine() as "world" | "osrm") : null}
-          onChangeRuntimeRoutingEngine={this.handleRuntimeRoutingEngineChange}
-          runtimeTravelMode={this.state.routeTravelMode}
-          onChangeRuntimeTravelMode={this.handleRuntimeTravelModeChange}
-          travelModeAvailability={
-            this.getEffectiveRoutingEngine() === "world"
-              ? {
+          {/* INFO BOX */}
+          {!this.state.isFullscreen && <InfoBox
+            imageInformationHost={this._imageInformationHost} imageInformationViewer={this.mapillaryViewer}
+            imageInformationActive={this.props.state !== 'CLOSED' && this.props.visible !== false}
+            detectionToolsRequest={this._detectionToolsRequest}
+            hideInfoBox={this.props.config.hideInfoBox}
+            turboCreator={this.props.config.turboCreator}
+            turboOrganization={this.props.config.turboOrganization || this.state.turboFilterOrganization}
+            turboOrganizationName={this.getOrganizationDisplayName()}
+            imageId={this.state.imageId}
+            address={this.state.address}
+            currentZoom={this.state.currentZoom}
+            jimuMapViewZoom={this.state.jimuMapView?.view?.zoom}
+            qualityViewType={this.state.jimuMapView?.view?.type === '2d' ? '2d' : this.state.jimuMapView?.view?.type === '3d' ? '3d' : undefined}
+            sequenceImages={this.state.sequenceImages}
+            turboModeActive={this.state.turboModeActive}
+            turboColorByDate={this.state.turboColorByDate}
+            turboYearLegend={this.state.turboYearLegend}
+            selectedTurboYear={this.state.selectedTurboYear}
+            trafficSignsActive={this.state.trafficSignsActive}
+            objectsActive={this.state.objectsActive}
+            detectionsActive={this.state.detectionsActive}
+            showAiTags={this.state.showAiTags}
+            detectionExplorer={this.state.detectionExplorer}
+            detectionSummary={this.state.detectionSummary}
+            onChangeDetectionExplorer={this.changeDetectionExplorer}
+            alternateImages={this.state.alternateImages}
+            isFetchingAlternates={this.state.isFetchingAlternates}
+            accessToken={this.accessToken}
+            onYearLegendClick={this.handleYearLegendClick}
+            mapFeatureExportLoading={this.state.mapFeatureExportLoading}
+            onDownloadFeatures={this.downloadCurrentFeatures}
+            onToggleDetections={this.toggleDetections}
+            onToggleAiTags={this.toggleAiTags}
+            onCloseAlternates={() => this.setState({ alternateImages: [], targetDetectionId: null })}
+            onSelectAlternateImage={this._handleSelectAlternateImage}
+            coverageAnalysisLoading={this.state.coverageAnalysisLoading}
+            coverageAnalysisProgress={this.state.coverageAnalysisProgress}
+            onCancelCoverageAnalysis={this.cancelCoverageAnalysis}
+            coverageResult={this.state.coverageResult}
+            coverageSegmentsVisible={this.state.coverageSegmentsVisible}
+            turboPointsAvailable={!!this.turboCoverageLayer && !this.state.turboLoading}
+            turboMinZoom={ZOOM.TURBO_MIN}
+            onToggleCoverageSegments={this.toggleCoverageSegments}
+            onRunCoverageAnalysis={this.runCoverageAnalysis}
+            hideCoverageAnalysis={this.props.config.hideCoverageAnalysis}
+            onDismissCoverageResult={() => {
+              this.clearCoverageSegments(true);
+              this.setState({ coverageResult: null });
+            }}
+            onCopyCoordinates={this.copyImageCoordinates}
+            pointCloudSummary={this.state.pointCloudSummary}
+            pointCloudIncomplete={this.state.pointCloudIncomplete}
+            pointCloudAutoPaused={!!this.state.pointCloudAutoPaused}
+            pointCloudPrevious={!!this.state.pointCloudPrevious}
+            onRetryPointCloud={() => { this._pointCloudAcquisition.resetFailures(); this.setState({ pointCloudAutoPaused: false }, () => void this.loadPointCloudLayer(false, true)); }}
+            pointCloudLoading={this.state.pointCloudLoading}
+            pointCloudAdaptive={!!this.state.pointCloudAdaptive}
+            onPointCloudAdaptiveChange={(enabled: boolean) => this.setState({ pointCloudAdaptive: enabled })}
+            pointCloudVisible={this.state.pointCloudVisible}
+            isMeasureMode={this.state.isMeasureMode}
+            measurePoints={this.state.measurePoints}
+            onToggleMeasureMode={this.toggleMeasureMode}
+            onClearMeasurement={this.clearMeasurement}
+            isLassoMode={this.state.isLassoMode}
+            onToggleLassoMode={this.toggleLassoMode}
+            onClearLasso={this.clearLasso}
+            showCalibrationPanel={this.state.showCalibrationPanel}
+            pointCloudColorMode={this.state.pointCloudColorMode}
+            nudgeStep={this.state.nudgeStep}
+            onToggleCalibrationPanel={this.toggleCalibrationPanel}
+            onJoystickNudge={this.handleJoystickNudge}
+            onResetCalibration={this.resetCalibration}
+            onSetNudgeStep={(step) => this.setState({ nudgeStep: step })}
+            pointCloudLength={this.state.pointCloudLength}
+            pointCloudMaxLength={this.state.pointCloudMaxLength}
+            pointCloudActualLength={this.state.pointCloudActualLength}
+            pointCloudWidth={this.state.pointCloudWidth}
+            pointCloudMaxWidth={this.state.pointCloudMaxWidth}
+            pointCloudActualWidth={this.state.pointCloudActualWidth}
+            onWidthChange={this.handlePointCloudWidthChange}
+            onLengthChange={this.handlePointCloudLengthChange}
+            pointCloudExportLoading={!!this.state.pointCloudExportLoading}
+            onDownloadPointCloud={this.downloadPointCloud}
+            isSightMode={this.state.isSightMode}
+            sightObserver={this.state.sightObserver}
+            sightTargets={this.state.sightTargets}
+            isViewshedMode={this.state.isViewshedMode}
+            onToggleViewshedMode={this.toggleViewshedMode}
+            onClearViewshed={this.clearViewshed}
+            onToggleSightMode={this.toggleSightMode}
+            onClearSight={this.clearSight}
+            enableQualityView={this.props.config.enableQualityView}
+            qualityViewActive={this.state.qualityViewActive}
+            onToggleQualityView={this.toggleQualityView}
+            selectedQualityBand={this.state.selectedQualityBand}
+            onQualityLegendClick={this.handleQualityLegendClick}
+            nearbyCount={this.state.nearbyImages?.length ?? 0}
+            nearbyLoading={!!this.state.nearbyLoading}
+            nearbyStripOpen={!!this.state.nearbyStripOpen}
+            onToggleNearbyStrip={() => this.setState((prev) => ({ nearbyStripOpen: !(prev.nearbyStripOpen && prev.imageTrayTab !== "object"), imageTrayTab: "nearby", fieldNotesListOpen: false }))}
+            fieldNotesCount={this.state.fieldNotes.length}
+            isAnnotationMode={this.state.isAnnotationMode}
+            fieldNotesListOpen={this.state.fieldNotesListOpen}
+            onToggleAnnotationMode={this.toggleAnnotationMode}
+            onToggleFieldNotesList={() => this.setState((prev) => ({ fieldNotesListOpen: !prev.fieldNotesListOpen, nearbyStripOpen: false }))}
+            isGeneratingRoute={this.state.isGeneratingRoute}
+            routeData={this.state.routeData}
+            onGenerateRoute={this.generateCaptureRoute}
+            onClearRoute={this.clearCaptureRoute}
+            onDownloadRouteGPX={this.downloadRouteGPX}
+            routePreviewHost={this.state.jimuMapView?.view && this.ArcGISModules ? {
+              view: this.state.jimuMapView.view, interactionElement: this.viewerContainer.current, registerStop: stop => { this._stopRoutePreview = stop; return () => { if (this._stopRoutePreview === stop) this._stopRoutePreview = null; }; }, createLayer: properties => new this.ArcGISModules.GraphicsLayer(properties),
+              createGraphic: properties => new this.ArcGISModules.Graphic(properties)
+            } : undefined}
+            routeStartPoint={this.state.routeStartPoint}
+            routeEndPoint={this.state.routeEndPoint}
+            routeSpareMinutes={this.state.routeSpareMinutes}
+            routePickMode={this.state.routePickMode}
+            runtimeRoutingEngine={["world", "osrm"].includes(this.getEffectiveRoutingEngine()) ? (this.getEffectiveRoutingEngine() as "world" | "osrm") : null}
+            onChangeRuntimeRoutingEngine={this.handleRuntimeRoutingEngineChange}
+            runtimeTravelMode={this.state.routeTravelMode}
+            onChangeRuntimeTravelMode={this.handleRuntimeTravelModeChange}
+            travelModeAvailability={
+              this.getEffectiveRoutingEngine() === "world"
+                ? {
                   drive: true,
                   walk: true,
                   bike: false,
                   bikeReason: "ArcGIS World Route does not provide a cycling travel mode.",
                 }
-              : {
+                : {
                   drive: true,
                   walk: false,
                   bike: false,
                   walkReason: "Walking is not enabled for this OSRM server.",
                   bikeReason: "Cycling is not enabled for this OSRM server.",
                 }
-          }
-          onSetRoutePickMode={(mode) => this.setState({ routePickMode: mode })}
-          onChangeSpareMinutes={(mins) => {
-            if (Number.isFinite(mins) && !this.state.isGeneratingRoute) this.setState({ routeSpareMinutes: Math.min(120, Math.max(5, Math.round(mins / 5) * 5)) });
-          }}
-          routeGenerationProgress={this.state.routeGenerationProgress}
-          onResetRoutePoints={this.resetRoutePoints}
-          enableSolar={this.props.config.enableSolar === true}
-          enableElevationProfile={this.props.config.enableElevationProfile === true}
-          isSolarMode={this.state.isSolarMode}
-          onToggleSolarMode={this.toggleSolarMode}
-          isElevationProfileActive={this.state.isElevationProfileActive}
-          onToggleElevationProfile={this.toggleElevationProfile}
-        />}
-
-        {/* UNIFIED FILTER BAR */}
-        <FilterBar
-          detectionLabelZoom={this.state.currentZoom}
-          signSpriteScale={this.state.signSpriteScale || 1}
-          objectSpriteScale={this.state.objectSpriteScale || 1}
-          signLabels={this.state.signLabels === true} objectLabels={this.state.objectLabels === true}
-          onDetectionLabelsChange={this.changeDetectionLabels}
-          signReduceOverlap={this.state.signReduceOverlap === true} objectReduceOverlap={this.state.objectReduceOverlap === true}
-          onDetectionOverlapChange={this.changeDetectionOverlap}
-          signDisplayMode={this.state.signDisplayMode || 'selected'} objectDisplayMode={this.state.objectDisplayMode || 'selected'}
-          onDetectionDisplayModeChange={this.changeDetectionDisplayMode}
-          signOpacity={this.state.signOpacity ?? 1} objectOpacity={this.state.objectOpacity ?? 1}
-          onDetectionOpacityChange={this.changeDetectionOpacity} onDetectionDisplayReset={this.resetDetectionDisplay}
-          onSpriteScaleChange={this.changeMapFeatureSpriteScale}
-          showTurboFilterBox={this.state.showTurboFilterBox}
-          showTrafficSignsFilterBox={this.state.showTrafficSignsFilterBox}
-          showObjectsFilterBox={this.state.showObjectsFilterBox}
-          turboFilterUsername={this.state.turboFilterUsername}
-          turboFilterOrganization={this.state.turboFilterOrganization}
-          onTurboOrganizationChange={value => this.changeCoverageOrganization(value)}
-          onTurboOrganizationEnter={() => this.changeCoverageOrganization(this.state.turboFilterOrganization, true)}
-          onTurboOrganizationClear={() => this.changeCoverageOrganization("", true)}
-          turboFilterStartDate={this.state.turboFilterStartDate}
-          turboFilterEndDate={this.state.turboFilterEndDate}
-          turboFilterIsPano={this.state.turboFilterIsPano}
-          turboFilterOnFoot={this.state.turboFilterOnFoot}
-          onTurboTravelMethodChange={this.changeTravelMethod}
-          turboColorByDate={this.state.turboColorByDate}
-          turboModeActive={this.state.turboModeActive}
-          turboCreator={this.props.config.turboCreator}
-          turboOrganization={this.props.config.turboOrganization}
-          trafficSignsSelectedCodes={this.state.trafficSignsSelectedCodes}
-          objectsSelectedCodes={this.state.objectsSelectedCodes}
-          onTrafficSignCategoriesChange={this.onTrafficSignCategoriesChange}
-          onObjectCategoriesChange={this.onObjectCategoriesChange}
-          trafficSignsFilterValue={this.state.trafficSignsFilterValue}
-          trafficSignsOptions={this.state.trafficSignsOptions}
-          objectsFilterValue={this.state.objectsFilterValue}
-          objectsOptions={this.state.objectsOptions}
-          onTurboUsernameChange={(val) => this.setState({ turboFilterUsername: val }, () => this.debouncedTurboFilter())}
-          onTurboUsernameEnter={() => {
-            this.debouncedTurboFilter.cancel?.();
-            const val = this.state.turboFilterUsername.trim();
-            if (this.state.jimuMapView && this.state.turboModeActive) {
-              if (val) this.enableTurboCoverageLayer(val);
-              else this.enableTurboCoverageLayer();
             }
-          }}
-          onTurboUsernameClear={() => this.setState({ turboFilterUsername: "" }, () => this.enableTurboCoverageLayer())}
-          onTurboStartDateChange={(dateString) => this.setState({ turboFilterStartDate: dateString }, () => this.debouncedTurboFilter())}
-          onTurboEndDateChange={(dateString) => this.setState({ turboFilterEndDate: dateString }, () => this.debouncedTurboFilter())}
-          onTurboIsPanoChange={(newVal) => {
-            this.setState({ turboFilterIsPano: newVal }, () => {
-              if (this.state.turboModeActive) { void this.enableTurboCoverageLayer(); return; }
-              const rebuild = async () => {
-                let creatorId: number | undefined = undefined;
-                const username = this.state.turboFilterUsername?.trim();
-                if (username) creatorId = (await this.getUserIdFromUsername(username)) || undefined;
-                this.rebuildCoverageLayer(
-                  creatorId,
-                  this.state.turboFilterStartDate || undefined,
-                  this.state.turboFilterEndDate || undefined,
-                  newVal,
-                  this.state.qualityViewActive,
-                  this.state.selectedQualityBand,
-                );
-                if (this.state.turboModeActive) await this.enableTurboCoverageLayer();
-              };
-              rebuild();
-            });
-          }}
-          onTurboColorByDateChange={(val) => this.setState({ turboColorByDate: val }, () => this.debouncedTurboFilter())}
-          onTrafficSignsFilterChange={async (selected: FilterOption) => {
-            this.setState({ trafficSignsFilterValue: selected }, async () => {
-              if (!this.state.jimuMapView) return;
-              const newName = selected.value;
-              let filterCode = newName;
-              if (newName !== DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS) {
-                const spriteData = await loadSpriteMetadata(`${this.spriteUrls.TRAFFIC_SIGNS}.json`);
-                const code = Object.keys(spriteData).find((c) => formatTrafficSignName(c) === newName);
-                filterCode = code || newName;
+            onSetRoutePickMode={(mode) => this.setState({ routePickMode: mode })}
+            onChangeSpareMinutes={(mins) => {
+              if (Number.isFinite(mins) && !this.state.isGeneratingRoute) this.setState({ routeSpareMinutes: Math.min(120, Math.max(5, Math.round(mins / 5) * 5)) });
+            }}
+            routeGenerationProgress={this.state.routeGenerationProgress}
+            onResetRoutePoints={this.resetRoutePoints}
+            enableSolar={this.props.config.enableSolar === true}
+            enableElevationProfile={this.props.config.enableElevationProfile === true}
+            isSolarMode={this.state.isSolarMode}
+            onToggleSolarMode={this.toggleSolarMode}
+            isElevationProfileActive={this.state.isElevationProfileActive}
+            onToggleElevationProfile={this.toggleElevationProfile}
+          />}
+
+          {/* UNIFIED FILTER BAR */}
+          <FilterBar
+            detectionLabelZoom={this.state.currentZoom}
+            signSpriteScale={this.state.signSpriteScale || 1}
+            objectSpriteScale={this.state.objectSpriteScale || 1}
+            signLabels={this.state.signLabels === true} objectLabels={this.state.objectLabels === true}
+            onDetectionLabelsChange={this.changeDetectionLabels}
+            signReduceOverlap={this.state.signReduceOverlap === true} objectReduceOverlap={this.state.objectReduceOverlap === true}
+            onDetectionOverlapChange={this.changeDetectionOverlap}
+            signDisplayMode={this.state.signDisplayMode || 'selected'} objectDisplayMode={this.state.objectDisplayMode || 'selected'}
+            onDetectionDisplayModeChange={this.changeDetectionDisplayMode}
+            signOpacity={this.state.signOpacity ?? 1} objectOpacity={this.state.objectOpacity ?? 1}
+            onDetectionOpacityChange={this.changeDetectionOpacity} onDetectionDisplayReset={this.resetDetectionDisplay}
+            onSpriteScaleChange={this.changeMapFeatureSpriteScale}
+            showTurboFilterBox={this.state.showTurboFilterBox}
+            showTrafficSignsFilterBox={this.state.showTrafficSignsFilterBox}
+            showObjectsFilterBox={this.state.showObjectsFilterBox}
+            turboFilterUsername={this.state.turboFilterUsername}
+            turboFilterOrganization={this.state.turboFilterOrganization}
+            onTurboOrganizationChange={value => this.changeCoverageOrganization(value)}
+            onTurboOrganizationEnter={() => this.changeCoverageOrganization(this.state.turboFilterOrganization, true)}
+            onTurboOrganizationClear={() => this.changeCoverageOrganization("", true)}
+            turboFilterStartDate={this.state.turboFilterStartDate}
+            turboFilterEndDate={this.state.turboFilterEndDate}
+            turboFilterIsPano={this.state.turboFilterIsPano}
+            turboFilterOnFoot={this.state.turboFilterOnFoot}
+            onTurboTravelMethodChange={this.changeTravelMethod}
+            turboColorByDate={this.state.turboColorByDate}
+            turboModeActive={this.state.turboModeActive}
+            turboCreator={this.props.config.turboCreator}
+            turboOrganization={this.props.config.turboOrganization}
+            trafficSignsSelectedCodes={this.state.trafficSignsSelectedCodes}
+            objectsSelectedCodes={this.state.objectsSelectedCodes}
+            onTrafficSignCategoriesChange={this.onTrafficSignCategoriesChange}
+            onObjectCategoriesChange={this.onObjectCategoriesChange}
+            trafficSignsFilterValue={this.state.trafficSignsFilterValue}
+            trafficSignsOptions={this.state.trafficSignsOptions}
+            objectsFilterValue={this.state.objectsFilterValue}
+            objectsOptions={this.state.objectsOptions}
+            onTurboUsernameChange={(val) => this.setState({ turboFilterUsername: val }, () => this.debouncedTurboFilter())}
+            onTurboUsernameEnter={() => {
+              this.debouncedTurboFilter.cancel?.();
+              const val = this.state.turboFilterUsername.trim();
+              if (this.state.jimuMapView && this.state.turboModeActive) {
+                if (val) this.enableTurboCoverageLayer(val);
+                else this.enableTurboCoverageLayer();
               }
-              this.filterTrafficSignsVTLayer(filterCode);
-            });
-          }}
-          onObjectsFilterChange={async (selected: FilterOption) => {
-            this.setState({ objectsFilterValue: selected }, async () => {
-              if (!this.state.jimuMapView) return;
-              const newName = selected.value;
-              let filterCode = newName;
-              if (newName !== DEFAULT_FILTER_LABELS.OBJECTS) {
-                const spriteData = await loadSpriteMetadata(`${this.spriteUrls.OBJECTS}.json`);
-                const code = Object.keys(spriteData).find((c) => (objectNameMap[c] || c) === newName);
-                filterCode = code || newName;
-              }
-              this.filterObjectsVTLayer(filterCode);
-            });
-          }}
-        />
+            }}
+            onTurboUsernameClear={() => this.setState({ turboFilterUsername: "" }, () => this.enableTurboCoverageLayer())}
+            onTurboStartDateChange={(dateString) => this.setState({ turboFilterStartDate: dateString }, () => this.debouncedTurboFilter())}
+            onTurboEndDateChange={(dateString) => this.setState({ turboFilterEndDate: dateString }, () => this.debouncedTurboFilter())}
+            onTurboIsPanoChange={(newVal) => {
+              this.setState({ turboFilterIsPano: newVal }, () => {
+                if (this.state.turboModeActive) { void this.enableTurboCoverageLayer(); return; }
+                const rebuild = async () => {
+                  let creatorId: number | undefined = undefined;
+                  const username = this.state.turboFilterUsername?.trim();
+                  if (username) creatorId = (await this.getUserIdFromUsername(username)) || undefined;
+                  this.rebuildCoverageLayer(
+                    creatorId,
+                    this.state.turboFilterStartDate || undefined,
+                    this.state.turboFilterEndDate || undefined,
+                    newVal,
+                    this.state.qualityViewActive,
+                    this.state.selectedQualityBand,
+                  );
+                  if (this.state.turboModeActive) await this.enableTurboCoverageLayer();
+                };
+                rebuild();
+              });
+            }}
+            onTurboColorByDateChange={(val) => this.setState({ turboColorByDate: val }, () => this.debouncedTurboFilter())}
+            onTrafficSignsFilterChange={async (selected: FilterOption) => {
+              this.setState({ trafficSignsFilterValue: selected }, async () => {
+                if (!this.state.jimuMapView) return;
+                const newName = selected.value;
+                let filterCode = newName;
+                if (newName !== DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS) {
+                  const spriteData = await loadSpriteMetadata(`${this.spriteUrls.TRAFFIC_SIGNS}.json`);
+                  const code = Object.keys(spriteData).find((c) => formatTrafficSignName(c) === newName);
+                  filterCode = code || newName;
+                }
+                this.filterTrafficSignsVTLayer(filterCode);
+              });
+            }}
+            onObjectsFilterChange={async (selected: FilterOption) => {
+              this.setState({ objectsFilterValue: selected }, async () => {
+                if (!this.state.jimuMapView) return;
+                const newName = selected.value;
+                let filterCode = newName;
+                if (newName !== DEFAULT_FILTER_LABELS.OBJECTS) {
+                  const spriteData = await loadSpriteMetadata(`${this.spriteUrls.OBJECTS}.json`);
+                  const code = Object.keys(spriteData).find((c) => (objectNameMap[c] || c) === newName);
+                  filterCode = code || newName;
+                }
+                this.filterObjectsVTLayer(filterCode);
+              });
+            }}
+          />
 
-        {this.state.placesActive && this.state.placesPanelOpen && <PlacesPanel onShowOnMap={this.showListedPlaceOnMap} onAreaSearch={this._placesVectorLayer?text=>this._places?.controller.setSearchText(text):undefined} onLoadMore={()=>this._places?.controller.loadMore()} onPreviousResults={()=>this._places?.controller.previousPage()} tileLoading={this.state.placesSourceLoading} tileQuality={this._placesVectorLayer?.quality} onTileQuality={this._placesVectorLayer?.supportsFamilyFilter ? this.setPlacesTileQuality : undefined} tileFamily={this._placesVectorLayer?.supportsFamilyFilter ? this.state.placesTileCategory : 'all'} onTileFamily={this._placesVectorLayer?.supportsFamilyFilter ? this.setPlacesTileCategory : undefined} autoUpdate={this.state.placesAutoUpdate} onAutoUpdate={this.setPlacesAutoUpdate} onSearch={()=>this._places?.controller.searchArea()} origin={this._placesVectorLayer?this.state.placesStatus.resultOrigin||null:this.placesListOrigin()} hoveredId={this.state.placesHoveredId} revealRequest={this.state.placesRevealRequest} onHover={id=>this._places?.setHover(id)} onGoToArea={this.goToPlacesArea} status={this.state.placesStatus} places={this.state.placesList} onSelect={id => this._places?.open([], id,false,'list')}
-          selection={this.state.selectedPlace ? { place: this.state.selectedPlace, link: this.state.placesShowLink, cameraDistance: this.state.placesCameraDistance,
-            onLink: value => { this.setState({ placesShowLink: value }); this._places?.selection.setLink(value); },
-            enterpriseEnabled:!!(this.props.config.sharedFieldNotesEnabled&&this.props.config.sharedFieldNotesUrl),onNote:this.createPlaceFieldNote,currentImageId:this.state.imageId,onGetNoteImage:this.getPlaceNoteImage,onLoadNotePreview:this.loadDetectionPreview,notePhase:this.state.placeNotePhase,onCancelNote:this.cancelPlaceNotePreparation,onImagery:()=>this._places?.open([],this.state.selectedPlace?.id,true,'card'),
-            onBack: this.goToSelectedPlace, onDetails: () => this._places?.open([], this.state.selectedPlace?.id,false,'card'), onClear: () => this._places?.clearSelection() } : undefined}
-          onRetry={() => this._places?.controller.retry()} onClose={() => this.setState({ placesPanelOpen: false })}/>}
+          {this.state.placesActive && this.state.placesPanelOpen && <PlacesPanel onShowOnMap={this.showListedPlaceOnMap} onAreaSearch={this._placesVectorLayer ? text => this._places?.controller.setSearchText(text) : undefined} onLoadMore={() => this._places?.controller.loadMore()} onPreviousResults={() => this._places?.controller.previousPage()} tileLoading={this.state.placesSourceLoading} tileQuality={this._placesVectorLayer?.quality} onTileQuality={this._placesVectorLayer?.supportsFamilyFilter ? this.setPlacesTileQuality : undefined} tileFamily={this._placesVectorLayer?.supportsFamilyFilter ? this.state.placesTileCategory : 'all'} onTileFamily={this._placesVectorLayer?.supportsFamilyFilter ? this.setPlacesTileCategory : undefined} autoUpdate={this.state.placesAutoUpdate} onAutoUpdate={this.setPlacesAutoUpdate} onSearch={() => this._places?.controller.searchArea()} origin={this._placesVectorLayer ? this.state.placesStatus.resultOrigin || null : this.placesListOrigin()} hoveredId={this.state.placesHoveredId} revealRequest={this.state.placesRevealRequest} onHover={id => this._places?.setHover(id)} onGoToArea={this.goToPlacesArea} status={this.state.placesStatus} places={this.state.placesList} onSelect={id => this._places?.open([], id, false, 'list')}
+            selection={this.state.selectedPlace ? {
+              place: this.state.selectedPlace, link: this.state.placesShowLink, cameraDistance: this.state.placesCameraDistance,
+              onLink: value => { this.setState({ placesShowLink: value }); this._places?.selection.setLink(value); },
+              enterpriseEnabled: !!(this.props.config.sharedFieldNotesEnabled && this.props.config.sharedFieldNotesUrl), onNote: this.createPlaceFieldNote, currentImageId: this.state.imageId, onGetNoteImage: this.getPlaceNoteImage, onLoadNotePreview: this.loadDetectionPreview, notePhase: this.state.placeNotePhase, onCancelNote: this.cancelPlaceNotePreparation, onImagery: () => this._places?.open([], this.state.selectedPlace?.id, true, 'card'),
+              onBack: this.goToSelectedPlace, onDetails: () => this._places?.open([], this.state.selectedPlace?.id, false, 'card'), onClear: () => this._places?.clearSelection()
+            } : undefined}
+            onRetry={() => this._places?.controller.retry()} onClose={() => this.setState({ placesPanelOpen: false })} />}
 
-        {this.state.placesActive && !this.state.placesPanelOpen && this.state.selectedPlace && <SelectedPlaceCard place={this.state.selectedPlace} link={this.state.placesShowLink} cameraDistance={this.state.placesCameraDistance}
-          onLink={value => { this.setState({ placesShowLink: value }); this._places?.selection.setLink(value); }}
-          enterpriseEnabled={!!(this.props.config.sharedFieldNotesEnabled&&this.props.config.sharedFieldNotesUrl)} onNote={this.createPlaceFieldNote} currentImageId={this.state.imageId} onGetNoteImage={this.getPlaceNoteImage} onLoadNotePreview={this.loadDetectionPreview} notePhase={this.state.placeNotePhase} onCancelNote={this.cancelPlaceNotePreparation} onImagery={()=>this._places?.open([],this.state.selectedPlace?.id,true,'card')}
-          onBack={this.goToSelectedPlace} onDetails={() => this._places?.open([], this.state.selectedPlace?.id,false,'card')} onClear={() => this._places?.clearSelection()}/>}
+          {this.state.placesActive && !this.state.placesPanelOpen && this.state.selectedPlace && <SelectedPlaceCard place={this.state.selectedPlace} link={this.state.placesShowLink} cameraDistance={this.state.placesCameraDistance}
+            onLink={value => { this.setState({ placesShowLink: value }); this._places?.selection.setLink(value); }}
+            enterpriseEnabled={!!(this.props.config.sharedFieldNotesEnabled && this.props.config.sharedFieldNotesUrl)} onNote={this.createPlaceFieldNote} currentImageId={this.state.imageId} onGetNoteImage={this.getPlaceNoteImage} onLoadNotePreview={this.loadDetectionPreview} notePhase={this.state.placeNotePhase} onCancelNote={this.cancelPlaceNotePreparation} onImagery={() => this._places?.open([], this.state.selectedPlace?.id, true, 'card')}
+            onBack={this.goToSelectedPlace} onDetails={() => this._places?.open([], this.state.selectedPlace?.id, false, 'card')} onClear={() => this._places?.clearSelection()} />}
 
-        {/* Splash Screen */}
-        <SplashScreen showIntro={this.state.showIntro} filtersLoaded={this.state.filtersLoaded} onDismiss={this.dismissIntro} />
+          {/* Splash Screen */}
+          <SplashScreen showIntro={this.state.showIntro} filtersLoaded={this.state.filtersLoaded} onDismiss={this.dismissIntro} />
 
-        {/* Control Bar */}
-        <ControlBar
-          signSpritesStatus={this.state.signSpritesStatus} objectSpritesStatus={this.state.objectSpritesStatus}
-          hideTurboFilter={this.props.config.hideTurboFilter}
-          enablePlaces={this.props.config.enablePlaces === true || !!this._placesVectorLayer}
-          placesAvailable={!!this._placesVectorLayer || !!placesSourceKey(this.props.config)}
-          placesActive={this.state.placesActive} placesPanelOpen={this.state.placesPanelOpen}
-          onTogglePlaces={this.togglePlaces} onTogglePlacesPanel={() => this.setState(previous => ({ placesPanelOpen: !previous.placesPanelOpen }))}
-          enableTrafficSigns={this.props.config.enableTrafficSigns}
-          enableMapillaryObjects={this.props.config.enableMapillaryObjects}
-          isFullscreen={this.state.isFullscreen}
-          tilesActive={this.state.tilesActive}
-          turboModeActive={this.state.turboModeActive}
-          showTurboFilterBox={this.state.showTurboFilterBox}
-          trafficSignsActive={this.state.trafficSignsActive}
-          showTrafficSignsFilterBox={this.state.showTrafficSignsFilterBox}
-          objectsActive={this.state.objectsActive}
-          showObjectsFilterBox={this.state.showObjectsFilterBox}
-          jimuMapView={this.state.jimuMapView}
-          onToggleFullscreen={this.toggleFullscreen}
-          onToggleTurboFilter={() => {
-            if (!this.state.turboModeActive) return;
-            this.setState((prev) => ({ showTurboFilterBox: !prev.showTurboFilterBox }));
-          }}
-          onToggleTrafficSigns={this.toggleMapillaryTrafficSigns}
-          onToggleTrafficSignsFilter={() => {
-            if (!this.state.trafficSignsActive) return;
-            this.setState((prev) => ({ showTrafficSignsFilterBox: !prev.showTrafficSignsFilterBox }));
-          }}
-          onToggleObjects={this.toggleMapillaryObjects}
-          onToggleObjectsFilter={() => {
-            if (!this.state.objectsActive) return;
-            this.setState((prev) => ({ showObjectsFilterBox: !prev.showObjectsFilterBox }));
-          }}
-        />
+          {/* Control Bar */}
+          <ControlBar
+            signSpritesStatus={this.state.signSpritesStatus} objectSpritesStatus={this.state.objectSpritesStatus}
+            hideTurboFilter={this.props.config.hideTurboFilter}
+            enablePlaces={this.props.config.enablePlaces === true || !!this._placesVectorLayer}
+            placesAvailable={!!this._placesVectorLayer || !!placesSourceKey(this.props.config)}
+            placesActive={this.state.placesActive} placesPanelOpen={this.state.placesPanelOpen}
+            onTogglePlaces={this.togglePlaces} onTogglePlacesPanel={() => this.setState(previous => ({ placesPanelOpen: !previous.placesPanelOpen }))}
+            enableTrafficSigns={this.props.config.enableTrafficSigns}
+            enableMapillaryObjects={this.props.config.enableMapillaryObjects}
+            isFullscreen={this.state.isFullscreen}
+            tilesActive={this.state.tilesActive}
+            turboModeActive={this.state.turboModeActive}
+            showTurboFilterBox={this.state.showTurboFilterBox}
+            trafficSignsActive={this.state.trafficSignsActive}
+            showTrafficSignsFilterBox={this.state.showTrafficSignsFilterBox}
+            objectsActive={this.state.objectsActive}
+            showObjectsFilterBox={this.state.showObjectsFilterBox}
+            jimuMapView={this.state.jimuMapView}
+            onToggleFullscreen={this.toggleFullscreen}
+            onToggleTurboFilter={() => {
+              if (!this.state.turboModeActive) return;
+              this.setState((prev) => ({ showTurboFilterBox: !prev.showTurboFilterBox }));
+            }}
+            onToggleTrafficSigns={this.toggleMapillaryTrafficSigns}
+            onToggleTrafficSignsFilter={() => {
+              if (!this.state.trafficSignsActive) return;
+              this.setState((prev) => ({ showTrafficSignsFilterBox: !prev.showTrafficSignsFilterBox }));
+            }}
+            onToggleObjects={this.toggleMapillaryObjects}
+            onToggleObjectsFilter={() => {
+              if (!this.state.objectsActive) return;
+              this.setState((prev) => ({ showObjectsFilterBox: !prev.showObjectsFilterBox }));
+            }}
+          />
         </div>
         {coverageBarVisible && (
           <div className="mly-coverage-notice" style={coverageNoticeStyles.container}>
@@ -14227,13 +13823,13 @@ private stopSafePlayback = () => {
                 {coveragePresentation.label}
               </button>
             )}
-            <button ref={this._coverageHelpButton} className="mly-coverage-help-button" type="button" aria-controls={coverageHelpId} aria-expanded={!!this.state.coverageHelpOpen} onClick={() => this.state.coverageHelpOpen ? this.closeCoverageHelp() : this.setState({ coverageHelpOpen: true })} aria-label={this._t('appExplorerGuideAndActiveFilters')} title={this._t('appExplorerGuideAndActiveFilters')} style={coverageNoticeStyles.helpButton}><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ display: "block", flexShrink: 0, pointerEvents: "none" }}><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3"/><circle cx="8" cy="4.75" r="0.75" fill="currentColor"/><path d="M8 7.25v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg></button>
+            <button ref={this._coverageHelpButton} className="mly-coverage-help-button" type="button" aria-controls={coverageHelpId} aria-expanded={!!this.state.coverageHelpOpen} onClick={() => this.state.coverageHelpOpen ? this.closeCoverageHelp() : this.setState({ coverageHelpOpen: true })} aria-label={this._t('appExplorerGuideAndActiveFilters')} title={this._t('appExplorerGuideAndActiveFilters')} style={coverageNoticeStyles.helpButton}><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ display: "block", flexShrink: 0, pointerEvents: "none" }}><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3" /><circle cx="8" cy="4.75" r="0.75" fill="currentColor" /><path d="M8 7.25v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg></button>
 
           </div>
         )}
         {this.state.selectionError && (
           <div role="alert" style={{ ...coverageNoticeStyles.helpPanel, zIndex: 1100 }}>
-            <div style={coverageNoticeStyles.message}>{<OwnedMessage source={String(this.state.selectionError ?? "")}/>}</div>
+            <div style={coverageNoticeStyles.message}>{<OwnedMessage source={String(this.state.selectionError ?? "")} />}</div>
             <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
               {this.state.selectionCanRetry && <button className="mly-text-action" type="button" onClick={() => void this.retrySelectedImage()} style={coverageNoticeStyles.action}> {this._t('appRetryImage')} </button>}
               <button className="mly-text-action" type="button" aria-label={this._t('appDismissImageError')} onClick={() => this.setState({ selectionError: undefined })} style={coverageNoticeStyles.action}> {this._t('appDismiss')} </button>
@@ -14254,7 +13850,7 @@ private stopSafePlayback = () => {
               <p style={{ margin: "5px 0 0" }}>{this.state.turboModeActive ? this._t('appBlueCirclesBelongToTheActiveSequenceItsFaint') : this._t('appMoreImageryMayContinueBeyondTheDotsSelectCoverage')}</p>
             </div>
             {!!guideContext.length && <div style={{ ...coverageNoticeStyles.message, marginTop: 8 }}><strong> {this._t('appActiveSettings')} </strong><ul style={{ margin: "4px 0", paddingLeft: 18 }}>{guideContext.map(item => <li key={item}>{item}</li>)}</ul></div>}
-            {coverageNoticeVisible && !this.state.turboWarningIsHelp && <p style={coverageNoticeStyles.message}>{<OwnedMessage source={String(this.state.zoomWarningMessage ?? "")}/>}</p>}
+            {coverageNoticeVisible && !this.state.turboWarningIsHelp && <p style={coverageNoticeStyles.message}>{<OwnedMessage source={String(this.state.zoomWarningMessage ?? "")} />}</p>}
             <label style={coverageNoticeStyles.optOut}>
               <input type="checkbox" checked={!this.shouldShowCoverageNotice()} onChange={event => { if (event.currentTarget.checked) this.hideCoverageNotices(); }} style={{ margin: 0, width: 16, height: 16, accentColor: "#91d9b5" }} />
               <span> {this._t('appHideTheGuideBarUntilThePageIsRefreshed')} </span>

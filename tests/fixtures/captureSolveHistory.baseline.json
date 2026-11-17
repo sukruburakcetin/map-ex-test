@@ -1,0 +1,6 @@
+{
+  "sourceCommit": "b36168d8170ca819d2286908442ec4d3e3207866",
+  "description": "Best-solve state initialization and update after stage 17. Strict comparisons, shallow snapshots and first-winner ties are retained.",
+  "initialize": "      let bestRoute: RoutingResult | null = null;\n\n      let bestRouteOpportunities: CaptureOpportunity[] = [];\n\n      let bestActualExtraMinutes = Infinity;\n",
+  "update": "        if (actualExtraMinutes < bestActualExtraMinutes) {\n          bestActualExtraMinutes = actualExtraMinutes;\n\n          bestRoute = finalRoute;\n\n          bestRouteOpportunities = [...solvedOpportunities];\n        }"
+}
