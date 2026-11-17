@@ -66,6 +66,7 @@ export interface RoutingResult {
  * their own API-specific parameters.
  */
 export interface RoutingSolveOptions {
+  signal?: AbortSignal;
   /**
    * Ordered route stops:
    *
@@ -110,5 +111,5 @@ export interface RoutingProvider {
 
   solve(options: RoutingSolveOptions): Promise<RoutingResult>;
 
-  preflightOrderedStops?(stops: RoutingCoordinate[]): Promise<RoutingPreflightResult>;
+  preflightOrderedStops?(stops: RoutingCoordinate[], signal?: AbortSignal): Promise<RoutingPreflightResult>;
 }

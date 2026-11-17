@@ -523,7 +523,7 @@ export const CAPTURE_ROUTE_CONFIG = {
   maxFinalStops: 72,
 
   /**
-   * Minimum road segment length worth considering.
+   * Minimum useful segment length and opportunity length/weighted-new-coverage floor.
    */
   minimumUsefulSegmentLengthMeters: 12,
 
@@ -562,6 +562,9 @@ export const CAPTURE_ROUTE_CONFIG = {
    * Road length contribution to opportunity value.
    */
   lengthWeight: 1.0,
+
+  /** Neutral center-distance preference. Keep scores finite without spatial retuning. */
+  centerDistanceWeight: 0.0,
 
   /**
    * Penalty for being far from the baseline route.

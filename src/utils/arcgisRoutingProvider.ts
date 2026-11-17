@@ -1,3 +1,4 @@
+import { throwIfRoutingAborted } from './routingCancellation';
 import type { RoutingProvider, RoutingProviderKind, RoutingResult, RoutingSolveOptions, RoutingCoordinate, CaptureTravelMode } from "./routingTypes";
 
 type ArcGISRoutingProviderKind = Extract<RoutingProviderKind, "arcgis-world" | "arcgis-portal" | "arcgis-custom">;
@@ -382,11 +383,13 @@ export const createArcGISRoutingProvider = (config: ArcGISRoutingProviderConfig)
     label,
 
     async solve(options: RoutingSolveOptions): Promise<RoutingResult> {
+      throwIfRoutingAborted(options.signal);
       if (!options.stops || options.stops.length < 2) {
         throw new Error("Routing requires at least " + "two stops.");
       }
 
       const arcgisTravelMode = await resolveArcGISTravelMode();
+      throwIfRoutingAborted(options.signal);
 
       const features = options.stops.map((coordinate, index) => createStop(coordinate, index, options.stops.length));
 
@@ -433,7 +436,8 @@ export const createArcGISRoutingProvider = (config: ArcGISRoutingProviderConfig)
         routeParameters.apiKey = apiKey;
       }
 
-      const result = await route.solve(routeUrl, routeParameters);
+      const result = await route.solve(routeUrl, routeParameters, options.signal ? {signal:options.signal} : undefined);
+      throwIfRoutingAborted(options.signal);
 
       return normalizeResult(result, arcgisTravelMode);
     },

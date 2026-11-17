@@ -1,0 +1,1656 @@
+{
+  "base": "Original widget formula with explicit neutral centerDistanceWeight=0 (routing-defaults fix)",
+  "segments": [
+    {
+      "start": [
+        0,
+        0
+      ],
+      "end": [
+        0.0002,
+        0
+      ],
+      "lengthMeters": 9999,
+      "highwayType": "residential",
+      "isOneway": false
+    },
+    {
+      "start": [
+        0.001,
+        0
+      ],
+      "end": [
+        0.002,
+        0
+      ],
+      "lengthMeters": 0,
+      "highwayType": "primary",
+      "isOneway": true
+    },
+    {
+      "start": [
+        0,
+        0
+      ],
+      "end": [
+        1e-05,
+        0
+      ],
+      "lengthMeters": 9999,
+      "highwayType": "service",
+      "isOneway": false
+    },
+    {
+      "start": [
+        0,
+        0
+      ],
+      "end": [
+        0.001,
+        0
+      ],
+      "lengthMeters": 100,
+      "highwayType": "footway",
+      "isOneway": false
+    },
+    {
+      "start": [
+        0.01,
+        0.01
+      ],
+      "end": [
+        0.011,
+        0.01
+      ],
+      "lengthMeters": 1,
+      "highwayType": "motorway_link",
+      "isOneway": false
+    },
+    {
+      "start": [
+        0.02,
+        0.02
+      ],
+      "end": [
+        0.021,
+        0.02
+      ],
+      "lengthMeters": 1,
+      "highwayType": "living_street",
+      "isOneway": false
+    },
+    {
+      "start": [
+        0,
+        0
+      ],
+      "end": [
+        0.001,
+        0
+      ],
+      "lengthMeters": 1,
+      "highwayType": "secondary_link",
+      "isOneway": false
+    }
+  ],
+  "cases": [
+    {
+      "name": "default",
+      "center": {
+        "longitude": 0,
+        "latitude": 0
+      },
+      "bbox": null,
+      "tiers": [
+        "none",
+        "stale",
+        "none",
+        "none",
+        "stale",
+        "none",
+        "fresh"
+      ],
+      "minimum": 12,
+      "targets": [
+        {
+          "seg": {
+            "start": [
+              0,
+              0
+            ],
+            "end": [
+              0.0002,
+              0
+            ],
+            "lengthMeters": 9999,
+            "highwayType": "residential",
+            "isOneway": false
+          },
+          "index": 0,
+          "tier": "none",
+          "midpoint": [
+            0.0001,
+            0
+          ],
+          "lengthMeters": 22.23898532891175,
+          "distanceFromCenterMeters": 11.119492664455874,
+          "priority": 2.694229936673701,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.001,
+              0
+            ],
+            "end": [
+              0.002,
+              0
+            ],
+            "lengthMeters": 0,
+            "highwayType": "primary",
+            "isOneway": true
+          },
+          "index": 1,
+          "tier": "stale",
+          "midpoint": [
+            0.0015,
+            0
+          ],
+          "lengthMeters": 111.19492664455875,
+          "distanceFromCenterMeters": 166.79238996683813,
+          "priority": 2.0460849726728694,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.01,
+              0.01
+            ],
+            "end": [
+              0.011,
+              0.01
+            ],
+            "lengthMeters": 1,
+            "highwayType": "motorway_link",
+            "isOneway": false
+          },
+          "index": 4,
+          "tier": "stale",
+          "midpoint": [
+            0.010499999999999999,
+            0.01
+          ],
+          "lengthMeters": 111.19492495096306,
+          "distanceFromCenterMeters": 1612.3264320537126,
+          "priority": 2.0460849660581855,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.02,
+              0.02
+            ],
+            "end": [
+              0.021,
+              0.02
+            ],
+            "lengthMeters": 1,
+            "highwayType": "living_street",
+            "isOneway": false
+          },
+          "index": 5,
+          "tier": "none",
+          "midpoint": [
+            0.0205,
+            0.02
+          ],
+          "lengthMeters": 111.19491987017656,
+          "distanceFromCenterMeters": 3184.6234424662503,
+          "priority": 4.092169892428272,
+          "clusterId": -1
+        }
+      ]
+    },
+    {
+      "name": "bbox-fallback",
+      "center": null,
+      "bbox": [
+        -1,
+        -1,
+        1,
+        1
+      ],
+      "tiers": [
+        "none",
+        "stale",
+        "none",
+        "none",
+        "stale",
+        "none",
+        "aging"
+      ],
+      "minimum": 12,
+      "targets": [
+        {
+          "seg": {
+            "start": [
+              0,
+              0
+            ],
+            "end": [
+              0.0002,
+              0
+            ],
+            "lengthMeters": 9999,
+            "highwayType": "residential",
+            "isOneway": false
+          },
+          "index": 0,
+          "tier": "none",
+          "midpoint": [
+            0.0001,
+            0
+          ],
+          "lengthMeters": 22.23898532891175,
+          "distanceFromCenterMeters": 11.119492664455874,
+          "priority": 2.694229936673701,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.001,
+              0
+            ],
+            "end": [
+              0.002,
+              0
+            ],
+            "lengthMeters": 0,
+            "highwayType": "primary",
+            "isOneway": true
+          },
+          "index": 1,
+          "tier": "stale",
+          "midpoint": [
+            0.0015,
+            0
+          ],
+          "lengthMeters": 111.19492664455875,
+          "distanceFromCenterMeters": 166.79238996683813,
+          "priority": 2.0460849726728694,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.01,
+              0.01
+            ],
+            "end": [
+              0.011,
+              0.01
+            ],
+            "lengthMeters": 1,
+            "highwayType": "motorway_link",
+            "isOneway": false
+          },
+          "index": 4,
+          "tier": "stale",
+          "midpoint": [
+            0.010499999999999999,
+            0.01
+          ],
+          "lengthMeters": 111.19492495096306,
+          "distanceFromCenterMeters": 1612.3264320537126,
+          "priority": 2.0460849660581855,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.02,
+              0.02
+            ],
+            "end": [
+              0.021,
+              0.02
+            ],
+            "lengthMeters": 1,
+            "highwayType": "living_street",
+            "isOneway": false
+          },
+          "index": 5,
+          "tier": "none",
+          "midpoint": [
+            0.0205,
+            0.02
+          ],
+          "lengthMeters": 111.19491987017656,
+          "distanceFromCenterMeters": 3184.6234424662503,
+          "priority": 4.092169892428272,
+          "clusterId": -1
+        }
+      ]
+    },
+    {
+      "name": "partial-center",
+      "center": {
+        "longitude": 1
+      },
+      "bbox": [
+        -1,
+        -1,
+        1,
+        1
+      ],
+      "tiers": [
+        "stale",
+        "none",
+        "none",
+        "none",
+        "stale",
+        "none",
+        "unknown"
+      ],
+      "minimum": 12,
+      "targets": [
+        {
+          "seg": {
+            "start": [
+              0,
+              0
+            ],
+            "end": [
+              0.0002,
+              0
+            ],
+            "lengthMeters": 9999,
+            "highwayType": "residential",
+            "isOneway": false
+          },
+          "index": 0,
+          "tier": "stale",
+          "midpoint": [
+            0.0001,
+            0
+          ],
+          "lengthMeters": 22.23898532891175,
+          "distanceFromCenterMeters": 111183.80715189426,
+          "priority": 1.3471149683368504,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.001,
+              0
+            ],
+            "end": [
+              0.002,
+              0
+            ],
+            "lengthMeters": 0,
+            "highwayType": "primary",
+            "isOneway": true
+          },
+          "index": 1,
+          "tier": "none",
+          "midpoint": [
+            0.0015,
+            0
+          ],
+          "lengthMeters": 111.19492664455875,
+          "distanceFromCenterMeters": 111028.13425459192,
+          "priority": 4.092169945345739,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.01,
+              0.01
+            ],
+            "end": [
+              0.011,
+              0.01
+            ],
+            "lengthMeters": 1,
+            "highwayType": "motorway_link",
+            "isOneway": false
+          },
+          "index": 4,
+          "tier": "stale",
+          "midpoint": [
+            0.010499999999999999,
+            0.01
+          ],
+          "lengthMeters": 111.19492495096306,
+          "distanceFromCenterMeters": 110032.99795588093,
+          "priority": 2.0460849660581855,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.02,
+              0.02
+            ],
+            "end": [
+              0.021,
+              0.02
+            ],
+            "lengthMeters": 1,
+            "highwayType": "living_street",
+            "isOneway": false
+          },
+          "index": 5,
+          "tier": "none",
+          "midpoint": [
+            0.0205,
+            0.02
+          ],
+          "lengthMeters": 111.19491987017656,
+          "distanceFromCenterMeters": 108938.13049701016,
+          "priority": 4.092169892428272,
+          "clusterId": -1
+        }
+      ]
+    },
+    {
+      "name": "invalid-center",
+      "center": {
+        "longitude": "NaN",
+        "latitude": 0
+      },
+      "bbox": null,
+      "tiers": [
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none"
+      ],
+      "minimum": 12,
+      "targets": []
+    },
+    {
+      "name": "missing-area",
+      "center": null,
+      "bbox": null,
+      "tiers": [
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none"
+      ],
+      "minimum": 12,
+      "targets": []
+    },
+    {
+      "name": "all-fresh",
+      "center": {
+        "longitude": 0,
+        "latitude": 0
+      },
+      "bbox": null,
+      "tiers": [
+        "fresh",
+        "aging",
+        "fresh",
+        "stale",
+        "fresh",
+        "aging",
+        "fresh"
+      ],
+      "minimum": 12,
+      "targets": []
+    },
+    {
+      "name": "length-boundary",
+      "center": {
+        "longitude": 0,
+        "latitude": 0
+      },
+      "bbox": null,
+      "tiers": [
+        "none",
+        "stale",
+        "none",
+        "none",
+        "stale",
+        "none",
+        "none"
+      ],
+      "minimum": 22.23898532891175,
+      "targets": [
+        {
+          "seg": {
+            "start": [
+              0,
+              0
+            ],
+            "end": [
+              0.0002,
+              0
+            ],
+            "lengthMeters": 9999,
+            "highwayType": "residential",
+            "isOneway": false
+          },
+          "index": 0,
+          "tier": "none",
+          "midpoint": [
+            0.0001,
+            0
+          ],
+          "lengthMeters": 22.23898532891175,
+          "distanceFromCenterMeters": 11.119492664455874,
+          "priority": 2.694229936673701,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.001,
+              0
+            ],
+            "end": [
+              0.002,
+              0
+            ],
+            "lengthMeters": 0,
+            "highwayType": "primary",
+            "isOneway": true
+          },
+          "index": 1,
+          "tier": "stale",
+          "midpoint": [
+            0.0015,
+            0
+          ],
+          "lengthMeters": 111.19492664455875,
+          "distanceFromCenterMeters": 166.79238996683813,
+          "priority": 2.0460849726728694,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.01,
+              0.01
+            ],
+            "end": [
+              0.011,
+              0.01
+            ],
+            "lengthMeters": 1,
+            "highwayType": "motorway_link",
+            "isOneway": false
+          },
+          "index": 4,
+          "tier": "stale",
+          "midpoint": [
+            0.010499999999999999,
+            0.01
+          ],
+          "lengthMeters": 111.19492495096306,
+          "distanceFromCenterMeters": 1612.3264320537126,
+          "priority": 2.0460849660581855,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.02,
+              0.02
+            ],
+            "end": [
+              0.021,
+              0.02
+            ],
+            "lengthMeters": 1,
+            "highwayType": "living_street",
+            "isOneway": false
+          },
+          "index": 5,
+          "tier": "none",
+          "midpoint": [
+            0.0205,
+            0.02
+          ],
+          "lengthMeters": 111.19491987017656,
+          "distanceFromCenterMeters": 3184.6234424662503,
+          "priority": 4.092169892428272,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0,
+              0
+            ],
+            "end": [
+              0.001,
+              0
+            ],
+            "lengthMeters": 1,
+            "highwayType": "secondary_link",
+            "isOneway": false
+          },
+          "index": 6,
+          "tier": "none",
+          "midpoint": [
+            0.0005,
+            0
+          ],
+          "lengthMeters": 111.19492664455875,
+          "distanceFromCenterMeters": 55.597463322279374,
+          "priority": 4.092169945345739,
+          "clusterId": -1
+        }
+      ]
+    },
+    {
+      "name": "below-boundary",
+      "center": {
+        "longitude": 0,
+        "latitude": 0
+      },
+      "bbox": null,
+      "tiers": [
+        "none",
+        "stale",
+        "none",
+        "none",
+        "stale",
+        "none",
+        "none"
+      ],
+      "minimum": 22.23898532991175,
+      "targets": [
+        {
+          "seg": {
+            "start": [
+              0.001,
+              0
+            ],
+            "end": [
+              0.002,
+              0
+            ],
+            "lengthMeters": 0,
+            "highwayType": "primary",
+            "isOneway": true
+          },
+          "index": 1,
+          "tier": "stale",
+          "midpoint": [
+            0.0015,
+            0
+          ],
+          "lengthMeters": 111.19492664455875,
+          "distanceFromCenterMeters": 166.79238996683813,
+          "priority": 2.0460849726728694,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.01,
+              0.01
+            ],
+            "end": [
+              0.011,
+              0.01
+            ],
+            "lengthMeters": 1,
+            "highwayType": "motorway_link",
+            "isOneway": false
+          },
+          "index": 4,
+          "tier": "stale",
+          "midpoint": [
+            0.010499999999999999,
+            0.01
+          ],
+          "lengthMeters": 111.19492495096306,
+          "distanceFromCenterMeters": 1612.3264320537126,
+          "priority": 2.0460849660581855,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.02,
+              0.02
+            ],
+            "end": [
+              0.021,
+              0.02
+            ],
+            "lengthMeters": 1,
+            "highwayType": "living_street",
+            "isOneway": false
+          },
+          "index": 5,
+          "tier": "none",
+          "midpoint": [
+            0.0205,
+            0.02
+          ],
+          "lengthMeters": 111.19491987017656,
+          "distanceFromCenterMeters": 3184.6234424662503,
+          "priority": 4.092169892428272,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0,
+              0
+            ],
+            "end": [
+              0.001,
+              0
+            ],
+            "lengthMeters": 1,
+            "highwayType": "secondary_link",
+            "isOneway": false
+          },
+          "index": 6,
+          "tier": "none",
+          "midpoint": [
+            0.0005,
+            0
+          ],
+          "lengthMeters": 111.19492664455875,
+          "distanceFromCenterMeters": 55.597463322279374,
+          "priority": 4.092169945345739,
+          "clusterId": -1
+        }
+      ]
+    },
+    {
+      "name": "explicit-weight-0",
+      "center": {
+        "longitude": 0,
+        "latitude": 0
+      },
+      "bbox": null,
+      "tiers": [
+        "none",
+        "stale",
+        "none",
+        "none",
+        "stale",
+        "none",
+        "fresh"
+      ],
+      "minimum": 12,
+      "weight": 0,
+      "targets": [
+        {
+          "seg": {
+            "start": [
+              0,
+              0
+            ],
+            "end": [
+              0.0002,
+              0
+            ],
+            "lengthMeters": 9999,
+            "highwayType": "residential",
+            "isOneway": false
+          },
+          "index": 0,
+          "tier": "none",
+          "midpoint": [
+            0.0001,
+            0
+          ],
+          "lengthMeters": 22.23898532891175,
+          "distanceFromCenterMeters": 11.119492664455874,
+          "priority": 2.694229936673701,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.001,
+              0
+            ],
+            "end": [
+              0.002,
+              0
+            ],
+            "lengthMeters": 0,
+            "highwayType": "primary",
+            "isOneway": true
+          },
+          "index": 1,
+          "tier": "stale",
+          "midpoint": [
+            0.0015,
+            0
+          ],
+          "lengthMeters": 111.19492664455875,
+          "distanceFromCenterMeters": 166.79238996683813,
+          "priority": 2.0460849726728694,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.01,
+              0.01
+            ],
+            "end": [
+              0.011,
+              0.01
+            ],
+            "lengthMeters": 1,
+            "highwayType": "motorway_link",
+            "isOneway": false
+          },
+          "index": 4,
+          "tier": "stale",
+          "midpoint": [
+            0.010499999999999999,
+            0.01
+          ],
+          "lengthMeters": 111.19492495096306,
+          "distanceFromCenterMeters": 1612.3264320537126,
+          "priority": 2.0460849660581855,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.02,
+              0.02
+            ],
+            "end": [
+              0.021,
+              0.02
+            ],
+            "lengthMeters": 1,
+            "highwayType": "living_street",
+            "isOneway": false
+          },
+          "index": 5,
+          "tier": "none",
+          "midpoint": [
+            0.0205,
+            0.02
+          ],
+          "lengthMeters": 111.19491987017656,
+          "distanceFromCenterMeters": 3184.6234424662503,
+          "priority": 4.092169892428272,
+          "clusterId": -1
+        }
+      ]
+    },
+    {
+      "name": "explicit-weight-0.25",
+      "center": {
+        "longitude": 0,
+        "latitude": 0
+      },
+      "bbox": null,
+      "tiers": [
+        "none",
+        "stale",
+        "none",
+        "none",
+        "stale",
+        "none",
+        "fresh"
+      ],
+      "minimum": 12,
+      "weight": 0.25,
+      "targets": [
+        {
+          "seg": {
+            "start": [
+              0,
+              0
+            ],
+            "end": [
+              0.0002,
+              0
+            ],
+            "lengthMeters": 9999,
+            "highwayType": "residential",
+            "isOneway": false
+          },
+          "index": 0,
+          "tier": "none",
+          "midpoint": [
+            0.0001,
+            0
+          ],
+          "lengthMeters": 22.23898532891175,
+          "distanceFromCenterMeters": 11.119492664455874,
+          "priority": 3.3662928211792633,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.001,
+              0
+            ],
+            "end": [
+              0.002,
+              0
+            ],
+            "lengthMeters": 0,
+            "highwayType": "primary",
+            "isOneway": true
+          },
+          "index": 1,
+          "tier": "stale",
+          "midpoint": [
+            0.0015,
+            0
+          ],
+          "lengthMeters": 111.19492664455875,
+          "distanceFromCenterMeters": 166.79238996683813,
+          "priority": 2.54109348526718,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.01,
+              0.01
+            ],
+            "end": [
+              0.011,
+              0.01
+            ],
+            "lengthMeters": 1,
+            "highwayType": "motorway_link",
+            "isOneway": false
+          },
+          "index": 4,
+          "tier": "stale",
+          "midpoint": [
+            0.010499999999999999,
+            0.01
+          ],
+          "lengthMeters": 111.19492495096306,
+          "distanceFromCenterMeters": 1612.3264320537126,
+          "priority": 2.4328786662564332,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.02,
+              0.02
+            ],
+            "end": [
+              0.021,
+              0.02
+            ],
+            "lengthMeters": 1,
+            "highwayType": "living_street",
+            "isOneway": false
+          },
+          "index": 5,
+          "tier": "none",
+          "midpoint": [
+            0.0205,
+            0.02
+          ],
+          "lengthMeters": 111.19491987017656,
+          "distanceFromCenterMeters": 3184.6234424662503,
+          "priority": 4.717148231565397,
+          "clusterId": -1
+        }
+      ]
+    },
+    {
+      "name": "explicit-weight-2.5",
+      "center": {
+        "longitude": 0,
+        "latitude": 0
+      },
+      "bbox": null,
+      "tiers": [
+        "none",
+        "stale",
+        "none",
+        "none",
+        "stale",
+        "none",
+        "fresh"
+      ],
+      "minimum": 12,
+      "weight": 2.5,
+      "targets": [
+        {
+          "seg": {
+            "start": [
+              0,
+              0
+            ],
+            "end": [
+              0.0002,
+              0
+            ],
+            "lengthMeters": 9999,
+            "highwayType": "residential",
+            "isOneway": false
+          },
+          "index": 0,
+          "tier": "none",
+          "midpoint": [
+            0.0001,
+            0
+          ],
+          "lengthMeters": 22.23898532891175,
+          "distanceFromCenterMeters": 11.119492664455874,
+          "priority": 9.414858781729327,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.001,
+              0
+            ],
+            "end": [
+              0.002,
+              0
+            ],
+            "lengthMeters": 0,
+            "highwayType": "primary",
+            "isOneway": true
+          },
+          "index": 1,
+          "tier": "stale",
+          "midpoint": [
+            0.0015,
+            0
+          ],
+          "lengthMeters": 111.19492664455875,
+          "distanceFromCenterMeters": 166.79238996683813,
+          "priority": 6.996170098615973,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.01,
+              0.01
+            ],
+            "end": [
+              0.011,
+              0.01
+            ],
+            "lengthMeters": 1,
+            "highwayType": "motorway_link",
+            "isOneway": false
+          },
+          "index": 4,
+          "tier": "stale",
+          "midpoint": [
+            0.010499999999999999,
+            0.01
+          ],
+          "lengthMeters": 111.19492495096306,
+          "distanceFromCenterMeters": 1612.3264320537126,
+          "priority": 5.914021968040662,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.02,
+              0.02
+            ],
+            "end": [
+              0.021,
+              0.02
+            ],
+            "lengthMeters": 1,
+            "highwayType": "living_street",
+            "isOneway": false
+          },
+          "index": 5,
+          "tier": "none",
+          "midpoint": [
+            0.0205,
+            0.02
+          ],
+          "lengthMeters": 111.19491987017656,
+          "distanceFromCenterMeters": 3184.6234424662503,
+          "priority": 10.341953283799526,
+          "clusterId": -1
+        }
+      ]
+    }
+  ],
+  "opportunities": [
+    {
+      "id": "one",
+      "tier": "none",
+      "segments": [
+        {
+          "seg": {
+            "start": [
+              0,
+              0
+            ],
+            "end": [
+              0.0002,
+              0
+            ],
+            "lengthMeters": 9999,
+            "highwayType": "residential",
+            "isOneway": false
+          },
+          "index": 0,
+          "tier": "none",
+          "midpoint": [
+            0.0001,
+            0
+          ],
+          "lengthMeters": 22.23898532891175,
+          "distanceFromCenterMeters": 11.119492664455874,
+          "priority": 2.694229936673701,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.001,
+              0
+            ],
+            "end": [
+              0.002,
+              0
+            ],
+            "lengthMeters": 0,
+            "highwayType": "primary",
+            "isOneway": true
+          },
+          "index": 1,
+          "tier": "stale",
+          "midpoint": [
+            0.0015,
+            0
+          ],
+          "lengthMeters": 111.19492664455875,
+          "distanceFromCenterMeters": 166.79238996683813,
+          "priority": 2.0460849726728694,
+          "clusterId": -1
+        }
+      ],
+      "routePoints": [
+        [
+          0,
+          0
+        ],
+        [
+          1e-05,
+          0
+        ],
+        [
+          0.0001,
+          0
+        ]
+      ],
+      "novelMeters": 12.7,
+      "baselineOverlapMeters": 2.3,
+      "lengthMeters": 150.4,
+      "estimatedDetourMinutes": 0.1234
+    },
+    {
+      "id": "two",
+      "tier": "stale",
+      "segments": [
+        {
+          "seg": {
+            "start": [
+              0,
+              0
+            ],
+            "end": [
+              0.0002,
+              0
+            ],
+            "lengthMeters": 9999,
+            "highwayType": "residential",
+            "isOneway": false
+          },
+          "index": 0,
+          "tier": "stale",
+          "midpoint": [
+            0.0001,
+            0
+          ],
+          "lengthMeters": 4.5,
+          "distanceFromCenterMeters": 11.119492664455874,
+          "priority": 2.694229936673701,
+          "clusterId": -1
+        },
+        {
+          "seg": {
+            "start": [
+              0.01,
+              0.01
+            ],
+            "end": [
+              0.011,
+              0.01
+            ],
+            "lengthMeters": 1,
+            "highwayType": "motorway_link",
+            "isOneway": false
+          },
+          "index": 4,
+          "tier": "stale",
+          "midpoint": [
+            0.010499999999999999,
+            0.01
+          ],
+          "lengthMeters": 111.19492495096306,
+          "distanceFromCenterMeters": 1612.3264320537126,
+          "priority": 2.0460849660581855,
+          "clusterId": -1
+        }
+      ],
+      "routePoints": [
+        [
+          0.0001,
+          0
+        ],
+        [
+          0.0002,
+          0
+        ]
+      ],
+      "novelMeters": 3.2,
+      "baselineOverlapMeters": 1.7,
+      "lengthMeters": 50.8,
+      "estimatedDetourMinutes": 0.4567
+    },
+    {
+      "id": "empty",
+      "tier": "mixed",
+      "segments": [],
+      "routePoints": [],
+      "novelMeters": 0,
+      "baselineOverlapMeters": 0,
+      "lengthMeters": 0,
+      "estimatedDetourMinutes": 0
+    }
+  ],
+  "stopOwners": [
+    "one",
+    "one",
+    "two"
+  ],
+  "summary": {
+    "missingMeters": 22.23898532891175,
+    "staleMeters": 226.8898515955218,
+    "targetedCaptureMeters": 249.12883692443356,
+    "finalSelectedNovelMeters": 15.899999999999999,
+    "finalSelectedBaselineOverlapMeters": 4,
+    "finalSelectedAnchorCount": 5
+  },
+  "diagnostics": {
+    "anchorDistribution": {
+      "one": 0,
+      "two": 1,
+      "three": 2
+    },
+    "threeAnchorDiagnostics": [
+      {
+        "id": "one",
+        "segments": 2,
+        "novelMeters": 13,
+        "totalLengthMeters": 150,
+        "estimatedMinutes": 0.12,
+        "tier": "none"
+      }
+    ]
+  },
+  "coverageTargets": [
+    {
+      "index": 0,
+      "tier": "stale",
+      "start": [
+        0,
+        0
+      ],
+      "end": [
+        0.0002,
+        0
+      ],
+      "lengthMeters": 4.5
+    },
+    {
+      "index": 1,
+      "tier": "stale",
+      "start": [
+        0.001,
+        0
+      ],
+      "end": [
+        0.002,
+        0
+      ],
+      "lengthMeters": 111.19492664455875
+    },
+    {
+      "index": 4,
+      "tier": "stale",
+      "start": [
+        0.01,
+        0.01
+      ],
+      "end": [
+        0.011,
+        0.01
+      ],
+      "lengthMeters": 111.19492495096306
+    }
+  ],
+  "expansion": [
+    {
+      "last": false,
+      "reason": "exhausted",
+      "estimated": 8.499999,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": true
+    },
+    {
+      "last": false,
+      "reason": "exhausted",
+      "estimated": 8.5,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": false,
+      "reason": "exhausted",
+      "estimated": 8.500001,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": false,
+      "reason": "budget",
+      "estimated": 8.499999,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": false,
+      "reason": "budget",
+      "estimated": 8.5,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": false,
+      "reason": "budget",
+      "estimated": 8.500001,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": false,
+      "reason": "anchor-cap",
+      "estimated": 8.499999,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": false,
+      "reason": "anchor-cap",
+      "estimated": 8.5,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": false,
+      "reason": "anchor-cap",
+      "estimated": 8.500001,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": false,
+      "reason": "opportunity-cap",
+      "estimated": 8.499999,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": false,
+      "reason": "opportunity-cap",
+      "estimated": 8.5,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": false,
+      "reason": "opportunity-cap",
+      "estimated": 8.500001,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": true,
+      "reason": "exhausted",
+      "estimated": 8.499999,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": true,
+      "reason": "exhausted",
+      "estimated": 8.5,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": true,
+      "reason": "exhausted",
+      "estimated": 8.500001,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": true,
+      "reason": "budget",
+      "estimated": 8.499999,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": true,
+      "reason": "budget",
+      "estimated": 8.5,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": true,
+      "reason": "budget",
+      "estimated": 8.500001,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": true,
+      "reason": "anchor-cap",
+      "estimated": 8.499999,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": true,
+      "reason": "anchor-cap",
+      "estimated": 8.5,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": true,
+      "reason": "anchor-cap",
+      "estimated": 8.500001,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": true,
+      "reason": "opportunity-cap",
+      "estimated": 8.499999,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": true,
+      "reason": "opportunity-cap",
+      "estimated": 8.5,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    },
+    {
+      "last": true,
+      "reason": "opportunity-cap",
+      "estimated": 8.500001,
+      "budget": 10,
+      "ratio": 0.85,
+      "expected": false
+    }
+  ],
+  "anchorBoundaries": [
+    {
+      "meters": 7.999999,
+      "opportunities": [
+        {
+          "id": "A",
+          "routePoints": [
+            [
+              0,
+              0
+            ]
+          ]
+        },
+        {
+          "id": "B",
+          "routePoints": [
+            [
+              7.194571948028238e-05,
+              0
+            ]
+          ]
+        }
+      ],
+      "expected": [
+        "A"
+      ]
+    },
+    {
+      "meters": 8,
+      "opportunities": [
+        {
+          "id": "A",
+          "routePoints": [
+            [
+              0,
+              0
+            ]
+          ]
+        },
+        {
+          "id": "B",
+          "routePoints": [
+            [
+              7.194572847349845e-05,
+              0
+            ]
+          ]
+        }
+      ],
+      "expected": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "meters": 8.000001,
+      "opportunities": [
+        {
+          "id": "A",
+          "routePoints": [
+            [
+              0,
+              0
+            ]
+          ]
+        },
+        {
+          "id": "B",
+          "routePoints": [
+            [
+              7.19457374667145e-05,
+              0
+            ]
+          ]
+        }
+      ],
+      "expected": [
+        "A",
+        "B"
+      ]
+    }
+  ],
+  "referenceConfig": {
+    "centerDistanceWeight": 0,
+    "minimumUsefulSegmentLengthMeters": 12,
+    "nonePriority": 2,
+    "stalePriority": 1,
+    "lengthWeight": 1
+  }
+}

@@ -10,6 +10,7 @@ function load(relative) {
     name => load(path.posix.normalize(path.posix.join(path.posix.dirname(relative), name))), module, module.exports);
   loaded.set(relative, module.exports); return module.exports;
 }
+const { OwnedMapResources } = load('features/map-graphics/OwnedMapResources');
 const { SharedTileRequests } = load('features/coverage/SharedTileRequests');
 const { SequenceTileIndex } = load('features/coverage/SequenceTileIndex');
 const { BackgroundRequestQueue } = load('features/imagery/BackgroundRequestQueue');
@@ -38,6 +39,8 @@ function setup() {
   let now = 100;
   const w = new Runtime();
   w.state = { isLoading: false, turboModeActive: true, sequenceImages: [], jimuMapView: { view: { type: '2d' } } };
+  w._ownedMapResources = new OwnedMapResources();
+  w.clearDirectionHighlight = w.clearClickRipples = w.clearTurboHover = () => {};
   w.props = { config: {} }; w.accessToken = 'private-test-token'; w._tileRequestToken = null;
   w._sharedTileRequests = new SharedTileRequests(); w._sequenceTileIndex = new SequenceTileIndex();
   w._turboTileCache = new TurboTileCache(); w._backgroundRequests = new BackgroundRequestQueue(2);
@@ -291,7 +294,7 @@ test('clearing the sequence cache during image paint cancels optional jobs and p
   const previous = Object.getOwnPropertyDescriptor(global, 'localStorage');
   Object.defineProperty(global, 'localStorage', { configurable: true, value: { removeItem() {} } });
   t.after(() => { if (previous) Object.defineProperty(global, 'localStorage', previous); else delete global.localStorage; });
-  w.state.jimuMapView.view.graphics = { removeAll() {}, remove() {} }; w.log = () => {};
+  w.state.jimuMapView.view.graphics = { forEach() {}, remove() {} }; w.log = () => {};
   w._liveSequenceFrames.clear = () => {}; w.mapillaryViewer.remove = () => events.push('remove');
   w._sequenceDemand = new SequenceDemandData((url, signal) => w.runSequenceBackground(async () => { started.push('old-demand'); return { data: [{ id: '1' }] }; }, signal));
   w._sequenceDemand.seed('A', [{ id: '1', lon: 29, lat: 41 }]);

@@ -19,8 +19,8 @@ export interface SpriteMeta {
 // Low-level helpers
 
 /** Reject missing deployment assets before parsing the server's 404/HTML response. */
-export async function loadSpriteMetadata(url: string): Promise<Record<string, SpriteMeta>> {
-  const response = await fetch(url);
+export async function loadSpriteMetadata(url: string, signal?: AbortSignal): Promise<Record<string, SpriteMeta>> {
+  const response = await fetch(url, signal ? {signal} : undefined);
   if (!response.ok) throw new Error(`Sprite metadata unavailable (HTTP ${response.status}): ${url}`);
   let data: unknown;
   try { data = await response.json(); } catch { throw new Error(`Invalid JSON sprite metadata response: ${url}`); }
@@ -135,15 +135,19 @@ export function processInChunks<T, R>(
   items:      T[],
   chunkSize:  number,
   iterator:   (item: T) => Promise<R | null | undefined> | (R | null | undefined),
-  onComplete: (results: R[]) => void
+  onComplete: (results: R[]) => void,
+  signal?: AbortSignal
 ): void {
   let index = 0;
   const results: R[] = [];
 
   const nextChunk = async () => {
+    if (signal?.aborted) return;
     const end = Math.min(index + chunkSize, items.length);
     for (let i = index; i < end; i++) {
+      if (signal?.aborted) return;
       const res = await iterator(items[i]);
+      if (signal?.aborted) return;
       if (res != null) results.push(res as R);
     }
     index = end;

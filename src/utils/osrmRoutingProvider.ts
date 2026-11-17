@@ -1,3 +1,4 @@
+import { throwIfRoutingAborted } from './routingCancellation';
 import type { RoutingProvider, RoutingResult, RoutingSolveOptions, RoutingCoordinate, RoutingPreflightResult } from "./routingTypes";
 import { distanceMeters } from "./geoUtils";
 
@@ -93,7 +94,8 @@ export const createOSRMRoutingProvider = (config: OSRMRoutingProviderConfig): Ro
     throw new Error("OSRM server URL is not configured.");
   }
 
-  const preflightOrderedStops = async (stops: RoutingCoordinate[]): Promise<RoutingPreflightResult> => {
+  const preflightOrderedStops = async (stops: RoutingCoordinate[], signal?: AbortSignal): Promise<RoutingPreflightResult> => {
+    throwIfRoutingAborted(signal);
     if (stops.length < 2) {
       return {
         durationMinutes: 0,
@@ -141,11 +143,13 @@ export const createOSRMRoutingProvider = (config: OSRMRoutingProviderConfig): Ro
     let response: Response;
 
     try {
-      response = await fetch(url);
+      response = await fetch(url, {signal});
     } catch {
+      throwIfRoutingAborted(signal);
       throw new Error("Could not connect to the OSRM Table service.");
     }
 
+    throwIfRoutingAborted(signal);
     if (!response.ok) {
       throw new Error(`OSRM table request failed with HTTP ` + `${response.status}.`);
     }
@@ -155,9 +159,11 @@ export const createOSRMRoutingProvider = (config: OSRMRoutingProviderConfig): Ro
     try {
       data = await response.json();
     } catch {
+      throwIfRoutingAborted(signal);
       throw new Error("OSRM Table returned an invalid response.");
     }
 
+    throwIfRoutingAborted(signal);
     if (data.code !== "Ok" || !Array.isArray(data.durations)) {
       throw new Error(data.message ? `OSRM Table: ${data.message}` : "OSRM Table preflight failed.");
     }
@@ -243,6 +249,7 @@ export const createOSRMRoutingProvider = (config: OSRMRoutingProviderConfig): Ro
     preflightOrderedStops,
 
     async solve(options: RoutingSolveOptions): Promise<RoutingResult> {
+      throwIfRoutingAborted(options.signal);
       /*
        * --------------------------------------------------------
        * VALIDATE STOPS
@@ -302,14 +309,16 @@ export const createOSRMRoutingProvider = (config: OSRMRoutingProviderConfig): Ro
       let response: Response;
 
       try {
-        response = await fetch(url);
+        response = await fetch(url, {signal:options.signal});
       } catch (error) {
+        throwIfRoutingAborted(options.signal);
         throw new Error("Could not connect to the OSRM routing server.");
       }
 
       /*
        * HTTP-level failure.
        */
+      throwIfRoutingAborted(options.signal);
       if (!response.ok) {
         throw new Error(`OSRM request failed with HTTP ` + `${response.status}.`);
       }
@@ -319,6 +328,7 @@ export const createOSRMRoutingProvider = (config: OSRMRoutingProviderConfig): Ro
       try {
         data = await response.json();
       } catch {
+        throwIfRoutingAborted(options.signal);
         throw new Error("OSRM returned an invalid response.");
       }
 
@@ -328,6 +338,7 @@ export const createOSRMRoutingProvider = (config: OSRMRoutingProviderConfig): Ro
        * --------------------------------------------------------
        */
 
+      throwIfRoutingAborted(options.signal);
       if (data.code !== "Ok") {
         throw new Error(data.message ? `OSRM: ${data.message}` : `OSRM routing failed: ${data.code}`);
       }

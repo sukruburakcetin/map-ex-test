@@ -532,7 +532,7 @@ export function buildCaptureOpportunities(
   groups.forEach((segments, index) => {
     const totalLength = segments.reduce((sum, s) => sum + s.lengthMeters, 0);
 
-    if (totalLength < CAPTURE_ROUTE_CONFIG.minimumCaptureValueMeters) {
+    if (totalLength < CAPTURE_ROUTE_CONFIG.minimumUsefulSegmentLengthMeters) {
       rejectedGroupCountByLength++;
 
       rejectedSegmentCountByLength += segments.length;
@@ -542,7 +542,7 @@ export function buildCaptureOpportunities(
 
     const { valueMeters, missingMeters, staleMeters, novelMeters, novelMissingMeters, novelStaleMeters, baselineOverlapMeters } = opportunityValue(segments, baseline);
 
-    if (valueMeters < CAPTURE_ROUTE_CONFIG.minimumCaptureValueMeters) {
+    if (valueMeters < CAPTURE_ROUTE_CONFIG.minimumUsefulSegmentLengthMeters) {
       rejectedGroupCountByValue++;
 
       rejectedSegmentCountByValue += segments.length;
@@ -701,7 +701,7 @@ export function buildCaptureOpportunities(
   console.log(`[CaptureRoute] Groups rejected by value: ` + `${rejectedGroupCountByValue} groups / ` + `${rejectedSegmentCountByValue} segments`);
 
   console.log(`[CaptureRoute] Segments in accepted opportunities: ` + `${acceptedOpportunitySegmentCount}`);
-  return opportunities.sort((a, b) => b.priority - a.priority).slice(0, CAPTURE_ROUTE_CONFIG.maxOpportunities);
+  return opportunities.sort((a, b) => b.priority - a.priority).slice(0, CAPTURE_ROUTE_CONFIG.maxOpportunityCandidates);
 }
 
 /**
@@ -733,7 +733,7 @@ export function selectCaptureOpportunities(opportunities: CaptureOpportunity[], 
   let missingMeters = 0;
   let staleMeters = 0;
 
-  let stopReason: "budget" | "opportunity-cap" | "exhausted" = "exhausted";
+  let stopReason: RouteSelectionResult['stopReason'] = "exhausted";
 
   for (const opportunity of sorted) {
     /*

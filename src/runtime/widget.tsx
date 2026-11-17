@@ -1,5 +1,12 @@
-import { detectionLabelStyle } from '../features/detections/detectionLabels';
-import { categoryDisplayStyle, type CategoryDisplayMode, categoryMatcher, selectedCategoryCodes, type CategorySelection, type MapCategoryFilter } from '../features/detections/categorySelection';
+import { selectAdaptiveCaptureOpportunities } from "../features/routing/adaptiveCaptureSelection";
+import {
+  scoreCaptureTargets, captureStopOwners, captureAnchorDistribution,
+  captureThreeAnchorDiagnostics, activeCaptureCoverageTargets, summarizeCaptureOpportunities,
+} from '../features/routing/captureRouteScoring';
+import { DetectionLayerController } from '../features/detections/DetectionLayerController';
+import { RouteGeneration } from '../features/routing/RouteGeneration';
+import { OwnedMapResources } from '../features/map-graphics/OwnedMapResources';
+import { type CategoryDisplayMode, categoryMatcher, selectedCategoryCodes, type CategorySelection, type MapCategoryFilter } from '../features/detections/categorySelection';
 import { placesSourceKey, placesSourceKind } from '../features/places/placesSource';
 import { PortalPlacesSource } from '../features/places/PortalPlacesSource';
 import { placesApiEndpoints } from '../features/places/placesApi';
@@ -189,7 +196,7 @@ import { ImageUtilityGroup } from "../components/ImageUtilityGroup";
 import type { FilterOption, NearbyImage, RouteData } from "../components/types";
 import { FieldNote, FieldNoteEditor, FieldNoteAttachments } from "../components/types";
 import { FieldNotesPanel } from "../components/FieldNotesPanel";
-import { buildCaptureOpportunities, selectCaptureOpportunities, buildFinalRouteStops } from "../utils/routeOptimizer";
+import { buildFinalRouteStops } from "../utils/routeOptimizer";
 import type { RouteTargetSegment, CaptureOpportunity } from "../utils/routeOptimizer";
 import type { RoutingResult, RoutingCoordinate, RoutingProvider, CaptureTravelMode } from "../utils/routingTypes";
 import { createArcGISRoutingProvider } from "../utils/arcgisRoutingProvider";
@@ -431,6 +438,13 @@ interface State {
 }
 
 export default class Widget extends React.PureComponent<AllWidgetProps<any>, State> {
+  private readonly _ownedMapResources = new OwnedMapResources<__esri.Graphic, __esri.Layer>();
+  private _startupDisposed = false;
+  private _startupRevision = 0;
+  private _startupAbort = new AbortController();
+  private _spritePreloadTimer: ReturnType<typeof setTimeout> | null = null;
+  private _introDismissTimer: ReturnType<typeof setTimeout> | null = null;
+  private _overrideStyleSheet: HTMLStyleElement | null = null;
   viewerContainer = React.createRef<HTMLDivElement>();
   private _profileFlowHost: HTMLDivElement | null = null;
   private setProfileFlowHost = (node: HTMLDivElement | null): void => {
@@ -741,8 +755,29 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   }
 
   private mapillaryVTLayer: __esri.VectorTileLayer | null = null;
-  private mapillaryTrafficSignsLayer: __esri.VectorTileLayer | null = null;
-  private mapillaryObjectsLayer: __esri.VectorTileLayer | null = null;
+  private readonly _detectionLayers = new DetectionLayerController<__esri.VectorTileLayer, __esri.MapView | __esri.SceneView>({
+    view: () => this.state.jimuMapView?.view || null,
+    disposed: () => this._sharedNotesDisposed || this._startupDisposed,
+    appearance: kind => { const signs = kind === 'signs'; return {
+      scale: (signs ? this.state.signSpriteScale : this.state.objectSpriteScale) || 1,
+      opacity: (signs ? this.state.signOpacity : this.state.objectOpacity) ?? 1,
+      reduceOverlap: (signs ? this.state.signReduceOverlap : this.state.objectReduceOverlap) === true,
+      labels: (signs ? this.state.signLabels : this.state.objectLabels) === true,
+      mode: (signs ? this.state.signDisplayMode : this.state.objectDisplayMode) || 'selected',
+    }; },
+    selection: kind => this._mapFeatureFilterCodes.get(kind),
+    codes: kind => kind === 'signs' ? this._detectionSignCodes : Object.keys(objectNameMap),
+    source: kind => ({tiles:`${kind === 'signs' ? TILE_URLS.TRAFFIC_SIGNS : TILE_URLS.OBJECTS}?access_token=${this.accessToken}`,
+      sprite: kind === 'signs' ? this.spriteUrls.TRAFFIC_SIGNS : this.spriteUrls.OBJECTS}),
+    create: properties => new this.ArcGISModules.VectorTileLayer(properties),
+    own: layer => { this._ownedMapResources.ownLayer(layer); },
+    loading: (kind, view, layer) => this._mapSpriteLoading.start(kind, view as any, layer),
+    clearLoading: kind => this._mapSpriteLoading.clear(kind),
+    error: (kind, phase, error) => { if (phase === 'appearance') this.showToast(this._t('appIconSizeCouldNotBeAppliedTryAgainAfter'),4000);
+      else console.error(`Error applying ${kind} filter:`,error); },
+  });
+  private get mapillaryTrafficSignsLayer() { return this._detectionLayers.layer('signs'); }
+  private get mapillaryObjectsLayer() { return this._detectionLayers.layer('objects'); }
 
   // Layer properties
   private _pendingDetectionFocus: { imageId: string; detectionId: string; request: number } | null = null;
@@ -2975,7 +3010,7 @@ private syncMapLegendLayer() {
           attributes: { sequenceId: seq.sequenceId },
         });
         (pointGraphic as any).__isSequenceOverlay = true;
-        view.graphics.add(pointGraphic);
+        this._ownedMapResources.addGraphic(view, pointGraphic);
       });
     }
 
@@ -3004,7 +3039,7 @@ private syncMapLegendLayer() {
    * - Removes cache from localStorage
    * - Stops & removes the pulsing green active image marker
    * - Removes clicked location red marker
-   * - Clears all map graphics
+   * - Clears only widget-owned map graphics
    * - Resets relevant widget state
    */
   private clearSequenceCache = () => {
@@ -3038,6 +3073,10 @@ private syncMapLegendLayer() {
 
       // Stop and remove green pulsing marker
       this.clearGreenPulse();
+      this.clearConeGraphics();
+      this.clearDirectionHighlight();
+      this.clearClickRipples();
+      this.clearTurboHover();
 
       // Remove red clicked location marker
       if (this.clickedLocationGraphic && this.state.jimuMapView) {
@@ -3045,10 +3084,8 @@ private syncMapLegendLayer() {
         this.clickedLocationGraphic = null;
       }
 
-      // Clear all map graphics
-      if (this.state.jimuMapView) {
-        this.state.jimuMapView.view.graphics.removeAll();
-      }
+      // Clear only graphics created by this widget instance.
+      this._ownedMapResources.clearGraphics(this.state.jimuMapView?.view);
 
       // Destroy the Mapillary viewer completely
       if (this.mapillaryViewer) {
@@ -3136,6 +3173,7 @@ private syncMapLegendLayer() {
   // destroys Mapillary viewer instance, clears DOM container,
   // and resets internal state if requested.
   private cleanupWidgetEnvironment(resetState: boolean = false, fullRemove: boolean = true) {
+    this.cancelCaptureRouteGeneration();
     this._mapSpriteLoading.clearAll();
     this._stopRoutePreview?.();
     this._sharedStartupImageId=null;this._sharedStartupBearing=null;this._isFlyInActive=false;
@@ -3228,7 +3266,7 @@ private syncMapLegendLayer() {
     //  graphics cleanup
     if (fullRemove && this.state.jimuMapView?.view?.graphics) {
       const { view } = this.state.jimuMapView;
-      view.graphics.removeAll();
+      this._ownedMapResources.clearGraphics(view);
     }
 
     if (fullRemove) {
@@ -3285,40 +3323,17 @@ private syncMapLegendLayer() {
     if (this.state.jimuMapView?.view?.map && fullRemove) {
       const { view } = this.state.jimuMapView;
 
-      // ROBUST REMOVAL BY ID
-      const layersToRemoveById = [
-        LAYER_IDS.COVERAGE_VT, // General Tiles
-        LAYER_IDS.TRAFFIC_SIGNS_VT, // Traffic Signs Coverage
-        LAYER_IDS.TRAFFIC_SIGNS_FL, // Traffic Signs Popup Points
-        LAYER_IDS.OBJECTS_VT, // Objects Coverage
-        LAYER_IDS.OBJECTS_FL, // Objects Popup Points
-        LAYER_IDS.TURBO_COVERAGE,
-      TURBO_LIMITS.closeLayerId, // Turbo Points
-      ];
-
-      layersToRemoveById.forEach((id) => {
-        const layer = view.map.findLayerById(id);
-        if (layer) {
-          view.map.remove(layer);
-          this.log(`Removed layer by ID: ${id}`);
-        }
-      });
+      // Detach only layers created here; borrowed coverage layers stay on the host map.
+      this._ownedMapResources.removeLayers(view.map);
 
       // Nullify References
       this.mapillaryVTLayer = null;
-      this.mapillaryTrafficSignsLayer = null;
+      this._detectionLayers.reset('signs');
       this.mapillaryTrafficSignsFeatureLayer = null;
-      this.mapillaryObjectsLayer = null;
+      this._detectionLayers.reset('objects');
       this.mapillaryObjectsFeatureLayer = null;
       this.turboCoverageLayer = null;
       this.turboCoverageLayerView = null;
-
-      // Fallback sweep (optional, but good for safety)
-      view.map.layers.forEach((layer) => {
-        if (layer.type === "feature" && (layer as any).fields?.some((f: any) => f.name === "value") && (layer as any).fields?.some((f: any) => f.name === "name")) {
-          view.map.remove(layer);
-        }
-      });
 
       this.setState({ turboModeActive: false });
     }
@@ -4534,11 +4549,14 @@ private syncMapLegendLayer() {
   }
 
   private async preloadTrafficSignOptions() {
+    if (this._startupDisposed) return;
+    const signal = this._startupAbort?.signal;
     try {
       const spriteBaseUrl = this.spriteUrls.TRAFFIC_SIGNS;
 
-      const [jsonResp, img] = await Promise.all([loadSpriteMetadata(`${spriteBaseUrl}.json`), loadImage(`${spriteBaseUrl}.png`)]);
+      const [jsonResp, img] = await Promise.all([loadSpriteMetadata(`${spriteBaseUrl}.json`, signal), loadImage(`${spriteBaseUrl}.png`)]);
 
+      if (this._startupDisposed || signal?.aborted) return;
       const codes = Object.keys(jsonResp);
       this._detectionSignCodes = new Set(codes);
 
@@ -4558,6 +4576,7 @@ private syncMapLegendLayer() {
           return { value: friendlyName, label: friendlyName, iconUrl, code };
         },
         (results) => {
+          if (this._startupDisposed || signal?.aborted) return;
           const allOption: FilterOption = { value: DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS, label: DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS, iconUrl: null };
 
           // Store full list
@@ -4572,8 +4591,10 @@ private syncMapLegendLayer() {
             () => { this.checkFiltersLoaded(); if(this.state.signLabels&&this.state.trafficSignsActive)this.filterTrafficSignsVTLayer(this._mapFeatureFilterCodes.get('signs')); },
           );
         },
+        signal,
       );
     } catch (err) {
+      if (this._startupDisposed || signal?.aborted) return;
       console.warn("Failed to preload traffic sign options", err);
     }
   }
@@ -4583,11 +4604,14 @@ private syncMapLegendLayer() {
    * Sets up dropdown options and initializes filter state to DEFAULT_FILTER_LABELS.OBJECTS.
    */
   private async preloadObjectOptions() {
+    if (this._startupDisposed) return;
+    const signal = this._startupAbort?.signal;
     try {
       const spriteBaseUrl = this.spriteUrls.OBJECTS;
 
-      const [jsonResp, img] = await Promise.all([loadSpriteMetadata(`${spriteBaseUrl}.json`), loadImage(`${spriteBaseUrl}.png`)]);
+      const [jsonResp, img] = await Promise.all([loadSpriteMetadata(`${spriteBaseUrl}.json`, signal), loadImage(`${spriteBaseUrl}.png`)]);
 
+      if (this._startupDisposed || signal?.aborted) return;
       const codes = Object.keys(jsonResp);
       this._detectionObjectCodes = new Set(codes);
 
@@ -4607,6 +4631,7 @@ private syncMapLegendLayer() {
           return { value: friendlyName, label: friendlyName, iconUrl, code };
         },
         (results) => {
+          if (this._startupDisposed || signal?.aborted) return;
           const allOption: FilterOption = { value: DEFAULT_FILTER_LABELS.OBJECTS, label: DEFAULT_FILTER_LABELS.OBJECTS, iconUrl: null };
 
           // Store full list
@@ -4621,21 +4646,28 @@ private syncMapLegendLayer() {
             () => { this.checkFiltersLoaded(); if(this.state.objectLabels&&this.state.objectsActive)this.filterObjectsVTLayer(this._mapFeatureFilterCodes.get('objects')); },
           );
         },
+        signal,
       );
     } catch (err) {
+      if (this._startupDisposed || signal?.aborted) return;
       console.warn("Failed to preload object options", err);
     }
   }
 
   // Helper to set loaded flag
   private checkFiltersLoaded() {
+    if (this._startupDisposed) return;
+    const signal = this._startupAbort?.signal;
     // Check if both drop-downs have been populated (length > 1 means data added to default "All" option)
     if (this.state.trafficSignsOptions.length > 1 && this.state.objectsOptions.length > 1) {
       // 1. Mark logic as ready (Triggers CSS fade-out via opacity)
       this.setState({ filtersLoaded: true });
 
       // 2. Wait for the fade-out animation to finish, then remove from DOM
-      setTimeout(() => {
+      if (this._introDismissTimer !== null) clearTimeout(this._introDismissTimer);
+      this._introDismissTimer = setTimeout(() => {
+        this._introDismissTimer = null;
+        if (this._startupDisposed || signal?.aborted) return;
         this.setState({ showIntro: false });
       }, 800); // 800ms delay (matches CSS transition)
     }
@@ -4656,36 +4688,9 @@ private syncMapLegendLayer() {
 
   /** Apply All/None/multiple categories to the native sign style; legacy single codes remain supported. */
   private filterTrafficSignsVTLayer(selectedValue: MapCategoryFilter) {
-    this._mapFeatureFilterCodes.set("signs", selectedValue || "");
+    this._mapFeatureFilterCodes.set('signs', selectedValue || '');
     this.refreshDetectionExploration();
-    if (!this.mapillaryTrafficSignsLayer) return;
-
-    const styleJson = this.mapillaryTrafficSignsLayer.style;
-    const newStyle = JSON.parse(JSON.stringify(styleJson));
-
-    const targetLayer = newStyle.layers.find((ly: any) => ly.id === STYLE_LAYER_IDS.TRAFFIC_SIGNS_ICONS);
-    if (targetLayer) {
-      const display = categoryDisplayStyle(selectedValue, DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS, this.state.signDisplayMode || 'selected');
-      if (display.filter) targetLayer.filter = display.filter;
-      else delete targetLayer.filter;
-      targetLayer.paint = {...targetLayer.paint, 'icon-opacity':display.opacity};
-    }
-
-    try {
-      const { VectorTileLayer } = this.ArcGISModules;
-      const filteredLayer = new VectorTileLayer({ id:LAYER_IDS.TRAFFIC_SIGNS_VT, title:"Mapillary Traffic Signs Coverage", style: this.mapFeatureLabelStyle('signs',newStyle) });
-
-      const { view } = this.state.jimuMapView;
-      if (this.mapillaryTrafficSignsLayer && view.map.layers.includes(this.mapillaryTrafficSignsLayer)) {
-        view.map.remove(this.mapillaryTrafficSignsLayer);
-      }
-      this.mapillaryTrafficSignsLayer = filteredLayer;
-      view.map.add(this.mapillaryTrafficSignsLayer);
-      this._mapSpriteLoading.start("signs",view as any,filteredLayer);
-      void this.applyMapFeatureSpriteScale("signs");
-    } catch (err) {
-      console.error("Error applying traffic signs filter:", err);
-    }
+    this._detectionLayers.filter('signs');
   }
 
   /**
@@ -4694,36 +4699,9 @@ private syncMapLegendLayer() {
    * @param selectedValue All/None/multiple categories, or a legacy single code
    */
   private filterObjectsVTLayer(selectedValue?: MapCategoryFilter) {
-    this._mapFeatureFilterCodes.set("objects", selectedValue || "");
+    this._mapFeatureFilterCodes.set('objects', selectedValue || '');
     this.refreshDetectionExploration();
-    if (!this.mapillaryObjectsLayer) return;
-
-    const styleJson = this.mapillaryObjectsLayer.style;
-    const newStyle = JSON.parse(JSON.stringify(styleJson));
-    const targetLayer = newStyle.layers.find((ly: any) => ly.id === STYLE_LAYER_IDS.OBJECTS_ICONS);
-
-    if (targetLayer) {
-      const display = categoryDisplayStyle(selectedValue, DEFAULT_FILTER_LABELS.OBJECTS, this.state.objectDisplayMode || 'selected');
-      if (display.filter) targetLayer.filter = display.filter;
-      else delete targetLayer.filter;
-      targetLayer.paint = {...targetLayer.paint, 'icon-opacity':display.opacity};
-    }
-
-    try {
-      const { VectorTileLayer } = this.ArcGISModules;
-      const filteredLayer = new VectorTileLayer({ id:LAYER_IDS.OBJECTS_VT, title:"Mapillary Objects Coverage", style: this.mapFeatureLabelStyle('objects',newStyle) });
-
-      const { view } = this.state.jimuMapView;
-      if (this.mapillaryObjectsLayer && view.map.layers.includes(this.mapillaryObjectsLayer)) {
-        view.map.remove(this.mapillaryObjectsLayer);
-      }
-      this.mapillaryObjectsLayer = filteredLayer;
-      view.map.add(this.mapillaryObjectsLayer);
-      this._mapSpriteLoading.start("objects",view as any,filteredLayer);
-      void this.applyMapFeatureSpriteScale("objects");
-    } catch (err) {
-      console.error("Error applying objects filter:", err);
-    }
+    this._detectionLayers.filter('objects');
   }
   // #endregion FILTER LOADING
 
@@ -4950,6 +4928,7 @@ private syncMapLegendLayer() {
       title: "Mapillary Coverage",
       style: minimalStyle,
     });
+    this._ownedMapResources.ownLayer(this.mapillaryVTLayer);
   }
 
   /** Defer coverage until the incoming link's map type is active.
@@ -5072,7 +5051,7 @@ private syncMapLegendLayer() {
   /*
         Initializes the Mapillary Traffic Signs Layer
         * Creates a Traffic Signs Layer from the Mapillary tiles API
-        * Stores the layer in `this.mapillaryTrafficSignsLayer` for later toggling
+        * Detection tile resources are owned by DetectionLayerController
     */
   /** Native tiles own all sprites; no per-viewport FeatureLayer is constructed. */
   private _mapSpriteLoading=new MapSpriteLoading((kind,status)=>{if(!this._sharedNotesDisposed)this.setState(kind==='signs'?{signSpritesStatus:status}:{objectSpritesStatus:status});});
@@ -5080,25 +5059,16 @@ private syncMapLegendLayer() {
     const view = this.state.jimuMapView?.view;
     if (!view) {this._mapSpriteLoading.clear(kind);return;}
     const signs = kind === "signs", active = signs ? this.state.trafficSignsActive : this.state.objectsActive;
-    const id = signs ? LAYER_IDS.TRAFFIC_SIGNS_VT : LAYER_IDS.OBJECTS_VT;
     const oldFeature = view.map.findLayerById(signs ? LAYER_IDS.TRAFFIC_SIGNS_FL : LAYER_IDS.OBJECTS_FL);
     if (oldFeature) { view.map.remove(oldFeature); oldFeature.destroy(); }
     if (signs) { this.mapillaryTrafficSignsFeatureLayer = null; this.trafficSignsZoomHandle?.remove(); this.trafficSignsStationaryHandle?.remove(); }
     else { this.mapillaryObjectsFeatureLayer = null; this.objectsZoomHandle?.remove(); this.objectsStationaryHandle?.remove(); }
-    let layer = view.map.findLayerById(id) as __esri.VectorTileLayer;
-    if (!active) { this._mapSpriteLoading.clear(kind);this.setState(signs ? { showTrafficSignsFilterBox: false } : { showObjectsFilterBox: false }); if (layer) view.map.remove(layer); this._mapFeatureClickAbort?.abort(); this._turboHoverPickAbort?.abort(); this.clearTurboHoverDetails(); return; }
-    if (!layer) {
-      if (signs) this.initMapillaryTrafficSignsLayer(); else this.initMapillaryObjectsLayer();
-      layer = (signs ? this.mapillaryTrafficSignsLayer : this.mapillaryObjectsLayer)!;
-      view.map.add(layer);
+    this._detectionLayers.sync(kind,active);
+    if (!active) {
+      this.setState(signs ? {showTrafficSignsFilterBox:false} : {showObjectsFilterBox:false});
+      this._mapFeatureClickAbort?.abort(); this._turboHoverPickAbort?.abort(); this.clearTurboHoverDetails();
+      return;
     }
-    if (signs) this.mapillaryTrafficSignsLayer = layer; else this.mapillaryObjectsLayer = layer;
-    layer.visible = true;
-    const code = this._mapFeatureFilterCodes.get(kind);
-    if (code || (signs ? this.state.signLabels : this.state.objectLabels)) { if (signs) this.filterTrafficSignsVTLayer(code); else this.filterObjectsVTLayer(code); }
-    void this.applyMapFeatureSpriteScale(kind);
-    const displayedLayer=signs?this.mapillaryTrafficSignsLayer:this.mapillaryObjectsLayer;
-    if(displayedLayer)this._mapSpriteLoading.start(kind,view as any,displayedLayer);
     this.enforceMapillaryLayerOrder(view);
   }
 
@@ -5212,13 +5182,7 @@ private syncMapLegendLayer() {
       else this.filterObjectsVTLayer(selection);
     });
   };
-  private mapFeatureLabelStyle(kind: 'signs' | 'objects', style: any) {
-    const signs = kind === 'signs';
-    return detectionLabelStyle(style, signs ? STYLE_LAYER_IDS.TRAFFIC_SIGNS_ICONS : STYLE_LAYER_IDS.OBJECTS_ICONS,
-      kind, signs ? this._detectionSignCodes : Object.keys(objectNameMap), this._mapFeatureFilterCodes.get(kind),
-      signs ? DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS : DEFAULT_FILTER_LABELS.OBJECTS,
-      (signs ? this.state.signLabels : this.state.objectLabels) === true);
-  }
+
   private changeDetectionLabels = (kind: 'signs' | 'objects', enabled: boolean) => {
     if (typeof enabled !== 'boolean') return;
     this.setState(kind === 'signs' ? {signLabels:enabled} : {objectLabels:enabled}, () => {
@@ -5234,8 +5198,7 @@ private syncMapLegendLayer() {
   };
   private changeDetectionOpacity = (kind: 'signs' | 'objects', opacity: number) => {
     if (!Number.isFinite(opacity) || opacity < .2 || opacity > 1) return;
-    const layer = kind === 'signs' ? this.mapillaryTrafficSignsLayer : this.mapillaryObjectsLayer;
-    if (layer && !layer.destroyed) layer.opacity = opacity;
+    this._detectionLayers.setOpacity(kind,opacity);
     this.setState(kind === 'signs' ? {signOpacity:opacity} : {objectOpacity:opacity});
   };
   private resetDetectionDisplay = (kind: 'signs' | 'objects') => {
@@ -5250,60 +5213,11 @@ private syncMapLegendLayer() {
     this.setState(kind === "signs" ? { signSpriteScale: scale } : { objectSpriteScale: scale }, () => { void this.applyMapFeatureSpriteScale(kind); });
   };
 
-  private async applyMapFeatureSpriteScale(kind: "signs" | "objects") {
-    const layer = kind === "signs" ? this.mapillaryTrafficSignsLayer : this.mapillaryObjectsLayer;
-    const id = kind === "signs" ? STYLE_LAYER_IDS.TRAFFIC_SIGNS_ICONS : STYLE_LAYER_IDS.OBJECTS_ICONS;
-    if (!layer || layer.destroyed) return;
-    layer.opacity = (kind === 'signs' ? this.state.signOpacity : this.state.objectOpacity) ?? 1;
-    try {
-      await layer.load();
-      if (this._sharedNotesDisposed || layer.destroyed || layer !== (kind === "signs" ? this.mapillaryTrafficSignsLayer : this.mapillaryObjectsLayer)) return;
-      const scale = (kind === "signs" ? this.state.signSpriteScale : this.state.objectSpriteScale) || 1;
-      const reduce = (kind === 'signs' ? this.state.signReduceOverlap : this.state.objectReduceOverlap) === true;
-      layer.setLayoutProperties(id, { ...layer.getLayoutProperties(id), "icon-size": 0.5 * scale,
-        "icon-allow-overlap": !reduce, "icon-ignore-placement": !reduce });
-    } catch (error) { if (!this._sharedNotesDisposed) this.showToast(this._t('appIconSizeCouldNotBeAppliedTryAgainAfter'), 4000); }
+  private async applyMapFeatureSpriteScale(kind: 'signs' | 'objects') {
+    await this._detectionLayers.applyAppearance(kind);
   }
 
-  private initMapillaryTrafficSignsLayer() {
-    const { VectorTileLayer } = this.ArcGISModules;
-
-    const vectorTileSourceUrl = `${TILE_URLS.TRAFFIC_SIGNS}?access_token=${this.accessToken}`;
-    const spriteBaseUrl = this.spriteUrls.TRAFFIC_SIGNS;
-
-    const minimalStyle = {
-      version: 8,
-      sprite: spriteBaseUrl,
-      sources: {
-        [STYLE_SOURCE_IDS.TRAFFIC_SIGNS]: {
-          type: "vector",
-          tiles: [vectorTileSourceUrl],
-          minzoom: 14,
-          maxzoom: 14,
-        },
-      },
-      layers: [
-        {
-          id: STYLE_LAYER_IDS.TRAFFIC_SIGNS_ICONS,
-          source: STYLE_SOURCE_IDS.TRAFFIC_SIGNS,
-          "source-layer": "traffic_sign",
-          type: "symbol",
-          layout: {
-            "icon-image": ["get", "value"],
-            "icon-size": 0.5 * (this.state.signSpriteScale || 1),
-            "icon-allow-overlap": true,
-            "icon-ignore-placement": true,
-          },
-        },
-      ],
-    };
-
-    this.mapillaryTrafficSignsLayer = new VectorTileLayer({
-      id: LAYER_IDS.TRAFFIC_SIGNS_VT,
-      title: "Mapillary Traffic Signs Coverage",
-      style: minimalStyle,
-    });
-  }
+  private initMapillaryTrafficSignsLayer() { this._detectionLayers.initialize('signs'); }
   private toggleMapillaryTrafficSigns = async () => {
     const next = !this.state.trafficSignsActive;
     this.setState({ trafficSignsActive: next,signSpritesStatus:next?'loading':'idle' }, () => { if(!next)this.clearSelectedMapFeature("signs");void this.syncMapFeatureCoverage("signs"); this.syncDetectionLayerAvailability(); });
@@ -5313,47 +5227,9 @@ private syncMapLegendLayer() {
   /*
         Initializes the Mapillary Objects Layer Layer
         * Creates a Object Layer from the Mapillary tiles API
-        * Stores the layer in `this.mapillaryObjectsLayer` for later toggling
+        * Detection tile resources are owned by DetectionLayerController
     */
-  private initMapillaryObjectsLayer() {
-    const { VectorTileLayer } = this.ArcGISModules;
-
-    const vectorTileSourceUrl = `${TILE_URLS.OBJECTS}?access_token=${this.accessToken}`;
-    const spriteBaseUrl = this.spriteUrls.OBJECTS;
-
-    const minimalStyle = {
-      version: 8,
-      sprite: spriteBaseUrl,
-      sources: {
-        [STYLE_SOURCE_IDS.OBJECTS]: {
-          type: "vector",
-          tiles: [vectorTileSourceUrl],
-          minzoom: 14,
-          maxzoom: 14,
-        },
-      },
-      layers: [
-        {
-          id: STYLE_LAYER_IDS.OBJECTS_ICONS,
-          source: STYLE_SOURCE_IDS.OBJECTS,
-          "source-layer": "point",
-          type: "symbol",
-          layout: {
-            "icon-image": ["get", "value"],
-            "icon-size": 0.5 * (this.state.objectSpriteScale || 1),
-            "icon-allow-overlap": true,
-            "icon-ignore-placement": true,
-          },
-        },
-      ],
-    };
-
-    this.mapillaryObjectsLayer = new VectorTileLayer({
-      id: LAYER_IDS.OBJECTS_VT,
-      title: "Mapillary Objects Coverage",
-      style: minimalStyle,
-    });
-  }
+  private initMapillaryObjectsLayer() { this._detectionLayers.initialize('objects'); }
   private toggleMapillaryObjects = async () => {
     const next = !this.state.objectsActive;
     this.setState({ objectsActive: next,objectSpritesStatus:next?'loading':'idle' }, () => { if(!next)this.clearSelectedMapFeature("objects");void this.syncMapFeatureCoverage("objects"); this.syncDetectionLayerAvailability(); });
@@ -7064,7 +6940,7 @@ private syncMapLegendLayer() {
       this._turboHoverAnchor = anchor; this._turboHoverOverlay = overlay;
     } else {
       this._turboHoverGraphicsLayer = null;
-      view.graphics.add(hover);
+      this._ownedMapResources.addGraphic(view, hover);
     }
     const started = performance.now();
     const animate = (now: number) => {
@@ -7390,6 +7266,7 @@ private syncMapLegendLayer() {
    * does not need to select them again.
    */
   private clearViewDependentAnalysis = () => {
+    this.cancelCaptureRouteGeneration();
     this.cancelCoverageAnalysis();
     this.stopCoverageRendering();
     const oldView = this.state.jimuMapView?.view;
@@ -7535,7 +7412,7 @@ private syncMapLegendLayer() {
     });
 
     (zoneGraphic as any).__isCoverageZone = true;
-    jimuMapView.view.graphics.add(zoneGraphic);
+    this._ownedMapResources.addGraphic(jimuMapView.view, zoneGraphic);
     this._coverageZoneGraphic = zoneGraphic;
   }
 
@@ -7554,66 +7431,11 @@ private syncMapLegendLayer() {
     else this.drawCoverageSegments();
   };
 
-  /** Calculates segment length in meters. */
-  private getCaptureSegmentLengthMeters = (seg: any): number => {
-    if (!seg?.start || !seg?.end) return 0;
-    return distanceMeters(seg.start[1], seg.start[0], seg.end[1], seg.end[0]);
-  };
-
-  /** Calculates the geographic midpoint [lon, lat] of a segment. */
-  private getCaptureSegmentMidpoint = (seg: any): [number, number] => {
-    return [(seg.start[0] + seg.end[0]) / 2, (seg.start[1] + seg.end[1]) / 2];
-  };
-
-  /** Collects, scores, and prioritizes missing (none) and stale segments for routing. */
-  private buildCaptureTargetSegments = (): RouteTargetSegment[] => {
-    // Score against the completed analysis area, even while Jimu detaches its view.
-    const center = this.state.jimuMapView?.view?.center;
-    const bbox = this._coverageAnalysisBbox;
-    const centerLon = center?.longitude ?? (bbox ? (bbox[0] + bbox[2]) / 2 : NaN);
-    const centerLat = center?.latitude ?? (bbox ? (bbox[1] + bbox[3]) / 2 : NaN);
-    if (!Number.isFinite(centerLon) || !Number.isFinite(centerLat)) return [];
-
-    const drivableTypes = new Set([
-      "motorway",
-      "motorway_link",
-      "trunk",
-      "trunk_link",
-      "primary",
-      "primary_link",
-      "secondary",
-      "secondary_link",
-      "tertiary",
-      "tertiary_link",
-      "unclassified",
-      "residential",
-      "living_street",
-      "service",
-    ]);
-
-    const targets: RouteTargetSegment[] = [];
-
-    this._coverageSegments.forEach((seg: any, index: number) => {
-      const tier = this._coverageSegmentTiers[index];
-      if (tier !== "none" && tier !== "stale") return;
-      if (!drivableTypes.has(seg.highwayType)) return;
-
-      const midpoint = this.getCaptureSegmentMidpoint(seg);
-      const lengthMeters = this.getCaptureSegmentLengthMeters(seg);
-      if (lengthMeters < this.CAPTURE_ROUTE_CONFIG.minimumUsefulSegmentLengthMeters) return;
-
-      const distanceFromCenterMeters = distanceMeters(midpoint[1], midpoint[0], centerLat, centerLon);
-      const lengthScore = Math.log10(Math.max(10, lengthMeters));
-      const freshnessScore = tier === "none" ? this.CAPTURE_ROUTE_CONFIG.nonePriority : this.CAPTURE_ROUTE_CONFIG.stalePriority;
-      const centerScore = 1 / (1 + distanceFromCenterMeters / 5000);
-
-      const priority = lengthScore * this.CAPTURE_ROUTE_CONFIG.lengthWeight * freshnessScore * (1 + this.CAPTURE_ROUTE_CONFIG.centerDistanceWeight * centerScore);
-
-      targets.push({ seg, index, tier, midpoint, lengthMeters, distanceFromCenterMeters, priority, clusterId: -1 });
-    });
-
-    return targets;
-  };
+  /** Score the current analysis snapshot without owning calculation details. */
+  private buildCaptureTargetSegments = (): RouteTargetSegment[] => scoreCaptureTargets(
+    this._coverageSegments, this._coverageSegmentTiers, this.state.jimuMapView?.view?.center,
+    this._coverageAnalysisBbox, this.CAPTURE_ROUTE_CONFIG,
+  );
 
   /**
    * Executes the multi-pass route optimization pipeline:
@@ -7631,14 +7453,16 @@ private syncMapLegendLayer() {
   };
 
   /** Draws the generated route onto the map with a purple line and outer glow effect. */
-  private async drawCaptureRoute(pathsData: any) {
+  private async drawCaptureRoute(pathsData: any, current: () => boolean = () => true) {
+    if (!current()) return;
     const { jimuMapView } = this.state;
     const view = jimuMapView?.view;
     if (!view?.map || view.destroyed || !this.ArcGISModules) return;
+    const routeMap = view.map;
 
     if (!this._routeGraphicLayer) {
       const [GraphicsLayer] = await loadArcGISJSAPIModules(["esri/layers/GraphicsLayer"]);
-      if (this.state.jimuMapView?.view !== view || !view.map || view.destroyed) return;
+      if (!current() || this.state.jimuMapView?.view !== view || view.map !== routeMap || view.destroyed) return;
       this._routeGraphicLayer = new GraphicsLayer({
         id: "capture-route-layer",
         title: "Mapillary Capture Route",
@@ -7677,6 +7501,7 @@ private syncMapLegendLayer() {
 
   // CLEAR CAPTURE ROUTE
   private clearCaptureRoute = () => {
+    this.cancelCaptureRouteGeneration();
     if (this._routeGraphicLayer) this._routeGraphicLayer.removeAll();
     this.setState({ routeData: null });
   };
@@ -7996,6 +7821,22 @@ private syncMapLegendLayer() {
     return provider;
   };
 
+  private readonly _routeGeneration = new RouteGeneration();
+  private _captureRouteLoginView: { type: string; viewpoint: __esri.Viewpoint } | null = null;
+  private releaseCaptureRouteLoginView() {
+    if (this._captureRouteLoginView && this._routingLoginView === this._captureRouteLoginView) {
+      this._routingLoginView = null;
+      if (this._routingLoginExpiry) clearTimeout(this._routingLoginExpiry);
+      this._routingLoginExpiry = null;
+    }
+    this._captureRouteLoginView = null;
+  }
+  private cancelCaptureRouteGeneration = () => {
+    if (!this._routeGeneration.cancel()) return;
+    this.releaseCaptureRouteLoginView();
+    if (!this._startupDisposed) this.setState({isGeneratingRoute:false,routeGenerationProgress:null});
+  };
+
   private _routingLoginExpiry: ReturnType<typeof setTimeout> | null = null;
   private _coverageOwnerMap: __esri.Map | null = null;
 
@@ -8005,6 +7846,7 @@ private syncMapLegendLayer() {
     if (existing) view.map.remove(existing);
     const reusable = this.mapillaryVTLayer && !this.mapillaryVTLayer.destroyed && (!this._coverageOwnerMap || this._coverageOwnerMap === view.map);
     const layer = reusable ? this.mapillaryVTLayer : new this.ArcGISModules.VectorTileLayer({ id: LAYER_IDS.COVERAGE_VT, title: "Mapillary Coverage", style: turboTileStyle(`${TILE_URLS.COVERAGE}?access_token=${this.accessToken}`, {}, false, [], YEAR_COLOR_PALETTE) });
+    if (!reusable) this._ownedMapResources.ownLayer(layer);
     view.map.add(layer);
     this._coverageOwnerMap = view.map; this.mapillaryVTLayer = layer;
     return layer;
@@ -8019,12 +7861,12 @@ private syncMapLegendLayer() {
     this._routingLoginView = view?.viewpoint ? { type: view.type, viewpoint: view.viewpoint.clone() } : null;
   }
 
-  private async restoreRoutingLoginView(view: __esri.MapView | __esri.SceneView): Promise<void> {
+  private async restoreRoutingLoginView(view: __esri.MapView | __esri.SceneView, current: () => boolean = () => true): Promise<void> {
     const saved = this._routingLoginView;
-    if (!saved || !view || view.type !== saved.type || view.destroyed) return;
+    if (!current() || !saved || !view || view.type !== saved.type || view.destroyed) return;
     try {
       await view.when();
-      if (this._routingLoginView !== saved || this.state.jimuMapView?.view !== view || !view.map || view.destroyed) return;
+      if (!current() || this._routingLoginView !== saved || this.state.jimuMapView?.view !== view || !view.map || view.destroyed) return;
       // A cloned Viewpoint retains 3D camera position, heading and tilt as well as scale.
       await view.goTo(saved.viewpoint.clone(), { animate: false });
     } catch (error) {
@@ -8045,7 +7887,17 @@ private syncMapLegendLayer() {
     }
 
     if (!this.ArcGISModules || this.state.isGeneratingRoute) return;
+    const routeView = jimuMapView.view, routeMap = routeView.map;
+    const segments = this._coverageSegments, tiers = this._coverageSegmentTiers, bbox = this._coverageAnalysisBbox;
+    const config = this.props.config, start = this.state.routeStartPoint, end = this.state.routeEndPoint;
+    const travelMode = this.state.routeTravelMode, engine = this.state.routingEngineOverride, budget = this.state.routeSpareMinutes;
+    const run = this._routeGeneration.begin(() => !this._startupDisposed && this.props.state !== 'CLOSED' && this.props.visible !== false &&
+      this.state.jimuMapView?.view === routeView && routeView.map === routeMap && !routeView.destroyed &&
+      this._coverageSegments === segments && this._coverageSegmentTiers === tiers && this._coverageAnalysisBbox === bbox && !this.state.coverageAnalysisLoading &&
+      this.props.config === config && this.state.routeStartPoint === start && this.state.routeEndPoint === end &&
+      this.state.routeTravelMode === travelMode && this.state.routingEngineOverride === engine && this.state.routeSpareMinutes === budget);
     if (this.getEffectiveRoutingEngine() !== "osrm") this.rememberRoutingLoginView();
+    this._captureRouteLoginView = this.getEffectiveRoutingEngine() !== "osrm" ? this._routingLoginView : null;
 
     this.setState({
       isGeneratingRoute: true,
@@ -8061,6 +7913,7 @@ private syncMapLegendLayer() {
        * if AUTO fallback is required during baseline solve.
        */
       const routingProvider = await this.createCaptureRoutingProvider();
+      run.check();
 
       /*
        * Helpers
@@ -8097,19 +7950,21 @@ private syncMapLegendLayer() {
       });
 
       const baselineRoute = await routingProvider.solve({
+        signal: run.signal,
         stops: [startPt, endPt],
 
         preserveStopOrder: true,
 
         preserveEndpoints: true,
       });
+      run.check();
 
       /*
        * The optimizer no longer needs to know how
        * ArcGIS represented these values internally.
        */
-      const currentView = this.state.jimuMapView?.view;
-      if (currentView) await this.restoreRoutingLoginView(currentView);
+      await this.restoreRoutingLoginView(routeView, run.current);
+      run.check();
 
       const baselineMinutes = baselineRoute.durationMinutes;
 
@@ -8179,127 +8034,14 @@ private syncMapLegendLayer() {
        * routes with large spare-time budgets to search farther away.
        */
 
-      const corridorWidths = this.CAPTURE_ROUTE_CONFIG.captureCorridorWidthsMeters;
-
-      let opportunities: CaptureOpportunity[] = [];
-
-      let selection: ReturnType<typeof selectCaptureOpportunities> | null = null;
-
-      let selectedCorridorWidth = corridorWidths[0] ?? this.CAPTURE_ROUTE_CONFIG.corridorWidthMeters;
-
-      /*
-       * TRY EACH CORRIDOR
-       */
-
-      for (let corridorIndex = 0; corridorIndex < corridorWidths.length; corridorIndex++) {
-        const corridorWidth = corridorWidths[corridorIndex];
-
-        this.log(`[CaptureRoute] Evaluating corridor: ` + `${corridorWidth} m`);
-
-        /*
-         * BUILD OPPORTUNITIES FOR THIS CORRIDOR
-         */
-
-        const currentOpportunities = buildCaptureOpportunities(optimizerTargets, baselineCoordinates, baselineSpeedMetersPerMinute, corridorWidth);
-
-        this.log("[CaptureRoute] Active limits:", {
-          maxSelectedOpportunities: this.CAPTURE_ROUTE_CONFIG.maxSelectedOpportunities,
-
-          maxFinalStops: this.CAPTURE_ROUTE_CONFIG.maxFinalStops,
-
-          maxAnchorsPerOpportunity: this.CAPTURE_ROUTE_CONFIG.maxAnchorsPerOpportunity,
-        });
-        /*
-         * SELECT OPPORTUNITIES WITHIN USER'S TIME BUDGET
-         */
-
-        const currentSelection = selectCaptureOpportunities(currentOpportunities, spareMinutes);
-
-        /*
-         * Keep this pass as the current best/final candidate.
-         *
-         * If we decide to expand, the next iteration replaces these.
-         */
-        opportunities = currentOpportunities;
-
-        selection = currentSelection;
-
-        selectedCorridorWidth = corridorWidth;
-
-        /*
-         * CORRIDOR DIAGNOSTICS
-         */
-
-        this.log(
-          `[CaptureRoute] Corridor ${corridorWidth}m: ` +
-            `${currentOpportunities.length} opportunities, ` +
-            `${currentSelection.opportunities.length} selected, ` +
-            `${currentSelection.estimatedExtraMinutes.toFixed(1)} min, ` +
-            `stop=${currentSelection.stopReason}`,
-        );
-
-        /*
-         * SHOULD WE TRY A WIDER CORRIDOR?
-         */
-
-        const isLastCorridor = corridorIndex === corridorWidths.length - 1;
-
-        /*
-         * How much of the user's requested spare time do we
-         * currently expect to consume?
-         *
-         * Example:
-         *
-         *   estimated = 17 min
-         *   budget    = 30 min
-         *
-         *   ratio = 0.57
-         */
-        const estimatedBudgetUseRatio = spareMinutes > 0 ? currentSelection.estimatedExtraMinutes / spareMinutes : 1;
-
-        /*
-         * Expand ONLY when:
-         *
-         * - there is another corridor available
-         * - selection ran out of useful opportunities
-         * - we are still using less than the configured fraction
-         *   of the user's spare-time budget
-         *
-         * Do NOT expand when:
-         *
-         * - budget already stopped selection
-         * - anchor capacity stopped selection
-         * - opportunity safety cap stopped selection
-         */
-        const shouldExpand = !isLastCorridor && currentSelection.stopReason === "exhausted" && estimatedBudgetUseRatio < this.CAPTURE_ROUTE_CONFIG.corridorExpansionBudgetUseRatio;
-
-        if (!shouldExpand) {
-          break;
-        }
-
-        /*
-         * Diagnostic explaining why another pass is happening.
-         */
-        const nextCorridorWidth = corridorWidths[corridorIndex + 1];
-
-        this.log(
-          `[CaptureRoute] Expanding capture corridor ` +
-            `${corridorWidth}m → ` +
-            `${nextCorridorWidth}m ` +
-            `(` +
-            `${currentSelection.estimatedExtraMinutes.toFixed(1)}/` +
-            `${spareMinutes.toFixed(1)} min estimated` +
-            `)`,
-        );
-      }
-
-      /*
-       * VALIDATE FINAL ADAPTIVE SELECTION
-       */
-
-      if (!selection) {
-        throw new Error("Capture opportunity selection failed.");
-      }
+      const { opportunities, selection, selectedCorridorWidth } = selectAdaptiveCaptureOpportunities({
+        targets: optimizerTargets,
+        baselineCoordinates,
+        baselineSpeedMetersPerMinute,
+        spareMinutes,
+        config: this.CAPTURE_ROUTE_CONFIG,
+        log: (...args) => this.log(...args),
+      });
 
       this.log(`[CaptureRoute] Selected corridor: ` + `${selectedCorridorWidth} m`);
 
@@ -8329,41 +8071,11 @@ private syncMapLegendLayer() {
       this.log(`[CaptureRoute] Selection stop reason: ` + `${selection.stopReason}`);
 
       this.log(`[CaptureRoute] Selected anchor slots: ` + `${selection.usedAnchorSlots}/` + `${this.CAPTURE_ROUTE_CONFIG.maxFinalStops}`);
-      const anchorDistribution = selection.opportunities.reduce(
-        (acc, opportunity) => {
-          const count = opportunity.routePoints.length;
-
-          if (count === 1) acc.one++;
-          else if (count === 2) acc.two++;
-          else acc.three++;
-
-          return acc;
-        },
-        {
-          one: 0,
-          two: 0,
-          three: 0,
-        },
-      );
+      const anchorDistribution = captureAnchorDistribution(selection.opportunities);
 
       this.log(`[CaptureRoute] Anchor distribution: ` + `1=${anchorDistribution.one}, ` + `2=${anchorDistribution.two}, ` + `3=${anchorDistribution.three}`);
 
-      const threeAnchorDiagnostics = selection.opportunities
-        .filter((opportunity) => opportunity.routePoints.length === 3)
-        .map((opportunity) => ({
-          id: opportunity.id,
-
-          segments: opportunity.segments.length,
-
-          novelMeters: Math.round(opportunity.novelMeters),
-
-          totalLengthMeters: Math.round(opportunity.lengthMeters),
-
-          estimatedMinutes: Number(opportunity.estimatedDetourMinutes.toFixed(2)),
-
-          tier: opportunity.tier,
-        }))
-        .sort((a, b) => a.novelMeters - b.novelMeters);
+      const threeAnchorDiagnostics = captureThreeAnchorDiagnostics(selection.opportunities);
 
       this.log("[CaptureRoute] 3-anchor detail:\n" + JSON.stringify(threeAnchorDiagnostics, null, 2));
 
@@ -8435,41 +8147,8 @@ private syncMapLegendLayer() {
        * IMPORTANT:
        * Keep this in sync with buildFinalRouteStops().
        */
-      const buildCaptureStopOwners = (opportunities: CaptureOpportunity[]): string[] => {
-        const acceptedStops: [number, number][] = [];
-        const owners: string[] = [];
-
-        for (const opportunity of opportunities) {
-          for (const point of opportunity.routePoints) {
-            /*
-             * First point is always accepted.
-             */
-            if (!acceptedStops.length) {
-              acceptedStops.push(point);
-              owners.push(opportunity.id);
-              continue;
-            }
-
-            /*
-             * Mirror buildFinalRouteStops():
-             * ignore consecutive anchors closer than 8 m.
-             */
-            const previous = acceptedStops[acceptedStops.length - 1];
-
-            const d = distanceMeters(previous[1], previous[0], point[1], point[0]);
-
-            if (d >= 8) {
-              acceptedStops.push(point);
-              owners.push(opportunity.id);
-            }
-          }
-        }
-
-        /*
-         * Mirror the final-stop cap too.
-         */
-        return owners.slice(0, this.CAPTURE_ROUTE_CONFIG.maxFinalStops);
-      };
+      const buildCaptureStopOwners = (opportunities: CaptureOpportunity[]): string[] =>
+        captureStopOwners(opportunities, this.CAPTURE_ROUTE_CONFIG.maxFinalStops);
 
       let finalRoute: RoutingResult | null = null;
 
@@ -8539,7 +8218,8 @@ private syncMapLegendLayer() {
           for (let preflightPass = 0; preflightPass < maxPreflightPrunePasses; preflightPass++) {
             const preflightStops: [number, number][] = [startPt, ...captureStops, endPt];
 
-            const preflight = await routingProvider.preflightOrderedStops(preflightStops);
+            const preflight = await routingProvider.preflightOrderedStops(preflightStops, run.signal);
+            run.check();
             /*
              * Convert preflight stop indices back to the
              * opportunity that supplied each capture anchor.
@@ -8814,7 +8494,8 @@ private syncMapLegendLayer() {
 
                   const trialStops: [number, number][] = [startPt, ...trialCaptureStops, endPt];
 
-                  const trialPreflight = await routingProvider.preflightOrderedStops!(trialStops);
+                  const trialPreflight = await routingProvider.preflightOrderedStops!(trialStops, run.signal);
+                run.check();
 
                   const trialExtraMinutes = trialPreflight.durationMinutes - baselineMinutes;
 
@@ -9129,7 +8810,8 @@ private syncMapLegendLayer() {
 
                   const trialStops: [number, number][] = [startPt, ...trialCaptureStops, endPt];
 
-                  const trialPreflight = await routingProvider.preflightOrderedStops!(trialStops);
+                  const trialPreflight = await routingProvider.preflightOrderedStops!(trialStops, run.signal);
+                run.check();
 
                   const trialExtraMinutes = trialPreflight.durationMinutes - baselineMinutes;
 
@@ -9380,7 +9062,8 @@ private syncMapLegendLayer() {
 
                 const trialStops: [number, number][] = [startPt, ...trialCaptureStops, endPt];
 
-                const trialPreflight = await routingProvider.preflightOrderedStops!(trialStops);
+                const trialPreflight = await routingProvider.preflightOrderedStops!(trialStops, run.signal);
+                run.check();
 
                 const trialExtraMinutes = trialPreflight.durationMinutes - baselineMinutes;
 
@@ -9643,12 +9326,14 @@ private syncMapLegendLayer() {
 
         const finalStops: [number, number][] = [startPt, ...captureStops, endPt];
         const result = await routingProvider.solve({
+          signal: run.signal,
           stops: finalStops,
 
           preserveStopOrder: true,
 
           preserveEndpoints: true,
         });
+        run.check();
 
         finalRoute = result;
 
@@ -9885,30 +9570,7 @@ private syncMapLegendLayer() {
        * actually followed closely by the final ArcGIS route.
        */
 
-      const activeTargetMap = new Map<number, RouteTargetSegment>();
-
-      for (const opportunity of activeOpportunities) {
-        for (const segment of opportunity.segments) {
-          /*
-           * A target belongs to only one opportunity in the normal
-           * pipeline, but Map gives us an inexpensive safety net
-           * against accidental duplicates.
-           */
-          activeTargetMap.set(segment.index, segment);
-        }
-      }
-
-      const activeRouteCoverageTargets = Array.from(activeTargetMap.values()).map((segment) => ({
-        index: segment.index,
-
-        tier: segment.tier,
-
-        start: segment.seg.start,
-
-        end: segment.seg.end,
-
-        lengthMeters: segment.lengthMeters,
-      }));
+      const activeRouteCoverageTargets = activeCaptureCoverageTargets(activeOpportunities);
 
       const routeCoverage = evaluateRouteCoverage(
         finalPaths,
@@ -9931,7 +9593,8 @@ private syncMapLegendLayer() {
 
       const combinedCoordinates: [number, number][] = finalPaths.flatMap((path) => path);
 
-      await this.drawCaptureRoute(finalPaths);
+      await this.drawCaptureRoute(finalPaths, run.current);
+      run.check();
 
       /*
        * 7. CAPTURE SUMMARY
@@ -9943,23 +9606,8 @@ private syncMapLegendLayer() {
        * the budget-pruning loop.
        */
 
-      const missingMeters = activeOpportunities.reduce(
-        (sum, opportunity) => sum + opportunity.segments.filter((segment) => segment.tier === "none").reduce((segmentSum, segment) => segmentSum + segment.lengthMeters, 0),
-        0,
-      );
-
-      const staleMeters = activeOpportunities.reduce(
-        (sum, opportunity) => sum + opportunity.segments.filter((segment) => segment.tier === "stale").reduce((segmentSum, segment) => segmentSum + segment.lengthMeters, 0),
-        0,
-      );
-
-      /*
-       * This is still the TARGETED capture length,
-       * not a mathematically exact measurement of route
-       * coverage. The exact partial-coverage calculation can
-       * be added separately without another ArcGIS solve.
-       */
-      const targetedCaptureMeters = missingMeters + staleMeters;
+      const { missingMeters, staleMeters, targetedCaptureMeters, finalSelectedNovelMeters,
+        finalSelectedBaselineOverlapMeters, finalSelectedAnchorCount } = summarizeCaptureOpportunities(activeOpportunities);
 
       this.log(`[CaptureRoute] Active opportunities: ` + `${activeOpportunities.length}`);
 
@@ -10009,11 +9657,8 @@ private syncMapLegendLayer() {
        * belonging to the final route after batch pruning/fallback.
        */
 
-      const finalSelectedNovelMeters = activeOpportunities.reduce((sum, opportunity) => sum + opportunity.novelMeters, 0);
 
-      const finalSelectedBaselineOverlapMeters = activeOpportunities.reduce((sum, opportunity) => sum + opportunity.baselineOverlapMeters, 0);
 
-      const finalSelectedAnchorCount = activeOpportunities.reduce((sum, opportunity) => sum + opportunity.routePoints.length, 0);
 
       this.log(`[CaptureRoute] Final selected baseline-new target: ` + `${finalSelectedNovelMeters.toFixed(0)} m`);
 
@@ -10137,6 +9782,7 @@ private syncMapLegendLayer() {
         5000,
       );
     } catch (err) {
+      if (!run.current() || (err as any)?.name === 'AbortError') return;
       console.error("[CaptureRoute] Error:", err);
 
       const message = err instanceof Error ? err.message : String(err);
@@ -10149,18 +9795,24 @@ private syncMapLegendLayer() {
         this.showToast(this._t('appCouldNotGenerateCaptureRoute'), 4000);
       }
     } finally {
-      const currentView = this.state.jimuMapView?.view;
-      if (currentView) await this.restoreRoutingLoginView(currentView);
-      // ExB may finish rebuilding its second resource after the routing response.
-      const snapshot = this._routingLoginView;
-      if (snapshot) this._routingLoginExpiry = setTimeout(() => {
-        if (this._routingLoginView === snapshot) this._routingLoginView = null;
-        this._routingLoginExpiry = null;
-      }, 15000);
-      this.setState({
-        isGeneratingRoute: false,
-        routeGenerationProgress: null,
-      });
+      try {
+        if (run.current()) await this.restoreRoutingLoginView(routeView, run.current);
+        if (run.current()) {
+          // Keep the existing short post-login restoration window only for this run.
+          const snapshot = this._routingLoginView;
+          if (snapshot) this._routingLoginExpiry = setTimeout(() => {
+            if (this._routingLoginView === snapshot) this._routingLoginView = null;
+            this._routingLoginExpiry = null;
+          }, 15000);
+        }
+      } finally {
+        const stillCurrent = run.current();
+        if (this._routeGeneration.finish(run)) {
+          if (!stillCurrent) this.releaseCaptureRouteLoginView();
+          this._captureRouteLoginView = null;
+          if (!this._startupDisposed) this.setState({isGeneratingRoute:false,routeGenerationProgress:null});
+        }
+      }
     }
   };
 
@@ -10205,13 +9857,14 @@ private syncMapLegendLayer() {
       symbol: symbol as any,
     });
 
-    view.graphics.add(pointGraphic);
+    this._ownedMapResources.addGraphic(view, pointGraphic);
     if (isStart) this._routePointAGraphic = pointGraphic;
     else this._routePointBGraphic = pointGraphic;
   };
 
   /** Sets Point A or Point B coordinates in state and updates map marker. */
   private setRoutePoint = (type: "start" | "end", coords: [number, number]) => {
+    this.cancelCaptureRouteGeneration();
     this.drawRoutePointMarker(type, coords[0], coords[1]);
     if (type === "start") {
       this.setState({ routeStartPoint: coords, routePickMode: null });
@@ -11670,6 +11323,9 @@ private stopSafePlayback = () => {
   // - restores cache, loads Mapillary JS/CSS via CDN,
   // - and attaches resize/fullscreen event listeners.
   async componentDidMount() {
+    const startupRevision = ++this._startupRevision;
+    if (this._startupDisposed) { this._startupDisposed = false; this._startupAbort = new AbortController(); }
+    const currentStartup = () => !this._startupDisposed && startupRevision === this._startupRevision;
     this.syncSequenceDiagnostics();
     document.addEventListener('visibilitychange', this._sequenceVisibilityChange);
     void this.updateOrganizationName();
@@ -11677,6 +11333,7 @@ private stopSafePlayback = () => {
     this.initializePlacesLifecycle();
     try {
       await this.ensureArcGISModules();
+      if (!currentStartup()) return;
 
       // 1. Read presets FIRST before creating any layer
       const presetStartDate = this.props.config.turboDefaultStartDate || undefined;
@@ -11688,6 +11345,7 @@ private stopSafePlayback = () => {
       let defaultFilterId: number | undefined = undefined;
       if (this.props.config.turboCreator) {
         defaultFilterId = await this.getUserIdFromUsername(this.props.config.turboCreator);
+        if (!currentStartup()) return;
         if (defaultFilterId) this.log(`Initializing Always-On layer for user ID: ${defaultFilterId}`);
       }
 
@@ -11706,8 +11364,11 @@ private stopSafePlayback = () => {
         turboColorByDate: presetColorByDate,
       });
     } catch (err) {
+      if (!currentStartup()) return;
       console.error("ArcGIS modules failed to load:", err);
     }
+
+    if (!currentStartup()) return;
 
     // Restore any cached sequence from previous session
     this.restoreSequenceCache();
@@ -11751,13 +11412,16 @@ private stopSafePlayback = () => {
     document.body.appendChild(this.tooltipDiv);
 
     // Defer the heavy processing by 500ms to let the Map widget render first
-    setTimeout(() => {
+    this._spritePreloadTimer = setTimeout(() => {
+      this._spritePreloadTimer = null;
+      if (!currentStartup()) return;
       this.preloadTrafficSignOptions();
       this.preloadObjectOptions();
     }, 500);
 
     const styleSheet = document.createElement("style");
     styleSheet.innerText = overrideStyles;
+    this._overrideStyleSheet = styleSheet;
     document.head.appendChild(styleSheet);
 
     if (this.props.config.turboCreator) {
@@ -11791,6 +11455,8 @@ private stopSafePlayback = () => {
     }else if(!wasNearbyVisible||prevState.imageId!==this.state.imageId||prevState.isLoading!==this.state.isLoading)
       this.refreshNearbyAfterPause(!prevState.nearbyStripOpen||prevState.imageTrayTab==='object');
 
+
+    if (this._routeGeneration.pending && !this._routeGeneration.current()) this.cancelCaptureRouteGeneration();
 
     if (this._coverageAnalysisCurrent && !this._coverageAnalysisCurrent()) {
       this.cancelCoverageAnalysis();
@@ -11932,7 +11598,7 @@ private stopSafePlayback = () => {
     if (prevProps.config.enableTrafficSigns !== this.props.config.enableTrafficSigns) {
       if (this.props.config.enableTrafficSigns === false) {
         if (this.state.trafficSignsActive) this.toggleMapillaryTrafficSigns();
-        this.mapillaryTrafficSignsLayer = null;
+        this._detectionLayers.reset('signs');
       } else {
         this.initMapillaryTrafficSignsLayer();
       }
@@ -11942,7 +11608,7 @@ private stopSafePlayback = () => {
     if (prevProps.config.enableMapillaryObjects !== this.props.config.enableMapillaryObjects) {
       if (this.props.config.enableMapillaryObjects === false) {
         if (this.state.objectsActive) this.toggleMapillaryObjects();
-        this.mapillaryObjectsLayer = null;
+        this._detectionLayers.reset('objects');
       } else {
         this.initMapillaryObjectsLayer();
       }
@@ -12014,10 +11680,22 @@ private stopSafePlayback = () => {
     }
   }
 
+  private disposeStartupResources() {
+    // Invalidate startup before teardown so late awaits cannot recreate resources.
+    this._startupDisposed = true;
+    ++this._startupRevision;
+    this._startupAbort.abort();
+    if (this._spritePreloadTimer !== null) clearTimeout(this._spritePreloadTimer);
+    if (this._introDismissTimer !== null) clearTimeout(this._introDismissTimer);
+    this._spritePreloadTimer = this._introDismissTimer = null;
+    this._overrideStyleSheet?.remove(); this._overrideStyleSheet = null;
+  }
+
   // Cleanup lifecycle
   // - Ensures all intervals, observers, and event listeners are removed
   // - to prevent memory leaks when widget is closed or reloaded.
   componentWillUnmount() {
+    this.disposeStartupResources();
     this._hoverPreviewStatus?.dispose();
     ++this._placesTilesStartRevision;this._placesConfiguredRequest=null;this._placesConfiguredUrl=null;
     this._placesVectorLayer?.stop(); this._placesVectorLayer = null;
@@ -12048,8 +11726,8 @@ private stopSafePlayback = () => {
     this.cleanupWidgetEnvironment(true, true);
 
     // Stop resize observer
-    if (this.resizeObserver && this.viewerContainer.current) {
-      this.resizeObserver.unobserve(this.viewerContainer.current);
+    if (this.resizeObserver) {
+      if (this.viewerContainer.current) this.resizeObserver.unobserve(this.viewerContainer.current);
       this.resizeObserver.disconnect();
       this.resizeObserver = null;
     }
@@ -12095,6 +11773,7 @@ private stopSafePlayback = () => {
    * Manages interactions for both normal and turbo mode, including object/traffic sign layers.
    */
   private onActiveViewChange = (jmv: JimuMapView) => {
+    if (this._routeGeneration.pending && (jmv?.view !== this.state.jimuMapView?.view || !this._routeGeneration.current())) this.cancelCaptureRouteGeneration();
     this._hoverPreviewStatus?.clear();
     this._coverageAlignmentDiagnostic?.clearHover();
     const view = jmv?.view;
@@ -13094,7 +12773,7 @@ private stopSafePlayback = () => {
       const existing = this._activeSequenceOverlay!.points.get(key);
       if (existing) { existing.geometry = graphic.geometry; existing.symbol = graphic.symbol; }
       else { if (deferred) deferred.push(graphic); else layer.add(graphic); this._activeSequenceOverlay!.points.set(key, graphic); }
-    } else jimuMapView.view.graphics.add(graphic);
+    } else this._ownedMapResources.addGraphic(jimuMapView.view, graphic);
   }
 
   /**
@@ -13131,7 +12810,7 @@ private stopSafePlayback = () => {
 
     (graphic as any).__isSequenceOverlay = true;
 
-    jimuMapView.view.graphics.add(graphic);
+    this._ownedMapResources.addGraphic(jimuMapView.view, graphic);
     this.clickedLocationGraphic = graphic;
   }
 
