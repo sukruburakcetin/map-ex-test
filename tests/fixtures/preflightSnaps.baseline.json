@@ -1,0 +1,4 @@
+{
+  "source": "Stage 34 widget main rounded-snap classification",
+  "body": "            const badSnapDiagnostics = snapDiagnostics.filter((item) => item.snapDistanceMeters > 40);\n\n            if (badSnapDiagnostics.length) {\n              this.log(\"[CaptureRoute] OSRM capture anchors snapping >40m:\\n\" + JSON.stringify(badSnapDiagnostics, null, 2));\n            }\n\n            const hardBadSnapOwners = new Set(\n              snapDiagnostics\n                .filter((item) => item.snapDistanceMeters > hardSnapRejectMeters)\n                .map((item) => item.owner)\n                .filter((owner) => owner !== \"START\" && owner !== \"END\"),\n            );\n\n"
+}

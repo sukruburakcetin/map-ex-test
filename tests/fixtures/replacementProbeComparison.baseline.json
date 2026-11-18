@@ -1,0 +1,4 @@
+{
+  "source": "Stage 24 widget replacement winner comparison",
+  "body": "                  /*\n                   * Primary objective:\n                   * maximize useful capture value.\n                   *\n                   * Tie-break:\n                   * use more of the available time budget.\n                   */\n                  if (\n                    !bestReplacement ||\n                    pair.valueGain > bestReplacement.valueGain ||\n                    (pair.valueGain === bestReplacement.valueGain && trialExtraMinutes > bestReplacement.extraMinutes)\n                  ) {\n                    bestReplacement = {\n                      opportunities: trialOpportunities,\n\n                      addId: pair.add.id,\n\n                      removeId: pair.remove.id,\n\n                      extraMinutes: trialExtraMinutes,\n\n                      valueGain: pair.valueGain,\n                    };\n                  }"
+}

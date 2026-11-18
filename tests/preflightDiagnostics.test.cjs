@@ -10,7 +10,7 @@ const fixture=JSON.parse(fs.readFileSync(__dirname+'/fixtures/preflightDiagnosti
 const oldSnap=new Function('preflight','preflightStops','captureStopOwners',compile(fixture.owner+fixture.snap+'return snapDiagnostics;'));
 const oldLegs=new Function('preflight','preflightStops','captureStopOwners','distanceMeters',compile(fixture.owner+fixture.legs+'return {preflightLegs,worstPreflightLegs};'));
 const widget=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8');
-const snapStart=widget.indexOf('            const snapDiagnostics = buildPreflightSnapDiagnostics('),snapEnd=widget.indexOf('            const badSnapDiagnostics =',snapStart);
+const snapStart=widget.indexOf('            const snapDiagnostics = buildPreflightSnapDiagnostics('),snapEnd=widget.indexOf('            const { badSnapDiagnostics, hardBadSnapOwners } =',snapStart);
 const legStart=widget.indexOf('            const { preflightLegs, worstPreflightLegs } = buildPreflightLegDiagnostics('),legEnd=widget.indexOf('\n            this.log(',legStart);
 assert(snapStart>0&&legStart>snapStart);
 const snapAdapter=new Function('preflight','preflightStops','captureStopOwners','buildPreflightSnapDiagnostics',compile(widget.slice(snapStart,snapEnd)+'return snapDiagnostics;'));

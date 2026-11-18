@@ -1,0 +1,8 @@
+{
+  "source": "Stage 35 widget trial preparation",
+  "blocks": [
+    "                  const trialOpportunities = activeOpportunities\n                    .filter((opportunity) => opportunity.id !== pair.remove.id)\n                    .concat(pair.add)\n                    .sort((a, b) => a.baselinePosition - b.baselinePosition);\n\n                  const trialCaptureStops = buildFinalRouteStops(trialOpportunities);\n\n                  const trialCaptureOwners = buildCaptureStopOwners(trialOpportunities);\n\n                  const trialStops: [number, number][] = [startPt, ...trialCaptureStops, endPt];\n\n",
+    "                  const trialOpportunities = activeOpportunities\n                    .filter((opportunity) => opportunity.id !== probeCandidate.opportunity.id)\n                    .sort((a, b) => a.baselinePosition - b.baselinePosition);\n\n                  const trialCaptureStops = buildFinalRouteStops(trialOpportunities);\n\n                  const trialCaptureOwners = buildCaptureStopOwners(trialOpportunities);\n\n                  const trialStops: [number, number][] = [startPt, ...trialCaptureStops, endPt];\n\n",
+    "                const trialOpportunities = activeOpportunities\n                  .filter((opportunity) => opportunity.id !== candidate.opportunity.id)\n                  .sort((a, b) => a.baselinePosition - b.baselinePosition);\n\n                const trialCaptureStops = buildFinalRouteStops(trialOpportunities);\n\n                const trialCaptureOwners = buildCaptureStopOwners(trialOpportunities);\n\n                const trialStops: [number, number][] = [startPt, ...trialCaptureStops, endPt];\n\n"
+  ]
+}

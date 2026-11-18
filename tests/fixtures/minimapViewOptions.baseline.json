@@ -1,0 +1,4 @@
+{
+  "source": "Stage 44 minimap initial view options",
+  "body": "      // Determine initial center\n      let initialCenter = this.state.jimuMapView.view.center;\n      if (this.state.imageId && this.state.sequenceImages.length > 0) {\n        const currentImg = this.state.sequenceImages.find((img) => img.id === this.state.imageId);\n        if (currentImg) {\n          initialCenter = [currentImg.lon, currentImg.lat] as any;\n        }\n      }\n\n      this.minimapView = new MapView({\n        container: this.minimapContainer.current,\n        map: minimap,\n        center: initialCenter,\n        zoom: this.state.imageId ? 15 : Math.max(3, this.state.jimuMapView.view.zoom - ZOOM.MINIMAP_OFFSET),\n        ui: { components: [] },\n        constraints: { rotationEnabled: true, snapToZoom: true, minZoom: 0, maxZoom: 20 },\n        navigation: { mouseWheelZoomEnabled: true, browserTouchPanEnabled: true },\n      });\n\n"
+}

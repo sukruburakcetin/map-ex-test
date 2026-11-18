@@ -1,0 +1,4 @@
+{
+  "source": "Stage 21 widget final recovery block",
+  "body": "      const lastRouteMinutes = finalRoute.durationMinutes;\n\n      const lastRouteExtraMinutes = lastRouteMinutes - baselineMinutes;\n\n      /*\n       * If the retry somehow produced a WORSE route,\n       * recover the best ArcGIS result actually seen.\n       */\n      if (lastRouteExtraMinutes > spareMinutes + finalBudgetTolerance && bestRoute && bestActualExtraMinutes < lastRouteExtraMinutes) {\n        console.warn(\n          `[CaptureRoute] Final retry was worse. ` +\n          `Restoring best solve: ` +\n          `${bestActualExtraMinutes.toFixed(1)} min extra ` +\n          `instead of ` +\n          `${lastRouteExtraMinutes.toFixed(1)} min.`,\n        );\n\n        finalRoute = bestRoute;\n\n        finalRouteOpportunities = [...bestRouteOpportunities];\n      }\n\n"
+}

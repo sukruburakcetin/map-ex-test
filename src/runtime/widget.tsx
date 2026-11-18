@@ -1,5 +1,22 @@
+import { buildMinimapViewOptions } from "../features/minimap/minimapViewOptions";
+import { createMinimapClickHandler } from "../features/minimap/minimapSelection";
+import { buildMinimapLayers } from "../features/minimap/minimapLayers";
+import { resolveMinimapBasemap } from "../features/minimap/minimapBasemap";
+import { renderCaptureRouteGraphics } from "../features/routing/captureRouteRenderer";
+import { prepareCaptureTrial } from "../features/routing/captureTrialPlan";
+import { evaluateFinalCaptureRoute } from "../features/routing/captureRouteEvaluation";
+import { reportCaptureCorridor, reportCaptureSelection } from "../features/routing/captureSelectionReport";
+import { planRuntimeRoutingEngineChange, planRuntimeTravelModeChange } from "../features/routing/runtimeRoutingSettings";
+import { discoverPortalRoutingService, isRoutingAuthenticationFailure } from "../features/routing/routingAuthentication";
+import { createRoutePointGraphic } from "../features/routing/routePointGraphic";
+import { createCaptureProvider } from "../features/routing/captureProviderFactory";
+import { resolveCaptureRoutingProvider, type ResolvedRoutingProvider } from "../features/routing/routingProviderResolution";
+import { chooseCaptureReplacementProbe, type CaptureReplacementProbe } from "../features/routing/replacementProbeComparison";
+import { classifyPreflightQuality, classifyPreflightSnaps } from "../features/routing/preflightQuality";
+import { reportCaptureRouteCoverage } from "../features/routing/captureCoverageReport";
+import { selectFinalCaptureRoute } from "../features/routing/finalCaptureSelection";
+import { buildCaptureRouteData } from "../features/routing/captureRouteData";
 import { CaptureSolveHistory } from "../features/routing/CaptureSolveHistory";
-import { normalizeCaptureRoutePaths } from "../features/routing/captureRouteGeometry";
 import { planAdaptiveNetworkRemoval } from "../features/routing/adaptiveNetworkRemoval";
 import {
   chooseNetworkBudgetProbe, chooseProgressBudgetProbe, chooseFittingBudgetProbe,
@@ -13,8 +30,7 @@ import { planPreflightBatchPruning } from "../features/routing/preflightBatchPru
 import { planFinalSolveBatchPruning } from "../features/routing/finalSolveBatchPruning";
 import { selectAdaptiveCaptureOpportunities } from "../features/routing/adaptiveCaptureSelection";
 import {
-  scoreCaptureTargets, captureStopOwners, captureAnchorDistribution,
-  captureThreeAnchorDiagnostics, activeCaptureCoverageTargets, summarizeCaptureOpportunities,
+  scoreCaptureTargets, captureStopOwners,
 } from '../features/routing/captureRouteScoring';
 import { DetectionLayerController } from '../features/detections/DetectionLayerController';
 import { RouteGeneration } from '../features/routing/RouteGeneration';
@@ -101,8 +117,6 @@ import {
   segmentMidpointInBbox,
   lonLatToWebMercator,
   getSunPosition,
-  evaluateRouteCoverage,
-  evaluateIncrementalRouteCoverage,
 } from "../utils/geoUtils";
 import { buildAllFilters } from "../utils/filterBuilder";
 import { organizationFilterId } from "../utils/organizationFilter";
@@ -182,7 +196,7 @@ import { PointCloudMapLayer } from '../features/point-cloud/PointCloudMapLayer';
 import { PointCloudViewerRenderer } from '../features/point-cloud/PointCloudViewerRenderer';
 import type { PointCloudResult, PointCloudPoint } from "../utils/pointCloudUtils";
 import { decodeAndNormalizeGeometry, getDetectionColor } from "../utils/mapillaryDetections";
-import { createYearBasedRenderer, YEAR_COLOR_PALETTE } from "../utils/mapillaryRenderers";
+import { YEAR_COLOR_PALETTE } from "../utils/mapillaryRenderers";
 import { loadImage, loadSpriteMetadata, cropSpriteImage, processInChunks } from "../utils/spriteUtils";
 import { Viewer, OutlineTag, PolygonGeometry, geodeticToEnu, RenderPass } from "mapillary-js";
 import { PanoramaDetectionLabels } from '../features/detections/PanoramaDetectionLabels';
@@ -212,9 +226,7 @@ import { FieldNotesPanel } from "../components/FieldNotesPanel";
 import { buildFinalRouteStops } from "../utils/routeOptimizer";
 import type { RouteTargetSegment, CaptureOpportunity } from "../utils/routeOptimizer";
 import type { RoutingResult, RoutingCoordinate, RoutingProvider, CaptureTravelMode } from "../utils/routingTypes";
-import { createArcGISRoutingProvider } from "../utils/arcgisRoutingProvider";
-import type { RoutingEngine, RoutingAuthMode } from "../config";
-import { createOSRMRoutingProvider } from "../utils/osrmRoutingProvider";
+import type { RoutingEngine } from "../config";
 import { TURBO_LIMITS, TurboSpatialIndex, TurboIndexCache, TurboTileCache, turboTiles, visitTurboImageLayer, turboPointMatches, turboTileStyle, turboFootprintBboxes, TurboMetadataCache, detectionThumbnailBounds } from "../utils/turboCoverageUtils";
 import { MAPILLARY_IMAGE } from "../utils/mapillary-image-base64";
 import type { TurboBbox, TurboFilters, TurboPoint } from "../utils/turboCoverageUtils";
@@ -260,15 +272,6 @@ import { sequenceCacheStore } from '../features/imagery/sequenceCacheStore';
 import { NearbyImageDiscovery } from '../features/imagery/nearbyDiscovery';
 import { NearbyImageHighlight, nearbyImagePose } from '../features/imagery/nearbyHighlight';
 import type { SequenceCoordinate, SequenceProgress } from '../features/imagery/sequenceCoordinates';
-type ResolvedRoutingProvider = {
-  kind: "api-key" | "user" | "portal" | "custom";
-  routeUrl: string;
-  apiKey?: string;
-  label: string;
-};
-
-const ARCGIS_LOCATION_ROUTE_URL = "https://route-api.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World";
-const PUBLIC_OSRM_BASE_URL = "https://router.project-osrm.org";
 // React component state
 // Holds current map view, image/sequence data, viewer state,
 // and temporary interaction information like clicks or loading flags.
@@ -1199,13 +1202,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   // Spatial Caching Trackers
   private _loadedTurboFiltersKey: string = "";
   private _userIdCache: Map<string, number | null> = new Map();
-  private _featureLoadedBboxes: Map<string, [number, number, number, number]> = new Map();
-  private _loadedFeatureTileKeys: Map<string, Set<string>> = new Map();
-  private _featureTileOids: Map<string, Map<string, number[]>> = new Map();
-  private _featureLoadedKeys: Map<string, string> = new Map();
-  private _featureRequestCounts: Map<string, number> = new Map();
-  private _featureOidCounters: Map<string, number> = new Map();
-  private _loadedFeatureIds: Map<string, Set<string>> = new Map();
   private _turboLoadTask: Promise<void> = Promise.resolve();
   private _turboCoveragePending: {
     view: __esri.MapView | __esri.SceneView; map: __esri.Map;
@@ -3522,52 +3518,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         id: LAYER_IDS.MINIMAP_TRACKING, title: "Mapillary Minimap",
       });
 
-      // 2. Advanced Basemap Duplication Strategy
-      let basemapConfig: any = "topo-vector"; // Fallback
-
-      try {
-        const mainBasemap = this.state.jimuMapView.view.map.basemap;
-        if (mainBasemap) {
-          const standardIds = [
-            "satellite",
-            "hybrid",
-            "oceans",
-            "osm",
-            "terrain",
-            "dark-gray",
-            "dark-gray-vector",
-            "gray",
-            "gray-vector",
-            "streets",
-            "streets-vector",
-            "streets-night-vector",
-            "streets-relief-vector",
-            "streets-navigation-vector",
-            "topo",
-            "topo-vector",
-          ];
-
-          if (mainBasemap.id && standardIds.includes(mainBasemap.id)) {
-            // A. Simple String ID (Fastest)
-            basemapConfig = mainBasemap.id;
-          } else {
-            // B. Custom Basemap: JSON Serialization (Safe Deep Copy)
-            // Using .clone() shares resources and breaks the main map on destroy.
-            // Using .toJSON() -> .fromJSON() forces a completely new, independent instance.
-            try {
-              const basemapJson = mainBasemap.toJSON();
-              // Rehydrate a new Basemap instance from the JSON definition
-              basemapConfig = Basemap.fromJSON(basemapJson);
-            } catch (jsonErr) {
-              console.warn("Failed to serialize custom basemap via JSON, falling back to clone (risky) or default.", jsonErr);
-              // Last resort fallback if JSON fails
-              basemapConfig = mainBasemap.clone();
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("Could not determine basemap, using default");
-      }
+      const basemapConfig = resolveMinimapBasemap(
+        () => this.state.jimuMapView.view.map.basemap,
+        json => Basemap.fromJSON(json),
+        (...args) => console.warn(...args),
+      );
 
       // Create minimap map instance
       const minimap = new Map({
@@ -3575,108 +3530,26 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         layers: [this.minimapGraphicsLayer],
       });
 
-      // Determine initial center
-      let initialCenter = this.state.jimuMapView.view.center;
-      if (this.state.imageId && this.state.sequenceImages.length > 0) {
-        const currentImg = this.state.sequenceImages.find((img) => img.id === this.state.imageId);
-        if (currentImg) {
-          initialCenter = [currentImg.lon, currentImg.lat] as any;
-        }
-      }
-
-      this.minimapView = new MapView({
-        container: this.minimapContainer.current,
-        map: minimap,
-        center: initialCenter,
-        zoom: this.state.imageId ? 15 : Math.max(3, this.state.jimuMapView.view.zoom - ZOOM.MINIMAP_OFFSET),
-        ui: { components: [] },
-        constraints: { rotationEnabled: true, snapToZoom: true, minZoom: 0, maxZoom: 20 },
-        navigation: { mouseWheelZoomEnabled: true, browserTouchPanEnabled: true },
-      });
+      this.minimapView = new MapView(buildMinimapViewOptions({
+        state: () => this.state,
+        container: () => this.minimapContainer.current,
+        map: minimap, zoomOffset: ZOOM.MINIMAP_OFFSET,
+      }));
 
       const view = this.minimapView;
       await view.when();
       if (!current() || this.minimapView !== view || view.destroyed) return;
       this._minimapReady = true;
 
-      // Safe Layer Transfer
-      const layersToAdd: __esri.Layer[] = [];
-      const mainLayers = this.state.jimuMapView.view.map.layers;
-      const isLayerActive = (layer: any) => layer && mainLayers.includes(layer);
-
-      // A. Mapillary VT
-      if (isLayerActive(this.mapillaryVTLayer)) {
-        try {
-          const styleCopy = JSON.parse(JSON.stringify(this.mapillaryVTLayer.style));
-          layersToAdd.push(new VectorTileLayer({ style: styleCopy, opacity: 0.6 }));
-        } catch (e) { }
-      }
-      // B. Traffic Signs
-      if (isLayerActive(this.mapillaryTrafficSignsLayer)) {
-        try {
-          const styleCopy = JSON.parse(JSON.stringify(this.mapillaryTrafficSignsLayer.style));
-          layersToAdd.push(new VectorTileLayer({ style: styleCopy, opacity: 0.6 }));
-        } catch (e) { }
-      }
-      // C. Objects
-      if (isLayerActive(this.mapillaryObjectsLayer)) {
-        try {
-          const styleCopy = JSON.parse(JSON.stringify(this.mapillaryObjectsLayer.style));
-          layersToAdd.push(new VectorTileLayer({ style: styleCopy, opacity: 0.6 }));
-        } catch (e) { }
-      }
-
-      // D. Mapillary coverage VectorTileLayer for minimap
-      // Always shows image circles at full opacity regardless of hideCoverageCircles config,
-      // so the minimap always has useful point context.
-      try {
-        const vectorTileSourceUrl = `${TILE_URLS.COVERAGE}?access_token=${this.accessToken}`;
-        const minimapCoverageStyle = {
-          version: 8,
-          sources: {
-            [STYLE_SOURCE_IDS.MAPILLARY]: {
-              type: "vector",
-              tiles: [vectorTileSourceUrl],
-              minzoom: 0,
-              maxzoom: 14,
-            },
-          },
-          layers: [
-            {
-              id: STYLE_LAYER_IDS.SEQUENCE,
-              source: STYLE_SOURCE_IDS.MAPILLARY,
-              "source-layer": STYLE_LAYER_IDS.SEQUENCE,
-              type: "line",
-              paint: {
-                "line-opacity": 0.6,
-                "line-color": "#35AF6D",
-                "line-width": 1.5,
-              },
-            },
-            {
-              id: STYLE_LAYER_IDS.IMAGE,
-              source: STYLE_SOURCE_IDS.MAPILLARY,
-              "source-layer": STYLE_LAYER_IDS.IMAGE,
-              type: "circle",
-              paint: {
-                "circle-radius": 2,
-                "circle-color": "#35AF6D",
-                "circle-stroke-color": "#ffffff",
-                "circle-stroke-width": 1,
-                "circle-opacity": 1,
-                "circle-stroke-opacity": 1,
-              },
-            },
-          ],
-        };
-        const minimapCoverageLayer = new VectorTileLayer({
-          style: minimapCoverageStyle,
-          opacity: 0.8,
-        });
-        layersToAdd.push(minimapCoverageLayer);
-      } catch (e) {
-        console.warn("Could not add coverage layer to minimap:", e);
-      }
+      const layersToAdd = buildMinimapLayers<__esri.Layer>({
+        mainLayers: this.state.jimuMapView.view.map.layers,
+        coverage: () => this.mapillaryVTLayer,
+        trafficSigns: () => this.mapillaryTrafficSignsLayer,
+        objects: () => this.mapillaryObjectsLayer,
+        accessToken: () => this.accessToken,
+        VectorTileLayer,
+        warn: (...args) => console.warn(...args),
+      });
 
       minimap.addMany(layersToAdd);
 
@@ -3689,70 +3562,15 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       if (this.state.sequenceId && this._selectionAbort && !this._liveSequenceFrames.complete)
         void this.showCachedSequencePreview(this.state.sequenceId, this._selectionRequestId, this._selectionAbort.signal);
 
-      this.minimapView.on("click", async (evt) => {
-        const clickPoint = evt.mapPoint;
-        const clickLon = clickPoint.longitude;
-        const clickLat = clickPoint.latitude;
-
-        // 1. Check if the click is near a point in the CURRENT sequence (proximity jump)
-        if (this.state.sequenceImages?.length > 0 && this.state.sequenceId) {
-          let closestImg: { id: string; lat: number; lon: number; captured_at?: number } | null = null;
-          let minDist = Infinity;
-          this.state.sequenceImages.forEach((img) => {
-            const dist = distanceMeters(img.lat, img.lon, clickLat, clickLon);
-            if (dist < minDist) {
-              minDist = dist;
-              closestImg = img;
-            }
-          });
-          // If within 5m of a sequence point, jump within the current sequence
-          if (closestImg && minDist < 5 && closestImg.id !== this.state.imageId) {
-            await this.loadSequenceById(this.state.sequenceId!, closestImg.id);
-            return;
-          }
-        }
-
-        // 2. Click is elsewhere, search for nearby sequences at that location.
-        //    We intentionally do NOT set availableSequences or call drawSequencesOverlay
-        //    so the main map is not polluted with colored multi-sequence overlays.
-        //    We just find the closest image and load it directly.
-        this.setState({ isLoading: true });
-        try {
-          const nearbySeqs = await this.getSequencesInBBox(clickLon, clickLat, this.accessToken);
-          if (!nearbySeqs.length) {
-            this.showNoImageMessage();
-            this.setState({ isLoading: false });
-            return;
-          }
-
-          const fullSeqs = nearbySeqs; // Discovery already includes the local image coordinates.
-          // Find the image closest to the click across all returned sequences
-          let globalClosest: { seqId: string; imgId: string; dist: number } | null = null;
-          fullSeqs.forEach((seq) => {
-            seq.images.forEach((img) => {
-              const dist = distanceMeters(img.lat, img.lon, clickLat, clickLon);
-              if (!globalClosest || dist < globalClosest.dist) {
-                globalClosest = { seqId: seq.sequenceId, imgId: img.id, dist };
-              }
-            });
-          });
-
-          if (!globalClosest) {
-            this.showNoImageMessage();
-            this.setState({ isLoading: false });
-            return;
-          }
-
-          // Load the sequence, this updates sequenceImages/imageId/selectedSequenceId
-          // but leaves availableSequences untouched so no colored overlay appears.
-          // When the user exits fullscreen they'll see just the single blue sequence line.
-          await this.loadSequenceById(globalClosest.seqId, globalClosest.imgId, { lon: clickLon, lat: clickLat });
-          this.setState({ isLoading: false, availableSequences: [], clickLon, clickLat });
-        } catch (err) {
-          console.error("Minimap click error:", err);
-          this.setState({ isLoading: false });
-        }
-      });
+      this.minimapView.on("click", createMinimapClickHandler({
+        state: () => this.state,
+        accessToken: () => this.accessToken,
+        discover: (lon, lat, token) => this.getSequencesInBBox(lon, lat, token),
+        loadSequence: (...args) => this.loadSequenceById(...args),
+        showNoImage: () => this.showNoImageMessage(),
+        update: patch => this.setState(patch),
+        error: (...args) => console.error(...args),
+      }));
 
       this.setState({ minimapView: this.minimapView });
     } catch (err) {
@@ -5693,125 +5511,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   // #region TURBO MODE
 
-  private createTurboRenderer(yearList?: string[]): __esri.Renderer {
-    const view = this.state.jimuMapView?.view;
-
-    const is3D = view?.type === "3d";
-
-    /*
-     * 3D Turbo symbol:
-     *
-     * Same visibility strategy that fixed
-     * the active green Mapillary point.
-     */
-    const make3DSymbol = (color: number[]) => {
-      return {
-        type: "point-3d",
-
-        disableDepthTestDistance: Number.POSITIVE_INFINITY,
-
-        /*
-         * Tiny lift so SceneView treats the
-         * symbol as undraped rather than a
-         * terrain-draped point.
-         */
-        verticalOffset: {
-          screenLength: 1,
-          maxWorldLength: 0.1,
-          minWorldLength: 0.1,
-        },
-
-        symbolLayers: [
-          {
-            type: "icon",
-
-            /*
-             * JSAPI native way to keep the
-             * Turbo point visible when terrain
-             * / camera depth would otherwise
-             * occlude it.
-             */
-            occludedVisibility: {
-              mode: "visible",
-            },
-
-            resource: {
-              primitive: "circle",
-            },
-
-            material: {
-              color,
-            },
-
-            size: 5,
-
-            outline: {
-              color: [255, 255, 255, 1],
-              size: 1,
-            },
-          },
-        ],
-      } as any;
-    };
-
-    /*
-     * COLOR-BY-YEAR renderer
-     */
-    if (yearList && yearList.length > 0) {
-      /*
-       * Leave the existing 2D behavior
-       * completely unchanged.
-       */
-      if (!is3D) {
-        return createYearBasedRenderer(yearList);
-      }
-
-      return {
-        type: "unique-value",
-        field: "date_category",
-
-        uniqueValueInfos: yearList.map((year, idx) => {
-          const paletteColor = YEAR_COLOR_PALETTE[idx % YEAR_COLOR_PALETTE.length];
-
-          const color = paletteColor.length >= 4 ? paletteColor : [...paletteColor, 0.9];
-
-          return {
-            value: year,
-            label: year,
-            symbol: make3DSymbol(color),
-          };
-        }),
-      } as any;
-    }
-
-    /*
-     * NORMAL brown Turbo renderer
-     */
-    if (is3D) {
-      return {
-        type: "simple",
-        symbol: make3DSymbol([165, 42, 42, 0.9]),
-      } as any;
-    }
-
-    /*
-     * Existing 2D renderer unchanged.
-     */
-    return {
-      type: "simple",
-
-      symbol: {
-        type: "simple-marker",
-        color: [165, 42, 42, 0.9],
-        size: 5,
-
-        outline: {
-          color: [255, 255, 255],
-          width: 1,
-        },
-      },
-    } as any;
-  }
   /** Native coverage at every zoom; local decoding supports picking without replacing tile circles. */
   private async enableTurboCoverageLayer(forceUsernameFilter?: string) {
     const view = this.state.jimuMapView?.view;
@@ -7104,46 +6803,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     });
   };
 
-  private async pruneFeatureTilesOutsideWindow(layerId: string, layer: __esri.FeatureLayer, keepTileKeys: Set<string>, isCurrentRequest: () => boolean) {
-    const loadedTiles = this._loadedFeatureTileKeys.get(layerId);
-
-    const tileOids = this._featureTileOids.get(layerId);
-
-    if (!loadedTiles || !tileOids) {
-      return;
-    }
-
-    const staleTiles = Array.from(loadedTiles).filter((tileKey) => !keepTileKeys.has(tileKey));
-
-    const deleteChunkSize = 15000;
-
-    for (const tileKey of staleTiles) {
-      if (!isCurrentRequest()) {
-        return;
-      }
-
-      const oids = tileOids.get(tileKey) ?? [];
-
-      for (let i = 0; i < oids.length; i += deleteChunkSize) {
-        if (!isCurrentRequest()) {
-          return;
-        }
-
-        const oidChunk = oids.slice(i, i + deleteChunkSize);
-
-        await layer.applyEdits({
-          deleteFeatures: oidChunk.map((objectId) => ({
-            objectId,
-          })) as any,
-        });
-      }
-
-      loadedTiles.delete(tileKey);
-
-      tileOids.delete(tileKey);
-    }
-  }
-
   // #endregion TURBO MODE
 
   // #region STREET COVERAGE ANALYSIS
@@ -7530,43 +7189,14 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   };
 
   /** Draws the generated route onto the map with a purple line and outer glow effect. */
-  private async drawCaptureRoute(pathsData: any, current: () => boolean = () => true) {
-    if (!current()) return;
-    const { jimuMapView } = this.state;
-    const view = jimuMapView?.view;
-    if (!view?.map || view.destroyed || !this.ArcGISModules) return;
-    const routeMap = view.map;
-
-    const polylinePaths = normalizeCaptureRoutePaths(pathsData);
-    if (!polylinePaths) return;
-    if (!this._routeGraphicLayer) {
-      const [GraphicsLayer] = await loadArcGISJSAPIModules(["esri/layers/GraphicsLayer"]);
-      if (!current() || this.state.jimuMapView?.view !== view || view.map !== routeMap || view.destroyed) return;
-      this._routeGraphicLayer = new GraphicsLayer({
-        id: "capture-route-layer",
-        title: "Mapillary Capture Route",
-      });
-      view.map.add(this._routeGraphicLayer);
-    }
-    this._routeGraphicLayer.removeAll();
-
-    const { Graphic } = this.ArcGISModules;
-
-    // 1. Outer Glow Effect
-    this._routeGraphicLayer.add(
-      new Graphic({
-        geometry: { type: "polyline", paths: polylinePaths, spatialReference: { wkid: 4326 } },
-        symbol: { type: "simple-line", color: [168, 85, 247, 0.35], width: 8 } as any,
-      }),
-    );
-
-    // 2. Main Purple Line (Centre Line)
-    this._routeGraphicLayer.add(
-      new Graphic({
-        geometry: { type: "polyline", paths: polylinePaths, spatialReference: { wkid: 4326 } },
-        symbol: { type: "simple-line", color: [168, 85, 247, 1], width: 3.5, style: "solid" } as any,
-      }),
-    );
+  private async drawCaptureRoute(pathsData: unknown, current: () => boolean = () => true) {
+    await renderCaptureRouteGraphics<__esri.Graphic, __esri.GraphicsLayer, __esri.MapView | __esri.SceneView>(pathsData, current, {
+      view: () => this.state.jimuMapView?.view,
+      modules: () => this.ArcGISModules,
+      layer: () => this._routeGraphicLayer,
+      setLayer: layer => { this._routeGraphicLayer = layer; },
+      loadLayerModules: () => loadArcGISJSAPIModules(["esri/layers/GraphicsLayer"]),
+    });
   }
 
   // CLEAR CAPTURE ROUTE
@@ -7580,27 +7210,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _stopRoutePreview: (() => void) | null = null;
   private downloadRouteGPX = () => downloadCaptureRouteGPX(this.state.routeData);
 
-  /**
-   * Generates a low-cost capture route:
-   *
-   * 1. Solve one ArcGIS baseline A → B route.
-   * 2. Build stale / missing target segments locally.
-   * 3. Generate capture opportunities locally around the baseline.
-   * 4. Select opportunities locally using the spare-time budget.
-   * 5. Build a small, ordered set of capture stops.
-   * 6. Solve the final ArcGIS route once.
-   * 7. If the real route exceeds the budget, remove the least efficient
-   *    opportunity and perform one additional final solve.
-   *
-   * ArcGIS is used only as the final network routing engine.
-   * It is NOT used to evaluate every candidate opportunity.
-   */
-
-  /*
-   * ------------------------------------------------------------
-   * ROUTING AUTHENTICATION
-   * ------------------------------------------------------------
-   */
+  // Routing service discovery and provider adapters. Run ownership stays with route generation.
 
   /**
    * Resolves the route service advertised by the current
@@ -7609,287 +7219,28 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
    * Portal() automatically uses Experience Builder's configured
    * portal through the ArcGIS Maps SDK environment.
    */
-  private resolvePortalRouteService = async (): Promise<string | null> => {
-    try {
-      const [Portal] = await loadArcGISJSAPIModules(["esri/portal/Portal"]);
-
-      const portal = new Portal();
-
-      await portal.load();
-
-      const routeUrl = portal.helperServices?.route?.url;
-
-      return routeUrl || null;
-    } catch (error) {
-      console.warn("[CaptureRoute] " + "Could not discover portal route service:", error);
-
-      return null;
-    }
-  };
-
-  /**
-   * Determines which routing provider should be used.
-   *
-   * AUTO:
-   *
-   *   explicit custom service
-   *            ↓
-   *   signed-in portal service
-   *            ↓
-   *   configured API key
-   *            ↓
-   *   anonymous/public portal service
-   */
-  private resolveRoutingProvider = async (): Promise<ResolvedRoutingProvider> => {
-    const routingEngine = this.getEffectiveRoutingEngine();
-
-    const authMode = (this.props.config.routingAuthMode ?? "auto") as RoutingAuthMode;
-
-    const apiKey = String(this.props.config.routingApiKey ?? "").trim();
-
-    /*
-     * --------------------------------------------------------
-     * 1. ESRI WORLD ROUTE
-     * --------------------------------------------------------
-     *
-     * This is our recommended/default capture-route engine.
-     */
-    if (routingEngine === "world") {
-      /*
-       * Explicit API-key mode.
-       */
-      if (authMode === "api-key") {
-        if (!apiKey) {
-          throw new Error("Routing API key is not configured.");
-        }
-
-        return {
-          kind: "api-key",
-
-          routeUrl: ARCGIS_LOCATION_ROUTE_URL,
-
-          apiKey,
-
-          label: "Esri World Route · API Key",
-        };
-      }
-
-      /*
-       * Automatic mode:
-       *
-       * If the Experience author supplied an API key,
-       * use it so anonymous users do not need to sign in.
-       */
-      if (authMode === "auto" && apiKey) {
-        return {
-          kind: "api-key",
-
-          routeUrl: ARCGIS_LOCATION_ROUTE_URL,
-
-          apiKey,
-
-          label: "Esri World Route · API Key",
-        };
-      }
-
-      /*
-       * USER mode, or AUTO without an API key.
-       *
-       * No API key is attached.
-       *
-       * In Step 4 we will explicitly establish/sign in
-       * an ArcGIS user session before the solve.
-       */
-      return {
-        kind: "user",
-
-        routeUrl: ARCGIS_LOCATION_ROUTE_URL,
-
-        label: "Esri World Route · ArcGIS User",
-      };
-    }
-
-    /*
-     * --------------------------------------------------------
-     * 2. ORGANIZATION / PORTAL ROUTE
-     * --------------------------------------------------------
-     *
-     * Never selected automatically anymore.
-     *
-     * The Experience author must explicitly choose it.
-     */
-    if (routingEngine === "portal") {
-      const portalRouteUrl = await this.resolvePortalRouteService();
-
-      if (!portalRouteUrl) {
-        throw new Error("No routing service is configured " + "for this ArcGIS portal.");
-      }
-
-      return {
-        kind: "portal",
-
-        routeUrl: portalRouteUrl,
-
-        label: "Organization Route",
-      };
-    }
-
-    /*
-     * --------------------------------------------------------
-     * 3. CUSTOM ROUTE SERVICE
-     * --------------------------------------------------------
-     */
-    if (routingEngine === "custom") {
-      const customRouteUrl = String(this.props.config.routingServiceUrl ?? "").trim();
-
-      if (!customRouteUrl) {
-        throw new Error("Custom routing service URL " + "is not configured.");
-      }
-
-      return {
-        kind: "custom",
-
-        routeUrl: customRouteUrl,
-
-        label: "Custom Route Service",
-      };
-    }
-
-    /*
-     * Defensive fallback.
-     */
-    throw new Error("Unsupported routing configuration.");
-  };
-
-  private isRoutingAuthenticationError = (error: any): boolean => {
-    const status = Number(error?.details?.httpStatus ?? error?.response?.status ?? error?.status ?? error?.code);
-
-    if (status === 401 || status === 403 || status === 498 || status === 499) {
-      return true;
-    }
-
-    const message = String(error?.message ?? error?.details?.message ?? error ?? "").toLowerCase();
-
-    return (
-      message.includes("token") ||
-      message.includes("credential") ||
-      message.includes("authentication") ||
-      message.includes("unauthorized") ||
-      message.includes("not authorized") ||
-      message.includes("forbidden")
-    );
-  };
-
-  private solveRouteWithProvider = async (
-    provider: ResolvedRoutingProvider,
-
-    routeParameters: any,
-  ): Promise<any> => {
-    const { route } = this.ArcGISModules;
-
-    /*
-     * API-key authorization.
-     *
-     * Never append the key to the URL.
-     */
-    if (provider.kind === "api-key" && provider.apiKey) {
-      routeParameters.apiKey = provider.apiKey;
-    } else {
-      /*
-       * Important when reusing RouteParameters:
-       *
-       * Make sure an old API key isn't accidentally
-       * carried into another authentication mode.
-       */
-      routeParameters.apiKey = null;
-    }
-
-    return await route.solve(provider.routeUrl, routeParameters);
-  };
-
-  private createCaptureRoutingProvider = async (): Promise<RoutingProvider> => {
-    const routingEngine = this.getEffectiveRoutingEngine();
-
-    /*
-     * ========================================================
-     * OSRM
-     * ========================================================
-     */
-    if (routingEngine === "osrm") {
-      const serverMode = this.props.config.osrmServerMode ?? "public";
-
-      let baseUrl: string;
-
-      if (serverMode === "custom") {
-        baseUrl = String(this.props.config.osrmServerUrl ?? "").trim();
-
-        if (!baseUrl) {
-          throw new Error("Custom OSRM server URL is not configured.");
-        }
-      } else {
-        baseUrl = PUBLIC_OSRM_BASE_URL;
-      }
-
-      const provider = createOSRMRoutingProvider({
-        baseUrl,
-
-        profile: "driving",
-
-        label: serverMode === "custom" ? "OSRM · Custom Server" : "OSRM · Public Demo",
-      });
-
-      this.log(`[CaptureRoute] Routing provider: ` + `${provider.label}`);
-
-      this.log(`[CaptureRoute] OSRM server: ` + `${baseUrl}`);
-
-      return provider;
-    }
-
-    /*
-     * ========================================================
-     * ARCGIS
-     * ========================================================
-     *
-     * Existing ArcGIS resolution remains responsible for:
-     *
-     * - World Route
-     * - Organization / Portal Route
-     * - Custom ArcGIS Route
-     */
-    const resolved = await this.resolveRoutingProvider();
-
-    const providerKind = resolved.kind === "portal" ? "arcgis-portal" : resolved.kind === "custom" ? "arcgis-custom" : "arcgis-world";
-
-    const provider = createArcGISRoutingProvider({
-      route: this.ArcGISModules.route,
-
-      networkService: this.ArcGISModules.networkService,
-
-      RouteParameters: this.ArcGISModules.RouteParameters,
-
-      FeatureSet: this.ArcGISModules.FeatureSet,
-
-      Graphic: this.ArcGISModules.Graphic,
-
-      Point: this.ArcGISModules.Point,
-
-      routeUrl: resolved.routeUrl,
-
-      apiKey: resolved.kind === "api-key" ? resolved.apiKey : undefined,
-
-      kind: providerKind,
-
-      label: resolved.label,
-
-      travelMode: this.state.routeTravelMode,
-    });
-
-    this.log(`[CaptureRoute] Routing provider: ` + `${provider.label}`);
-
-    this.log(`[CaptureRoute] ArcGIS route service: ` + `${resolved.routeUrl}`);
-
-    return provider;
-  };
+  private resolvePortalRouteService = async (): Promise<string | null> => discoverPortalRoutingService(
+    () => loadArcGISJSAPIModules(["esri/portal/Portal"]),
+    (...args) => console.warn(...args),
+  );
+
+  /** Apply the selected engine's World/auth, explicit portal or custom-service policy. */
+  private resolveRoutingProvider = async (): Promise<ResolvedRoutingProvider> => resolveCaptureRoutingProvider({
+    routingEngine: this.getEffectiveRoutingEngine(),
+    config: this.props.config,
+    discoverPortalRouteService: () => this.resolvePortalRouteService(),
+  });
+
+  private isRoutingAuthenticationError = (error: any): boolean => isRoutingAuthenticationFailure(error);
+
+  private createCaptureRoutingProvider = async (): Promise<RoutingProvider> => createCaptureProvider({
+    routingEngine: this.getEffectiveRoutingEngine(),
+    config: this.props.config,
+    resolveArcGIS: () => this.resolveRoutingProvider(),
+    modules: () => this.ArcGISModules,
+    travelMode: () => this.state.routeTravelMode,
+    log: message => this.log(message),
+  });
 
   private readonly _routeGeneration = new RouteGeneration();
   private _captureRouteLoginView: { type: string; viewpoint: __esri.Viewpoint } | null = null;
@@ -8113,11 +7464,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         log: (...args) => this.log(...args),
       });
 
-      this.log(`[CaptureRoute] Selected corridor: ` + `${selectedCorridorWidth} m`);
-
-      this.log(`[CaptureRoute] Opportunities: ` + `${opportunities.length}`);
-
-      this.log(`[CaptureRoute] Opportunity segment counts: ` + opportunities.map((opportunity) => opportunity.segments.length).join(", "));
+      reportCaptureCorridor(opportunities, selectedCorridorWidth, message => this.log(message));
 
       if (!opportunities.length) {
         this.showToast(this._t('appNoSuitableStaleMissingRoadsFoundNearYourA'), 4500);
@@ -8132,26 +7479,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
        * was ultimately selected: 180m, 250m, or 350m.
        */
 
-      this.log(`[CaptureRoute] Selected opportunities: ` + `${selection.opportunities.length}`);
-
-      this.log(`[CaptureRoute] Estimated extra time: ` + `${selection.estimatedExtraMinutes.toFixed(1)} min`);
-
-      this.log(`[CaptureRoute] Estimated capture: ` + `${selection.estimatedCaptureMeters.toFixed(0)} m`);
-
-      this.log(`[CaptureRoute] Selection stop reason: ` + `${selection.stopReason}`);
-
-      this.log(`[CaptureRoute] Selected anchor slots: ` + `${selection.usedAnchorSlots}/` + `${this.CAPTURE_ROUTE_CONFIG.maxFinalStops}`);
-      const anchorDistribution = captureAnchorDistribution(selection.opportunities);
-
-      this.log(`[CaptureRoute] Anchor distribution: ` + `1=${anchorDistribution.one}, ` + `2=${anchorDistribution.two}, ` + `3=${anchorDistribution.three}`);
-
-      const threeAnchorDiagnostics = captureThreeAnchorDiagnostics(selection.opportunities);
-
-      this.log("[CaptureRoute] 3-anchor detail:\n" + JSON.stringify(threeAnchorDiagnostics, null, 2));
-
-      this.log(`[CaptureRoute] Rejected by budget: ` + `${selection.rejectedForBudgetCount}`);
-
-      this.log(`[CaptureRoute] Rejected by anchor cap: ` + `${selection.rejectedForAnchorCount}`);
+      reportCaptureSelection(selection, this.CAPTURE_ROUTE_CONFIG.maxFinalStops, message => this.log(message));
 
       if (!selection.opportunities.length) {
         this.showToast(<OwnedMessage source={"No beneficial capture detour found within {value0} minutes."} values={{ value0: String(spareMinutes) }} />, 4000);
@@ -8294,18 +7622,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
               preflight.waypointSnapDistancesMeters, preflightStops.length, captureStopOwners,
             );
 
-            const badSnapDiagnostics = snapDiagnostics.filter((item) => item.snapDistanceMeters > 40);
+            const { badSnapDiagnostics, hardBadSnapOwners } = classifyPreflightSnaps(snapDiagnostics, hardSnapRejectMeters);
 
             if (badSnapDiagnostics.length) {
               this.log("[CaptureRoute] OSRM capture anchors snapping >40m:\n" + JSON.stringify(badSnapDiagnostics, null, 2));
             }
-
-            const hardBadSnapOwners = new Set(
-              snapDiagnostics
-                .filter((item) => item.snapDistanceMeters > hardSnapRejectMeters)
-                .map((item) => item.owner)
-                .filter((owner) => owner !== "START" && owner !== "END"),
-            );
 
             if (hardBadSnapOwners.size) {
               for (const owner of hardBadSnapOwners) {
@@ -8349,48 +7670,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
             const budgetFits = projectedExtraMinutes <= spareMinutes + preflightTolerance;
 
-            /*
-             * --------------------------------------------------------
-             * NETWORK QUALITY GATE
-             * --------------------------------------------------------
-             *
-             * A short geometric transition that requires several
-             * minutes of driving usually indicates:
-             *
-             * - divided road / median
-             * - one-way incompatibility
-             * - ramp / interchange topology
-             * - anchor ordering that forces a large loop
-             *
-             * START and END are excluded because endpoint access
-             * may be inherently expensive and unavoidable.
-             */
-            const pathologicalInternalLegs = preflightLegs.filter(
-              (leg) =>
-                /*
-                 * A hard quality failure only exists when
-                 * two anchors belonging to the SAME opportunity
-                 * require an absurd network detour.
-                 */
-                leg.fromOwner !== "START" &&
-                leg.fromOwner !== "END" &&
-                leg.fromOwner !== "UNKNOWN" &&
-                leg.fromOwner === leg.toOwner &&
-                leg.directMeters <= 450 &&
-                leg.durationMinutes >= 4.5,
+            const { pathologicalInternalLegs, networkQualityFits, qualityCleanupMode, pathologicalOwnerIds } = classifyPreflightQuality(
+              preflightLegs, budgetFits,
             );
             this.log("[CaptureRoute] SAME-OWNER quality guard active");
-
-            const networkQualityFits = pathologicalInternalLegs.length === 0;
-            const qualityCleanupMode = budgetFits && !networkQualityFits;
-
-            const pathologicalOwnerIds = new Set<string>();
-
-            for (const leg of pathologicalInternalLegs) {
-              pathologicalOwnerIds.add(leg.fromOwner);
-
-              pathologicalOwnerIds.add(leg.toOwner);
-            }
 
             if (pathologicalInternalLegs.length) {
               this.log("[CaptureRoute] OSRM pathological internal legs:\n" + JSON.stringify(pathologicalInternalLegs, null, 2));
@@ -8421,33 +7704,17 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
                   maxFinalStops: this.CAPTURE_ROUTE_CONFIG.maxFinalStops,
                 });
 
-                let bestReplacement: {
-                  opportunities: CaptureOpportunity[];
-
-                  addId: string;
-
-                  removeId: string;
-
-                  extraMinutes: number;
-
-                  valueGain: number;
-                } | null = null;
+                let bestReplacement: CaptureReplacementProbe | null = null;
 
                 for (const pair of probePairs) {
                   /*
                    * Replace exactly one opportunity and restore
                    * monotonic A -> B baseline ordering.
                    */
-                  const trialOpportunities = activeOpportunities
-                    .filter((opportunity) => opportunity.id !== pair.remove.id)
-                    .concat(pair.add)
-                    .sort((a, b) => a.baselinePosition - b.baselinePosition);
-
-                  const trialCaptureStops = buildFinalRouteStops(trialOpportunities);
-
-                  const trialCaptureOwners = buildCaptureStopOwners(trialOpportunities);
-
-                  const trialStops: [number, number][] = [startPt, ...trialCaptureStops, endPt];
+                  const { trialOpportunities, trialCaptureOwners, trialStops } = prepareCaptureTrial({
+                    activeOpportunities, removeId: pair.remove.id, add: pair.add,
+                    startPt, endPt, maxFinalStops: this.CAPTURE_ROUTE_CONFIG.maxFinalStops,
+                  });
 
                   const trialPreflight = await routingProvider.preflightOrderedStops!(trialStops, run.signal);
                   run.check();
@@ -8503,30 +7770,9 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
                     continue;
                   }
 
-                  /*
-                   * Primary objective:
-                   * maximize useful capture value.
-                   *
-                   * Tie-break:
-                   * use more of the available time budget.
-                   */
-                  if (
-                    !bestReplacement ||
-                    pair.valueGain > bestReplacement.valueGain ||
-                    (pair.valueGain === bestReplacement.valueGain && trialExtraMinutes > bestReplacement.extraMinutes)
-                  ) {
-                    bestReplacement = {
-                      opportunities: trialOpportunities,
-
-                      addId: pair.add.id,
-
-                      removeId: pair.remove.id,
-
-                      extraMinutes: trialExtraMinutes,
-
-                      valueGain: pair.valueGain,
-                    };
-                  }
+                  bestReplacement = chooseCaptureReplacementProbe(
+                    bestReplacement, pair, trialOpportunities, trialExtraMinutes,
+                  );
                 }
 
                 if (bestReplacement) {
@@ -8622,15 +7868,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
                     break;
                   }
 
-                  const trialOpportunities = activeOpportunities
-                    .filter((opportunity) => opportunity.id !== probeCandidate.opportunity.id)
-                    .sort((a, b) => a.baselinePosition - b.baselinePosition);
-
-                  const trialCaptureStops = buildFinalRouteStops(trialOpportunities);
-
-                  const trialCaptureOwners = buildCaptureStopOwners(trialOpportunities);
-
-                  const trialStops: [number, number][] = [startPt, ...trialCaptureStops, endPt];
+                  const { trialOpportunities, trialCaptureOwners, trialStops } = prepareCaptureTrial({
+                    activeOpportunities, removeId: probeCandidate.opportunity.id,
+                    startPt, endPt, maxFinalStops: this.CAPTURE_ROUTE_CONFIG.maxFinalStops,
+                  });
 
                   const trialPreflight = await routingProvider.preflightOrderedStops!(trialStops, run.signal);
                   run.check();
@@ -8793,15 +8034,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
               let bestProgressProbe: ProgressBudgetProbe | null = null;
 
               for (const candidate of genericProbeCandidates) {
-                const trialOpportunities = activeOpportunities
-                  .filter((opportunity) => opportunity.id !== candidate.opportunity.id)
-                  .sort((a, b) => a.baselinePosition - b.baselinePosition);
-
-                const trialCaptureStops = buildFinalRouteStops(trialOpportunities);
-
-                const trialCaptureOwners = buildCaptureStopOwners(trialOpportunities);
-
-                const trialStops: [number, number][] = [startPt, ...trialCaptureStops, endPt];
+                const { trialOpportunities, trialCaptureOwners, trialStops } = prepareCaptureTrial({
+                  activeOpportunities, removeId: candidate.opportunity.id,
+                  startPt, endPt, maxFinalStops: this.CAPTURE_ROUTE_CONFIG.maxFinalStops,
+                });
 
                 const trialPreflight = await routingProvider.preflightOrderedStops!(trialStops, run.signal);
                 run.check();
@@ -9069,15 +8305,13 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       const { route: bestRoute, opportunities: bestRouteOpportunities, extraMinutes: bestActualExtraMinutes } = captureSolveHistory.best;
       const finalBudgetTolerance = this.CAPTURE_ROUTE_CONFIG.finalBudgetToleranceMinutes ?? 0.25;
 
-      const lastRouteMinutes = finalRoute.durationMinutes;
+      const finalSelection = selectFinalCaptureRoute({
+        finalRoute, finalRouteOpportunities, bestRoute, bestRouteOpportunities,
+        bestActualExtraMinutes, baselineMinutes, spareMinutes, finalBudgetTolerance,
+      });
+      const { lastRouteExtraMinutes } = finalSelection;
 
-      const lastRouteExtraMinutes = lastRouteMinutes - baselineMinutes;
-
-      /*
-       * If the retry somehow produced a WORSE route,
-       * recover the best ArcGIS result actually seen.
-       */
-      if (lastRouteExtraMinutes > spareMinutes + finalBudgetTolerance && bestRoute && bestActualExtraMinutes < lastRouteExtraMinutes) {
+      if (finalSelection.recovered) {
         console.warn(
           `[CaptureRoute] Final retry was worse. ` +
           `Restoring best solve: ` +
@@ -9085,11 +8319,9 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
           `instead of ` +
           `${lastRouteExtraMinutes.toFixed(1)} min.`,
         );
-
-        finalRoute = bestRoute;
-
-        finalRouteOpportunities = [...bestRouteOpportunities];
       }
+      finalRoute = finalSelection.route;
+      finalRouteOpportunities = finalSelection.opportunities;
 
       /*
        * From here onward, these opportunities correspond
@@ -9119,44 +8351,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
        * 6. DRAW FINAL ROUTE
        */
 
-      const finalPaths = normalizeCaptureRoutePaths(finalRoute.paths);
-
-      if (!finalPaths) {
-        throw new Error("Final route geometry is empty.");
-      }
-
-      /*
-       * ACTUAL ROUTE COVERAGE EVALUATION
-       *
-       * Evaluate only the opportunities that survived final budget
-       * pruning.
-       *
-       * This tells us how much of the road we INTENDED to capture is
-       * actually followed closely by the final ArcGIS route.
-       */
-
-      const activeRouteCoverageTargets = activeCaptureCoverageTargets(activeOpportunities);
-
-      const routeCoverage = evaluateRouteCoverage(
-        finalPaths,
-        activeRouteCoverageTargets,
-
-        this.CAPTURE_ROUTE_CONFIG.routeCoverageToleranceMeters,
-
-        this.CAPTURE_ROUTE_CONFIG.coverageSampleSpacingMeters,
-      );
-
-      const incrementalCoverage = evaluateIncrementalRouteCoverage(
-        finalPaths,
-        baselinePaths,
-        activeRouteCoverageTargets,
-
-        this.CAPTURE_ROUTE_CONFIG.routeCoverageToleranceMeters,
-
-        this.CAPTURE_ROUTE_CONFIG.coverageSampleSpacingMeters,
-      );
-
-      const combinedCoordinates: [number, number][] = finalPaths.flatMap((path) => path);
+      const { finalPaths, activeRouteCoverageTargets, routeCoverage, incrementalCoverage, combinedCoordinates } = evaluateFinalCaptureRoute({
+        paths: finalRoute.paths, baselinePaths, activeOpportunities,
+        routeCoverageToleranceMeters: this.CAPTURE_ROUTE_CONFIG.routeCoverageToleranceMeters,
+        coverageSampleSpacingMeters: this.CAPTURE_ROUTE_CONFIG.coverageSampleSpacingMeters,
+      });
 
       await this.drawCaptureRoute(finalPaths, run.current);
       run.check();
@@ -9171,65 +8370,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
        * the budget-pruning loop.
        */
 
-      const { missingMeters, staleMeters, targetedCaptureMeters, finalSelectedNovelMeters,
-        finalSelectedBaselineOverlapMeters, finalSelectedAnchorCount } = summarizeCaptureOpportunities(activeOpportunities);
-
-      this.log(`[CaptureRoute] Active opportunities: ` + `${activeOpportunities.length}`);
-
-      this.log(`[CaptureRoute] Targeted NONE: ` + `${missingMeters.toFixed(0)} m`);
-
-      this.log(`[CaptureRoute] Targeted STALE: ` + `${staleMeters.toFixed(0)} m`);
-
-      this.log(`[CaptureRoute] Targeted capture: ` + `${targetedCaptureMeters.toFixed(0)} m`);
-
-      this.log(`[CaptureRoute] Actual targeted route coverage: ` + `${routeCoverage.coveredTargetMeters.toFixed(0)} m`);
-
-      this.log(`[CaptureRoute] Actual NONE coverage: ` + `${routeCoverage.noneCoveredMeters.toFixed(0)} m`);
-
-      this.log(`[CaptureRoute] Actual STALE coverage: ` + `${routeCoverage.staleCoveredMeters.toFixed(0)} m`);
-
-      this.log(`[CaptureRoute] Target realization: ` + `${routeCoverage.coveragePercent.toFixed(1)}%`);
-
-      this.log(`[CaptureRoute] Target segments touched: ` + `${routeCoverage.touchedSegmentCount}/` + `${routeCoverage.segmentResults.length}`);
-
-      this.log(`[CaptureRoute] Target segments fully covered: ` + `${routeCoverage.fullyCoveredSegmentCount}/` + `${routeCoverage.segmentResults.length}`);
-
-      this.log(`[CaptureRoute] Baseline target overlap: ` + `${incrementalCoverage.baselineCoveredMeters.toFixed(0)} m`);
-
-      this.log(`[CaptureRoute] Final target overlap: ` + `${incrementalCoverage.finalCoveredMeters.toFixed(0)} m`);
-
-      this.log(`[CaptureRoute] Shared baseline/final overlap: ` + `${incrementalCoverage.sharedCoveredMeters.toFixed(0)} m`);
-
-      this.log(`[CaptureRoute] Incremental useful coverage: ` + `${incrementalCoverage.incrementalCoveredMeters.toFixed(0)} m`);
-
-      this.log(`[CaptureRoute] Incremental NONE: ` + `${incrementalCoverage.incrementalNoneMeters.toFixed(0)} m`);
-
-      this.log(`[CaptureRoute] Incremental STALE: ` + `${incrementalCoverage.incrementalStaleMeters.toFixed(0)} m`);
-
-      this.log(`[CaptureRoute] Incremental target gain: ` + `${incrementalCoverage.incrementalPercent.toFixed(1)}%`);
-
-      /*
-       * FINAL ACTIVE-SELECTION DIAGNOSTICS
-       *
-       * IMPORTANT:
-       *
-       * Use activeOpportunities here, not selection.opportunities.
-       *
-       * selection.opportunities represents the ORIGINAL local
-       * selection before ArcGIS budget correction.
-       *
-       * activeOpportunities represents the exact opportunity set
-       * belonging to the final route after batch pruning/fallback.
-       */
-
-
-
-
-      this.log(`[CaptureRoute] Final selected baseline-new target: ` + `${finalSelectedNovelMeters.toFixed(0)} m`);
-
-      this.log(`[CaptureRoute] Final selected baseline-overlap target: ` + `${finalSelectedBaselineOverlapMeters.toFixed(0)} m`);
-
-      this.log(`[CaptureRoute] Final novelty-aware anchors: ` + `${finalSelectedAnchorCount}`);
+      const { finalSelectedNovelMeters, finalSelectedBaselineOverlapMeters, finalSelectedAnchorCount } = reportCaptureRouteCoverage({
+        activeOpportunities, routeCoverage, incrementalCoverage,
+        log: message => this.log(message),
+      });
 
       /*
        * 9. STORE FINAL ROUTE RESULT
@@ -9243,99 +8387,13 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
        */
 
       this.setState({
-        routeData: {
-          /*
-           * BASIC ROUTE
-           */
-          distance: finalDistanceMeters,
-
-          duration: finalMinutes * 60,
-
-          geojson: {
-            type: "LineString",
-            coordinates: combinedCoordinates,
-          },
-
-          /*
-           * TIME
-           */
-          baselineDurationMinutes: baselineMinutes,
-
-          extraDurationMinutes: actualExtraMinutes,
-
-          requestedExtraMinutes: spareMinutes,
-
-          /*
-           * TARGET REALIZATION
-           */
-
-          /*
-           * Length of the final selected NONE/STALE
-           * target network.
-           */
-          targetedLengthMeters: activeRouteCoverageTargets.reduce((sum, target) => sum + target.lengthMeters, 0),
-
-          /*
-           * Amount of that final selected target network
-           * actually traversed by the ArcGIS route.
-           */
-          coveredTargetLengthMeters: routeCoverage.coveredTargetMeters,
-
-          targetRealizationPercent: routeCoverage.coveragePercent,
-
-          /*
-           * GENUINELY NEW USEFUL COVERAGE
-           *
-           * This is the headline metric.
-           *
-           * It excludes target road already covered by the
-           * normal baseline A → B route.
-           */
-          usefulCoverageMeters: incrementalCoverage.incrementalCoveredMeters,
-
-          incrementalNoneMeters: incrementalCoverage.incrementalNoneMeters,
-
-          incrementalStaleMeters: incrementalCoverage.incrementalStaleMeters,
-
-          /*
-           * FINAL SELECTION
-           */
-          selectedNovelTargetMeters: finalSelectedNovelMeters,
-
-          selectedBaselineOverlapMeters: finalSelectedBaselineOverlapMeters,
-
+        routeData: buildCaptureRouteData({
+          finalDistanceMeters, finalMinutes, combinedCoordinates, baselineMinutes, actualExtraMinutes,
+          spareMinutes, activeRouteCoverageTargets, routeCoverage, incrementalCoverage,
+          finalSelectedNovelMeters, finalSelectedBaselineOverlapMeters,
           selectedOpportunityCount: activeOpportunities.length,
-
-          selectedAnchorCount: finalSelectedAnchorCount,
-
-          selectedCorridorWidthMeters: selectedCorridorWidth,
-
-          selectionStopReason: selection.stopReason,
-
-          /*
-           * SEGMENT REALIZATION
-           */
-          touchedSegmentCount: routeCoverage.touchedSegmentCount,
-
-          fullyCoveredSegmentCount: routeCoverage.fullyCoveredSegmentCount,
-
-          totalTargetSegmentCount: routeCoverage.segmentResults.length,
-
-          /*
-           * LEGACY COMPATIBILITY
-           */
-          targetCoveragePercent: routeCoverage.coveragePercent,
-
-          capturedTargetLengthMeters: routeCoverage.coveredTargetMeters,
-
-          totalTargetLengthMeters: routeCoverage.totalTargetMeters,
-
-          remainingTargetLengthMeters: Math.max(0, activeRouteCoverageTargets.reduce((sum, target) => sum + target.lengthMeters, 0) - routeCoverage.coveredTargetMeters),
-
-          capturedSegmentCount: routeCoverage.fullyCoveredSegmentCount,
-
-          totalSegmentCount: routeCoverage.segmentResults.length,
-        },
+          finalSelectedAnchorCount, selectedCorridorWidth, selectionStopReason: selection.stopReason,
+        }),
       });
 
       /*
@@ -9392,35 +8450,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const graphicRef = isStart ? this._routePointAGraphic : this._routePointBGraphic;
     if (graphicRef) view.graphics.remove(graphicRef);
 
-    const pointColor = isStart ? [46, 204, 113, 1] : [231, 76, 60, 1]; // Green (A) / Red (B)
-
-    const symbol = is3D
-      ? {
-        type: "point-3d",
-        symbolLayers: [
-          {
-            type: "icon",
-            resource: { primitive: "circle" },
-            material: { color: pointColor },
-            size: 16,
-            outline: { color: [255, 255, 255, 1], size: 2 },
-          },
-        ],
-        verticalOffset: { screenLength: 40, maxWorldLength: 150, minWorldLength: 10 },
-        callout: { type: "line", size: 2, color: pointColor, border: { color: [0, 0, 0, 0.4] } },
-      }
-      : {
-        type: "simple-marker",
-        style: "circle",
-        color: pointColor,
-        size: 12,
-        outline: { color: [255, 255, 255, 1], width: 2 },
-      };
-
-    const pointGraphic = new Graphic({
-      geometry: new Point({ x: lon, y: lat, spatialReference: { wkid: 4326 } }),
-      symbol: symbol as any,
-    });
+    const pointGraphic = createRoutePointGraphic<__esri.Graphic, __esri.Point>({ isStart, is3D, lon, lat, Graphic, Point });
 
     this._ownedMapResources.addGraphic(view, pointGraphic);
     if (isStart) this._routePointAGraphic = pointGraphic;
@@ -9462,79 +8492,19 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   };
 
   private handleRuntimeRoutingEngineChange = (engine: "world" | "osrm") => {
-    const nextTravelMode: CaptureTravelMode = engine === "osrm" && this.state.routeTravelMode !== "drive" ? "drive" : this.state.routeTravelMode;
-
-    /*
-     * Do not change providers during an active solve.
-     */
-    if (this.state.isGeneratingRoute) {
-      return;
-    }
-
-    /*
-     * Remove only the generated route.
-     *
-     * Preserve:
-     * - Street Coverage analysis
-     * - frozen analysis bbox
-     * - A
-     * - B
-     * - spare-time budget
-     */
-    if (this._routeGraphicLayer) {
-      this._routeGraphicLayer.removeAll();
-    }
-
-    this.setState({
-      routingEngineOverride: engine,
-
-      routeTravelMode: nextTravelMode,
-
-      routeData: null,
-
-      routeGenerationProgress: null,
-    });
-
-    this.log(`[CaptureRoute] Runtime engine → ` + `${engine === "world" ? "Esri World Route" : "OSRM"}`);
+    const change = planRuntimeRoutingEngineChange(engine, this.state);
+    if (!change) return;
+    if (this._routeGraphicLayer) this._routeGraphicLayer.removeAll();
+    this.setState(change.patch);
+    this.log(change.message);
   };
 
   private handleRuntimeTravelModeChange = (mode: CaptureTravelMode) => {
-    /*
-     * Never change routing mode in the middle
-     * of an active solve.
-     */
-    if (this.state.isGeneratingRoute) {
-      return;
-    }
-
-    /*
-     * Changing transport mode invalidates only
-     * the generated route.
-     *
-     * Preserve:
-     *
-     * - Street Coverage analysis
-     * - frozen analysis bbox
-     * - A
-     * - B
-     * - spare-time budget
-     * - selected routing engine
-     */
-    if (this._routeGraphicLayer) {
-      this._routeGraphicLayer.removeAll();
-    }
-
-    this.setState({
-      routeTravelMode: mode,
-
-      routeData: null,
-
-      routeGenerationProgress: null,
-    });
-
-    const label = mode === "drive" ? "Drive" : mode === "walk" ? "Walk" : "Bike";
-
-    this.log(`[CaptureRoute] Travel mode → ${label}`);
+    const change = planRuntimeTravelModeChange(mode, this.state);
+    if (!change) return;
+    if (this._routeGraphicLayer) this._routeGraphicLayer.removeAll();
+    this.setState(change.patch);
+    this.log(change.message);
   };
 
   // #endregion STREET COVERAGE ANALYSIS
