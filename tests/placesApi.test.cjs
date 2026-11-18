@@ -13,7 +13,7 @@ test('connection test checks capabilities with one credential-free metadata requ
  global.fetch=(url,{signal})=>new Promise((resolve,reject)=>{signal.addEventListener('abort',()=>reject(new DOMException('Cancelled','AbortError')),{once:true})});const controller=new AbortController(),pending=api.testPlacesApi('https://example.org/places',controller.signal);controller.abort();await assert.rejects(pending,{name:'AbortError'});
  }finally{global.fetch=saved}
 });
-function builder(){const file=fs.readFileSync(path.join(root,'setting/setting.tsx'),'utf8'),source=ts.createSourceFile('setting.tsx',file,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX),setting=source.statements.find(n=>ts.isClassDeclaration(n)),wanted=new Set(['placesTestAbort','onPlacesApiChange','testPlacesConnection','componentDidUpdate','componentWillUnmount']);const members=setting.members.filter(m=>m.name&&wanted.has(m.name.getText(source))).map(m=>m.getText(source)).join('\n');const m={exports:{}};
+function builder(){const file=fs.readFileSync(path.join(root,'setting/setting.tsx'),'utf8'),source=ts.createSourceFile('setting.tsx',file,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX),setting=source.statements.find(n=>ts.isClassDeclaration(n)),wanted=new Set(['placesAreaPreview','placesAreaView','placesAreaRevision','clearPlacesArea','placesTestAbort','onPlacesApiChange','testPlacesConnection','componentDidUpdate','componentWillUnmount']);const members=setting.members.filter(m=>m.name&&wanted.has(m.name.getText(source))).map(m=>m.getText(source)).join('\n');const m={exports:{}};
  new Function('exports','placesSourceKey','placesSourceKind','testPlacesApi',ts.transpileModule('export class Fixture{'+members+'}',{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText)(m.exports,load('features/places/placesSource.ts').placesSourceKey,load('features/places/placesSource.ts').placesSourceKind,api.testPlacesApi);const w=new m.exports.Fixture();w.state={placesTestStatus:'idle',placesTestInfo:''};w.context={locale:'en'};w.setState=p=>Object.assign(w.state,p);w.props={id:'w',config:{placesApiUrl:'https://example.org/places',set(key,value){return{...this,[key]:value}}},onSettingChange:p=>w.props.config=p.config};return w;}
 test('builder URL edits never fetch, explicit testing reports success, and changed URLs discard late results',async()=>{
  const saved=global.fetch;let calls=0,release;global.fetch=async()=>{calls++;return{ok:true,json:async()=>metadata()}};
@@ -22,3 +22,17 @@ test('builder URL edits never fetch, explicit testing reports success, and chang
  }finally{global.fetch=saved}
 });
 module.exports={load,metadata};
+
+
+test('builder unmount detaches the pending test before abort, clears its preview and rejects late state updates',async()=>{
+ const saved=global.fetch,w=builder();let release,pending,destroyed=0,detachedAtAbort=false;const writes=[];
+ const setState=w.setState;w.setState=patch=>{writes.push(patch);setState(patch)};
+ global.fetch=()=>new Promise(resolve=>release=()=>resolve({ok:true,json:async()=>metadata()}));
+ try{
+  w.placesAreaPreview={destroy(){destroyed++}};w.placesAreaView={};pending=w.testPlacesConnection();
+  const controller=w.placesTestAbort;controller.signal.addEventListener('abort',()=>{detachedAtAbort=w.placesTestAbort===null});
+  assert.equal(writes.length,1);w.componentWillUnmount();assert.equal(detachedAtAbort,true);assert.equal(controller.signal.aborted,true);
+  assert.equal(w.placesTestAbort,null);assert.equal(destroyed,1);assert.equal(w.placesAreaPreview,null);assert.equal(w.placesAreaView,null);assert.equal(w.placesAreaRevision,1);
+  release();await pending;assert.equal(writes.length,1);w.componentWillUnmount();assert.equal(destroyed,1);
+ }finally{release?.();await pending;global.fetch=saved}
+});

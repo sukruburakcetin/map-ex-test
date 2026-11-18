@@ -13,7 +13,7 @@ The repository is a widget, not a standalone app. Install and run the Experience
 
 Use [Esri's release matrix](https://developers.arcgis.com/experience-builder/guide/release-versions/) and [installation guide](https://developers.arcgis.com/experience-builder/guide/install-guide/) for the host you downloaded. Starting with 1.21, Esri requires pnpm to install host dependencies; `npm install` / `npm ci` in those host folders are not the supported route. Newer Experience Builder releases may require different versions—check the matrix instead of extrapolating this table.
 
-The widget manifest currently declares `exbVersion: 1.20.0`. That is not evidence of completed 1.21 testing. A package-manager change alone does not validate the new SDK.
+The widget manifest currently declares `exbVersion: 1.21.0`. That is not evidence of completed 1.21 testing. A package-manager change alone does not validate the new SDK.
 
 ## 2. Install the host
 
@@ -74,24 +74,24 @@ Return to the host's **`client` directory**. Do not run these commands from the 
 **Experience Builder 1.20:**
 
 ```sh
-npm install --save-exact mapillary-js@4.1.2 pbf@5.1.2 @mapbox/vector-tile@3.0.0
+npm install --save-exact mapillary-js@4.1.2 pbf@5.1.2 @mapbox/vector-tile@3.0.0 pako@2.2.0
 ```
 
 **Experience Builder 1.21:**
 
 ```sh
-pnpm add --save-exact mapillary-js@4.1.2 pbf@5.1.2 @mapbox/vector-tile@3.0.0
+pnpm add --save-exact mapillary-js@4.1.2 pbf@5.1.2 @mapbox/vector-tile@3.0.0 pako@2.2.0
 ```
 
 If pnpm specifically reports `ERR_PNPM_ADDING_TO_ROOT`, you are in a pnpm workspace root. Confirm this is the intended host `client` package, then explicitly target that root:
 
 ```sh
-pnpm add --workspace-root --save-exact mapillary-js@4.1.2 pbf@5.1.2 @mapbox/vector-tile@3.0.0
+pnpm add --workspace-root --save-exact mapillary-js@4.1.2 pbf@5.1.2 @mapbox/vector-tile@3.0.0 pako@2.2.0
 ```
 
 Do not bypass this by disabling root checks globally. If pnpm says the directory is not a workspace, use the ordinary `pnpm add` command above instead.
 
-These exact dependency versions were checked on 14 November 2026. `--save-exact` records reproducible versions in the host package. Keep its updated `package.json` and lockfile: `package-lock.json` for the npm installation, or `pnpm-lock.yaml` for the pnpm installation. Retain any additional files the host's own setup legitimately manages; do not manually convert or delete its supplied lockfiles.
+The viewer/decoder pins were checked on 14 November 2026. The directly imported pako fallback is explicitly pinned to 2.2.0 and checked on 18 November 2026; this avoids relying on transitive hoisting in pnpm. `--save-exact` records reproducible versions in the host package. Keep its updated `package.json` and lockfile: `package-lock.json` for the npm installation, or `pnpm-lock.yaml` for the pnpm installation. Retain any additional files the host's own setup legitimately manages; do not manually convert or delete its supplied lockfiles.
 
 The current source uses pbf 5's **`PbfReader`**. Old widget source with `import Pbf from 'pbf'` must be updated before using pbf 5. See the [runtime dependency reference](development/runtime-dependencies.md). Do not install separate React, ArcGIS SDK, or Jimu versions for this widget; the host owns them.
 
@@ -100,13 +100,13 @@ Check the installed dependencies in `client`:
 **1.20:**
 
 ```sh
-npm ls mapillary-js pbf @mapbox/vector-tile --depth=0
+npm ls mapillary-js pbf @mapbox/vector-tile pako --depth=0
 ```
 
 **1.21:**
 
 ```sh
-pnpm list mapillary-js pbf @mapbox/vector-tile --depth=0
+pnpm list mapillary-js pbf @mapbox/vector-tile pako --depth=0
 ```
 
 ## 5. Configure and start

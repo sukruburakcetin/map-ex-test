@@ -97,3 +97,12 @@ The existing minimap selection module now also creates the complete click handle
 One-time minimap MapView configuration lives in [minimapViewOptions](../../src/features/minimap/minimapViewOptions.ts). Live state/container readers preserve lookup order, strict image-ID matching, first-match selection, fallback center identity, fixed image zoom and lazy fallback zoom reads. UI, navigation and constraint defaults are unchanged and option containers remain fresh per initialization. The widget keeps SDK construction, readiness/revision checks and tracking. [Characterization tests](../../tests/minimapViewOptions.test.cjs) compare actual adapter options, references and read events against the [previous block](../../tests/fixtures/minimapViewOptions.baseline.json). Lifecycle tests use the real builder; no playback-path work is added.
 
 Stage 46 verifies cumulative delivery through stage 45: 27 installers replayed and repeated, 70 installed files matched the workspace, all 47 focused test files passed on installed output, and reverse rollback restored the baseline exactly. A static local-import audit found all 894 relative targets across 360 source files. Checkpoint v2 accepts recognized revisions and preserves unknown edits; its rollback restores the actual pre-install state. No runtime code changes were introduced by this checkpoint, and these checks do not replace the full Experience Builder 1.21 build or live performance measurement.
+
+<!-- isolated-build-check-stage47 -->
+Stage 47 adds the [isolated runtime/settings checker](../../tools/check-exb-build.cjs) and [guide](isolated-build-check.md), without runtime changes. All 47 focused files (855 tests), strict extracted-module TypeScript and the available 1.20 bundle passed. Full 1.21 packaging/browser/performance checks remain separate.
+
+<!-- viewer-presentation-stage48 -->
+Stage 48 establishes the [viewer presentation boundary](viewer-presentation.md): stateless surface/fullscreen/tray components, dedicated styles and a separate runtime state contract. SDK refs, portals, requests and selection ownership remain in the runtime. Further controller extraction remains.
+
+<!-- widget-documentation-stage49 -->
+For lifecycle entry points, request/resource ownership, fullscreen completion semantics and comment conventions, read the [runtime contributor guide](runtime-reading-guide.md). Stage 49 changes documentation only.

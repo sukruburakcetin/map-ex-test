@@ -9,9 +9,12 @@ This is a React/TypeScript widget hosted by ArcGIS Experience Builder Developer 
 
 Run affected Node suites with `node --test tests/<suite>.test.cjs`. The lightweight TypeScript loaders resolve the host's `typescript`, or the module path supplied through `MAPILLARY_TYPESCRIPT`. React/DOM suites additionally need compatible React, React DOM and jsdom available from the environment. Browser suites need their documented browser harness/dependencies. Python export tests need `tools/overture_places/requirements.txt`; serving uses standard-library Python.
 
+For an explicit complete Node run and dependency preflight, use the [portable test environment guide](docs/development/portable-tests.md). Test dependencies stay outside the runtime/host when needed; the runner does not suppress existing failures.
+
 Maintained check entry points:
 
 ```sh
+node tools/check-portable-tests.cjs --client "C:\path\to\experience-builder\client" --preflight
 node tools/check-repository.cjs
 node tools/check-docs.cjs
 node tools/check-localization-catalogs.cjs

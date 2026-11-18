@@ -18,9 +18,9 @@ export interface Config {
   placesPortalTilesUrl?: string;
   placesPortalQueryUrl?: string;
   /**
-   * Mapillary API access token used to authenticate requests to the Mapillary services.
-   * Required for loading imagery, vector tiles, and related Mapillary data.
-   * Accessed in widget via: this.props.config.mapillaryAccessToken
+   * Legacy configuration field retained for saved-experience compatibility.
+   * The current runtime reads manifest.properties.mapillaryAccessToken instead;
+   * setting this field does not override the manifest token.
    */
   mapillaryAccessToken?: string;
 

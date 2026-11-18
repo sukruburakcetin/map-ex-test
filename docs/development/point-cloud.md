@@ -224,4 +224,21 @@ Cluster downloads retain their existing AbortSignal through response-body loadin
 
 The 64 MiB decoded-data limit is enforced while streaming. Download concurrency, cache/point budgets, reconstruction/color normalization and export quality are unchanged. No external worker script or additional service request is used. Blocked/unsupported workers retain the existing pako compatibility path; synchronous parsing there can still delay input, so immediate processing cancellation requires worker support. A failed worker capability is remembered to avoid repeated failing starts.
 
-`tests/pointCloud.test.cjs` runs real decoder code using Node worker threads, including zlib/gzip parity, abort during decoding/materialization, budget enforcement and compatibility fallback. The lifecycle suite checks the real Cancel-button adapter and acquisition queue. Validate Cancel during a large live cluster download and decode in Experience Builder; unit tests do not measure browser input latency or network-panel timing.
+An earlier report named `tests/pointCloud.test.cjs`, but that file is absent from this checkout; its reported worker-thread checks are not current validation evidence. `tests/runtimeDependencies.test.cjs` exercises the actual no-Worker gzip/zlib compatibility path and pre-request cancellation. It does not establish streaming-worker cancellation or decoded-budget coverage. The lifecycle suite checks the real Cancel-button adapter and acquisition queue. Validate Cancel during a large live cluster download and decode in Experience Builder; unit tests do not measure browser input latency or network-panel timing.
+
+## Point-cloud fixture repair (stage 51)
+
+The 17 point-cloud suites now execute 257 passing tests. Four additional fixture
+contract tests validate the shared English binding helper. The map-layer snippet
+compiler uses explicit TSX mode; the 15 map-layer tests previously could not load.
+No frozen fixture files were rewritten.
+
+See the [current full baseline](test-baseline.md) for scope and remaining failures.
+The helper renders the shipped text-only localization wrappers against actual
+English messages. It preserves data/SDK traces and checks rendered feedback
+instead of treating React fragments as DOM nodes. Calibration explicitly permits
+only the historical-to-current unit/axis spacing changes. A regression control
+confirms that the real `cluster s` typo still fails the repaired comparisons.
+
+Only that plural-joining space changed in production. This pass does not alter
+acquisition, exports, rendering, cancellation or resource lifetimes.

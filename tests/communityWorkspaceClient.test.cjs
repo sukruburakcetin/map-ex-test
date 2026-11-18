@@ -1,5 +1,15 @@
 const fs=require('node:fs'),path=require('node:path'),test=require('node:test'),assert=require('node:assert/strict'),ts=require(process.env.MAPILLARY_TYPESCRIPT||'typescript');
-const m={exports:{}};new Function('module','exports',ts.transpileModule(fs.readFileSync(path.join(__dirname,'../src/features/community-notes/communityWorkspace.ts'),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText)(m,m.exports);
+// Load current attachment helpers as actual pure dependencies; transport stays injected per case.
+const modules=new Map();
+function load(file){
+ file=path.resolve(file);if(modules.has(file))return modules.get(file).exports;
+ const module={exports:{}};modules.set(file,module);
+ new Function('require','module','exports',ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText)(id=>{
+  assert(id.startsWith('.'),'Unexpected community-client dependency: '+id);
+  return load(path.resolve(path.dirname(file),id+'.ts'));
+ },module,module.exports);return module.exports;
+}
+const m={exports:load(path.join(__dirname,'../src/features/community-notes/communityWorkspace.ts'))};
 const {CommunityWorkspaceClient,validateWorkspaceConnection,parseWorkspaceInvitation,communityNoteTarget}=m.exports;
 const connection={endpoint:'https://workspace.example',publicKey:'sb_publishable_examplePublicKey123'},user='10000000-0000-4000-8000-000000000001',workspace='20000000-0000-4000-8000-000000000001',record='30000000-0000-4000-8000-000000000001';
 const session={access_token:'private-session',refresh_token:'must-not-persist',expires_in:3600,user:{id:user,app_metadata:{workspace_creator:true}}};

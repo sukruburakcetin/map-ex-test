@@ -1,9 +1,17 @@
 const fs=require('node:fs'),path=require('node:path'),test=require('node:test'),assert=require('node:assert/strict'),ts=require(process.env.MAPILLARY_TYPESCRIPT||'typescript');
 const compile=s=>ts.transpileModule(s,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText;
-const constantsModule={exports:{}};new Function('module','exports',compile(fs.readFileSync(path.join(__dirname,'../src/utils/constants.ts'),'utf8')))(constantsModule,constantsModule.exports);
-const geoModule={exports:{}};new Function('module','exports',compile(fs.readFileSync(path.join(__dirname,'../src/utils/geoUtils.ts'),'utf8')))(geoModule,geoModule.exports);
-const moduleValue={exports:{}};new Function('require','module','exports',compile(fs.readFileSync(path.join(__dirname,'../src/features/imagery/timeTravel.ts'),'utf8')))(id=>id.endsWith('constants')?constantsModule.exports:geoModule.exports,moduleValue,moduleValue.exports);
-const {checkTimeTravelAvailability,TimeTravelAvailability}=moduleValue.exports;
+// Resolve current pure-module dependencies instead of treating geoUtils as import-free.
+// Network and clocks remain under each case's explicit control.
+const root=path.resolve(__dirname,'../src'),modules=new Map();
+function load(file){
+ file=path.resolve(file);if(modules.has(file))return modules.get(file).exports;
+ const module={exports:{}};modules.set(file,module);
+ new Function('require','module','exports',compile(fs.readFileSync(file,'utf8')))(id=>{
+  assert(id.startsWith('.'),'Unexpected time-travel dependency: '+id);
+  return load(path.resolve(path.dirname(file),id+'.ts'));
+ },module,module.exports);return module.exports;
+}
+const {checkTimeTravelAvailability,TimeTravelAvailability}=load(path.join(root,'features/imagery/timeTravel.ts'));
 const current={id:'A',sequence:'drive-A',captured_at:'2020-01-01',geometry:{coordinates:[29,41]},computed_geometry:{coordinates:[29,41]},computed_compass_angle:359};
 const candidate={id:'other',sequence:'drive-B',captured_at:'2021-01-01',geometry:{coordinates:[29,41]},computed_geometry:{coordinates:[29,41]},computed_compass_angle:1};
 const response=(data,ok=true)=>({ok,json:async()=>data});
@@ -62,8 +70,7 @@ test('cancelUnless invalidates a matching image when token changes',async t=>{
  const held=deferred(),values=[];let token='one',signal,calls=0;mock(t,async(url,options)=>{calls++;signal=options.signal;return held.promise});const owner=new TimeTravelAvailability(()=>token,(id,value)=>values.push([id,value]));const task=owner.update('A');token='two';owner.cancelUnless('A');assert.equal(signal.aborted,true);assert.equal(calls,1);held.resolve(response(current));await task;assert.deepEqual(values,[]);
 });
 
-const queueModule={exports:{}};new Function('module','exports',compile(fs.readFileSync(path.join(__dirname,'../src/features/imagery/BackgroundRequestQueue.ts'),'utf8')))(queueModule,queueModule.exports);
-const {BackgroundRequestQueue}=queueModule.exports;
+const {BackgroundRequestQueue}=load(path.join(root,'features/imagery/BackgroundRequestQueue.ts'));
 test('injected background queue defers both time-travel request stages until resumed',async t=>{
  const queue=new BackgroundRequestQueue(1),values=[];let calls=0;queue.setPaused(true);
  mock(t,async()=>response(calls++?{data:[candidate]}:current));

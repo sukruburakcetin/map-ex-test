@@ -8,7 +8,7 @@ const {SequenceTileIndex}=load('features/coverage/SequenceTileIndex');
 const {TileSequenceHighlights}=load('features/coverage/TileSequenceHighlights');
 const {CoverageSelectionTargets}=load('features/coverage/CoverageSelectionTargets');
 const {BackgroundRequestQueue}=load('features/imagery/BackgroundRequestQueue');
-const {SelectionPulse}=load('features/map-graphics/SelectionPulse');
+const {renderedGroundPoint}=load('features/map-graphics/SelectionPulse');
 const {lonLatToWebMercator}=load('utils/geoUtils');
 const {TurboTileCache}=load('utils/turboCoverageUtils');
 const world=2*Math.PI*6378137,span=world/2**14,offset=world/2**14/4096/4;
@@ -54,7 +54,7 @@ const member=name=>widget.members.find(n=>n.name?.getText(sf)===name).getText(sf
 const Runtime=new Function('nativeImageAnchor','VectorTile','Pbf','ZOOM','lonLatToWebMercator',compile('class Runtime{'+['coverageSelectionContext','getCoverageDisplayPosition','resolveNativeImageAnchor','clearGreenPulse','drawCone'].map(member).join('\n')+'}')+';return Runtime;')(nativeImageAnchor,class{constructor(){this.layers=layers();}},class{},{TILE_FETCH:14},lonLatToWebMercator);
 class Point{constructor(p){Object.assign(this,p);this.type='point';}get longitude(){return this.x/6378137*180/Math.PI;}get latitude(){return Math.atan(Math.sinh(this.y/6378137))*180/Math.PI;}clone(){return new Point({...this});}}
 function setup(type='2d'){
- const w=new Runtime(),view={type,zoom:23,destroyed:false,map:{reorder(){},layers:[]}};w.state={jimuMapView:{view},turboModeActive:true,imageId:'I1',sequenceId:'A'};w._nativeSequenceSelection={};w._coverageSelectionTargets=new CoverageSelectionTargets();w._turboRequestCount=1;w.accessToken='test';w.ArcGISModules={Point};w._turboTileCache=new TurboTileCache();w._index=new SequenceTileIndex();w._sequenceTileIndex=w._index;w.getSequenceTileIndex=(bytes,signal)=>w._index.get(bytes,()=>({layers:layers()}),signal);w._backgroundRequests=new BackgroundRequestQueue(1);w.runSequenceBackground=(job,signal)=>w._backgroundRequests.run(job,signal);w._nativeImageAnchorKey='';w.coneLengths=[5];w.coneSpreads=[60];w.zoomStepIndex=0;w._poses=[];w.drawPulsingPoint=(lon,lat,color,id)=>w._poses.push(w.getCoverageDisplayPosition(id,lon,lat));w.log=()=>{};w.ensureSelectionPulseOwner=()=>({dispose(){}});w.ensureConeLayer=()=>({});w.ensureCameraConeOwner=()=>({render:(view,layer,center)=>{w._cone=center;return{};}});return w;
+ const w=new Runtime(),view={type,zoom:23,destroyed:false,map:{reorder(){},layers:[]}};w.state={jimuMapView:{view},turboModeActive:true,imageId:'I1',sequenceId:'A'};w._nativeSequenceSelection={};w._coverageSelectionTargets=new CoverageSelectionTargets();w._turboRequestCount=1;w.accessToken='test';w.ArcGISModules={Point};w._turboTileCache=new TurboTileCache();w._index=new SequenceTileIndex();w._sequenceTileIndex=w._index;w.getSequenceTileIndex=(bytes,signal)=>w._index.get(bytes,()=>({layers:layers()}),signal);w._backgroundRequests=new BackgroundRequestQueue(1);w.runSequenceBackground=(job,signal)=>w._backgroundRequests.run(job,signal);w._nativeImageAnchorKey='';w.coneLengths=[5];w.coneSpreads=[60];w.zoomStepIndex=0;w._poses=[];w.drawPulsingPoint=(lon,lat,color,id)=>w._poses.push(w.getCoverageDisplayPosition(id,lon,lat));w.log=()=>{};w.ensureSelectionPulseOwner=()=>({dispose(){}});w.ensureScreenDirectionCone=()=>({show:(view,lon,lat)=>{w._cone=lonLatToWebMercator(lon,lat);},clear(){}});w.ensureConeLayer=()=>({});w.ensureCameraConeOwner=()=>({render:(view,layer,center)=>{w._cone=center;return{};}});return w;
 }
 const api={lon:raw.x/6378137*180/Math.PI,lat:Math.atan(Math.sinh(raw.y/6378137))*180/Math.PI};
 for(const type of ['2d','3d'])test(`${type}: playback resolves native circle and cone center from warm bytes without fetching or changing API coordinates`,async()=>{
@@ -77,26 +77,44 @@ test('late index resolution cannot move a new image or transfer an anchor into a
  held.resolve({imageIndex:()=>0});await work;assert.equal(w._poses.length,0);assert.equal(w._coverageSelectionTargets.anchor(w.coverageSelectionContext(),'I1'),null);}
 });
 
-test('3D pulse projects the currently rendered terrain height, refreshing without network or another animation loop',()=>{
- const callbacks=new Map();let serial=0,height=100,samples=0,projected,groundChanged,groundRemoved=0;const overlay={style:{},setAttribute(){},remove(){}};const layer={visible:true,add(){},remove(){},destroy(){}};
- const view={type:'3d',width:900,height:700,updating:false,stationary:true,container:{appendChild(){}},map:{add(){},remove(){}},graphics:{remove(){}},groundView:{elevationSampler:{noDataValue:-999,on:(event,callback)=>{assert.equal(event,'changed');groundChanged=callback;return{remove(){groundRemoved++;}};},queryElevation:p=>{samples++;return {...p,z:height};}}},toScreen:p=>{projected=p;return{x:450,y:350};}};
- const clock={now:()=>0,request:callback=>{callbacks.set(++serial,callback);return serial;},cancel:id=>callbacks.delete(id),clearInterval(){}};const owner=new SelectionPulse({graphic:null},{point:p=>p,layer:()=>layer,graphic:p=>p,overlay:()=>overlay},clock);
- const frame=t=>{const jobs=[...callbacks.values()];callbacks.clear();jobs.forEach(job=>job(t));};
- owner.show(view,{geometry:{x:raw.x+offset,y:raw.y-offset,z:0}},api.lon,api.lat,[0,255,0,1],'I1');frame(16);assert.equal(projected.z,100);assert.equal(overlay.style.display,'block');assert.equal(callbacks.size,1);frame(32);assert.equal(samples,1);
- view.updating=true;height=140;frame(48);assert.equal(projected.z,140);assert.equal(samples,2);assert.equal(callbacks.size,1);view.updating=false;height=150;groundChanged();frame(64);assert.equal(projected.z,150);assert.equal(samples,3);owner.dispose();assert.equal(callbacks.size,0);assert.equal(groundRemoved,1);
+// The steady SDK-draped 3D pulse no longer projects a DOM overlay or samples terrain.
+// Preserve terrain-refresh intent at renderedGroundPoint, used by the direction indicator.
+test('explicit terrain projection reads the currently rendered height without mutating the native anchor',()=>{
+ let height=100,samples=0;const created=[];const geometry={x:raw.x+offset,y:raw.y-offset,z:0};
+ const view={groundView:{elevationSampler:{noDataValue:-999,queryElevation:p=>{samples++;return {...p,z:height};}}}};
+ const create=properties=>{created.push(properties);return properties;};
+ assert.equal(renderedGroundPoint(view,geometry,create).z,100);height=140;
+ assert.equal(renderedGroundPoint(view,geometry,create).z,140);height=150;
+ assert.equal(renderedGroundPoint(view,geometry,create).z,150);assert.equal(samples,3);assert.equal(geometry.z,0);assert.deepEqual(created,[]);
 });
 
 test('3D cone apex stays on the image ground point while the rest of its wedge remains lifted',()=>{
  const {CameraConeGraphics}=load('features/map-graphics/CameraConeGraphics');const included=new Set(),layer={graphics:{includes:g=>included.has(g)},add:g=>included.add(g),removeAll:()=>included.clear()},view={graphics:{forEach(){},remove(){}}};const owner=new CameraConeGraphics(()=>layer);
  const graphic=owner.render(view,layer,raw,0,0,5,60,true,p=>p);
- assert.deepEqual(graphic.geometry.rings[0][0],[raw.x,raw.y,0]);assert.equal(owner.parts[2].geometry.paths[0][0][2],0);assert(graphic.geometry.rings[0].slice(1,-1).some(p=>p[2]>0));
+ assert.equal(graphic.geometry.type,'mesh');assert.deepEqual(graphic.geometry.vertexSpace.origin,[raw.x,raw.y,0]);assert.deepEqual(graphic.geometry.vertexAttributes.position.slice(0,3),[0,0,0]);assert.deepEqual(owner.parts[0].geometry.paths[0][0],[raw.x,raw.y,0]);assert(graphic.geometry.vertexAttributes.position.some((value,index)=>index%3===2&&value>0));
 });
 
-test('missing scene terrain is retried at a bounded rate even after the view becomes stationary',()=>{
- const callbacks=new Map();let serial=0,samples=0,ready=false,projection;const layer={visible:true,add(){},remove(){},destroy(){}},overlay={style:{},setAttribute(){},remove(){}};
- const view={type:'3d',width:900,height:700,updating:false,stationary:true,container:{appendChild(){}},map:{add(){},remove(){}},graphics:{remove(){}},groundView:{elevationSampler:{noDataValue:-999,queryElevation:p=>{samples++;return {...p,z:ready?1000:-999};}}},toScreen:p=>{projection=p;return{x:450,y:350};}};
- const owner=new SelectionPulse({graphic:null},{point:p=>p,layer:()=>layer,graphic:p=>p,overlay:()=>overlay},{now:()=>0,request:f=>{callbacks.set(++serial,f);return serial;},cancel:id=>callbacks.delete(id),clearInterval(){}});
- const frame=t=>{const jobs=[...callbacks.values()];callbacks.clear();jobs.forEach(f=>f(t));};owner.show(view,{geometry:{x:1,y:2,z:0}},0,0,[0,255,0,1],'I1');frame(16);assert.equal(samples,1);frame(32);assert.equal(samples,1);ready=true;frame(120);assert.equal(samples,2);assert.equal(projection.z,1000);frame(136);assert.equal(samples,2);owner.dispose();
+// Bounded retry timers belonged to the retired DOM pulse. The active projection
+// helper must defer unknown terrain and accept it on the next explicit invocation.
+test('missing rendered terrain stays unavailable until a later sample succeeds',()=>{
+ let samples=0,ready=false;const created=[];const geometry={x:1,y:2,z:0},view={map:{ground:{layers:[{}]}},groundView:{elevationSampler:{noDataValue:-999,queryElevation:p=>{samples++;return {...p,z:ready?1000:-999};}}}};
+ const create=properties=>{created.push(properties);return properties;};
+ assert.equal(renderedGroundPoint(view,geometry,create),null);assert.equal(samples,1);
+ ready=true;const result=renderedGroundPoint(view,geometry,create);assert.equal(result.z,1000);assert.equal(samples,2);assert.equal(geometry.z,0);assert.deepEqual(created,[]);
+});
+test('only explicitly empty ground allows a z=0 fallback, preserving coordinate reference',()=>{
+ const geometry={x:1,y:2,z:999,spatialReference:{wkid:3857}},view={map:{ground:{layers:[]}}};
+ const point=renderedGroundPoint(view,geometry,p=>p);assert.deepEqual(point,{x:1,y:2,z:0,spatialReference:geometry.spatialReference});
+ assert.strictEqual(point.spatialReference,geometry.spatialReference);assert.equal(geometry.z,999);
+ const created=[];for(const map of [undefined,{}, {ground:{}},{ground:{layers:[{}]}}])assert.equal(renderedGroundPoint({map},geometry,p=>{created.push(p);return p}),null);assert.deepEqual(created,[]);
+});
+test('nonfinite, no-data and throwing terrain samples defer projection without speculative geometry',()=>{
+ const geometry={longitude:1,latitude:2,spatialReference:{wkid:4326}},created=[],create=p=>{created.push(p);return p;};
+ for(const sample of [undefined,null,{z:NaN},{z:Infinity},{z:-999}]){
+  const view={groundView:{elevationSampler:{noDataValue:-999,queryElevation:()=>sample}}};
+  assert.equal(renderedGroundPoint(view,geometry,create),null);
+ }
+ assert.equal(renderedGroundPoint({groundView:{elevationSampler:{queryElevation(){throw Error('Terrain unavailable')}}}},geometry,create),null);assert.deepEqual(created,[]);
 });
 
 test('image ID lookup respects the existing estimated byte budget without truncating oversized results',async()=>{

@@ -1,3 +1,7 @@
+import type { WidgetState as State } from "./widgetState";
+import { ViewerSurface } from "../components/ViewerSurface";
+import { FullscreenViewer } from "../components/FullscreenViewer";
+import { ImageTray } from "../features/imagery/ImageTray";
 import { buildMinimapViewOptions } from "../features/minimap/minimapViewOptions";
 import { createMinimapClickHandler } from "../features/minimap/minimapSelection";
 import { buildMinimapLayers } from "../features/minimap/minimapLayers";
@@ -65,15 +69,13 @@ import { paddedPlacesExtent } from '../features/places/publishedPlacesExtent';
 import { placeCameraDistanceLabel } from '../features/places/placeListUtils';
 import { SelectedPlaceCard } from '../components/SelectedPlaceCard';
 import { PlaceNoteReview } from '../features/places/PlaceNoteReview';
-import type { PlaceNoteDestination, PlaceNoteOptions, PlaceNoteImageContext, PlaceContributionSeed, ExternalContributionSeed } from '../features/places/placeNote';
+import type { PlaceNoteDestination, PlaceNoteOptions, PlaceNoteImageContext, PlaceContributionSeed } from '../features/places/placeNote';
 import type { PlaceListOrigin } from '../features/places/placeListUtils';
 import { PlacesPanel } from "../components/PlacesPanel";
 import { Place } from "../features/places/placesModel";
-import { PlacesState } from "../features/places/PlacesController";
 import { fetchCoverageRoads } from "../features/coverage/fetchCoverageRoads";
-import { FullscreenControls } from "../components/FullscreenControls";
 import { widgetSpriteUrls } from '../utils/widgetSpriteUrls';
-import { React, AllWidgetProps, jsx, SessionManager, getAppStore } from "jimu-core";
+import { React, AllWidgetProps, jsx, getAppStore } from "jimu-core";
 import { JimuMapViewComponent, JimuMapView, loadArcGISJSAPIModules, MapViewManager } from "jimu-arcgis";
 import ReactDOM from "react-dom";
 import * as webMercatorUtils from "esri/geometry/support/webMercatorUtils";
@@ -81,7 +83,7 @@ import { PbfReader as Pbf } from "pbf";
 import { VectorTile } from "@mapbox/vector-tile";
 import { objectNameMap } from "../utils/mapillaryObjectNameMap";
 import * as Icons from "../components/Icons";
-import { coverageNoticeStyles, glassStyles, overrideStyles, fullscreenOverlayStyle, getMinimapContainerStyle } from "../utils/styles";
+import { coverageNoticeStyles, glassStyles, overrideStyles } from "../utils/styles";
 import {
   LAYER_IDS,
   STYLE_LAYER_IDS,
@@ -89,7 +91,6 @@ import {
   TILE_URLS,
   GRAPH_API,
   ZOOM,
-  BBOX,
   LIMITS,
   CACHE_KEYS,
   SHARE_PARAMS,
@@ -105,7 +106,6 @@ import {
 import {
   distanceMeters,
   calculateBearing,
-  bboxToTileRange,
   createConeGeometry,
   debounce as debounceUtil,
   formatTrafficSignName,
@@ -168,7 +168,6 @@ import { pointCloudMapRenderer } from '../features/point-cloud/pointCloudMapPoli
 import { LocalNoteCollection } from '../features/field-notes/LocalNoteCollection';
 import { showLocalNotesClearedFeedback } from '../features/field-notes/LocalNoteCollectionFeedback';
 import { FieldNoteDraft } from '../features/field-notes/FieldNoteDraft';
-import type { PendingFieldNote } from '../features/field-notes/FieldNoteDraft';
 import { showFieldNoteDraftFeedback } from '../features/field-notes/FieldNoteDraftFeedback';
 import { PointCloudAnnotationPicker } from '../features/field-notes/PointCloudAnnotationPicker';
 import type { AnnotationMapPoint } from '../features/field-notes/PointCloudAnnotationPicker';
@@ -189,7 +188,6 @@ import { PointCloudSight } from '../features/point-cloud/PointCloudSight';
 import { PointCloudLasso } from '../features/point-cloud/PointCloudLasso';
 import { selectLassoIndices } from '../features/point-cloud/lassoProjection';
 import { PointCloudMeasurement } from '../features/point-cloud/PointCloudMeasurement';
-import type { MeasurementPoint } from '../features/point-cloud/MeasurementViewerRenderer';
 import { PointCloudAcquisition } from '../features/point-cloud/PointCloudAcquisition';
 import type { PointCloudLoadSession } from '../features/point-cloud/PointCloudAcquisition';
 import { PointCloudMapLayer } from '../features/point-cloud/PointCloudMapLayer';
@@ -202,11 +200,10 @@ import { Viewer, OutlineTag, PolygonGeometry, geodeticToEnu, RenderPass } from "
 import { PanoramaDetectionLabels } from '../features/detections/PanoramaDetectionLabels';
 import { DetectionNoteAction } from '../features/detections/DetectionNoteAction';
 import { MapSpriteLoading } from '../features/detections/MapSpriteLoading';
-import type { MapSpriteStatus } from '../features/detections/MapSpriteLoading';
 import { createNoteObjectChoice, deferNoteObjectPopup } from '../features/detections/NoteObjectChoice';
 import { attachmentMetadata, captureDetectionCrop, storeDetectionCrop, readDetectionCrop, deleteDetectionCrop } from '../features/detections/detectionImageAttachment';
 import { validDetectionNoteLocation, mappedDetectionLocation } from '../features/detections/detectionNote';
-import type { DetectionNoteSelection, DetectionNoteDestination, DetectionContributionSeed } from '../features/detections/detectionNote';
+import type { DetectionNoteSelection, DetectionNoteDestination } from '../features/detections/detectionNote';
 import type { DetectionPreviewLoader } from '../features/detections/detectionPreview';
 import { defaultDetectionExplorer, detectionGroup, showDetection } from '../features/detections/detectionExploration';
 import type { DetectionExplorerOptions, DetectionSummary } from '../features/detections/detectionExploration';
@@ -216,16 +213,15 @@ import { InfoBox } from "../components/InfoBox";
 import { shouldRecenterImage } from "../features/imagery/imageFollowPolicy";
 import { sceneFollowCamera } from '../features/imagery/sceneFollowCamera';
 import { FilterBar } from "../components/FilterBar";
-import { ImageryLoading } from "../components/ImageryLoading";
 import { SplashScreen } from "../components/SplashScreen";
 import { ControlBar } from "../components/ControlBar";
 import { ImageUtilityGroup } from "../components/ImageUtilityGroup";
-import type { FilterOption, NearbyImage, RouteData } from "../components/types";
-import { FieldNote, FieldNoteEditor, FieldNoteAttachments } from "../components/types";
+import type { FilterOption, NearbyImage, AssociatedImage } from "../components/types";
+import { FieldNote, FieldNoteAttachments } from "../components/types";
 import { FieldNotesPanel } from "../components/FieldNotesPanel";
 import { buildFinalRouteStops } from "../utils/routeOptimizer";
 import type { RouteTargetSegment, CaptureOpportunity } from "../utils/routeOptimizer";
-import type { RoutingResult, RoutingCoordinate, RoutingProvider, CaptureTravelMode } from "../utils/routingTypes";
+import type { RoutingResult, RoutingProvider, CaptureTravelMode } from "../utils/routingTypes";
 import type { RoutingEngine } from "../config";
 import { TURBO_LIMITS, TurboSpatialIndex, TurboIndexCache, TurboTileCache, turboTiles, visitTurboImageLayer, turboPointMatches, turboTileStyle, turboFootprintBboxes, TurboMetadataCache, detectionThumbnailBounds } from "../utils/turboCoverageUtils";
 import { MAPILLARY_IMAGE } from "../utils/mapillary-image-base64";
@@ -272,190 +268,17 @@ import { sequenceCacheStore } from '../features/imagery/sequenceCacheStore';
 import { NearbyImageDiscovery } from '../features/imagery/nearbyDiscovery';
 import { NearbyImageHighlight, nearbyImagePose } from '../features/imagery/nearbyHighlight';
 import type { SequenceCoordinate, SequenceProgress } from '../features/imagery/sequenceCoordinates';
-// React component state
-// Holds current map view, image/sequence data, viewer state,
-// and temporary interaction information like clicks or loading flags.
-interface State {
-  placesActive: boolean;
-  placesAutoUpdate: boolean;
-  placeNotePhase: 'idle' | 'capturing' | 'picking';
-  placesPanelOpen: boolean;
-  placesTileCategory: TileCategoryId;
-  placesSourceLoading: boolean;
-  placesStatus: PlacesState;
-  selectedPlace: Place | null;
-  placesHoveredId: string | null; placesRevealRequest: number;
-  placesShowLink: boolean;
-  placesList: readonly Place[];
-  placesCameraDistance: string | null;
-  jimuMapView: JimuMapView | null;
-  imageId: string | null;
-  sequenceId: string | null;
-  sequenceImages: { id: string; lat: number; lon: number; captured_at?: number }[];
-  lon: number | null;
-  lat: number | null;
-  isFullscreen: boolean;
-  address: string | null;
-  state?: string; // e.g. 'OPENED' | 'CLOSED'
-  visible?: boolean; // directly indicates visibility
-  isLoading: boolean;
-  availableSequences?: { sequenceId: string; images: { id: string; lon: number; lat: number }[]; _color?: number[]; capturedAt?: string }[];
-  selectedSequenceId?: string;
-  clickLon?: number;
-  clickLat?: number;
-  tilesActive?: boolean;
-  trafficSignsActive?: boolean;
-  objectsActive?: boolean;
-  turboModeActive?: boolean;
-  turboLoading?: boolean;
-  turboUpdatingVisible?: boolean;
-  hoverPreviewLoading?: boolean;
-  coverageHelpOpen?: boolean;
-  nearbyFramesHintVisible?: boolean;
-  sequenceRouteProgress?: string;
-  sequenceRouteLoading?: boolean;
-  coverageFrameResolving?: boolean;
-  selectionError?: string;
-  selectionCanRetry?: boolean;
-  featuresLoading?: boolean; // traffic signs / objects tile fetch in progress
-  coverageAnalysisLoading?: boolean;
-  coverageAnalysisProgress?: string;
-  coverageResult?: import("../components/types").CoverageResult | null;
-  coverageSegmentsVisible?: boolean;
-  turboFilterStartDate?: string; // ISO yyyy-mm-dd
-  turboFilterEndDate?: string; // ISO yyyy-mm-dd
-  turboFilterOnFoot?: boolean;
-  turboFilterIsPano?: boolean; // true = only panoramas, false = only non-panos, undefined/empty = no filter
-  turboColorByDate?: boolean;
-  qualityViewActive?: boolean; // Which quality band the legend has isolated ("good"|"fair"|"poor"|"unscored"), or null/undefined = show all bands
-  selectedQualityBand?: "good" | "fair" | "poor" | "unscored" | null;
-  turboYearLegend?: { year: string; color: string }[];
-  zoomWarningMessage?: string;
-  turboWarningAction?: "zoom" | "retry";
-  turboWarningIsHelp?: boolean;
-  trafficSignsSelectedCodes: CategorySelection;
-  objectsSelectedCodes: CategorySelection;
-  trafficSignsFilterValue: { value: string; label: string; iconUrl: string | null };
-  objectsFilterValue: { value: string; label: string; iconUrl: string | null };
-  filtersLoaded: boolean;
-  showIntro: boolean;
-  signDisplayMode?: CategoryDisplayMode;
-  objectDisplayMode?: CategoryDisplayMode;
-  signReduceOverlap?: boolean;
-  objectReduceOverlap?: boolean;
-  signLabels?: boolean;
-  objectLabels?: boolean;
-  signOpacity?: number;
-  objectOpacity?: number;
-  signSpriteScale?: number;
-  objectSpriteScale?: number;
-  minimapView?: __esri.MapView;
-  noImageMessageVisible: boolean;
-  turboFilterUsername: string;
-  turboFilterOrganization: string;
-  organizationName: { id: string; name: string } | null;
-  showTurboFilterBox: boolean;
-  signSpritesStatus: MapSpriteStatus;
-  objectSpritesStatus: MapSpriteStatus;
-  trafficSignsOptions: Array<{ value: string; label: string; iconUrl: string | null }>;
-  showTrafficSignsFilterBox: boolean;
-  objectsOptions: Array<{ value: string; label: string; iconUrl: string | null }>;
-  showObjectsFilterBox: boolean;
-  currentZoom?: number;
-  hasTimeTravel: boolean;
-  isDownloading?: boolean;
-  mapFeatureExportLoading?: boolean;
-  selectedTurboYear?: string | null;
-  showMinimap: boolean;
-  minimapExpanded?: boolean;
-  detectionsActive: boolean;
-  showAiTags: boolean;
-  detectionExplorer: DetectionExplorerOptions;
-  detectionSummary: DetectionSummary;
-  isSharedState: boolean;
-  imageTrayTab?: "nearby" | "object";
-  selectedFeatureMetadata?: { id: string; name: string; firstSeen?: string | number; lastSeen?: string | number };
-  featureMetadataLoading?: boolean;
-  featureMetadataError?: string;
-  alternateImagesError?: string;
-  alternateImages: Array<{
-    id: string;
-    detectionId: string;
-    detectionBounds?: { x: number; y: number; width: number; height: number };
-    detectionLabel?: string;
-    thumbUrl: string;
-    capturedAt: number;
-    geometry: { type: "Point"; coordinates: [number, number] };
-  }>;
-  selectedFeatureLocation: { lat: number; lon: number } | null;
-  isFetchingAlternates: boolean;
-  targetDetectionId: string | null;
-  syncHeading: boolean;
-  lockToImage: boolean;
-  imageryRepresentative?: boolean;
-  toastMessage?: React.ReactNode;
-  isMeasureMode: boolean;
-  measurePoints: MeasurementPoint[];
-  showCalibrationPanel: boolean;
-  nudgeStep: number;
-  pointCloudAutoPaused?: boolean;
-  pointCloudPrevious?: boolean;
-  pointCloudFollowImages?: boolean;
-  pointCloudAdaptive?: boolean;
-  pointCloudSummary?: string;
-  pointCloudIncomplete?: boolean;
-  pointCloudExportLoading?: boolean;
-  pointCloudLoading?: boolean;
-  pointCloudVisible?: boolean;
-  pointCloudAvailable?: boolean; // null = unknown, false = no sfm_cluster for this image
-  pointCloudColorMode: "rgb" | "elevation";
-  pointCloudLength: number;
-  pointCloudMaxLength: number;
-  pointCloudActualLength: number;
-  pointCloudWidth: number;
-  pointCloudMaxWidth: number;
-  pointCloudActualWidth: number;
-  /** Toggles the SVG drawing overlay on the Mapillary viewer */
-  isLassoMode: boolean;
-  /** Array of 2D screen coordinates representing the user's drawn polygon */
-  lassoPolygon: [number, number][];
-  /** Maps the selected points to ArcGIS FeatureLayer ObjectIDs for highlighting */
-  lassoSelectedObjectIds: number[];
-  isSightMode: boolean;
-  sightObserver: __esri.Point | null;
-  sightTargets: __esri.Point[];
-  isViewshedMode: boolean;
-  nearbyImages?: NearbyImage[];
-  nearbyLoading?: boolean;
-  nearbyStripOpen?: boolean;
-  nearbyCanExpand?: boolean;
-  isAnnotationMode: boolean;
-  fieldNotes: FieldNote[];
-  sharedNotesMessage?: string;
-  fieldNoteEditor?: FieldNoteEditor | null;
-  fieldNoteAttachments?: FieldNoteAttachments | null;
-  pendingFieldNote: PendingFieldNote | null;
-  viewerDetectionNote: DetectionNoteSelection | null;
-  detectionNotePicking: boolean;
-  detectionNoteCapturing: boolean;
-  detectionWorkspaceDraft: ExternalContributionSeed | null;
-  fieldNotesListOpen: boolean;
-  isGeneratingRoute?: boolean;
-  routeGenerationProgress?: { usedMinutes: number; budgetMinutes: number } | null;
-  routeData?: RouteData | null;
-  isSolarMode: boolean;
-  isElevationProfileActive?: boolean;
-  routeStartPoint: [number, number] | null;
-  routeEndPoint: [number, number] | null;
-  routeSpareMinutes: number;
-  routePickMode: "start" | "end" | null;
-  routeTravelMode: CaptureTravelMode;
-  routingEngineOverride: "world" | "osrm" | null;
-}
 
+/**
+ * Experience Builder runtime coordinator. Feature modules own bounded resources;
+ * this class supplies live host adapters, React state and cross-feature intent.
+ * Read docs/development/runtime-reading-guide.md before changing lifecycle or
+ * request ownership; optional enrichment must not delay foreground imagery.
+ */
 export default class Widget extends React.PureComponent<AllWidgetProps<any>, State> {
   private readonly _ownedMapResources = new OwnedMapResources<__esri.Graphic, __esri.Layer>();
   private _startupDisposed = false;
+  /** Invalidates asynchronous widget startup independently of image or map-selection requests. */
   private _startupRevision = 0;
   private _startupAbort = new AbortController();
   private _spritePreloadTimer: ReturnType<typeof setTimeout> | null = null;
@@ -463,6 +286,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _overrideStyleSheet: HTMLStyleElement | null = null;
   viewerContainer = React.createRef<HTMLDivElement>();
   private _profileFlowHost: HTMLDivElement | null = null;
+  /** Attach or release the elevation-profile DOM host without creating a second profile owner. */
   private setProfileFlowHost = (node: HTMLDivElement | null): void => {
     this._profileFlowHost = node;
     this._elevationProfile?.refreshLayout();
@@ -518,6 +342,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _placesTilesStartRevision = 0;
   private _placesConfiguredUrl: string | null = null;
   private _placesConfiguredRequest: { url: string; view: any } | null = null;
+  /** Reflect a Places selection in the panel and camera-distance display; list-origin changes request a reveal. */
   private selectedPlaceChanged = (selectedPlace: Place | null, origin: 'map' | 'list' | 'card' = 'map') => {
     if (selectedPlace !== this.state.selectedPlace) this._placeNoteReview?.cancel();
     const frame = this._liveSequenceFrames.current;
@@ -525,7 +350,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this.setState(previous => ({ selectedPlace, placesCameraDistance, ...(origin === 'map' && selectedPlace ? { placesRevealRequest: previous.placesRevealRequest + 1 } : {}), ...(!selectedPlace ? { placesShowLink: false } : {}) }));
     if (selectedPlace && frame) this._places?.selection.updateCamera(frame.lon, frame.lat);
   };
-  /** Owns the configured service lifecycle privately; startup follows an explicit Places action. */
+  /** Bind the configured Places service to live widget/map state. Service startup remains demand-driven by Places actions. */
   private initializePlacesLifecycle() {
     const control = {
       startService: async (base: string) => {
@@ -619,6 +444,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   private _placesImageryCache: PlaceImageryCache | null = null;
   private _placesExploreAbort: AbortController | null = null;
+  /** Explain why Places cannot currently explore; the same guards prevent discovery during competing interactions. */
   private placesPauseReason = (): string => {
     if (this.props.state === 'CLOSED') return this._owned("Open the widget to load nearby places.");
     if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return this._owned("Return to this tab to load nearby places.");
@@ -630,6 +456,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     return '';
   };
   private placesBusy = () => !!this.placesPauseReason();
+  /** Synchronize the active Places source with current view, filters and panel demand; source owners retain transport and rendering. */
   private syncPlaces = () => {
     const view = this.state.jimuMapView?.view;
     const url = placesSourceKey(this.props.config);
@@ -669,6 +496,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     open: (seed, destination) => this.openPlaceFieldNote(seed, destination)
   });
   private cancelPlaceNotePreparation = () => this._placeNoteReview?.cancel();
+  /** Resolve the current capture context for a place note; return null when no image is selected. */
   private getPlaceNoteImage = async (): Promise<PlaceNoteImageContext | null> => {
     const viewer = this.mapillaryViewer, id = String(this.state.imageId || ''); if (!viewer || !/^\d+$/.test(id)) return null;
     try {
@@ -679,6 +507,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     } catch { return null; }
   };
   private createPlaceFieldNote = (destination: PlaceNoteDestination, options?: PlaceNoteOptions) => { void this._placeNoteReview.begin(destination, options); };
+  /** Seed a place-linked note draft and route it to the chosen local or shared destination. */
   private openPlaceFieldNote = (seed: PlaceContributionSeed, destination: PlaceNoteDestination) => {
     this._placesExploreAbort?.abort(); this.state.jimuMapView?.view?.closePopup();
     if (destination === 'workspace') { this._placeWorkspaceCrop = seed.attachmentId || null; this._detectionWorkspaceMarkerOwner = seed.requestId; this._detectionWorkspaceImage = seed.attachmentId || null; this.drawPendingNoteGraphic(seed.lon, seed.lat); this.setState({ detectionWorkspaceDraft: seed, fieldNotesListOpen: true, nearbyStripOpen: false }); }
@@ -731,6 +560,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     if (label !== this.state.placesCameraDistance) this.setState({ placesCameraDistance: label });
   }
   private showPlacesHit(results: any[], targetId?: string | null): boolean { return !!this._places?.open(results, targetId); }
+  /** Search imagery around the selected place under an abortable exploration request; a superseded search cannot publish its result. */
   private async explorePlace(place: Place, radius: number, signal: AbortSignal): Promise<PlaceImagery[]> {
     const view = this.state.jimuMapView?.view;
     if (!view || view.destroyed || signal.aborted) throw new DOMException('Cancelled', 'AbortError');
@@ -755,6 +585,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       if (this._placesExploreAbort === controller) { this._placesExploreAbort = null; this._places?.controller.sync(); }
     }
   }
+  /** Open a selected place capture and orient the viewer toward the place; guard asynchronous restoration against replacement selections. */
   private async openPlaceImagery(image: PlaceImagery) {
     const view = this.state.jimuMapView?.view;
     if (!view || view.destroyed) return;
@@ -822,6 +653,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private changeDetectionExplorer = (options: DetectionExplorerOptions) => {
     this.setState({ detectionExplorer: options }, () => this.refreshDetectionExploration());
   };
+  /** Refresh detection summary and viewer visibility from the active exploration options. */
   private refreshDetectionExploration() {
     if (this.state.detectionsActive && this.state.imageId) void this.loadDetections(this.state.imageId);
   }
@@ -884,6 +716,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     if (typeof data.thumb_1024_url !== 'string') throw new Error('Preview unavailable.');
     return data.thumb_1024_url;
   };
+  /** Invalidate detection consumers and release viewer tag/hover resources before a new image or filter takes ownership. */
   private clearDetectionOverlays() {
     this.cancelDetectionNoteLocation();
     if (this.state.viewerDetectionNote && !this.state.pendingFieldNote && !this.state.detectionWorkspaceDraft && !this._detectionWorkspaceMarkerOwner) this.clearPendingNoteGraphic();
@@ -934,6 +767,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   private _mapFeatureExportAbort: AbortController | null = null;
 
+  /**
+   * Collect filtered map detections from source tiles for the requested geographic boxes.
+   * @param signal Cancels tile collection; no viewport FeatureLayer is created for export.
+   */
   private async collectMapFeatureExport(boxes: [number, number, number, number][], kinds: ("signs" | "objects")[], signal: AbortSignal): Promise<Blob> {
     const tiles = new Map<string, [number, number, number]>();
     for (const box of boxes) for (const tile of turboTiles(box, 14)) {
@@ -1084,8 +921,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   }
 
   private _objectDetailsAbort: AbortController | null = null;
+  /** Scopes metadata, thumbnails and outline enrichment to the selected map feature. */
   private _objectDetailsRequest = 0;
   private _objectDetailsCache = new TurboMetadataCache<any>(16);
+  /** Scopes associated-capture navigation separately from feature-detail loading. */
   private _alternateNavigationRequest = 0;
   private _alternateNavigationAbort: AbortController | null = null;
 
@@ -1098,6 +937,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private selectedMapFeatureEnabled(): boolean {
     return this._selectedMapFeatureKind === 'signs' ? !!this.state.trafficSignsActive : this._selectedMapFeatureKind === 'objects' ? !!this.state.objectsActive : false;
   }
+  /** Invalidate selected-feature detail/navigation requests and clear their popup, tray and detection focus. */
   private clearSelectedMapFeature(kind?: "signs" | "objects"): void {
     if (kind && this._selectedMapFeatureKind !== kind) return;
     this._objectDetailsAbort?.abort(); ++this._objectDetailsRequest;
@@ -1121,8 +961,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _coverageRenderAbort: AbortController | null = null;
   private _coverageRoadRetryAt = 0;
   private _coverageAnalysisAbort: AbortController | null = null;
+  /** Separates coverage-analysis runs so cancellation can invalidate pending calculations and drawing. */
   private _coverageAnalysisRevision = 0;
   private _coverageAnalysisCurrent: (() => boolean) | null = null;
+  /** Abort the active analysis, advance its revision and clear analysis-loading feedback before another run may start. */
   private cancelCoverageAnalysis = () => {
     ++this._coverageAnalysisRevision;
     this._coverageAnalysisCurrent = null;
@@ -1134,6 +976,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _coverageRenderRevision = 0;
   private _coverageRenderLimited = false;
 
+  /** Cancel incremental coverage drawing so retired analysis cannot continue adding graphics. */
   private stopCoverageRendering() {
     ++this._coverageRenderRevision;
     this._coverageRenderAbort?.abort(); this._coverageRenderAbort = null;
@@ -1208,6 +1051,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     key: string; controller: AbortController; promise: Promise<void>;
   } | null = null;
   private _turboDecodeTask: Promise<void> = Promise.resolve();
+  /** Identifies the foreground imagery selection; stale metadata/navigation must not publish against a newer selection. */
   private _selectionRequestId = 0;
   private readonly _sharedTileRequests = new SharedTileRequests();
   private readonly _sequenceTileIndex = new SequenceTileIndex();
@@ -1272,6 +1116,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _nativeCurrentImageMarker: NativeCurrentImageMarker | null = null;
   private _screenDirectionCone: ScreenDirectionCone | null = null;
   private readonly _currentImagePresentation = new CurrentImagePresentationOwner();
+  /** Transfer current-image feedback to this map owner; shared-map presentation must not outlive its claim. */
   private claimCurrentImagePresentation(view: __esri.MapView | __esri.SceneView): void {
     if (!view?.map || view.destroyed || this.props.visible === false || this.props.state === 'CLOSED') return;
     this._currentImagePresentation.activate(view.map, String(this.props.id), () => {
@@ -1310,8 +1155,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _coverageHoverHandler: ((event: any) => void) | null = null;
   private _turboMapLeaveCleanup: (() => void) | null = null;
   private _turboClickPickAbort: AbortController | null = null;
+  /** Rejects delayed SDK hit tests from an older click or retired map view. */
   private _mapClickRevision = 0;
-
 
   // Point Cloud Variables
   private _pointCloudCache = new PointCloudClusterCache();
@@ -1632,7 +1477,9 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _turboAbortController: AbortController | null = null;
 
   // Request tracking
+  /** Scopes native coverage setup/loading feedback to the current coverage revision. */
   private _turboRequestCount: number = 0;
+  /** Invalidates delayed setup/shared-link work when the active map view is replaced. */
   private _viewStartupRevision = 0;
   private _startupUrlParameters: URLSearchParams | null = null;
   private _sharedStateRestoreComplete: boolean = false;
@@ -1837,7 +1684,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
     // Read accessToken from manifest.json properties - you should use your own token start with MLY
     this.accessToken = (props.manifest?.properties as any)?.mapillaryAccessToken || "";
-    this.log("Loaded Access Token:", this.accessToken);
 
     // Wrap the layer reload logic in debounce (300ms delay after typing stops)
     this.debouncedTurboFilter = debounceUtil(async () => {
@@ -1869,7 +1715,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }, 300);
   }
 
-  // Binds events (cone drawing, zoom, image changes) to the current viewer instance.
+  /**
+   * Bind image, camera and playback callbacks to the current Mapillary viewer.
+   * Rebinding clears current map feedback; callers restoring feedback must do so afterward.
+   * Event handlers coordinate live selection state with feature-owned renderers and background metadata.
+   */
   private bindMapillaryEvents() {
     const profileEventViewer = this.mapillaryViewer;
     if (!this.mapillaryViewer) return;
@@ -2123,7 +1973,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
           this.currentGreenGraphic = this.drawPulsingPoint(activeImg.lon, activeImg.lat, [0, 255, 0, 1], activeImg.id);
           this._lastSuccessfulSelection = { sequenceImages: this.state.sequenceImages, imageId: newId, sequenceId: this.state.sequenceId, selectedSequenceId: this.state.selectedSequenceId };
 
-
           redrawCone(activeImg.lon, activeImg.lat);
           this.updateMinimapTracking();
           void this.refreshSequenceMarkerWindow();
@@ -2168,8 +2017,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._directionBindings.bind(this.mapillaryViewer, this.viewerContainer.current);
   }
 
-
-
   /** Bind live lookup state and rendering callbacks once; hover requests stay owner-managed. */
   private ensureDirectionHoverDiscovery(): DirectionHoverDiscovery {
     return this._directionDiscovery ??= new DirectionHoverDiscovery({
@@ -2189,8 +2036,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     if (!view || !this.ArcGISModules) return;
     this.ensureDirectionHoverDiscovery().handle(hoveredId);
   }
-
-
 
   /** Bind live host dependencies once; marker and interval lifetime belong to the owner. */
   private ensureDirectionHoverMarker(): DirectionHoverMarker<__esri.Graphic> {
@@ -2343,6 +2188,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   // Resolves the selected image independently of optional complete route data,
   // updates the viewer, re-draws map markers,
   // and attaches Mapillary event listeners for bearing/image changes.
+  /** Resolve coordinates for one image from available metadata; fetch missing coordinates only on demand. */
   private async getSelectedImageCoords(sequenceId: string, imageId: string, signal: AbortSignal): Promise<{ id: string; lon: number; lat: number; captured_at?: number }> {
     const live = this._liveSequenceFrames.sequenceId === sequenceId ? this._liveSequenceFrames.find(imageId) : undefined;
     if (live) return live;
@@ -2361,6 +2207,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     return { id: String(imageId), lon: xy[0], lat: xy[1], captured_at: data.captured_at ? new Date(data.captured_at).getTime() : undefined };
   }
 
+  /**
+   * Create and bind the SDK viewer only when its React-owned container exists and no viewer is active.
+   * The SDK owns the container contents; React overlays must remain outside it.
+   */
   private ensureImageViewer(startImageId: string): void {
     // Create new Mapillary viewer
     if (!this.mapillaryViewer && this.viewerContainer.current) {
@@ -2407,7 +2257,12 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   }
 
-
+  /**
+   * Open the requested capture with foreground selection ownership, then populate local sequence context.
+   * New selections invalidate old work; optional route/metadata hydration must not block initial imagery.
+   * @param sequenceId Sequence context supplied by the coverage pick or associated-image navigation.
+   * @param startImageId Capture to open before optional sequence hydration.
+   */
   private async loadSequenceById(sequenceId: string, startImageId: string, clickPoint?: { lon: number; lat: number }, representative = false, nearestToClick = false, clickStartedAt?: number) {
     this._nearbyDiscovery?.cancel();
     this.highlightNearbyPin?.(null);
@@ -2599,6 +2454,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   // Fetch full coordinate list of a sequence
   // - Uses sequence_id → image_ids → geometry batch fetch
   // - to get lat/lon for all frames in a sequence efficiently.
+  /** Fetch and validate a Mapillary JSON response through the existing API helper; forward cancellation to transport. */
   private async fetchMapillaryJson(url: string, accessToken: string, signal?: AbortSignal): Promise<any> {
     return fetchGraphJson(url, accessToken, signal);
   }
@@ -2743,6 +2599,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }
   }
 
+  /** Update the active sequence overlay from retained coordinates without taking ownership of the current image. */
   private async renderLiveSequenceLine(route: readonly SequenceCoordinate[], sequenceId: string, requestId: number, controller: AbortController, view: __esri.MapView | __esri.SceneView) {
     const current = () => requestId === this._selectionRequestId && !controller.signal.aborted && this.state.jimuMapView?.view === view && !view.destroyed && this._liveSequenceFrames.sequenceId === sequenceId;
     try {
@@ -2812,6 +2669,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     } catch (error) { if (current()) console.warn('[Mapillary sequence] Could not draw nearby route markers:', error); }
   }
 
+  /** Resolve sequence coordinates through the shared request/cache owner; callers retain selection-lifetime guards. */
   private async getSequenceWithCoords(sequenceId: string, accessToken: string, signal?: AbortSignal, onProgress?: SequenceProgress): Promise<SequenceCoordinate[]> {
     this._sequenceRequests ??= new SharedSequenceRequests((id, token, requestSignal, progress) => this.fetchSequenceWithCoords(id, token, requestSignal, progress));
     return this._sequenceRequests.get(sequenceId, accessToken, signal, onProgress);
@@ -2975,6 +2833,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     });
   };
 
+  /** Retry the saved selection target using the normal selection pipeline and its current ownership checks. */
   private async retrySelectedImage() {
     const target = this._selectionRetry;
     if (target) await this.loadSequenceById(target.sequenceId, target.imageId, target.clickPoint, !!target.nearestToClick, !!target.nearestToClick);
@@ -3166,6 +3025,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   // Local caching of last sequence
   // Stores minimal sequence info (IDs + coords) in localStorage
   // to reload previous sequence instantly on widget startup.
+  /** Persist a bounded sequence snapshot for later restoration; storage failure leaves the live session usable. */
   private saveSequenceCache(sequenceId: string, sequenceImages: { id: string; lat: number; lon: number }[]) {
     if (this._sequenceStorageDisabled) return;
     try {
@@ -3184,6 +3044,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   }
 
   // Restores minimal sequence info (IDs + coords) in localStorage
+  /** Restore cached coordinate hints without activating a sequence; actual image selection remains user-driven. */
   private restoreSequenceCache() {
     try {
       const cache = localStorage.getItem(CACHE_KEYS.SEQUENCE);
@@ -3213,10 +3074,12 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   }
   // #endregion SEQUENCE MANAGEMENT
 
-  // Clean up everything when widget closes or reloads
-  // Stops animation intervals, removes all map graphics,
-  // destroys Mapillary viewer instance, clears DOM container,
-  // and resets internal state if requested.
+  /**
+   * Cancel feature work and release viewer/map presentation for minimize, close or teardown.
+   * @param resetState Reset selection and coverage controls after cleanup.
+   * @param fullRemove Also retire view handlers, owned layers and full-removal resources; false preserves the reusable view setup.
+   * Shared-view cleanup targets registered widget resources rather than unrelated map content.
+   */
   private cleanupWidgetEnvironment(resetState: boolean = false, fullRemove: boolean = true) {
     this.cancelCaptureRouteGeneration();
     this._mapSpriteLoading.clearAll();
@@ -3276,7 +3139,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._screenDirectionCone?.clear();
     this._cameraCone?.dispose(this.state.jimuMapView?.view);
 
-
     if (this._coneRedrawRaf != null) {
       cancelAnimationFrame(this._coneRedrawRaf);
       this._coneRedrawRaf = null;
@@ -3309,7 +3171,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
     this.clearViewshed();
 
-    //  graphics cleanup
     if (fullRemove && this.state.jimuMapView?.view?.graphics) {
       const { view } = this.state.jimuMapView;
       this._ownedMapResources.clearGraphics(view);
@@ -3398,7 +3259,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }
 
     if (resetState) {
-      // state reset logic
       this.setState({
         imageId: null,
         sequenceId: null,
@@ -3492,10 +3352,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   // #region MINIMAP
   // Creates, updates and destroys the fullscreen minimap view.
-  /*
-   * Initializes the minimap view within the fullscreen portal.
-   * It replicates the main map's basemap and specific Vector Tile layers (safely re-creating them to avoid cloning errors),
-   * and binds click events to allow users to jump to different frames within the sequence.
+
+  /**
+   * Construct the fullscreen ArcGIS minimap from the current view and native layers.
+   * After asynchronous initialization, verify the container/view still owns the minimap before retaining it.
    */
   private async createMinimap() {
     if (!this.state.isFullscreen || !this.minimapContainer.current || !this.state.jimuMapView || !this.ArcGISModules) return;
@@ -3580,10 +3440,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }
   }
 
-  /*
-   * Fully disposes of the minimap view, map instance, and associated graphics layers.
-   * This ensures WebGL contexts are released and prevents memory leaks when the user exits fullscreen mode.
-   */
+
+  /** Release the minimap view, its tracking handles and references before fullscreen exit or recreation. */
   private destroyMinimap() {
     ++this._minimapRevision;
     this._minimapReady = false;
@@ -3642,11 +3500,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this.log("Minimap destroyed");
   }
 
-  /*
-   * Synchronizes the minimap with the active Mapillary image.
-   * It centers the view on the current coordinates and redraws tracking graphics:
-   * a pulsing location dot, a camera direction cone, and the sequence polyline.
-   */
+
+  /** Synchronize the minimap marker, route and camera with the current image while reusing existing graphics where possible. */
   private updateMinimapTracking() {
     const layer = this.minimapGraphicsLayer, view = this.minimapView;
     if (!this._minimapReady || !layer || !view || !view.ready || view.destroyed || !this.ArcGISModules || !this.state.imageId) return;
@@ -3686,11 +3541,12 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   // #endregion MINIMAP
 
   // #region FULLSCREEN & RESIZE
-  // Manages toggling fullscreen mode and keeping the Mapillary viewer
-  // correctly sized when the container or window dimensions change.
-  // Toggle between embedded and fullscreen modes
-  // Destroys/recreates Mapillary viewer in the appropriate container
-  // because Mapillary viewer must rebind its WebGL canvas context.
+  /**
+   * Switch between embedded and body-portal layouts by removing and recreating the Mapillary viewer.
+   * Preserve the selected image and bearing, then restore viewer integrations and fullscreen minimap.
+   * Recreation can briefly expose SDK loading/cover UI; this is not a resize-only transition.
+   * The async setState callback completes restoration separately from the returned promise.
+   */
   private toggleFullscreen = async () => {
     const goingFullscreen = !this.state.isFullscreen;
     if (goingFullscreen) {
@@ -3698,7 +3554,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       this.setState({ pointCloudLoading: false, minimapExpanded: false });
     }
 
-    // Store the current state
     let currentBearing = this._lastBearing || 0;
     let currentImageId = this.state.imageId;
     let currentImageCoords: { lon: number; lat: number } | null = null;
@@ -3710,7 +3565,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       }
     }
 
-    // Clear graphics before state change
     this.clearGreenPulse();
     this.clearConeGraphics();
 
@@ -3720,7 +3574,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       await new Promise((resolve) => setTimeout(resolve, 200));
     }
 
-    // Destroy current viewer
     if (this.mapillaryViewer) {
       try {
         await this.mapillaryViewer
@@ -3757,7 +3610,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
       if (this.viewerContainer.current && currentImageId) {
         this._isInitialImageLoad = true;
-        // Create new viewer
         this._viewerImageTiling = this.props.config.imageTiling === true;
         this.mapillaryViewer = new Viewer({
           imageTiling: this._viewerImageTiling,
@@ -4204,15 +4056,12 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   };
 
   /**
-   * Fetches a small set of alternate Mapillary images related to a detected feature.
-   * The function queries the Mapillary Graph API for detections associated with the
-   * provided feature ID, extracts image metadata (thumbnail URL, capture time, geometry),
-   * removes duplicate images, and stores up to 3 alternate images in component state.
-   * It also updates UI state to indicate loading progress and saves the selected
-   * feature location for reference.
-   * @param featureId - Mapillary feature identifier used to query detections.
-   * @param featureLat - Latitude of the selected feature.
-   * @param featureLon - Longitude of the selected feature.
+   * Load selected-feature metadata and a bounded, deduplicated associated-capture list.
+   * Publish thumbnails before optional outline enrichment; cache only successful current-request results.
+   * A new feature selection aborts and supersedes these detail and navigation requests.
+   * @param featureId Mapillary feature identifier.
+   * @param featureLat Feature latitude in WGS84 degrees.
+   * @param featureLon Feature longitude in WGS84 degrees.
    */
   private async fetchAlternateImages(featureId: string, featureLat: number, featureLon: number) {
     this._objectDetailsAbort?.abort();
@@ -4294,23 +4143,12 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     if (current() && metadataOK && imagesOK) this._objectDetailsCache.set(String(featureId), { metadata: resolvedMetadata, images: resolvedImages });
   }
 
-  /*
-   * Handles selecting an alternate image from the InfoBox panel.
-   * When a user clicks a different image thumbnail, this function:
-   * 1. Retrieves the sequence containing that image
-   * 2. Loads the sequence on the map/viewer
-   * 3. Rotates the Mapillary viewer toward the detected feature
-   * 4. Moves the ArcGIS map camera to the image location
-   * 5. Loads detections for the selected image
+
+  /**
+   * Open an associated capture and focus its detection while this feature-navigation request remains current.
+   * Coordinate viewer, sequence, map and detection updates without allowing a superseded capture to restore focus.
    */
-  private _handleSelectAlternateImage = async (img: {
-    id: string;
-    detectionId: string;
-    detectionBounds?: { x: number; y: number; width: number; height: number };
-    thumbUrl: string;
-    capturedAt: number;
-    geometry: { type: "Point"; coordinates: [number, number] };
-  }) => {
+  private _handleSelectAlternateImage = async (img: AssociatedImage) => {
     if (!this.selectedMapFeatureEnabled()) return;
     this._nearbyDiscovery?.cancel();
     this.revealDetectionTools();
@@ -4416,14 +4254,15 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   // #region FILTER LOADING
   // Preloads traffic sign and object dropdown options from sprite sheets.
-  /**
-   * Loads traffic sign filter options with icons from the bundled Mapillary sprite snapshot.
-   * Sets up dropdown options and initializes filter state to DEFAULT_FILTER_LABELS.TRAFFIC_SIGNS.
-   */
+  /** Resolve deployment-relative sprite URLs from the Experience Builder widget folder. */
   private get spriteUrls() {
     return widgetSpriteUrls(this.props.context?.folderUrl);
   }
 
+  /**
+   * Load the bundled traffic-sign sprite catalog and build filter choices in cancellable chunks.
+   * Startup disposal prevents late catalog or image work from publishing options.
+   */
   private async preloadTrafficSignOptions() {
     if (this._startupDisposed) return;
     const signal = this._startupAbort?.signal;
@@ -4476,8 +4315,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   }
 
   /**
-   * Loads object detection filter options with icons from the bundled Mapillary sprite snapshot.
-   * Sets up dropdown options and initializes filter state to DEFAULT_FILTER_LABELS.OBJECTS.
+   * Load the bundled object sprite catalog and build filter choices in cancellable chunks.
+   * Startup disposal prevents late work from publishing options.
    */
   private async preloadObjectOptions() {
     if (this._startupDisposed) return;
@@ -4531,6 +4370,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   }
 
   // Helper to set loaded flag
+  /** Dismiss the introduction after both sprite catalogs are ready, using the startup-owned dismissal timer. */
   private checkFiltersLoaded() {
     if (this._startupDisposed) return;
     const signal = this._startupAbort?.signal;
@@ -4582,12 +4422,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   // #endregion FILTER LOADING
 
   // #region COVERAGE LAYERS
-  /*
-        Initializes the Mapillary Vector Tile Layer
-        * Creates a VectorTileLayer from the Mapillary tiles API
-        * Uses an inline `minimalStyle` object for symbology (sequence = green line, image = light cyan blue circle)
-        * Stores the layer in `this.mapillaryVTLayer` for later toggling
-    */
+
+  /** Create the native coverage layer with creator/date/panorama presets applied before it is attached to a view. */
   private initMapillaryLayer(
     filterCreatorId?: number,
     filterStartDate?: string,
@@ -4924,13 +4760,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }
   }
 
-  /*
-        Initializes the Mapillary Traffic Signs Layer
-        * Creates a Traffic Signs Layer from the Mapillary tiles API
-        * Detection tile resources are owned by DetectionLayerController
-    */
+
   /** Native tiles own all sprites; no per-viewport FeatureLayer is constructed. */
   private _mapSpriteLoading = new MapSpriteLoading((kind, status) => { if (!this._sharedNotesDisposed) this.setState(kind === 'signs' ? { signSpritesStatus: status } : { objectSpritesStatus: status }); });
+  /** Synchronize native detection-layer coverage and appearance through the controller for the requested feature kind. */
   private async syncMapFeatureCoverage(kind: "signs" | "objects") {
     const view = this.state.jimuMapView?.view;
     if (!view) { this._mapSpriteLoading.clear(kind); return; }
@@ -4972,6 +4805,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     view.openPopup({ title: this._owned('Note and map objects'), content, location: graphic.geometry as __esri.Point }); return true;
   }
 
+  /** Resolve a pointer-local detection from source tiles under the current map-click request; return only a still-current pick. */
   private async pickMapFeature(screen: { x: number; y: number }, view: __esri.MapView | __esri.SceneView, signal: AbortSignal): Promise<any | null> {
     const stationary = () => view.stationary !== false;
     // SceneView can report 13.99999 for a settled zoom-14 target.
@@ -5099,7 +4933,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this.setState({ trafficSignsActive: next, signSpritesStatus: next ? 'loading' : 'idle' }, () => { if (!next) this.clearSelectedMapFeature("signs"); void this.syncMapFeatureCoverage("signs"); this.syncDetectionLayerAvailability(); });
   };
 
-
   /*
         Initializes the Mapillary Objects Layer Layer
         * Creates a Object Layer from the Mapillary tiles API
@@ -5110,7 +4943,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const next = !this.state.objectsActive;
     this.setState({ objectsActive: next, objectSpritesStatus: next ? 'loading' : 'idle' }, () => { if (!next) this.clearSelectedMapFeature("objects"); void this.syncMapFeatureCoverage("objects"); this.syncDetectionLayerAvailability(); });
   };
-
 
   private toggleQualityView = async () => {
     const newActive = !this.state.qualityViewActive;
@@ -5146,6 +4978,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       );
     });
   };
+  /** Restore the widget layer ordering without replacing unrelated layers on the shared map. */
   private enforceMapillaryLayerOrder(view?: __esri.MapView | __esri.SceneView) {
     const targetView = view ?? this.state.jimuMapView?.view;
 
@@ -5249,8 +5082,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     onFailure: () => this.showToast(this._t('appCouldNotCopyPleaseCopyFromAddressBar')),
     onError: error => console.error("Error generating link:", error),
   };
-
-
 
   /** Restore a shared link only after React, the view and ArcGIS modules are ready.
    * Coverage initializes independently so long sequence routes cannot block tiles.
@@ -5412,9 +5243,9 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   };
 
   /**
-   * Downloads currently visible traffic signs and objects within the map extent
-   * as a GeoJSON file.
-   * Exports only the explicitly selected map feature; no viewport FeatureLayer is retained.
+   * Export enabled traffic-sign/object categories within the current geographic extent as GeoJSON.
+   * Collect source tiles under an abortable export request; do not retain a viewport FeatureLayer.
+   * Ignore a completed download if its originating view has been replaced.
    */
   private downloadCurrentFeatures = async () => {
     const view = this.state.jimuMapView?.view;
@@ -5595,6 +5426,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }, 300);
   }
 
+  /** Cancel the passive loading timer and clear coverage busy feedback; callers own request-validity checks. */
   private finishTurboLoading() {
     if (this._turboLoadingTimer) clearTimeout(this._turboLoadingTimer);
     this._turboLoadingTimer = null;
@@ -5771,6 +5603,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     };
   }
 
+  /** Replace or restyle native coverage for the active filters and view; preserve request identity across asynchronous SDK work. */
   private async loadTurboCoverageLayer(forceUsernameFilter: string | undefined, requestId: number, controller: AbortController) {
     const jmv = this.state.jimuMapView;
     const view = jmv?.view;
@@ -5894,6 +5727,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }
   }
 
+  /** Reuse raw tile bytes or share an in-flight tile request; decoding and selection remain separate consumers. */
   private async getTurboTileBuffer(tile: [number, number, number], signal: AbortSignal): Promise<ArrayBuffer> {
     if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
     const token = this.accessToken, [x, y, z] = tile, key = `${z}/${x}/${y}`;
@@ -5914,6 +5748,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     return result;
   }
 
+  /** Fetch coverage bytes with bounded retry, token-identity checks and cache publication; the shared-request owner calls this transport. */
   private async fetchTurboTileBuffer(tile: [number, number, number], signal: AbortSignal, token: string): Promise<ArrayBuffer> {
     const [x, y, z] = tile, key = `${z}/${x}/${y}`;
     const url = `${TILE_URLS.COVERAGE.replace("{z}", String(z)).replace("{x}", String(x)).replace("{y}", String(y))}?access_token=${token}`;
@@ -6095,6 +5930,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }
   }
 
+  /** Derive status text and busy state from current coverage/selection conditions without initiating requests. */
   private getCoverageBarPresentation(): { text: string; action?: "show" | "data" | "tilt" | "zoom" | "retry"; label?: string; busy?: boolean } {
     const view = this.state.jimuMapView?.view;
     const zoom = view?.zoom ?? 0;
@@ -6137,6 +5973,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     return this.shouldShowCoverageNotice() && !!(this.state.turboModeActive || this.state.trafficSignsActive || this.state.objectsActive || this.state.zoomWarningMessage || this.state.turboUpdatingVisible);
   }
 
+  /** Describe active exploration settings for the coverage guide without changing those settings. */
   private getExplorerGuideContext(): string[] {
     const context: string[] = [];
     const creator = this.state.turboFilterUsername || this.props.config.turboCreator;
@@ -6631,7 +6468,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     else this._hoverTimeout = setTimeout(resolvePreview, dwell);
   }
 
-
   private disableTurboCoverageLayer(restoreStyle = true) {
     this._coverageHoverResume?.leave();
     this._turboClickPickAbort?.abort(); this._coverageFrameLookup?.clear();
@@ -6681,11 +6517,9 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   }
 
   /**
-   * Displays a pulsing hover indicator on a Turbo point.
-   * The function creates a temporary graphic at the hovered point location
-   * and animates it by repeatedly increasing and decreasing its size.
-   *
-   * @param graphic The turbo point graphic being hovered.
+   * Show one pointer-local coverage marker, reusing it for the same image.
+   * Prefer a DOM pulse anchored to the view, with a graphic fallback when a DOM host is unavailable.
+   * @param graphic Resolved coverage pick; its identity and geometry define the hover target.
    */
   private showTurboHover(graphic: __esri.Graphic) {
     const view = this.state.jimuMapView?.view;
@@ -6807,7 +6641,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   // #region STREET COVERAGE ANALYSIS
 
-  /** Fetches the OSM road network and analyzes coverage by snapping Turbo points to segments. */
+  /**
+   * Fetch OSM roads and classify coverage against the current native-coverage/filter snapshot.
+   * Use an abort controller, revision and input/view checks to prevent stale results or drawing from replacing newer analysis.
+   */
   private runCoverageAnalysis = async () => {
     const { jimuMapView } = this.state;
     if (this.state.coverageAnalysisLoading || this._coverageAnalysisAbort) return;
@@ -7173,10 +7010,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._coverageAnalysisBbox, this.CAPTURE_ROUTE_CONFIG,
   );
 
-  /**
-   * Executes the multi-pass route optimization pipeline:
-   * Targets -> Initial Anchors -> OSRM -> Evaluation -> Refinement Passes -> Best Route Draw
-   */
+  /** Validate the A/B endpoints and delegate capture-route generation to the selected routing-provider pipeline. */
   private generateCaptureRoute = async () => {
     const { routeStartPoint, routeEndPoint, routeSpareMinutes } = this.state;
 
@@ -7233,6 +7067,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   private isRoutingAuthenticationError = (error: any): boolean => isRoutingAuthenticationFailure(error);
 
+  /** Build the selected routing provider with live SDK/session adapters; the route run owns request cancellation. */
   private createCaptureRoutingProvider = async (): Promise<RoutingProvider> => createCaptureProvider({
     routingEngine: this.getEffectiveRoutingEngine(),
     config: this.props.config,
@@ -7252,6 +7087,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }
     this._captureRouteLoginView = null;
   }
+  /** Invalidate the active route run before clearing generation feedback and releasing its temporary login-view snapshot. */
   private cancelCaptureRouteGeneration = () => {
     if (!this._routeGeneration.cancel()) return;
     this.releaseCaptureRouteLoginView();
@@ -7275,6 +7111,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   private _routingLoginView: { type: string; viewpoint: __esri.Viewpoint } | null = null;
 
+  /** Snapshot the active viewpoint for routing authentication; preserve scene camera details through a clone. */
   private rememberRoutingLoginView() {
     if (this._routingLoginExpiry) clearTimeout(this._routingLoginExpiry);
     this._routingLoginExpiry = null;
@@ -7282,6 +7119,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._routingLoginView = view?.viewpoint ? { type: view.type, viewpoint: view.viewpoint.clone() } : null;
   }
 
+  /** Restore a pre-login viewpoint only while the same route run and compatible active view still own it. */
   private async restoreRoutingLoginView(view: __esri.MapView | __esri.SceneView, current: () => boolean = () => true): Promise<void> {
     const saved = this._routingLoginView;
     if (!current() || !saved || !view || view.type !== saved.type || view.destroyed) return;
@@ -7295,6 +7133,14 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }
   }
 
+  /**
+   * Generate and refine a coverage-seeking route using the resolved ArcGIS or OSRM provider.
+   * The RouteGeneration run owns provider requests and guards every asynchronous publication/drawing boundary.
+   * Only the current run may publish route results, restore its login camera or clear its busy state.
+   * @param startPt Start coordinate as [longitude, latitude] in WGS84 degrees.
+   * @param endPt End coordinate as [longitude, latitude] in WGS84 degrees.
+   * @param spareMinutes Additional travel-time budget beyond the direct route, in minutes.
+   */
   private generateEsriDetourRoute = async (startPt: [number, number], endPt: [number, number], spareMinutes: number) => {
     const { jimuMapView } = this.state;
 
@@ -7564,9 +7410,9 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
        */
       const captureSolveHistory = new CaptureSolveHistory<RoutingResult, CaptureOpportunity>();
 
-      
 
-      
+
+
 
       let finalAttemptCount = 0;
 
@@ -7720,8 +7566,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
                   run.check();
 
                   const trialExtraMinutes = trialPreflight.durationMinutes - baselineMinutes;
-
-
 
                   /*
                    * Reject newly introduced >60 m snapping.
@@ -7877,8 +7721,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
                   run.check();
 
                   const trialExtraMinutes = trialPreflight.durationMinutes - baselineMinutes;
-
-
 
                   /*
                    * Reject a trial if one selected opportunity
@@ -8043,8 +7885,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
                 run.check();
 
                 const trialExtraMinutes = trialPreflight.durationMinutes - baselineMinutes;
-
-
 
                 /*
                  * Preserve the same full-road quality rule.
@@ -9041,10 +8881,12 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     return manager;
   };
 
+  /** Resolve the configured shared-note service endpoint for the requested read/write operation. */
   private sharedNotesUrl(read = false): string {
     return resolveEnterpriseNotesEndpoint(this.props.config, read);
   }
 
+  /** Detach shared-note layer resources and invalidate view-bound reads before another view can attach them. */
   private clearSharedNotesView() {
     ++this._sharedNotesRevision;
     this._sharedNotesPopupHandle?.remove(); this._sharedNotesPopupHandle = null;
@@ -9058,6 +8900,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._sharedNotesLayer = null; this._sharedNotesView = null;
   }
 
+  /** Synchronize the shared-note source with current configuration and map; guard delayed layer work against replacement. */
   private async syncSharedFieldNotes(force = false) {
     if (this._sharedNotesDisposed) return;
     const view = this.state.jimuMapView?.view;
@@ -9140,6 +8983,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }));
   }
 
+  /** Publish a local draft to the shared destination, serialize saves per note and record confirmation or retryable failure. */
   private publishFieldNote = async (id: string) => {
     const note = this.state.fieldNotes.find((item: FieldNote) => item.id === id);
     if (!note || this._sharedNoteSaves.has(id) || note.sharedStatus === "shared") return;
@@ -9247,6 +9091,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }
   }
 
+  /** Persist the active note edit to its local or shared owner and retain actionable feedback when saving fails. */
   private saveFieldNoteEdit = async (values: { category: string; note: string; status: string; resolutionNote: string }) => {
     const editor = this.state.fieldNoteEditor;
     if (!editor || editor.saving) return;
@@ -9296,6 +9141,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }
   };
 
+  /** Load attachment metadata for the selected shared note under the current attachment-panel request. */
   private async openFieldNoteAttachments(feature: __esri.Graphic | FieldNote) {
     if (this.state.fieldNoteAttachments?.busy) return;
     const revision = ++this._noteAttachmentRevision;
@@ -9333,6 +9179,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     ++this._noteAttachmentRevision; this.setState({ fieldNoteAttachments: null });
   };
 
+  /** Upload the user-selected file to the current shared note, with save feedback and request-ownership checks. */
   private uploadFieldNoteAttachment = async (file?: File, currentImage = false) => {
     const panel: FieldNoteAttachments | null | undefined = this.state.fieldNoteAttachments;
     if (!panel || panel.busy || (!file && !currentImage)) return;
@@ -9526,6 +9373,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const bounds = det?.geometry ? detectionThumbnailBounds(decodeAndNormalizeGeometry(det.geometry)) : undefined;
     return bounds ? { imageId: String(note.imageId), detectionId: note.detectionId, bounds } : null;
   }
+  /** Refresh viewer note markers from current note/image state without transferring map-layer ownership. */
   private updateViewerFieldNoteMarkers = () => {
     if (!this.mapillaryViewer) return;
 
@@ -9609,6 +9457,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private ensureSolarMapOverlay(): SolarMapOverlay<__esri.GraphicsLayer, __esri.MapView | __esri.SceneView> {
     return this._solarMapOverlay ??= new SolarMapOverlay();
   }
+  /** Enable or disable solar presentation and coordinate map/viewer owners for the current capture. */
   private toggleSolarMode = async () => {
     if (this.props.config.enableSolar !== true) return;
     this.setState(
@@ -9688,8 +9537,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
     overlay.renderVectors(currentImg, sun, properties => new Graphic(properties));
 
-
-
     // 2. Add Glowing WebGL Sun to Mapillary Viewer
     this.ensureSolarViewerOwner().update(this.mapillaryViewer, sun.azimuth, sun.altitude);
 
@@ -9717,6 +9564,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   // #endregion SOLAR & SHADOW MODELING
 
   // #region ELEVATION PROFILE
+  /** Enable or disable the profile consumer; complete sequence-route demand belongs to the profile workflow. */
   private toggleElevationProfile = async () => {
     if (this.props.config.enableElevationProfile !== true) return;
     const next = !this.state.isElevationProfileActive;
@@ -9827,6 +9675,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   private _arcGISModulesReady: Promise<void> | null = null;
 
+  /**
+   * Share one lazy ArcGIS-module initialization promise across callers.
+   * Clear a rejected initialization so a later caller can retry; callers still guard their own lifecycle after awaiting it.
+   */
   private async ensureArcGISModules(): Promise<void> {
     if (this.ArcGISModules?.VectorTileLayer) return;
     if (!this._arcGISModulesReady) {
@@ -9871,10 +9723,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   private dismissIntro = () => this.setState({ showIntro: false });
 
-  // Initial setup lifecycle
-  // - Loads ArcGIS API modules dynamically (Graphic, Point, etc.),
-  // - restores cache, loads Mapillary JS/CSS via CDN,
-  // - and attaches resize/fullscreen event listeners.
+  /**
+   * Initialize SDK dependencies, preset coverage and deferred sprite catalogs for this widget instance.
+   * Check the startup revision after awaits so unmount cannot be followed by late listener, layer or DOM attachment.
+   * Mapillary JS is imported by the bundle; it is not fetched from a CDN here.
+   */
   async componentDidMount() {
     const startupRevision = ++this._startupRevision;
     if (this._startupDisposed) { this._startupDisposed = false; this._startupAbort = new AbortController(); }
@@ -9999,6 +9852,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._nativeSequenceSelection.select(this.state.selectedSequenceId || this.state.sequenceId || null);
   }
 
+  /**
+   * Reconcile feature demand and configuration changes with the currently active view and viewer.
+   * Handle close/reopen, fullscreen resize observation and background-work priority without owning feature implementation details.
+   */
   componentDidUpdate(prevProps: AllWidgetProps<any>, prevState: State) {
     const nearbyVisible = this.nearbyPanelVisible();
     const wasNearbyVisible = this._nearbyDemandVisible; this._nearbyDemandVisible = nearbyVisible;
@@ -10007,7 +9864,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       this._nearbyDiscovery?.cancel();
     } else if (!wasNearbyVisible || prevState.imageId !== this.state.imageId || prevState.isLoading !== this.state.isLoading)
       this.refreshNearbyAfterPause(!prevState.nearbyStripOpen || prevState.imageTrayTab === 'object');
-
 
     if (this._routeGeneration.pending && !this._routeGeneration.current()) this.cancelCaptureRouteGeneration();
 
@@ -10233,6 +10089,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }
   }
 
+  /** Invalidate startup before teardown, abort its work and release its deferred timers and injected stylesheet. */
   private disposeStartupResources() {
     // Invalidate startup before teardown so late awaits cannot recreate resources.
     this._startupDisposed = true;
@@ -10244,9 +10101,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._overrideStyleSheet?.remove(); this._overrideStyleSheet = null;
   }
 
-  // Cleanup lifecycle
-  // - Ensures all intervals, observers, and event listeners are removed
-  // - to prevent memory leaks when widget is closed or reloaded.
+  /**
+   * Invalidate startup and feature owners before removing instance listeners, observers and shared-map presentation.
+   * This is the final teardown path; minimize/close cleanup is handled separately.
+   */
   componentWillUnmount() {
     this.disposeStartupResources();
     this._hoverPreviewStatus?.dispose();
@@ -10278,7 +10136,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this.clearFieldNotesGroup();
     this.cleanupWidgetEnvironment(true, true);
 
-    // Stop resize observer
     if (this.resizeObserver) {
       if (this.viewerContainer.current) this.resizeObserver.unobserve(this.viewerContainer.current);
       this.resizeObserver.disconnect();
@@ -10290,7 +10147,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       this.tooltipDiv = null;
     }
 
-    // Remove listeners
     document.removeEventListener("fullscreenchange", this.handleFullscreenChange);
     document.removeEventListener("webkitfullscreenchange", this.handleFullscreenChange);
     document.removeEventListener("mozfullscreenchange", this.handleFullscreenChange);
@@ -10307,6 +10163,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }
   }
 
+  /** Reattach enabled detection coverage and legend presentation to the newly active ArcGIS view. */
   private restoreMapillaryFeatureLayersForView(jmv: JimuMapView) {
     this.syncMapLegendLayer();
     const view = jmv.view;
@@ -10317,13 +10174,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   }
 
-  /*
-   * Handles map view changes and sets up click/hover event handlers.
-   * Manages interactions for both normal and turbo mode, including object/traffic sign layers.
-   */
-  /*
-   * Handles map view changes and sets up click/hover event handlers.
-   * Manages interactions for both normal and turbo mode, including object/traffic sign layers.
+  /**
+   * Transfer widget interactions and feature resources to the incoming Experience Builder map view.
+   * Retire old handlers and view-bound work before registering replacements.
+   * View/startup revisions guard delayed shared-link restoration and SDK hit-test results after a view transfer.
    */
   private onActiveViewChange = (jmv: JimuMapView) => {
     if (this._routeGeneration.pending && (jmv?.view !== this.state.jimuMapView?.view || !this._routeGeneration.current())) this.cancelCaptureRouteGeneration();
@@ -10860,7 +10714,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
           if ((this.state.trafficSignsActive || this.state.objectsActive) && this.offerNoteObjectChoice(view, (enterpriseNoteHit as any).graphic, openEnterpriseNote, clickCurrent)) return;
           openEnterpriseNote(); return;
         }
-
 
         // Note clicks select the same highlight as Show on map without moving the camera.
         const noteHit = response.results.find((result: any) => result.graphic && this._fieldNoteMap.noteForGraphic(result.graphic));
@@ -11613,8 +11466,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     warn: error => console.warn("Could not synchronize URL state:", error),
   };
 
-
-
   /** Hover keeps a neon green line from native Mapillary tiles, independent of blue selection. */
   private highlightSequenceOnVTL(sequenceId: string | null) {
     const startedAt = performance.now();
@@ -11643,6 +11494,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     return completion;
   }
 
+  /** Yield two animation frames for presentation; reject cancellation or a document hidden at entry. */
   private waitForSequencePaint(signal: AbortSignal): Promise<void> {
     if (signal.aborted || typeof document === 'undefined' || document.visibilityState !== 'visible')
       return Promise.reject(new DOMException('Cancelled', 'AbortError'));
@@ -11656,8 +11508,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     });
   }
 
-
-
   // #region UTILITIES
   // Misc helpers used across the widget.
 
@@ -11666,9 +11516,12 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     return resolveCreatorId(username, this.accessToken, this._userIdCache);
   }
 
-  // Reverse geocoding helper
-  // Calls ArcGIS World Geocoding API to convert image lat/lon
-  // into a readable address displayed in the info box.
+  /**
+   * Enrich the current image address as optional background work.
+   * Abort the prior lookup and publish only while the originating image and view remain current.
+   * @param lat Image latitude in WGS84 degrees.
+   * @param lon Image longitude in WGS84 degrees.
+   */
   private fetchReverseGeocode = async (lat: number, lon: number) => {
     this._reverseGeocodeAbort?.abort();
     const controller = new AbortController(); this._reverseGeocodeAbort = controller;
@@ -11843,15 +11696,9 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }
   };
 
-  /**
-   * Fetches nearby street-level images from the Mapillary Graph API
-   * centered on the given coordinates, then populates the nearby image strip.
-   * Applies a startup delay on the very first image load so the fetch does not
-   * race with the splash-screen fade animation; all subsequent calls are immediate.
-   * @param lat     - Latitude of the anchor point (decimal degrees, WGS-84).
-   * @param lon     - Longitude of the anchor point (decimal degrees, WGS-84).
-   * @param imageId - ID of the currently active image, excluded from results
-   *                  so the viewer does not show the current image as a "nearby" suggestion.
+  /** Schedule nearby discovery for the paused frame; expanded requests widen the sample on demand.
+   * @param immediate Bypass the normal discovery delay when the tray first opens.
+   * @param expanded Search the larger sample requested by the user.
    */
   private refreshNearbyAfterPause = (immediate = false, expanded = false) => {
     const image = this._liveSequenceFrames.find(String(this.state.imageId)) || this.state.sequenceImages.find((img: { id: string; lat: number; lon: number }) => String(img.id) === this.state.imageId);
@@ -11862,6 +11709,15 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private nearbyPanelVisible = () => !!this.state.nearbyStripOpen && this.state.imageTrayTab !== 'object' &&
     this.props.state !== 'CLOSED' && this.props.visible !== false && !this.state.isLoading && this._imageryOpeningRequest == null &&
     (!this._currentImagePresentation || !!this.state.jimuMapView?.view?.map && this._currentImagePresentation.owns(this.state.jimuMapView.view.map));
+  /**
+   * Schedule nearby discovery around the display anchor only while the nearby panel is eligible.
+   * The discovery owner controls debounce, interaction pauses and request cancellation.
+   * @param lat Anchor latitude in WGS84 degrees.
+   * @param lon Anchor longitude in WGS84 degrees.
+   * @param imageId Current capture excluded by discovery.
+   * @param immediate Request discovery without the usual scheduling delay.
+   * @param expanded Use the larger user-requested discovery sample.
+   */
   private fetchNearbyImages(lat: number, lon: number, imageId: string, immediate = false, expanded = false) {
     if (!this.nearbyPanelVisible()) return;
     this._nearbyDiscovery ??= new NearbyImageDiscovery({
@@ -11879,16 +11735,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._nearbyDiscovery.schedule(anchor.lat, anchor.lon, imageId, immediate, expanded);
   }
 
-  /**
-   * Places or removes a temporary highlight pin on the ArcGIS map to indicate
-   * the geographic position of a hovered nearby-image thumbnail.
-   * Only one pin exists at a time, calling this method always removes the
-   * previous graphic before adding a new one. Pass `null` to clear the pin
-   * without adding a replacement (e.g. on mouse-leave).
-   * @param img - The nearby image whose coordinates should be pinned, or
-   *              `null` to remove the existing pin.
-   */
   private _nearbySelectionRevision = 0;
+  /** Open a tray capture and restore its heading only while this selection still owns the viewer. */
   private async selectNearbyImage(img: NearbyImage): Promise<void> {
     const viewer = this.mapillaryViewer; if (!viewer) return;
     this._nearbyDiscovery?.cancel();
@@ -11907,6 +11755,15 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     } catch (error) { if (current()) this.log('[Mapillary nearby] Image selection failed:', error); }
   }
 
+  /**
+   * Places or removes a temporary highlight pin on the ArcGIS map to indicate
+   * the geographic position of a hovered nearby-image thumbnail.
+   * Only one pin exists at a time, calling this method always removes the
+   * previous graphic before adding a new one. Pass `null` to clear the pin
+   * without adding a replacement (e.g. on mouse-leave).
+   * @param img - The nearby image whose coordinates should be pinned, or
+   *              `null` to remove the existing pin.
+   */
   private highlightNearbyPin(img: NearbyImage | null) {
     this._nearbyHoverAbort?.abort(); this._nearbyHoverAbort = null;
     this._nearbyHighlight ??= new NearbyImageHighlight<__esri.Graphic>();
@@ -11926,6 +11783,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     void this.resolveNearbyPreviewAnchor(view, img, pose, controller);
   }
 
+  /**
+   * Resolve the exact nearby capture in native coverage before drawing its hover pin.
+   * Abort/view/selection checks prevent a departed thumbnail from publishing a late marker.
+   */
   private async resolveNearbyPreviewAnchor(view: __esri.MapView | __esri.SceneView, img: NearbyImage, pose: { lon: number; lat: number }, controller: AbortController): Promise<void> {
     const context = { ...this.coverageSelectionContext() }, token = this.accessToken;
     const current = () => this._nearbyHoverAbort === controller && !controller.signal.aborted && this.state.jimuMapView?.view === view && !view.destroyed &&
@@ -11980,12 +11841,14 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _owned = (source: string, values?: Record<string, string | number>) => this._runtimeLocale?.owned(source, values) ?? englishPresentation.text(source, values);
   private _presentationHandle: { remove(): void } | null = null;
   private _presentationOwner: unknown = null;
+  /** Subscribe to committed presentation changes and release the prior subscription; refresh callbacks do not select data. */
   private bindPresentation = (locale: LocaleValue) => {
     if (this._presentationOwner === locale.presentation) return;
     this._presentationHandle?.remove(); this._presentationOwner = locale.presentation;
     this._presentationHandle = locale.presentation.onChange(() => this.refreshPresentation());
   };
   private _localizedCloudSummary?: () => string;
+  /** Refresh visible localized summaries, legends and popup labels without replacing their data sources. */
   private refreshPresentation() {
     const summary = this._localizedCloudSummary?.(); if (summary && this.state.pointCloudVisible) this.setState({ pointCloudSummary: summary });
     this._mapSymbolLegend?.refreshLocale(); this._places?.refreshLocale(); this._elevationProfile?.refreshLocale();
@@ -11997,134 +11860,38 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }
   }
   private _t = (key: MessageKey, values?: Record<string, string | number>) => this._runtimeLocale?.t(key, values) ?? message(en, key, values);
+  /** Supply the active locale to the runtime render adapter; side-effectful presentation refresh follows locale commit. */
   private renderLocaleContent = (locale: LocaleValue) => { this._runtimeLocale = locale; return this.renderLocalizedContent(); };
+  /** Provide widget-scoped localization and delegate layout orchestration to the localized render adapter. */
   render() {
     return <WidgetLocaleProvider key={this.props.id} appLocale={this.props.intl?.locale} widgetId={this.props.id}
       defaultLanguage={this.props.config.widgetLanguage || "auto"} allowUserChoice={this.props.config.allowUserLanguageChoice !== false}><LocaleContent render={this.renderLocaleContent} onCommit={this.bindPresentation} /></WidgetLocaleProvider>;
   }
 
+  /**
+   * Compose existing feature panels and stateless viewer views from live state and callbacks.
+   * Keep SDK containers ref-owned and empty; fullscreen portal ownership remains here rather than in feature views.
+   */
   private renderLocalizedContent() {
     const mapWidgetId = this.props.useMapWidgetIds?.[0];
 
     // This is the viewer container. It will be placed either in normal widget or fullscreen portal.
     const viewerArea = (
-      <div
-        style={{
-          flex: 1,
-          minHeight: 0,
-          position: "relative",
-          background: "#000",
-          boxSizing: "border-box",
+      <ViewerSurface viewerRef={this.viewerContainer} measurementRef={this.measureLabelRef}
+        t={this._t} imageId={this.state.imageId} isLoading={this.state.isLoading}
+        turboLoading={this.state.turboLoading} featuresLoading={this.state.featuresLoading}
+        noImageMessageVisible={this.state.noImageMessageVisible}
+        lasso={{
+          active: this.state.isLassoMode, polygon: this.state.lassoPolygon,
+          onStart: this.handleLassoStart, onMove: this.handleLassoMove,
+          onEnd: this.handleLassoEnd, onCancel: this.handleLassoCancel
         }}
-      >
-        {/* This empty div is controlled by Mapillary, React will never touch its internals */}
-        <div dir="ltr" ref={this.viewerContainer} style={{ width: "100%", height: "100%", position: "relative" }} />
-
-        {/* [4.5.0 Update] LASSO SVG OVERLAY */}
-        {/* Renders the dashed cyan line while dragging. */}
-        {this.state.isLassoMode && (
-          <svg
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              zIndex: 1000,
-              cursor: "crosshair",
-              pointerEvents: "auto",
-              touchAction: "none",
-              userSelect: "none",
-              WebkitUserSelect: "none",
-            }}
-            onPointerDown={this.handleLassoStart}
-            onPointerMove={this.handleLassoMove}
-            onPointerUp={this.handleLassoEnd}
-            onPointerLeave={this.handleLassoEnd}
-            onPointerCancel={this.handleLassoCancel}
-          >
-            {this.state.lassoPolygon.length > 0 && (
-              <polygon points={this.state.lassoPolygon.map((p) => `${p[0]},${p[1]}`).join(" ")} fill="rgba(0, 255, 255, 0.2)" stroke="cyan" strokeWidth="2" strokeDasharray="4 2" />
-            )}
-          </svg>
-        )}
-
-        {/* MEASUREMENT FLOATING TEXT OVERLAY */}
-        <div
-          ref={this.measureLabelRef}
-          style={{
-            position: "absolute",
-            display: "none",
-            transform: "translate(-50%, -50%)",
-            background: "rgba(20, 20, 20, 0.75)",
-            backdropFilter: "blur(4px)",
-            border: "1px solid rgba(255, 255, 0, 0.6)",
-            color: "white",
-            padding: "4px 8px",
-            borderRadius: "6px",
-            fontSize: "11px",
-            fontWeight: "bold",
-            pointerEvents: "none",
-            zIndex: 1000,
-            textAlign: "center",
-            whiteSpace: "pre-wrap",
-            boxShadow: "0 4px 10px rgba(0,0,0,0.5)",
-          }}
-        ></div>
-
-        {/* FEATURES LOADING REGION; traffic signs / objects tile fetch */}
-        {this.state.featuresLoading && (
-          <div style={glassStyles.featuresLoadingBadge}>
-            <div style={glassStyles.featuresLoadingSpinner} />
-            <span style={glassStyles.featuresLoadingText}> {this._t('appLoadingFeatures')} </span>
-          </div>
-        )}
-
-        {/* Loading feedback preserves the previous image while the selection opens. */}
-        <ImageryLoading loading={this.state.isLoading || !!this.state.coverageFrameResolving} hasImage={!!this._lastSuccessfulSelection} representative={!!this.state.imageryRepresentative} resolving={!!this.state.coverageFrameResolving || !!this._selectionRetry?.nearestToClick} progress={this.state.sequenceRouteProgress} onCancel={this.cancelNearestFrameSelection} />
-
-        {/* CLICK A POINT TO VIEW IMAGERY REGION */}
-        {!this.state.imageId && !this.state.isLoading && !this.state.turboLoading && !this.state.noImageMessageVisible && (
-          <div style={glassStyles.initialStateContainer}>
-            <div className="initial-state-card" style={glassStyles.initialStateCard}>
-              {/* Polished text with clean gradient styling */}
-              <span
-                style={{
-                  ...glassStyles.initialStateTextPrimary,
-                  background: "linear-gradient(90deg, #fff 0%, #37d582 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                {this._t('appClickAPointToViewImagery')} </span>
-
-              {/* Kept intact for TypeScript mapping, automatically hidden by glassStyles config */}
-              <span style={glassStyles.initialStateTextSecondary}> {this._t('appMapillaryImageryWillAppearHere')} </span>
-            </div>
-          </div>
-        )}
-
-        {/* NO IMAGE VISIBLE WARNING REGION */}
-        {this.state.noImageMessageVisible && (
-          <div style={glassStyles.noImageContainer}>
-            <div className="no-image-card" style={glassStyles.noImageContent}>
-              {/* Icon with a subtle glow */}
-              <div
-                style={{
-                  filter: "drop-shadow(0 0 8px rgba(255,255,255,0.3))",
-                  color: "#fff",
-                  opacity: 0.9,
-                }}
-              >
-                <Icons.NoImage size={32} />
-              </div>
-
-              <span> {this._t('appNoNearbyMapillaryImageryFound')} </span>
-            </div>
-          </div>
-        )}
-
+        loading={{
+          loading: this.state.isLoading || !!this.state.coverageFrameResolving,
+          hasImage: !!this._lastSuccessfulSelection, representative: !!this.state.imageryRepresentative,
+          resolving: !!this.state.coverageFrameResolving || !!this._selectionRetry?.nearestToClick,
+          progress: this.state.sequenceRouteProgress, onCancel: this.cancelNearestFrameSelection
+        }}>
         {/* IMAGE UTILITY GROUP */}
         {this.state.imageId && (
           <ImageUtilityGroup
@@ -12176,171 +11943,18 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         )}
 
         {/* NEARBY CAPTURES BOTTOM STRIP */}
-        {this.state.nearbyStripOpen && (
-          <div className="mapillary-image-tray"
-            style={{
-              position: "absolute",
-              height: "var(--tray-height)",
-              boxSizing: "border-box",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              zIndex: 999999990,
-              background: "rgba(12,12,12,0.92)",
-              backdropFilter: "blur(10px)",
-              borderTop: "1px solid rgba(255,255,255,0.1)",
-              padding: "6px 8px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "4px",
-              // slide up animation
-              animation: "nearbySlideUp 0.2s ease-out",
-            }}
-          >
-            <style>{`
-                            .mapillary-image-tray { --tray-height:176px; --tray-image-height:104px; --tray-card-width:clamp(140px,25vw,220px); }
-                            @media(max-width:600px),(max-height:500px) { .mapillary-image-tray { --tray-height:148px; --tray-image-height:76px; --tray-card-width:160px; } }
-
-                            @keyframes nearbySlideUp {
-                                from { transform: translateY(100%); opacity: 0; }
-                                to   { transform: translateY(0);    opacity: 1; }
-                            }
-                        `}</style>
-
-            {/* Header row */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                height: "24px",
-                flexShrink: 0,
-                fontSize: "9px",
-                color: "rgba(255,255,255,0.45)",
-              }}
-            >
-              <div role="tablist" aria-label={this._t('appImageSources')} style={{ display: "flex", gap: 8 }}>
-                {(["nearby", "object"] as const).filter(tab => tab === 'nearby' || !!this.state.selectedFeatureMetadata).map(tab => <button className="mly-text-action" key={tab} role="tab" aria-selected={(this.state.imageTrayTab || "nearby") === tab} onClick={() => { this.highlightNearbyPin(null); if (tab === 'object') this.revealDetectionTools(); this.setState({ imageTrayTab: tab }); }} style={{ background: "none", border: 0, color: (this.state.imageTrayTab || "nearby") === tab ? "#8bdbb7" : "#bbb", padding: "6px", cursor: "pointer" }}>{tab === "nearby" ? <OwnedMessage source={"Nearby ({value0})"} values={{ value0: String((this.state.nearbyImages || []).length) }} /> : <OwnedMessage source={"Selected object ({value0})"} values={{ value0: String(this.state.alternateImages.length) }} />}</button>)}
-              </div>
-              {this.state.imageTrayTab !== 'object' && this.state.nearbyCanExpand && <button className="mly-text-action" type="button" disabled={!!this.state.nearbyLoading}
-                title={this._owned('Search a larger sample and show the nearest 20 captures')}
-                onClick={() => this.refreshNearbyAfterPause(true, true)}
-                style={{ fontSize: 9, padding: '2px 5px', border: '1px solid #648b73', borderRadius: 4, background: '#214233', color: '#e1eee5', cursor: 'pointer' }}>{this._owned('Search more')}</button>}
-              <button
-                onClick={() => { this.highlightNearbyPin(null); this.setState({ nearbyStripOpen: false }); }}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "rgba(255,255,255,0.4)",
-                  cursor: "pointer",
-                  fontSize: "11px",
-                  padding: "0 2px",
-                  lineHeight: 1,
-                }}
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Rows stay mounted while switching tabs, preserving independent scroll positions. */}
-            <div role="tabpanel" aria-label={this._t('appNearbyImages')} aria-busy={!!this.state.nearbyLoading}
-              onPointerEnter={event => { if (event.pointerType === 'mouse' || event.pointerType === 'pen') this._nearbyPointerInside = true; }}
-              onPointerLeave={() => { this._nearbyPointerInside = false; this._nearbyDiscovery?.flush(); }}
-              style={{
-                display: this.state.imageTrayTab === "object" ? "none" : "flex",
-                flex: "1 1 0",
-                minHeight: 0,
-                alignItems: "flex-start",
-                overflowY: "hidden",
-                gap: "5px",
-                overflowX: "auto",
-                scrollSnapType: "x mandatory",
-                scrollbarWidth: "thin",
-                scrollbarColor: "rgba(255,255,255,0.2) transparent",
-                paddingBottom: "2px",
-              }}
-            >
-              {this.state.nearbyLoading && !this.state.nearbyImages?.length && <span role="status" style={{ fontSize: 11, padding: 8, color: '#b5ccbf' }}>{this._owned('Loading nearby captures…')}</span>}
-              {(this.state.nearbyImages ?? []).map((img) => {
-                // Use _nearbySelectedId for instant highlight on click,
-                // fall back to imageId so the current sequence image
-                // stays highlighted when no carousel pick is pending
-                const isCurrent = this._nearbySelectedId ? img.id === this._nearbySelectedId : img.id === this.state.imageId;
-
-                const date = new Date(img.captured_at).toLocaleDateString(this._runtimeLocale?.formatLocale, {
-                  year: "numeric",
-                  month: "short",
-                });
-                return (
-                  <div
-                    key={img.id}
-                    onClick={() => {
-                      void this.selectNearbyImage(img);
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "scale(1.04)";
-                      this.highlightNearbyPin(img);
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "scale(1)";
-                      this.highlightNearbyPin(null);
-                    }}
-                    style={{
-                      flex: "0 0 auto",
-                      width: "var(--tray-card-width)",
-                      scrollSnapAlign: "start",
-                      cursor: "pointer",
-                      borderRadius: "5px",
-                      overflow: "hidden",
-                      border: isCurrent ? "2px solid #05a056" : "2px solid transparent",
-                      position: "relative",
-                      transition: "transform 0.12s",
-                    }}
-                  >
-                    <img src={img.thumb_512_url ?? img.thumb_256_url} alt="" loading="lazy" style={{ width: "100%", height: "var(--tray-image-height)", objectFit: "cover", display: "block" }} />
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        background: "linear-gradient(transparent, rgba(0,0,0,0.78))",
-                        padding: "10px 4px 3px",
-                        fontSize: "8px",
-                        color: "rgba(255,255,255,0.85)",
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{img.creator?.username ?? ""}</div>
-                      <div style={{ opacity: 0.7 }}>{date}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div role="tabpanel" aria-label={this._t('appSelectedObjectImages')} style={{ display: this.state.imageTrayTab === "object" && this.state.selectedFeatureMetadata ? "flex" : "none", gap: 6, flex: "1 1 0", minHeight: 0, overflowX: "auto", overflowY: "hidden", alignItems: "flex-start", color: "#ddd", fontSize: 12 }}>
-              {this.state.isFetchingAlternates && <span style={{ alignSelf: "center" }} role="status"> {this._t('appLoadingAssociatedImages')} </span>}
-              {this.state.alternateImagesError && <span style={{ alignSelf: "center" }} role="alert">{<OwnedMessage source={String(this.state.alternateImagesError ?? "")} />} <button className="mly-text-action" onClick={() => { const location = this.state.selectedFeatureLocation; const id = this.state.selectedFeatureMetadata?.id; if (location && id) void this.fetchAlternateImages(id, location.lat, location.lon); }}> {this._t('appRetry')} </button></span>}
-              {!this.state.isFetchingAlternates && !this.state.alternateImagesError && !this.state.alternateImages.length && <span> {this._t('appNoAssociatedImagesAvailableSelectASignOrObject')} </span>}
-              {this.state.alternateImages.map(img => <button className="mly-text-action" key={img.id}
-                onMouseEnter={event => { event.currentTarget.style.transform = "scale(1.04)"; }}
-                onMouseLeave={event => { event.currentTarget.style.transform = "scale(1)"; }}
-                onClick={() => void this._handleSelectAlternateImage(img)} aria-label={this._owned("Open associated image {value0}", { value0: String(img.id) })} title={`${img.detectionLabel || "Detected object"} · ${Number.isFinite(img.capturedAt) ? new Date(img.capturedAt).toLocaleDateString(this._runtimeLocale?.formatLocale) : this._t('appDateUnavailable')}`} style={{ flex: "0 0 auto", width: "var(--tray-card-width)", padding: 0, transition: "transform 0.12s", background: "#182321", color: "#ddd", border: img.id === this.state.imageId ? "2px solid #05a056" : "2px solid transparent", borderRadius: 5, overflow: "hidden", cursor: "pointer" }}>
-                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "var(--tray-image-height)", background: "#0f1618" }}>
-                  <span style={{ display: "inline-block", position: "relative", lineHeight: 0 }}>
-                    <img src={img.thumbUrl} alt={this._t('appAssociatedCameraCapture')} loading="lazy" style={{ width: "auto", height: "auto", maxWidth: "var(--tray-card-width)", maxHeight: "var(--tray-image-height)", display: "block" }} />
-                    {img.detectionBounds && <svg aria-hidden="true" viewBox="0 0 1 1" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
-                      <rect {...img.detectionBounds} fill="none" stroke="#111" strokeWidth={4} vectorEffect="non-scaling-stroke" />
-                      <rect {...img.detectionBounds} fill="none" stroke="#ffe45e" strokeWidth={2} vectorEffect="non-scaling-stroke" />
-                    </svg>}
-                  </span>
-                </span>
-                <span style={{ display: "block", padding: "3px 4px", height: 20, boxSizing: "border-box", fontSize: 10, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{img.detectionBounds ? this._t('appOutlined') : this._t('appOutlineUnavailable')}  {this._t('appCaptured')} {Number.isFinite(img.capturedAt) ? new Date(img.capturedAt).toLocaleDateString(this._runtimeLocale?.formatLocale) : this._t('appDateUnavailable')}</span>
-              </button>)}
-            </div>
-          </div>
-        )}
-      </div>
+        {this.state.nearbyStripOpen && <ImageTray state={this.state}
+          selectedNearbyId={this._nearbySelectedId} formatLocale={this._runtimeLocale?.formatLocale}
+          t={this._t} owned={this._owned}
+          onChangeTab={tab => { this.highlightNearbyPin(null); if (tab === 'object') this.revealDetectionTools(); this.setState({ imageTrayTab: tab }); }}
+          onSearchMore={() => this.refreshNearbyAfterPause(true, true)}
+          onClose={() => { this.highlightNearbyPin(null); this.setState({ nearbyStripOpen: false }); }}
+          onNearbyPointerEnter={event => { if (event.pointerType === 'mouse' || event.pointerType === 'pen') this._nearbyPointerInside = true; }}
+          onNearbyPointerLeave={() => { this._nearbyPointerInside = false; this._nearbyDiscovery?.flush(); }}
+          onSelectNearby={image => this.selectNearbyImage(image)} onHighlightNearby={image => this.highlightNearbyPin(image)}
+          onSelectAssociated={this._handleSelectAlternateImage}
+          onRetryAssociated={() => { const location = this.state.selectedFeatureLocation; const id = this.state.selectedFeatureMetadata?.id; if (location && id) void this.fetchAlternateImages(id, location.lat, location.lon); }} />}
+      </ViewerSurface>
     );
 
     /**
@@ -12409,7 +12023,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         <div ref={this.setProfileFlowHost} className="mly-profile-flow-dock" style={{ display: "none", flex: "0 0 auto", width: "100%", minHeight: 0, minWidth: 0, overflow: "hidden", boxSizing: "border-box", borderBottom: "1px solid rgba(127,127,127,0.25)" }} />
         <div className="mly-viewer-workspace" style={{ flex: "1 1 0", minHeight: 0, minWidth: 0, position: "relative", isolation: "isolate", zIndex: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
           {viewerArea}
-
 
           {(this.state.toastMessage || this.state.pointCloudLoading) && <div style={{ ...glassStyles.toastContainer, top: this.state.isLoading ? 12 : undefined, bottom: this.state.isLoading ? "auto" : glassStyles.toastContainer.bottom, display: "flex", alignItems: "center", gap: 10, maxWidth: "calc(100% - 24px)", width: "max-content", whiteSpace: "normal", boxSizing: "border-box" }}>
             <div style={{ flex: "1 1 auto", minWidth: 0, maxWidth: "100%", whiteSpace: "normal", overflowWrap: "anywhere" }}>{this.state.toastMessage || <OwnedMessage source={"Loading point cloud…"} />}</div>
@@ -12836,77 +12449,14 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const fullscreenImage = this.state.sequenceImages.find(image => image.id === this.state.imageId)
       || this._lastSuccessfulSelection?.sequenceImages.find(image => image.id === this.state.imageId);
     const fullscreenMode = ReactDOM.createPortal(
-      <div dir={this._runtimeLocale?.direction || "ltr"} lang={this._runtimeLocale?.formatLocale || "en-US"} className={`mly-fullscreen-viewer${this.state.minimapExpanded ? " mly-minimap-expanded" : ""}`} style={{ ...fullscreenOverlayStyle, containerType: "size" }}>
-        <style>{`
-          .mly-fullscreen-viewer.mly-minimap-expanded .minimap-container {
-            width: min(420px, calc(100% - 24px)) !important; max-width: 420px !important;
-            height: min(280px, 42dvh) !important;
-          }
-          .mly-fullscreen-viewer.mly-minimap-expanded .glass-image-utility-panel, .mly-fullscreen-viewer.mly-minimap-expanded .mly-fullscreen-location { display: none !important; }
-          .mly-fullscreen-location { position: absolute; top: 12px; right: 12px; max-width: 200px; z-index: 10002; padding: 5px 7px; border-radius: 6px; background: #14251ddd; color: #e2ece7; font-size: 10px; }
-          .mly-fullscreen-location button { padding: 3px 0; background: none; border: 0; color: #bdd8c8; cursor: pointer; font: inherit; }
-          @media (max-width: 768px) { .mly-fullscreen-location { top: calc(76px + env(safe-area-inset-top, 0px)); right: 8px; max-width: 46%; font-size: 9px; } }
-          /* Keep mobile perspective navigation clear of widget overlays. */
-          @media (max-width: 768px) {
-            .mly-fullscreen-viewer .minimap-container {
-              top: calc(90px + env(safe-area-inset-top, 0px)) !important;
-              bottom: auto !important; left: calc(8px + env(safe-area-inset-left, 0px)) !important;
-              width: min(30vw, 112px) !important; max-width: 112px !important;
-              height: 78px !important; border-radius: 8px !important;
-            }
-            .mly-fullscreen-viewer .glass-image-utility-panel {
-              top: calc(178px + env(safe-area-inset-top, 0px)) !important;
-              bottom: auto !important; right: auto !important;
-              left: calc(8px + env(safe-area-inset-left, 0px)) !important;
-              padding: 3px !important; gap: 3px !important;
-              border-radius: 9px !important; background: rgba(20, 27, 24, 0.48) !important;
-              box-shadow: 0 2px 8px #0003 !important;
-            }
-            .mly-fullscreen-viewer .mapillary-point-cloud-mode > div[role="group"] {
-              left: calc(100% + 6px) !important; right: auto !important;
-              top: 0 !important; bottom: auto !important;
-            }
-            .mly-fullscreen-viewer .glass-image-utility-panel .utility-button {
-              width: 24px !important; height: 24px !important;
-            }
-            .mly-fullscreen-viewer .glass-image-utility-panel .utility-button svg {
-              width: 14px !important; height: 14px !important;
-            }
-          }
-          @media (max-width: 768px) and (max-height: 440px) {
-            .mly-fullscreen-viewer .minimap-container {
-              top: calc(78px + env(safe-area-inset-top, 0px)) !important;
-              width: 96px !important; height: 64px !important;
-            }
-            .mly-fullscreen-viewer .glass-image-utility-panel {
-              top: calc(78px + env(safe-area-inset-top, 0px)) !important;
-              left: calc(114px + env(safe-area-inset-left, 0px)) !important;
-            }
-          }
-        `}</style>
-        {viewerArea}
-        <FullscreenControls
-          showMinimap={this.state.showMinimap}
-          onExit={this.toggleFullscreen}
-          onToggleMinimap={() => this.setState((prev) => ({ showMinimap: !prev.showMinimap }))}
-        />
-
-        {!this.props.config.hideInfoBox && fullscreenImage && <div className="mly-fullscreen-location">
-          <div title={this.state.address || this._t('currentImage')} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{this.state.address || this._t('currentImage')}</div>
-          <button type="button" title={this._t('appCopyLatitudeAndLongitude')} aria-label={this._t('appCopyCurrentImageCoordinates')} onClick={() => void this.copyImageCoordinates(fullscreenImage.lat, fullscreenImage.lon)}>{fullscreenImage.lat.toFixed(6)}, {fullscreenImage.lon.toFixed(6)}</button>
-        </div>}
-        {/* Minimap frame keeps React controls separate from ArcGIS-managed content. */}
-        <div className="minimap-container" style={getMinimapContainerStyle(this.state.showMinimap)}>
-          {this.state.minimapExpanded && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 36, padding: "3px 36px 3px 8px", boxSizing: "border-box", background: "#14251d", color: "#e2ece7", fontSize: 10 }}>
-            <div title={this.state.address || this._t('currentImage')} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{this.state.address || this._t('currentImage')}</div>
-            {!this.props.config.hideInfoBox && fullscreenImage && <button type="button" title={this._t('appCopyLatitudeAndLongitude')} onClick={() => void this.copyImageCoordinates(fullscreenImage.lat, fullscreenImage.lon)} style={{ padding: 0, border: 0, background: "none", color: "#bdd8c8", font: "inherit", cursor: "pointer" }}>{fullscreenImage.lat.toFixed(6)}, {fullscreenImage.lon.toFixed(6)}</button>}
-          </div>}
-          <div ref={this.minimapContainer} style={{ width: "100%", height: this.state.minimapExpanded ? "calc(100% - 36px)" : "100%", marginTop: this.state.minimapExpanded ? 36 : 0 }} />
-          <button type="button" aria-label={this.state.minimapExpanded ? this._t('appCollapseMinimap') : this._t('appExpandMinimap')} aria-expanded={!!this.state.minimapExpanded} title={this.state.minimapExpanded ? this._t('appCollapseMinimap') : this._t('appExpandMinimap')} onClick={() => this.setState(prev => ({ minimapExpanded: !prev.minimapExpanded }))} style={{ position: "absolute", top: 3, right: 3, zIndex: 10002, width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #ffffff45", borderRadius: 4, background: "#17251ede", color: "white", cursor: "pointer" }}>
-            {this.state.minimapExpanded ? <Icons.Minimize size={14} /> : <Icons.Maximize size={14} />}
-          </button>
-        </div>
-      </div>,
+      <FullscreenViewer direction={this._runtimeLocale?.direction || "ltr"}
+        formatLocale={this._runtimeLocale?.formatLocale || "en-US"}
+        showMinimap={this.state.showMinimap} minimapExpanded={this.state.minimapExpanded}
+        hideInfoBox={this.props.config.hideInfoBox} address={this.state.address} image={fullscreenImage}
+        minimapRef={this.minimapContainer} t={this._t} onExit={this.toggleFullscreen}
+        onToggleMinimap={() => this.setState(prev => ({ showMinimap: !prev.showMinimap }))}
+        onToggleExpanded={() => this.setState(prev => ({ minimapExpanded: !prev.minimapExpanded }))}
+        onCopyCoordinates={(lat, lon) => this.copyImageCoordinates(lat, lon)}>{viewerArea}</FullscreenViewer>,
       document.body,
     );
     /** Return either normal or fullscreen layout */

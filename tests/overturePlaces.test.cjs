@@ -20,7 +20,7 @@ test('timeout aborts the request and exposes retry without an automatic loop',as
 test('dispose releases tasks and cache, and no later call can restart work',async()=>{const f=fixture();f.controller.setEnabled(true);await f.advance();f.controller.dispose();await f.complete();f.controller.retry();f.controller.setEnabled(true);f.controller.sync();await f.advance();assert.equal(f.calls.length,1);assert.equal(f.pending(),0);assert.equal(f.controller.stats.cacheBytes,0);});
 const src=fs.readFileSync(path.join(root,'src/runtime/widget.tsx'),'utf8'),sf=ts.createSourceFile('widget.tsx',src,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX),widget=sf.statements.find(n=>ts.isClassDeclaration(n)&&n.name?.text==='Widget');
 const methods=['placesPauseReason','placesBusy','syncPlaces','togglePlaces'].map(name=>widget.members.find(m=>m.name?.getText(sf)===name).getText(sf)).join('\n');
-test('widget default-off path never constructs an ArcGIS service or optional owner',()=>{const Runtime=new Function('placesApiUrl',compile('class Runtime{'+methods+'}\nreturn Runtime;'))(load('placesApi').placesApiUrl);const w=new Runtime();w.props={config:{enablePlaces:true,placesApiUrl:'https://host/places'}};w.state={placesActive:false,jimuMapView:{view:{ready:true}}};w._placesLifecycle={startService(){throw Error('must not start while off')}};w.ArcGISModules={get FeatureLayer(){throw Error('must not load a service while off')}};for(let i=0;i<100;i++)w.syncPlaces();});
+test('widget default-off path never constructs an ArcGIS service or optional owner',()=>{const Runtime=new Function('placesSourceKey',compile('class Runtime{'+methods+'}\nreturn Runtime;'))(load('placesSource').placesSourceKey);const w=new Runtime();w.props={config:{enablePlaces:true,placesApiUrl:'https://host/places'}};w.state={placesActive:false,jimuMapView:{view:{ready:true}}};w._placesLifecycle={startService(){throw Error('must not start while off')}};w.ArcGISModules={get FeatureLayer(){throw Error('must not load a service while off')}};for(let i=0;i<100;i++)w.syncPlaces();});
 test('idle scheduling has a deadline and retains cancellation without bypassing foreground gates',()=>{
  const {PlacesCoordinator}=load('PlacesCoordinator');const oldWindow=global.window,oldDocument=global.document;let captured,cancelled;
  global.window={requestIdleCallback(work,options){captured={work,options};return 42;},cancelIdleCallback(id){cancelled=id;}};global.document={addEventListener(){},removeEventListener(){}};
@@ -44,6 +44,9 @@ test('POI click stops automatic popup handling before asynchronous hitTest and r
  const handler=new Function('view','TURBO_LIMITS','coverageClickHitTest',compile('return '+callback.getText(sf))).call(w,view,{pickRadiusPx:10},coverageClickHitTest);const pending=handler({x:10,y:10,stopPropagation(){stopped++;}});assert.equal(stopped,1);assert.equal(opened,0);resolve({results:[]});await pending;assert.equal(target,'gers-1');assert.equal(opened,1);
 });
 const nearby=load('nearbyPlaceImagery');const distance=load('geoUtils').distanceMeters;
+/** Bind the actual source identity and imagery helpers to the extracted runtime method. */
+function explorationRuntime(){const method=widget.members.find(m=>m.name?.getText(sf)==='explorePlace').getText(sf);return new Function('PlaceImageryCache','placeImageryBbox','rankPlaceImagery','distanceMeters','GRAPH_API','placesSourceKey',compile('class Runtime{'+method+'}\nreturn Runtime;'))(load('PlaceImageryCache').PlaceImageryCache,nearby.placeImageryBbox,nearby.rankPlaceImagery,distance,{BASE:'https://graph.mapillary.com'},load('placesSource').placesSourceKey);}
+
 test('nearby imagery starts within 75m and rejects original/computed coordinate jumps',()=>{
  const place={lon:-86.13,lat:39.78},image=(id,metres,computed)=>({id,sequence:'seq',geometry:{coordinates:[place.lon,place.lat+metres/111195]},...(computed===undefined?{}:{computed_geometry:{coordinates:[place.lon,place.lat+computed/111195]}})});
  assert(nearby.choosePlaceImagery(place,[image('near',30),image('far',200)],75,distance).distance<31);
@@ -71,8 +74,8 @@ test('popup wider search is explicit, duplicate clicks are blocked and obsolete 
  }finally{owner.dispose();global.document=oldDocument;global.window=oldWindow;}
 });
 test('actual widget search returns a candidate without navigation and rejects superseded requests',async()=>{
- const method=widget.members.find(m=>m.name?.getText(sf)==='explorePlace').getText(sf);const Runtime=new Function('PlaceImageryCache','placeImageryBbox','rankPlaceImagery','distanceMeters','GRAPH_API',compile('class Runtime{'+method+'}\nreturn Runtime;'))(load('PlaceImageryCache').PlaceImageryCache,nearby.placeImageryBbox,nearby.rankPlaceImagery,distance,{BASE:'https://graph.mapillary.com'});
- const w=new Runtime(),view={destroyed:false};w.state={jimuMapView:{view}};w._selectionRequestId=1;w.accessToken='test';let url,resolve;w.fetchMapillaryJson=async(u,t,signal)=>{url=u;assert.equal(t,'test');assert(!signal.aborted);return {data:[{id:'i',sequence:'s',geometry:{coordinates:[0,.0001]}}]};};w.loadSequenceById=()=>{throw Error('search must not navigate');};const candidate=await w.explorePlace({lon:0,lat:0},75,new AbortController().signal);assert.equal(candidate[0].id,'i');assert(url.includes('limit=40'));assert(url.includes('computed_geometry'));assert(url.includes('captured_at'));assert.equal(w._placesExploreAbort,null);
+ const Runtime=explorationRuntime();
+ const w=new Runtime(),view={destroyed:false};w.props={config:{}};w.state={jimuMapView:{view}};w._selectionRequestId=1;w.accessToken='test';let url,resolve;w.fetchMapillaryJson=async(u,t,signal)=>{url=u;assert.equal(t,'test');assert(!signal.aborted);return {data:[{id:'i',sequence:'s',geometry:{coordinates:[0,.0001]}}]};};w.loadSequenceById=()=>{throw Error('search must not navigate');};const candidate=await w.explorePlace({lon:0,lat:0},75,new AbortController().signal);assert.equal(candidate[0].id,'i');assert(url.includes('limit=40'));assert(url.includes('computed_geometry'));assert(url.includes('captured_at'));assert.equal(w._placesExploreAbort,null);
  w._placesImageryCache.clear();w.fetchMapillaryJson=()=>new Promise(r=>resolve=r);const pending=w.explorePlace({lon:0,lat:0},75,new AbortController().signal);w._selectionRequestId++;resolve({data:[]});await assert.rejects(pending,{name:'AbortError'});assert.equal(w._placesExploreAbort,null);
 });
 test('heading ranking prefers facing images over closer away/unknown images and wraps north correctly',()=>{
@@ -148,7 +151,7 @@ test('heading-only fallback uses explicit matching coordinate/heading pairs and 
  let center;const opened={id:'pair',cameraType:'spherical',lngLat:{lng:0,lat:0},computedLngLat:{lng:0,lat:0},originalLngLat:{lng:2,lat:0},originalCompassAngle:270,compassAngle:270};const viewer={getImage:async()=>opened,setCenter:p=>center=p},image={id:'pair',placeLon:1,placeLat:0};assert.equal(await nearby.facePlaceInPanorama(viewer,image,()=>true),270);assert.equal(center[0],.5,'original camera west toward POI with original west heading');opened.computedCompassAngle=0;assert.equal(await nearby.facePlaceInPanorama(viewer,image,()=>true),90);assert.equal(center[0],.75);delete opened.originalCompassAngle;delete opened.computedCompassAngle;center=null;assert.equal(await nearby.facePlaceInPanorama(viewer,image,()=>true),null);assert.equal(center,null);
 });
 test('actual widget restores vector category on explicit enable without restoring startup activation',()=>{
- const preferences=load('placePreferences'),body=widget.members.find(m=>m.name?.getText(sf)==='togglePlaces').getText(sf);const Runtime=new Function('placesApiUrl','readTilePlacePreferences','tilePlacePreferenceKey',compile('class Runtime{'+body+'}\nreturn Runtime;'))(load('placesApi').placesApiUrl,preferences.readTilePlacePreferences,preferences.tilePlacePreferenceKey);const oldWindow=global.window,data=new Map();let reads=0;global.window={location:{pathname:'/experience/0'},localStorage:{getItem:k=>{reads++;return data.get(k)||null;},setItem:(k,v)=>data.set(k,v)}};
+ const preferences=load('placePreferences'),body=widget.members.find(m=>m.name?.getText(sf)==='togglePlaces').getText(sf);const Runtime=new Function('placesSourceKey','readTilePlacePreferences','tilePlacePreferenceKey',compile('class Runtime{'+body+'}\nreturn Runtime;'))(load('placesSource').placesSourceKey,preferences.readTilePlacePreferences,preferences.tilePlacePreferenceKey);const oldWindow=global.window,data=new Map();let reads=0;global.window={location:{pathname:'/experience/0'},localStorage:{getItem:k=>{reads++;return data.get(k)||null;},setItem:(k,v)=>data.set(k,v)}};
  const make=()=>{const w=new Runtime();w.props={id:'w',config:{placesApiUrl:'https://host/places'}};w.state={placesActive:false,placesTileCategory:'all',jimuMapView:{view:{ready:true}}};w._placesLifecycle={stop:()=>w.setState({placesActive:false})};w.syncPlaces=()=>{};w.setState=(patch,done)=>{Object.assign(w.state,typeof patch==='function'?patch(w.state):patch);done?.()};return w};
  try{const key=preferences.tilePlacePreferenceKey('w','/experience/0','https://host/places');preferences.saveTilePlacePreferences(()=>window.localStorage,key,{family:'landmarks',minimum:null,hideClosed:false,autoUpdate:false});const w=make();assert.equal(reads,0);assert.equal(w.state.placesActive,false);w.togglePlaces();assert.equal(w.state.placesActive,true);assert.equal(w.state.placesTileCategory,'landmarks');assert.equal(w.state.placesAutoUpdate,false);w.togglePlaces();assert.equal(w.state.placesActive,false);}finally{global.window=oldWindow}
 });
@@ -283,8 +286,8 @@ test('imagery cache bounds memory with LRU eviction and clears on map, service o
  cache.scope(view,'a','s');assert.equal(cache.stats.entries,12);cache.scope(view,'b','s');assert.equal(cache.stats.entries,0);cache.put(place,75,[]);cache.scope(view,'b','other');assert.equal(cache.stats.entries,0);cache.put(place,75,[]);cache.scope({},'b','other');assert.equal(cache.stats.entries,0);cache.put(place,75,[]);cache.clear();assert.equal(cache.stats.entries,0);
 });
 test('actual widget reuses successful searches without fetching and does not cache failed or stale work',async()=>{
- const method=widget.members.find(m=>m.name?.getText(sf)==='explorePlace').getText(sf);const Runtime=new Function('PlaceImageryCache','placeImageryBbox','rankPlaceImagery','distanceMeters','GRAPH_API',compile('class Runtime{'+method+'}\nreturn Runtime;'))(load('PlaceImageryCache').PlaceImageryCache,nearby.placeImageryBbox,nearby.rankPlaceImagery,distance,{BASE:'https://graph.mapillary.com'});
- const w=new Runtime(),view={destroyed:false},place={id:'p',lon:0,lat:0,release:''};w.state={jimuMapView:{view}};w._selectionRequestId=1;w.accessToken='a';let calls=0;w.fetchMapillaryJson=async()=>{calls++;return{data:[{id:'i',sequence:'s',geometry:{coordinates:[0,.0001]}}]};};
+ const Runtime=explorationRuntime();
+ const w=new Runtime(),view={destroyed:false},place={id:'p',lon:0,lat:0,release:''};w.props={config:{}};w.state={jimuMapView:{view}};w._selectionRequestId=1;w.accessToken='a';let calls=0;w.fetchMapillaryJson=async()=>{calls++;return{data:[{id:'i',sequence:'s',geometry:{coordinates:[0,.0001]}}]};};
  await w.explorePlace(place,75,new AbortController().signal);await w.explorePlace(place,75,new AbortController().signal);assert.equal(calls,1);await w.explorePlace(place,250,new AbortController().signal);assert.equal(calls,2);w.accessToken='b';await w.explorePlace(place,75,new AbortController().signal);assert.equal(calls,3);
  w._placesImageryCache.clear();w.fetchMapillaryJson=async()=>{calls++;throw Error('offline');};await assert.rejects(w.explorePlace(place,75,new AbortController().signal),/offline/);assert.equal(w._placesImageryCache.stats.entries,0);
  let resolve;w.fetchMapillaryJson=()=>new Promise(r=>resolve=r);const abort=new AbortController(),pending=w.explorePlace(place,75,abort.signal);abort.abort();resolve({data:[]});await assert.rejects(pending,{name:'AbortError'});assert.equal(w._placesImageryCache.stats.entries,0);assert.equal(w._placesExploreAbort,null);
@@ -319,5 +322,31 @@ test('manual old transport finishing resumes only a newer explicitly requested a
  const f=fixture(true);f.controller.setEnabled(true);f.controller.searchArea();await f.advance();const old=f.calls[0];f.view={...f.view,bbox:[0,0,2,1]};f.controller.sync();f.controller.searchArea();await f.advance();assert.equal(f.calls.length,1);assert(old.signal.aborted);await f.complete();await f.advance();assert.equal(f.calls.length,2);await f.complete();assert.equal(f.displays.length,1);f.controller.dispose();
 });
 test('production widget starts only the configured vector service and coalesces repeated sync',async()=>{
- const Runtime=new Function('placesApiUrl',compile('class Runtime{'+methods+'}\nreturn Runtime;'))(load('placesApi').placesApiUrl);const w=new Runtime();w.props={id:'test',config:{enablePlaces:true,placesApiUrl:'https://host/places'}};w.state={placesActive:true,jimuMapView:{view:{ready:true}}};let calls=0;w._placesLifecycle={startService:url=>{calls++;assert.equal(url,'https://host/places');return new Promise(()=>{})}};w.syncPlaces();for(let i=0;i<20;i++)w.syncPlaces();assert.equal(calls,1);
+ const Runtime=new Function('placesSourceKey',compile('class Runtime{'+methods+'}\nreturn Runtime;'))(load('placesSource').placesSourceKey);const w=new Runtime();w.props={id:'test',config:{enablePlaces:true,placesApiUrl:'https://host/places'}};w.state={placesActive:true,jimuMapView:{view:{ready:true}}};let calls=0;w._placesLifecycle={startService:url=>{calls++;assert.equal(url,'https://host/places');return new Promise(()=>{})}};w.syncPlaces();for(let i=0;i<20;i++)w.syncPlaces();assert.equal(calls,1);
+});
+
+test('runtime imagery cache follows external and Portal source identity without changing the selected place',async()=>{
+ const Runtime=explorationRuntime(),w=new Runtime(),view={destroyed:false},place={id:'place',lon:0,lat:0,release:'release'};
+ const external={placesSource:'external',placesApiUrl:'https://host/places'},portal={placesSource:'portal',placesPortalTilesUrl:'https://portal.test/Places/VectorTileServer',placesPortalQueryUrl:'https://portal.test/Places/FeatureServer/0'};
+ w.props={config:external};w.state={jimuMapView:{view}};w._selectionRequestId=1;w.accessToken='test';let calls=0;
+ w.fetchMapillaryJson=async()=>{calls++;return{data:[{id:'image',sequence:'sequence',geometry:{coordinates:[0,.0001]}}]}};
+ const search=()=>w.explorePlace(place,75,new AbortController().signal);
+ await search();await search();assert.equal(calls,1);
+ w.props.config=portal;await search();await search();assert.equal(calls,2);
+ w.props.config={...portal,placesPortalQueryUrl:'https://portal.test/Places/FeatureServer/1'};await search();assert.equal(calls,3);
+ w.props.config=external;await search();assert.equal(calls,4);assert.equal(w._placesImageryCache.stats.entries,1);
+ assert.equal(place.id,'place');assert.equal(w._selectionRequestId,1);
+});
+test('an older imagery completion cannot cache results or clear a newer pending search',async()=>{
+ const Runtime=explorationRuntime(),w=new Runtime(),view={destroyed:false},place={id:'place',lon:0,lat:0,release:''},requests=[];let syncs=0;
+ w.props={config:{placesApiUrl:'https://host/places'}};w.state={jimuMapView:{view}};w._selectionRequestId=1;w.accessToken='test';w._places={controller:{sync(){syncs++}}};
+ w.fetchMapillaryJson=(url,token,signal)=>new Promise(resolve=>requests.push({resolve,signal}));
+ const first=w.explorePlace(place,75,new AbortController().signal),rejected=assert.rejects(first,{name:'AbortError'});
+ const second=w.explorePlace(place,75,new AbortController().signal),controller=w._placesExploreAbort;
+ assert.equal(requests[0].signal.aborted,true);assert.equal(requests[1].signal.aborted,false);
+ requests[0].resolve({data:[{id:'stale',sequence:'sequence',geometry:{coordinates:[0,.0001]}}]});await rejected;
+ assert.strictEqual(w._placesExploreAbort,controller);assert.equal(w._placesImageryCache.stats.entries,0);assert.equal(syncs,2);
+ requests[1].resolve({data:[{id:'fresh',sequence:'sequence',geometry:{coordinates:[0,.0001]}}]});
+ assert.equal((await second)[0].id,'fresh');assert.equal(w._placesExploreAbort,null);assert.equal(syncs,3);
+ assert.equal(w._placesImageryCache.get(place,75)[0].id,'fresh');
 });

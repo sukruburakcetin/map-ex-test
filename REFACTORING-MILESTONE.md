@@ -177,3 +177,156 @@ The previously documented `tools/check-exb-build.cjs` is absent. Use the target 
 Suggested resume prompt:
 
 > Read REFACTORING-MILESTONE.md and the routing-validation/solve-history guides. Inspect and preserve actual local changes. Resume after stage 46; use the newly extracted final-selection helper; the historically reported build checker is still absent. Use the restored stage 20 controlled integration suite. Verify the user's geometry-v2 and solve-history installation, prioritize Experience Builder 1.21 host checks, and review remaining orchestration before proposing another bounded extraction. Preserve behavior, cancellation and resource ownership; deliver a reversible installer for any code change.
+
+<!-- isolated-build-check-stage47 -->
+## Stage 47 — isolated build verification
+
+The source checkpoint is `609b81c` (v13). The isolated runtime/settings checker is restored at `tools/check-exb-build.cjs`; no runtime source changes are introduced. Current-source verification passed 855 tests across 47 focused files, strict extracted-module TypeScript, and an isolated Experience Builder 1.20.0 build with zero errors/warnings using Mapillary JS 4.1.2, pbf 5.1.2 and vector-tile 3.0.0.
+
+This does not establish full target 1.21 packaging/browser compatibility or performance. Run the target client's normal build and the remaining live scenarios. See [checker usage and limits](docs/development/isolated-build-check.md). The tooling installer is additive, preserves existing notes and does not require a runtime restart.
+
+<!-- viewer-presentation-stage48 -->
+## Stage 48 — viewer presentation boundary
+
+Extracted viewer surface, nearby/associated image tray, fullscreen/minimap chrome, styles and the runtime state contract. Requests, portals, SDK DOM ownership and selection timing stay with the runtime. The widget is reduced from 12,915 to 12,371 lines and still requires further controller extraction before it becomes a minimal entry. No runtime dependencies were added.
+
+885 focused tests passed across 48 files, including 30 before/after presentation checks. Chromium passed 14 controlled layout/identity checks (desktop/mobile, LTR/RTL, tray scroll and SDK child retention) with SDK/control stubs. New presentation/style/state modules have no strict diagnostics; existing dependency/repository diagnostics prevent claiming a clean full typecheck. No additional widget diagnostics were introduced relative to the baseline. Isolated ExB 1.20 runtime/settings bundles passed with zero errors/warnings; target 1.21 normal build/live behavior/performance remain unverified.
+
+See [presentation architecture and validation](docs/development/viewer-presentation.md). Installer: `apply-viewer-presentation-refactor.cjs`. It preflights known v13 runtime/types sources, refuses unknown edits and supports exact rollback. Restart the client and hard-refresh after application; no dependency reinstall. Continue with coherent controller boundaries rather than moving the remaining monolith wholesale.
+
+<!-- widget-documentation-stage49 -->
+## Stage 49 — runtime contributor documentation
+
+Documentation-only audit after stage 48: reviewed 82 member descriptions and eight startup/request ownership counters. Corrected obsolete CDN startup, fullscreen, export, associated-image and sprite-preload descriptions; removed duplicate legacy preambles. See [runtime reading guide](docs/development/runtime-reading-guide.md) for entry points, ownership rules and comment conventions.
+
+The full runtime syntax tree is unchanged, and emitted JavaScript with comments removed is byte-identical to the stage-48 input. All 885 focused regressions pass; all 47 JSDoc parameter names match signatures. Documentation links and repository layout checks pass. No runtime behavior, dependencies or fullscreen fixes are introduced. Existing full-repository type diagnostics and target 1.21/live-SDK validation remain separate.
+
+Installer: `apply-widget-documentation.cjs` (known stage-48 runtime; BOM/CRLF supported). Preflight refuses unknown edits; backups support exact rollback. Uninstall stage 49 before rolling back stage 48. Continue refactoring from the presentation boundary with these lifecycle/request contracts.
+
+<!-- v5-phase1-foundation-stage50 -->
+## Stage 50 — Version 5.0 phase-1 foundation
+
+Added a complete portable runner/preflight/report and test-environment guide. Six new runner/real-codec checks pass. With complete test dependencies, 185 Node files report **2,175 tests: 2,034 pass, 141 fail**; the pre-cleanup stage-49 application source under the same environment reproduces identical totals and failing names. No failures are suppressed or automatically accepted. See [baseline and failure inventory](docs/development/test-baseline.md) and [reproduction guide](docs/development/portable-tests.md).
+
+Removed five unused imports, the token-value debug log and the empty root `.gitkeep`. Emitted runtime code changes only by removal of that debug log. Token-source behavior and saved config fields are preserved. Docs now match manifest ExB 1.21 and document directly imported pako 2.2.0. The isolated ExB 1.20 runtime/settings build passes with zero errors/warnings; target 1.21 production/live SDK acceptance remains outstanding. No host packages, credentials or license choices were changed.
+
+Installer: `apply-v5-phase1-foundation.cjs`, targeting the known stage-49 source. Keep backups for exact rollback; uninstall stage 50 before older stages. From the target client, install the documented direct pako dependency if needed, then restart. Legacy files, migrations and assets remain. Next work: individually diagnose the 141 remaining loader/assertion failures without weakening requirements or blanket rebaselining.
+
+<!-- point-cloud-fixture-repair-stage51 -->
+## Stage 51 — point-cloud fixture repair
+
+All 257 point-cloud tests across 17 suites plus four English fixture checks pass (261 focused). Full suite: **2,194 tests, 2,135 pass, 59 fail**, all 186 files included. The former 82 point-cloud failure reports are resolved; the other failing names are unchanged. This corrects the earlier conversational count of 92. Fourteen extra map-layer cases now execute instead of one module-load failure; five new fixture/format checks also execute.
+
+Shared bindings use actual English catalogs, formatters and shipped text-only wrappers. SDK/clocks/writers and side-effect assertions remain suite-owned. Only rendered-toast text grouping/ordinary whitespace is canonicalized; props/styles, wording, counts, duration, state/order and non-toast identity stay checked. Calibration explicitly adapts historical compact-unit/XYZ spacing and separately asserts exact current feedback. No frozen fixtures or existing assertions were removed.
+
+A real feedback typo was fixed: one JSX space separated `cluster` from `s`. No other production source changed. Restoring that old space in a temporary control makes 13 result tests fail. The isolated ExB 1.20 bundle passes with zero errors/warnings; target 1.21/live SDK acceptance remains separate. A guide's reference to absent worker-thread tests is corrected, not treated as evidence.
+
+See [full baseline](docs/development/test-baseline.md) and [point-cloud notes](docs/development/point-cloud.md). Installer: `apply-point-cloud-fixture-repair.cjs` after stage 50; preserve backups for exact rollback and uninstall newer stages first. No package reinstall. Next: individually diagnose the other 59 failures, starting with field-note locale bindings, without weakening assertions.
+
+<!-- field-note-fixture-repair-stage52 -->
+## Stage 52 — field-note fixture repair
+
+All 46 draft/file/collection tests plus four shared English fixture checks pass (50 focused). Full portable run: **2,195 tests, 2,163 pass, 32 fail**, all 186 files included. The former 27 target failure reports are resolved; remaining failing names are unchanged. One new exact count-feedback case executes.
+
+The three suites reuse actual English bindings. Only four historical Turkish alerts and counted import wording are adapted on the frozen comparison side; note data, error objects, clocks, identities, storage/FileReader/publication operations and save/editor guards remain exact. Zero/singular/plural import and duplicate counts have explicit assertions. A temporary wrong duplicate-count control fails three file tests. No frozen JSON or original assertion calls were removed.
+
+All production source files and dependencies are unchanged relative to stage 51. This is test/documentation work; it does not establish live SDK, multilingual or authenticated Enterprise permission acceptance. See [current baseline](docs/development/test-baseline.md) and [fixture conventions](docs/development/portable-tests.md).
+
+Installer: `apply-field-note-fixture-repair.cjs`, after stage 51. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: diagnose the remaining 32 failures individually, starting with coverage-analysis bindings; do not force a green run by discarding tests or blanket-updating snapshots.
+
+<!-- coverage-analysis-fixture-repair-stage53 -->
+## Stage 53 — coverage-analysis fixture repair
+
+The reliability suite now compiles runtime snippets as TSX and uses the existing actual English bindings. Its lifecycle guard is identified by analysis-input ownership instead of statement position. All 17 existing cases and assertions remain, with four new cases covering pending-classifier cancellation, late progress/results, newer-run ownership, replaced views and rate-limit cooldown feedback.
+
+Focused result: **25 passed** (21 reliability tests plus four shared-fixture checks). Complete portable run: **2,199 tests, 2,173 pass, 26 fail**, across all 186 files. The six previous coverage-analysis failures are resolved, with no newly failing names. Removing only the post-classification stale-result guard in a temporary copy makes three new late-result tests fail.
+
+All 449 production-source/frozen-fixture files remain unchanged from stage 52; no dependencies changed. The classifier is stubbed: this validates orchestration, not classification accuracy or real server/GPU behavior. No new bundle or live ExB 1.21 acceptance is claimed. See [current baseline](docs/development/test-baseline.md) and [fixture conventions](docs/development/portable-tests.md).
+
+Installer: `apply-coverage-analysis-fixture-repair.cjs`, after stage 52. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: diagnose the remaining 26 failures individually, starting with detection-label fixture bindings; retain every suite and behavior assertion.
+
+<!-- detection-label-fixture-repair-stage54 -->
+## Stage 54 — detection-label fixture repair
+
+The AI viewer label fixture now explicitly supplies its missing bounds adapter, matching the existing detection-exploration fixture. Bounds are inert in this label-only harness. Controlled timers, pointer hits and viewer events retain all three original cases/15 assertions and add four regressions/22 assertions for panorama visibility, focus/all mode, viewer-removal cleanup and out-of-order hover hits.
+
+Focused result: **20 passed** across AI-label toggle, exploration, map-label and display suites (seven AI-label cases). Full portable run: **2,203 tests, 2,180 pass, 23 fail**, across all 186 files. The three previous AI-label failure reports are resolved, with no newly failing names. Removing visibility forwarding in a temporary copy fails two cases; removing hover ownership checks fails the newer-pointer case.
+
+All 449 production-source/frozen-fixture files remain unchanged from stage 53. No dependencies or production behavior changed. These tests use controlled SDK substitutes and do not establish live pointer/WebGL or ExB 1.21 acceptance. Optional Mapbox style-spec checks were not configured. See [current baseline](docs/development/test-baseline.md) and [fixture conventions](docs/development/portable-tests.md).
+
+Installer: `apply-detection-label-fixture-repair.cjs`, after stage 53. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: diagnose the remaining 23 failures individually, starting with the info-panel footer fixture bindings; keep every suite and behavior assertion.
+
+<!-- info-footer-fixture-repair-stage55 -->
+## Stage 55 — info-panel footer fixture repair
+
+The footer fixture now explicitly binds `useWidgetLocale` to the shared actual English catalog instead of returning styles for every unknown import. Unknown imports fail clearly and each case restores the original global `window` descriptor. All four original cases/eight assertions remain; two regressions/four assertions check replacement viewport/current height, live reduced-motion preferences and absent matchMedia.
+
+Focused result: **10 passed** (six footer cases plus four English fixture checks). Complete portable run: **2,205 tests, 2,186 pass, 19 fail**, across all 186 files. Four previous footer failure reports resolved, with no newly failing names. Temporary relative-distance and forced-smooth-motion controls fail three and two cases respectively.
+
+All 449 production-source/frozen-fixture files remain unchanged from stage 54. No dependencies or production behavior changed. Controlled component checks do not establish React-provider lifecycle, keyboard/focus, browser layout, screen-reader or live ExB 1.21 acceptance. See [current baseline](docs/development/test-baseline.md) and [fixture conventions](docs/development/portable-tests.md).
+
+Installer: `apply-info-footer-fixture-repair.cjs`, after stage 54. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: individually diagnose the remaining 19 failures, starting with native coverage alignment/terrain ownership; distinguish harness failures from production behavior defects and preserve all assertions.
+
+<!-- native-alignment-fixture-repair-stage56 -->
+## Stage 56 — native alignment / current terrain contracts
+
+Two warm-playback fixture failures lacked the screen-direction owner now used by `drawCone`; that branch is explicitly recorded. Three legacy cases are migrated: retired DOM-pulse terrain projection/retry assumptions now exercise current `renderedGroundPoint` height/readiness safety, and old polygon-face apex assertions use mesh local vertices/origin and the current perimeter. The bounded DOM retry expectation is retired with its implementation; existing pulse tests independently require SDK draping and zero 3D frames. Mesh topology/reuse stays covered by the existing closed-mesh suite.
+
+Focused result: **39 passed** (24 native-alignment, six pulse, nine mesh cases). Full portable run: **2,207 tests, 2,193 pass, 14 fail**, across all 186 files. Five previous alignment failure reports resolved; no newly failing names. All 43 assertion calls outside the three migrated cases remain exact. Two new cases check flat-ground/reference and invalid/throwing terrain samples. Factory calls are asserted outside contained callbacks. Temporary speculative-flat, lifted-apex and ignored-anchor mutations fail three, one and two cases respectively.
+
+All 449 production-source/frozen-fixture files remain unchanged from stage 55; no dependency or production behavior changes. No new bundle or live SDK terrain/projection, browser/GPU or ExB 1.21 acceptance claimed. See [current baseline](docs/development/test-baseline.md) for the explicit old-to-current assertion mapping and [fixture conventions](docs/development/portable-tests.md).
+
+Installer: `apply-native-alignment-fixture-repair.cjs`, after stage 55. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: individually diagnose the remaining 14 failures, starting with Nearby foreground/runtime bindings; preserve request ownership, opt-in behavior and all active-path assertions.
+
+<!-- nearby-foreground-fixture-repair-stage57 -->
+## Stage 57 — Nearby foreground fixture repair
+
+The foreground harness now selects only Nearby's four lifecycle statements (visibility declarations, demand assignment and visibility branch) instead of a prefix ending at another feature's guard. The old prefix had begun executing unbound route-generation reconciliation. A count assertion protects the boundary; original statement order remains.
+
+Focused result: **30 passed** across foreground runtime, actual discovery-owner and coverage-anchor suites. All five original runtime cases/15 assertions remain; two regressions and the binding-count check add 17 assertions. New cases cover tab/hidden-widget demand, pointer reset, priority and paused/playback image transitions. Existing real-owner tests retain cancellation, stale-publication and background-slot checks. Temporary eligibility-removal and forced-immediate controls fail three cases each.
+
+Full portable run: **2,209 tests, 2,197 pass, 12 fail**, across all 186 files. Both previous Nearby runtime failure reports resolved; no newly failing names. All 449 production-source/frozen-fixture files remain unchanged from stage 56, with no dependency changes. No new bundle or live SDK/browser/network timing/ExB 1.21 acceptance claimed. See [current baseline](docs/development/test-baseline.md) and [fixture conventions](docs/development/portable-tests.md).
+
+Installer: `apply-nearby-foreground-fixture-repair.cjs`, after stage 56. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: diagnose the remaining 12 failures individually, starting with Overture Places/runtime bindings; preserve category, confidence, caching, request ownership and opt-in behavior.
+
+<!-- overture-places-fixture-repair-stage58 -->
+## Stage 58 — Overture Places source-identity fixture repair
+
+Five runtime fixtures now bind actual `placesSourceKey` instead of only the former external API URL helper. Both imagery fixtures supply runtime configuration and share one local extracted-method constructor. All 62 existing Overture cases/387 assertions remain exact; two new source-scope/overlapping-search regressions add 17 assertions.
+
+Focused result: **85 passed** across Overture Places, configured runtime and Portal-source suites. New cases verify external/Portal/query-endpoint cache isolation and prevent an old completion from caching, clearing a newer controller or resynchronizing its owner. Temporary fixed-source and cache-write-removal controls fail the relevant assertions; the source-audit test also detects these deliberate edits.
+
+Full portable run: **2,211 tests, 2,204 pass, 7 fail**, across all 186 files. Five previous Overture failures resolved; other failing names unchanged. All 449 production-source/frozen-fixture files remain unchanged from stage 57; no dependencies changed. No new bundle or live SDK/Portal permissions/service-scale/ExB 1.21 acceptance claimed. See [current baseline](docs/development/test-baseline.md) and [fixture conventions](docs/development/portable-tests.md).
+
+Installer: `apply-overture-places-fixture-repair.cjs`, after stage 57. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: diagnose the seven remaining failures individually, starting with the Places API fixture; preserve source validation, category/confidence contracts and active behavior assertions.
+
+<!-- places-api-fixture-repair-stage59 -->
+## Stage 59 — Places API builder teardown fixture repair
+
+The builder fixture now extracts actual `clearPlacesArea` and its preview/view/revision fields, required by current unmount. All three original API cases/19 assertions remain. A held abort-ignoring response regression adds ten assertions for controller detachment-before-abort, one preview destruction, cleared ownership, repeated unmount and no post-unmount state write. Temporary removal of cancellation or preview cleanup fails this case.
+
+Focused result: **13 passed** across API and area-profile suites (four API and nine area cases). Complete portable run: **2,212 tests, 2,206 pass, 6 fail**, across all 186 files. Previous API builder failure resolved; no newly failing names. All 449 production-source/frozen-fixture files unchanged from stage 58; no dependencies changed. No new bundle, real HTTP/CORS, SDK builder rendering or ExB 1.21 acceptance claimed. See [current baseline](docs/development/test-baseline.md) and [fixture conventions](docs/development/portable-tests.md).
+
+Installer: `apply-places-api-fixture-repair.cjs`, after stage 58. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: diagnose the remaining six failures individually, starting with the time-travel suite loading failure; preserve cancellation, stale-result guards and all active-path assertions.
+
+<!-- time-travel-fixture-repair-stage60 -->
+## Stage 60 — time-travel dependency fixture repair
+
+The availability loader now follows actual pure-module relative dependencies with cached module records; the background queue shares that loader. Previously `geoUtils` was evaluated without `require`, so its current detection-label/presentation imports prevented all availability cases from registering. No helper is replaced with an empty mock.
+
+All 24 original availability cases/61 assertion calls remain, with one import-boundary assertion added and no new cases. Focused result: **45 passed** (24 availability, five preview, 16 background queue). Temporary stale-apply-guard removal fails nine cases; removing cached-result assignment fails one. Cancellation, retry/coalescing and physical slot retention through JSON settlement remain checked.
+
+Full portable run: **2,235 tests, 2,230 pass, 5 fail**, across all 186 files. The suite-load failure is replaced by 24 passing tests, raising the total by 23. Other five failing names unchanged. All 449 production-source/frozen-fixture files unchanged from stage 59; no dependencies changed. No new bundle or live Mapillary/SDK/browser/network-timing/ExB 1.21 acceptance claimed. See [current baseline](docs/development/test-baseline.md) and [fixture conventions](docs/development/portable-tests.md).
+
+Installer: `apply-time-travel-fixture-repair.cjs`, after stage 59. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: diagnose the five remaining failures individually, starting with community-workspace client loading; preserve credential boundaries, cancellation and active-path assertions.
+
+<!-- community-client-fixture-repair-stage61 -->
+## Stage 61 — community-workspace client dependency fixture repair
+
+The client fixture now follows its actual pure relative dependency graph, including attachment helpers, with cached module records and a non-relative import rejection. Previously the evaluator omitted `require`, so attachment support prevented all client cases from registering. Transport and clocks remain explicitly injected; no service connection is made.
+
+All 30 existing cases/96 assertions remain unchanged; one import-boundary assertion added, no new cases. Focused result: **30 passed**. Temporary cookie-forwarding and exact-revision-truncation controls each fail an original case. Credential/key/endpoint boundaries, session expiry/disposal, invitations, whitelists and duplicate/revision checks remain active.
+
+Full portable run: **2,264 tests, 2,260 pass, 4 fail**, across all 186 files. The suite-load failure becomes 30 passing existing cases, raising the total by 29. Other four failing names unchanged. All 449 production-source/frozen-fixture files unchanged from stage 60; no dependencies changed. No new bundle, deployed operator permissions, browser attachment persistence or live ExB 1.21 acceptance claimed. Full-run PostgreSQL/RLS suites remain included. See [current baseline](docs/development/test-baseline.md) and [fixture conventions](docs/development/portable-tests.md).
+
+Installer: `apply-community-client-fixture-repair.cjs`, after stage 60. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: diagnose the remaining four failures individually, starting with detection-linked preview; preserve opt-in behavior, provenance and credential boundaries.

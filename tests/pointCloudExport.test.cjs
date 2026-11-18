@@ -1,3 +1,4 @@
+const { englishFunction, bindEnglish, feedbackTrace } = require('./helpers/englishFixture.cjs');
 /** Compare actual runtime export adapters and browser operations with the frozen original handler.
  * Held writers expose single-flight, live/captured values and teardown timing without real downloads.
  */
@@ -16,16 +17,16 @@ function setup(kind,{hold=false,failAt=null}={}){
  class Blob{constructor(parts,options){this.parts=parts;this.options=options;event('blob',parts,options)}}
  const setTimeout=(fn,ms)=>{event('timer',ms);timers.push(fn)};
  const jsx=(type,props,...children)=>({type:typeof type==='string'?type:'check',props,children});const Icons={Check:()=>{}};
- const ui={exports:{}};new Function('require','module','exports',compile(fs.readFileSync(root+'/src/features/point-cloud/PointCloudExportFeedback.tsx','utf8')))(name=>name==='jimu-core'?{React:{},jsx}:Icons,ui,ui.exports);
- const owner={exports:{}};new Function('module','exports','URL','document','Blob','setTimeout',compile(fs.readFileSync(root+'/src/features/point-cloud/PointCloudExport.ts','utf8')))(owner,owner.exports,URL,document,Blob,setTimeout);
+ const ui={exports:{}};englishFunction('require','module','exports',compile(fs.readFileSync(root+'/src/features/point-cloud/PointCloudExportFeedback.tsx','utf8')))(name=>name==='jimu-core'?{React:{},jsx}:Icons,ui,ui.exports);
+ const owner={exports:{}};englishFunction('module','exports','URL','document','Blob','setTimeout',compile(fs.readFileSync(root+'/src/features/point-cloud/PointCloudExport.ts','utf8')))(owner,owner.exports,URL,document,Blob,setTimeout);
  function writer(format){return (...args)=>{event('writer',format,...args);const p=deferred();pending.push(p);if(!hold)p.resolve(format==='csv'?'csv-content':{binary:format});return p.promise}}
  const csv=writer('csv'),ply=writer('ply'),las=writer('las');const console={error:(label,error)=>trace.push(['error',label,error.message])};
- const Harness=new Function('PointCloudExport','showPointCloudExportFeedback','buildPointCloudCsv','buildPointCloudPly','buildPointCloudLas','URL','document','Blob','setTimeout','jsx','Icons','console',compile('class Widget{'+(kind==='baseline'?fixture.handler:current)+'};return Widget;'))(owner.exports.PointCloudExport,ui.exports.showPointCloudExportFeedback,csv,ply,las,URL,document,Blob,setTimeout,jsx,Icons,console);
- const w=new Harness();w.state={pointCloudVisible:true,imageId:'current',pointCloudExportLoading:false};const points=[{lon:1,lat:2,altitude:3}];const result={imageId:'source',points};w._pointCloudAcquisition={result};w._pointCloudExportBusy=false;w._sharedNotesDisposed=false;w._nudgeX=1;w._nudgeY=-2;w._nudgeZ=3;w._cameraLat=45;
+ const Harness=englishFunction('PointCloudExport','showPointCloudExportFeedback','buildPointCloudCsv','buildPointCloudPly','buildPointCloudLas','URL','document','Blob','setTimeout','jsx','Icons','console',compile('class Widget{'+(kind==='baseline'?fixture.handler:current)+'};return Widget;'))(owner.exports.PointCloudExport,ui.exports.showPointCloudExportFeedback,csv,ply,las,URL,document,Blob,setTimeout,jsx,Icons,console);
+ const w=bindEnglish(new Harness());w.state={pointCloudVisible:true,imageId:'current',pointCloudExportLoading:false};const points=[{lon:1,lat:2,altitude:3}];const result={imageId:'source',points};w._pointCloudAcquisition={result};w._pointCloudExportBusy=false;w._sharedNotesDisposed=false;w._nudgeX=1;w._nudgeY=-2;w._nudgeZ=3;w._cameraLat=45;
  w.setState=values=>{Object.assign(w.state,values);trace.push(['state',values])};w.showToast=(...args)=>{trace.push(['toast',...args]);onToast(...args)};
  return{w,trace,pending,timers,result,points,setThrow:value=>throwAt=value,onToast:fn=>onToast=fn,onBrowser:fn=>onBrowser=fn,run:format=>w.downloadPointCloud(format),revoke:()=>timers.splice(0).forEach(fn=>fn())};
 }
-async function compare(run,options){const a=setup('baseline',options),b=setup('working',options);await run(a);await run(b);assert.deepEqual(structuredClone(b.trace),structuredClone(a.trace));assert.deepEqual(b.w.state,a.w.state);return b}
+async function compare(run,options){const a=setup('baseline',options),b=setup('working',options);await run(a);await run(b);assert.deepEqual(structuredClone(feedbackTrace(b.trace)),structuredClone(feedbackTrace(a.trace)));assert.deepEqual(b.w.state,a.w.state);return b}
 test('CSV/PLY/LAS and default retain writer args, feedback, filename and browser-operation order',async()=>{for(const format of [undefined,'csv','ply','las'])await compare(async h=>{await h.run(format);const call=h.trace.find(x=>x[0]==='writer');assert.strictEqual(call[2],h.points);assert.deepEqual(call.slice(3),[1,-2,3,45]);h.revoke()})});
 test('exports borrow the full result regardless of crop, ground and lasso settings',async()=>{await compare(async h=>{h.w.state.pointCloudLength=10;h.w.state.isLassoMode=true;h.w._groundMode=true;h.w._filteredPointCloudPoints=[];await h.run('csv');assert.strictEqual(h.trace.find(x=>x[0]==='writer')[2],h.points)})});
 test('hidden or absent cloud reports unavailable without busy/loading/writer work',async()=>{for(const missing of ['visible','result'])await compare(async h=>{if(missing==='visible')h.w.state.pointCloudVisible=false;else h.w._pointCloudAcquisition.result=null;await h.run('las');assert.deepEqual(h.trace,[['toast','No point cloud available to export.']])})});

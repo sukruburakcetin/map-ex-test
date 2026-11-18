@@ -16,7 +16,7 @@ export function showPointCloudLoadedFeedback(showToast: Toast, result: PointClou
       <span style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
         <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <Icons.Check size={14} color="#37d582" />
-          <b> <OwnedMessage source={"Point cloud loaded:"}/> </b> {result.clusterCount}  <OwnedMessage source={"cluster"}/> {result.clusterCount !== 1 ? "s" : ""}
+          <b> <OwnedMessage source={"Point cloud loaded:"}/> </b> {result.clusterCount}  <OwnedMessage source={"cluster"}/>{result.clusterCount !== 1 ? "s" : ""}
         </span>
         <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.75)", paddingLeft: "20px" }}>
           {<OwnedNumber value={totalPoints}/>}  <OwnedMessage source={"pts total"}/> {dupes > 0 ? <OwnedMessage source={" · {value0} dupes removed"} values={{value0:dupes}}/> : ""}

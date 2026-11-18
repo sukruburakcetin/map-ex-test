@@ -506,3 +506,14 @@ export interface FieldNoteAttachments {
     items: { id: number; name: string; size?: number; contentType?: string }[];
     busy?: boolean; error?: string; message?: string;
 }
+
+/** One camera capture associated with a selected map detection. */
+export interface AssociatedImage {
+    id: string;
+    detectionId: string;
+    detectionBounds?: { x: number; y: number; width: number; height: number };
+    detectionLabel?: string;
+    thumbUrl: string;
+    capturedAt: number;
+    geometry: { type: "Point"; coordinates: [number, number] };
+}

@@ -1,26 +1,27 @@
+const { englishFunction, bindEnglish, feedbackTrace } = require('./helpers/englishFixture.cjs');
 /** Baseline comparisons use the real runtime adapters, geographic math and candidate index.
  * Recording scene/viewer adapters expose property values and state/callback order.
  */
 const fs=require('fs'),path=require('path'),test=require('node:test'),assert=require('node:assert/strict'),ts=require(process.env.MAPILLARY_TYPESCRIPT||'typescript');
 const root=path.resolve(__dirname,'..'),fixture=JSON.parse(fs.readFileSync(__dirname+'/fixtures/pointCloudGeometry.baseline.json','utf8'));
 const compile=s=>ts.transpileModule(s,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React,jsxFactory:'jsx'}}).outputText;
-function functions(file,names,prefix=''){const sf=ts.createSourceFile(file,fs.readFileSync(root+'/src/utils/'+file,'utf8'),ts.ScriptTarget.Latest,true);return new Function(compile(prefix+names.map(name=>sf.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name.text===name).getText(sf).replace(/^export /,'')).join('\n')+';return {'+names.join(',')+'};'))()}
+function functions(file,names,prefix=''){const sf=ts.createSourceFile(file,fs.readFileSync(root+'/src/utils/'+file,'utf8'),ts.ScriptTarget.Latest,true);return englishFunction(compile(prefix+names.map(name=>sf.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name.text===name).getText(sf).replace(/^export /,'')).join('\n')+';return {'+names.join(',')+'};'))()}
 const metric=functions('geoUtils.ts',['distanceMeters']);
 const cloud=functions('pointCloudUtils.ts',['pointCloudCandidates','pointCloudCorridorCount','summarizePointCloud'],'const corridorIndexes=new WeakMap();\n');
 // The count helper also needs the same distance-independent candidate envelope.
-const m={exports:{}};new Function('require','module','exports',compile(fs.readFileSync(root+'/src/features/point-cloud/pointCloudGeometry.ts','utf8')))(id=>id.endsWith('/geoUtils')?metric:cloud,m,m.exports);const geometry=m.exports;
+const m={exports:{}};englishFunction('require','module','exports',compile(fs.readFileSync(root+'/src/features/point-cloud/pointCloudGeometry.ts','utf8')))(id=>id.endsWith('/geoUtils')?metric:cloud,m,m.exports);const geometry=m.exports;
 function methods(kind){const sf=ts.createSourceFile('widget.tsx',kind==='baseline'?fixture.source:fs.readFileSync(root+'/src/runtime/widget.tsx','utf8'),ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX),cl=sf.statements.find(n=>ts.isClassDeclaration(n)&&n.name.text==='Widget');return [...(kind==='working'?['_pointCloudCrop','_pointCloudResult']:[]),'acceptPointCloudResult','renderPointCloudMapLayer','handlePointCloudLengthChange','handlePointCloudWidthChange'].map(name=>{const n=cl.members.find(m=>m.name?.getText(sf)===name);assert(n,name);return n.getText(sf)}).join('\n')}
-const policy={exports:{}};new Function('module','exports',compile(fs.readFileSync(root+'/src/features/point-cloud/pointCloudMapPolicy.ts','utf8')))(policy,policy.exports);
-const crop={exports:{}};new Function('require','module','exports',compile(fs.readFileSync(root+'/src/features/point-cloud/PointCloudCrop.ts','utf8')))(()=>geometry,crop,crop.exports);
-const application={exports:{}};new Function('require','module','exports',compile(fs.readFileSync(root+'/src/features/point-cloud/PointCloudResultApplication.ts','utf8')))(id=>id==='./pointCloudGeometry'?geometry:cloud,application,application.exports);
-const feedback={exports:{}};new Function('require','module','exports',compile(fs.readFileSync(root+'/src/features/point-cloud/PointCloudResultFeedback.tsx','utf8')))(id=>id==='jimu-core'?{jsx:(tag,props,...children)=>({tag,props:props||{},children})}:{Check:'check'},feedback,feedback.exports);
+const policy={exports:{}};englishFunction('module','exports',compile(fs.readFileSync(root+'/src/features/point-cloud/pointCloudMapPolicy.ts','utf8')))(policy,policy.exports);
+const crop={exports:{}};englishFunction('require','module','exports',compile(fs.readFileSync(root+'/src/features/point-cloud/PointCloudCrop.ts','utf8')))(()=>geometry,crop,crop.exports);
+const application={exports:{}};englishFunction('require','module','exports',compile(fs.readFileSync(root+'/src/features/point-cloud/PointCloudResultApplication.ts','utf8')))(id=>id==='./pointCloudGeometry'?geometry:cloud,application,application.exports);
+const feedback={exports:{}};englishFunction('require','module','exports',compile(fs.readFileSync(root+'/src/features/point-cloud/PointCloudResultFeedback.tsx','utf8')))(id=>id==='jimu-core'?{jsx:(tag,props,...children)=>({tag,props:props||{},children})}:{Check:'check'},feedback,feedback.exports);
 const globals={...feedback.exports,...application.exports,...crop.exports,...policy.exports,...geometry,...metric,...cloud,POINT_CLOUD_CONFIG:{FETCH_LENGTH:300,FETCH_WIDTH:30,LENGTH_MAX:300,WIDTH_MAX:80,GROUND_MODE_HEIGHT_M:1.5},jsx:(tag,props,...children)=>({tag,props:props||{},children}),Icons:{Check:'check'}};
-const Harness={};for(const kind of ['baseline','working'])Harness[kind]=new Function(...Object.keys(globals),compile('class Harness {'+methods(kind)+'};return Harness;'))(...Object.values(globals));
+const Harness={};for(const kind of ['baseline','working'])Harness[kind]=englishFunction(...Object.keys(globals),compile('class Harness {'+methods(kind)+'};return Harness;'))(...Object.values(globals));
 const clone=x=>structuredClone(x);
 function at(east,north,alt=12,extra={},lon=0,lat=0){return {lon:lon+east/(111320*Math.cos(lat*Math.PI/180)),lat:lat+north/111320,rawLon:lon+.0001+east/(111320*Math.cos(lat*Math.PI/180)),rawLat:lat-.0001+north/111320,alt,r:100,g:150,b:200,...extra}}
 function result(points,lon=0,lat=0){return {imageId:'A',points,computedImageLocation:{lon,lat},mapImageLocation:{lon,lat},sfmClusterUrl:'cluster',clusterCount:2,totalPoints:points.length,wasDownsampled:false,duplicatesRemoved:0}}
 function setup(kind,{points=[at(0,0),at(8,12)],lon=0,lat=0,state={},batched=false}={}){
- const w=new Harness[kind](),trace=[],pending=[],r=result(clone(points),lon,lat);
+ const w=bindEnglish(new Harness[kind]()),trace=[],pending=[],r=result(clone(points),lon,lat);
  w.state={imageId:'A',sequenceImages:[{id:'A',lon,lat}],jimuMapView:{view:{map:{},destroyed:false}},pointCloudLength:0,pointCloudWidth:0,pointCloudActualLength:300,pointCloudMaxLength:300,pointCloudColorMode:'rgb',pointCloudVisible:true,...state};
  w._pointCloudAcquisition={result:r,retain(next){this.result=next;trace.push(['retain',next])},resetFailures(){trace.push(['resetFailures'])}};
  Object.assign(w,{_cameraLon:lon,_cameraLat:lat,_nudgeX:1.2,_nudgeY:-2.3,_nudgeZ:.4,_baseAlt:10,_groundMode:false,bearing:30});
@@ -30,7 +31,7 @@ function setup(kind,{points=[at(0,0),at(8,12)],lon=0,lat=0,state={},batched=fals
  w.ensurePointCloudMapLayerOwner=()=>({beginUpdate(){trace.push(['beginUpdate']);return 1},update(properties){trace.push(['mapUpdate',properties]);w.lastMap=properties}});
  return {kind,w,r,trace,render:()=>w.renderPointCloudMapLayer(true),commit:(automatic=false,next=r)=>w.acceptPointCloudResult(next,{imageId:'A',sequenceImages:w.state.sequenceImages,automatic,finishProgress:()=>trace.push(['finishProgress'])})};
 }
-function compare(run,options){const a=setup('baseline',options),b=setup('working',options);run(a);run(b);assert.deepEqual(b.trace,a.trace);assert.deepEqual(b.w.state,a.w.state);assert.equal(b.w._baseAlt,a.w._baseAlt);return {a,b}}
+function compare(run,options){const a=setup('baseline',options),b=setup('working',options);run(a);run(b);assert.deepEqual(feedbackTrace(b.trace),feedbackTrace(a.trace));assert.deepEqual(b.w.state,a.w.state);assert.equal(b.w._baseAlt,a.w._baseAlt);return {a,b}}
 test('map features preserve RGB/elevation properties, raw distance, shifted placement and stable indices',()=>{for(const pointCloudColorMode of ['rgb','elevation'])compare(h=>{h.render();const f=h.w.lastMap.features;assert.equal(f[0].attributes.originalIndex,0);assert.notEqual(f[0].attributes.distanceFromCamera,0);assert.equal(f[0].geometry.z,2.4)},{state:{pointCloudColorMode}})});
 test('initial commit preserves extents, floor, calibration retention, map/viewer order and result identity',()=>{for(const automatic of [false,true])compare(h=>{const p=h.r.points;h.commit(automatic);assert.equal(h.w._pointCloudAcquisition.result,h.r);assert.equal(h.r.points,p);assert.equal(h.w._filteredPointCloudPoints[0],p[0]);assert.equal(h.w._nudgeX,automatic?1.2:0)})});
 test('initial camera fallback uses map position then computed position when frame is absent',()=>{for(const fallback of ['map','computed'])compare(h=>{h.w.state.sequenceImages=[];if(fallback==='computed')delete h.r.mapImageLocation;h.commit();assert.equal(h.w._cameraLon,0);assert.equal(h.w._cameraLat,0)})});

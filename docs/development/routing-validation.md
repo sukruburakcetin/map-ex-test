@@ -1,3 +1,6 @@
+<!-- isolated-build-check-stage47 -->
+> Stage 47 update: `tools/check-exb-build.cjs` is now restored. Statements below describing its absence concern the earlier baseline. See [current usage, results and limitations](isolated-build-check.md). The available 1.20 result is not target 1.21 browser validation.
+
 # Routing validation after milestone reconciliation
 
 Baseline: `968375a` (18 November 2026). This guide describes files available in the current checkout, not the full test/build setup reported by the previous milestone.
