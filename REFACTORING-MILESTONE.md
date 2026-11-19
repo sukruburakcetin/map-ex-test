@@ -1,3 +1,6 @@
+<!-- stage65-checkpoint-afca751 -->
+> **Working checkpoint recorded: afca751 (19 November 2026).** All 2,265 portable tests pass. The user supplied a successful isolated ExB 1.21.0 build (zero errors/warnings) and reported browser smoke checks good. Detailed device/feature evidence, whole-project semantic types and production packaging remain separate. This file-based installer preserves your local history below and does not create/import Git commits or push anything. See docs/development/checkpoint-2026-11-19.md.
+
 # Mapillary Explorer — refactoring milestone
 
 Updated: **18 November 2026 (Asia/Riyadh)**. Resume point: **stage 46 — cumulative checkpoint v2 verified through stage 45**.
@@ -330,3 +333,47 @@ All 30 existing cases/96 assertions remain unchanged; one import-boundary assert
 Full portable run: **2,264 tests, 2,260 pass, 4 fail**, across all 186 files. The suite-load failure becomes 30 passing existing cases, raising the total by 29. Other four failing names unchanged. All 449 production-source/frozen-fixture files unchanged from stage 60; no dependencies changed. No new bundle, deployed operator permissions, browser attachment persistence or live ExB 1.21 acceptance claimed. Full-run PostgreSQL/RLS suites remain included. See [current baseline](docs/development/test-baseline.md) and [fixture conventions](docs/development/portable-tests.md).
 
 Installer: `apply-community-client-fixture-repair.cjs`, after stage 60. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: diagnose the remaining four failures individually, starting with detection-linked preview; preserve opt-in behavior, provenance and credential boundaries.
+
+<!-- detection-preview-fixture-repair-stage62 -->
+## Stage 62 — detection preview representation fixture
+
+The legacy round-trip case now explicitly uses `detectionPreviewLink`; current `detectionNoteDescription` emits URN attachment metadata. A separate case validates that metadata through `attachmentMetadata`: IDs/bounds, absent attachment by default, optional saved identity, compatibility and no URLs/credentials/image bytes. Actual crop capture remains separately gated by `includePreview` in the runtime; it was not changed.
+
+All 16 original assertion calls retained; one new current-format case adds 13 assertions. Focused result: **20 passed** across linked preview, field-note and crop-ownership suites. Dropped attachment identity and accepted zero-width controls each fail the relevant case in temporary source copies.
+
+Full portable run: **2,265 tests, 2,262 pass, 3 fail**, all 186 files, zero skipped. Compared with recorded stage 61, the preview failure is resolved and other failing names unchanged. Temporary dependency packages were restored at their recorded versions after resume; the previous ephemeral full report was unavailable. All 449 production-source/frozen-fixture files unchanged; no production dependency changes. No new bundle or real browser/IndexedDB/SDK/Enterprise/ExB 1.21 acceptance claimed. See [current baseline](docs/development/test-baseline.md) and [fixture conventions](docs/development/portable-tests.md).
+
+Installer: `apply-detection-preview-fixture-repair.cjs`, after stage 61. Keep backups and uninstall newer stages first. No app restart or host dependency reinstall. Next: diagnose the three remaining failures individually, starting with regional locales; preserve semantic locale fallback and units rather than blindly updating a numeric ceiling.
+
+<!-- regional-catalog-cleanup-stage63 -->
+## Stage 63 — UK override deduplication / semantic regional contract
+
+Removed 44 runtime and eight settings UK entries byte-for-byte equal to their US base. Effective merged text is exactly unchanged for all 1,210 runtime and 171 settings messages; 41/19 genuine overrides remain. Two arbitrary size ceilings are replaced by inheritance/key-coverage/value checks. All other 47 assertion calls, including placeholders, unit/device distinction, regional selection and formatting, remain. No cases added or removed.
+
+Focused result: **59 passed**. Temporary redundant-override and corrupted-placeholder controls each fail. Complete portable run: **2,265 tests, 2,263 pass, 2 fail**, all 186 files, zero skipped; no newly failing names. Only the two UK catalog files changed under `src/`; other 447 source/frozen files unchanged. No dependencies changed.
+
+Isolated Experience Builder **1.20.0** runtime/settings bundle passed with zero errors/warnings. This is transpile-only, not whole-project semantic checking or live ExB 1.21/browser/RTL acceptance. See [current baseline](docs/development/test-baseline.md) and [fixture conventions](docs/development/portable-tests.md).
+
+Installer: `apply-regional-catalog-cleanup.cjs`, after stage 62. Keep backups and uninstall newer stages first. No host dependency reinstall. Next: diagnose the remaining screen-direction-cone and text-button failures individually, starting with the phone close-zoom transform contract; preserve marker dimensions, projection/ground alignment and shared text-action sizing.
+
+<!-- phone-cone-fixture-repair-stage64 -->
+## Stage 64 — phone SVG-fallback ground-plane fixture
+
+Replaced two obsolete camera-facing expectations in the close-zoom case with three ground-plane assertions: independently specified normalized projection `[1,0,0,0.1,0,0]` and shared marker/fan transform. Other 86 assertion calls remain exact, including nominal geometry, visibility, one overlay and zoom-return checks. The mobile predicate controls native sampling; it does not select a flat SVG mode. No production rendering changed or 14-screen-pixel unforeshortened 3D circle promised.
+
+Focused result: **26 passed** across SVG fallback/native-marker suites; no new cases. Temporary flat-fan and separate-marker controls fail seven and three cases. Complete portable run: **2,265 tests, 2,264 pass, 1 fail**, all 186 files, zero skipped. The phone failure is resolved; text-button audit remains; no new failing names.
+
+All 449 source/frozen files unchanged from stage 63, no dependency changes. No new bundle; stage 63's isolated 1.20 result still applies to this byte-identical production source. No live mobile/SDK/terrain/ExB 1.21 acceptance claimed. See [current baseline](docs/development/test-baseline.md) and [fixture conventions](docs/development/portable-tests.md).
+
+Installer: `apply-phone-cone-fixture-repair.cjs`, after stage 63. Keep backups and uninstall newer stages first. No app restart or host dependency reinstall. Next: diagnose the remaining shared text-action sizing audit in DetectionDisplayControls; distinguish text actions from icons and preserve control behavior.
+
+<!-- detection-text-actions-stage65 -->
+## Stage 65 — detection menu shared text-action sizing / clean portable baseline
+
+Added `mly-text-action` to six existing text-button JSX sites: percentage presets, mode, overlap, label toggle, reset and close. Removing only those six additions exactly reproduces prior source, including callbacks, state, ARIA, styles and lifecycle. No new CSS policy/dependency or test changes. Restoring the prior component in a temporary copy fails the unchanged policy audit.
+
+Focused result: **10 passed**. Complete portable run: **2,265 tests, 2,265 pass, 0 fail**, all 186 files, zero skipped, exit 0. The former final failure is resolved. Only DetectionDisplayControls changed under `src/`; other 448 source/frozen files unchanged from stage 64.
+
+Isolated Experience Builder **1.20.0** runtime/settings bundle passed with zero errors/warnings. This is transpile-only; not target 1.21 normal host/build/browser, whole-project semantic or narrow translated/coarse-pointer/fullscreen portal acceptance. No publish/deployment or live permissions acceptance is implied. See [current baseline](docs/development/test-baseline.md) and [fixture conventions](docs/development/portable-tests.md).
+
+Installer: `apply-detection-text-actions.cjs`, after stage 64. Keep backups and uninstall newer stages first. Refresh the running app; no host dependency reinstall. Optional existing ACCOUNT-HANDOFF receives a checkpoint banner without replacing its history. Next: establish target ExB 1.21 normal build/browser acceptance, checkpoint the actual reviewed tree when authorized, then choose the next cohesive extraction. Preserve requests, cancellation and shared-view ownership; do not equate a clean portable run with release readiness.

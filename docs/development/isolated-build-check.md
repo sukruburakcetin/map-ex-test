@@ -14,7 +14,7 @@ It prints a new temporary output directory and writes `build-report.json` there,
 
 Optional arguments:
 
-- `--dependencies <node_modules directory>` supplies a separate dependency installation; the client's own dependencies remain available as fallback.
+- `--dependencies <node_modules directory>` supplies a separate dependency installation; the client's own dependencies remain available as fallback. It can also diagnose an existing parent-folder installation. The checker checks these selected folders, not every ancestor searched by Node; a package can therefore resolve in Node while the checker reports it missing. Use the installation guide's [declaration/resolution checks](../installation.md#if-the-widget-works-but-dependencies-appear-missing) before reinstalling. Declare the widget packages in the intended client for a reproducible setup.
 - `--out <new directory>` selects a new output directory. Existing directories are refused.
 - `--help` prints usage.
 

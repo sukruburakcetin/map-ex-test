@@ -1,4 +1,233 @@
-# Portable test baseline — stage 61, 18 November 2026
+# Portable test baseline — stage 65, 19 November 2026
+
+This local checkpoint contains `609b81c` plus stages 47–65. Every portable suite
+remains included. See [reproduction and fixture conventions](portable-tests.md).
+
+| Check | Result and scope |
+| --- | --- |
+| Complete portable Node run | **2,265 tests: 2,265 passed, 0 failed**, all 186 files; zero skipped. Exit code 0. |
+| Focused policy/display/label checks | **10 passed**, all existing assertions; no test changes or new cases. |
+| Component scope | Six `mly-text-action` attributes added; stripping only those additions exactly reproduces prior source. |
+| Negative control | Restoring the pre-change component fails the unchanged text-action policy audit. |
+| Source/frozen scope | One component changed under `src/`; other 448 source/frozen files unchanged from stage 64. No dependencies changed. |
+| Isolated bundle | Cloud ExB **1.20.0** passed; user-supplied **1.21.0** result also has zero errors/warnings. Transpile-only. |
+
+The detection display menu's percentage, mode, overlap, label, reset and close
+button sites now use the existing shared text-action layout. No new CSS policy,
+observer, listener, request or dependency was introduced. Callback bodies, state,
+ARIA attributes, popup lifecycle and existing inline styles are byte-identical.
+Icon controls retain their own sizing. The audit is unchanged; no exemptions or
+expectations were weakened to obtain this clean run.
+
+## Acceptance limits and next checkpoint
+
+This is a clean **default portable** baseline, not a publishing or live-host
+acceptance claim. Optional Mapbox style-spec/browser suites are not represented
+by these counts. Whole-project semantic types, normal ExB **1.21** build/start,
+real SDK/browser/GPU/terrain, narrow translated/coarse-pointer/fullscreen menu
+layout and deployed Enterprise/workspace permissions remain separate checks.
+
+The user supplied a passing isolated 1.21.0 result and a general good browser
+smoke-check report. See [checkpoint evidence](checkpoint-2026-11-19.md) for limits;
+follow the existing routing/viewer/integration guides. Preserve all
+stage files in the authorized local Git checkpoint; no push or deployment is included.
+
+Environment unchanged: Node 24.19.0, TypeScript 5.9.3, React/DOM/renderer 19.2.3,
+jsdom 26.1.0, PGlite 0.5.16, Mapillary JS 4.1.2, pbf 5.1.2, vector-tile 3.0.0 and
+pako 2.2.0. Test-only packages remain outside the host and widget.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---
+
+# Historical stage-64 baseline — 19 November 2026
+
+Current source is `609b81c` plus uncommitted stages 47–64. Every portable suite
+remains included; the remaining failure still makes the runner exit nonzero.
+See [reproduction and fixture conventions](portable-tests.md).
+
+| Check | Result and scope |
+| --- | --- |
+| Complete portable Node run | **2,265 tests: 2,264 passed, 1 failed**, all 186 files, zero skipped. |
+| Focused SVG/native-marker checks | **26 passed**; no new cases. |
+| Assertion migration | Two obsolete camera-facing assertions replaced by three projected-ground checks; other 86 calls retained exactly. |
+| Negative controls | Flattening the 3D fan fails seven cases; separating the marker transform fails three. Temporary copies only. |
+| Production/frozen scope | All 449 source/frozen files unchanged relative to stage 63. No dependency changes. |
+| Failure comparison | Phone transform failure resolved; text-button sizing audit remains. No newly failing names. |
+
+The legacy case expected a camera-facing `rotate(...)` fan and an untransformed
+marker at zoom 21+. Current SVG fallback keeps both on the same ground plane;
+the phone predicate controls native sampling rather than changing fallback mode.
+The case now checks the independently specified linear projection's normalized
+matrix `[1,0,0,0.1,0,0]` and identical marker/fan transforms at each close zoom.
+Nominal geometry, visibility, one overlay and return-to-lower-zoom assertions remain.
+
+This explicitly migrates the retired camera-facing expectation. It does not
+change phone rendering or promise an unforeshortened 14-screen-pixel 3D circle.
+The existing native-marker suite remains included. No cases or frozen JSON were
+removed or added. No new bundle: production source is identical to stage 63,
+whose isolated 1.20 bundle passed. Real mobile SDK/terrain/browser and ExB 1.21
+acceptance remain separate.
+
+## Remaining failures
+
+Reports below remain unresolved; diagnose each rather than dropping tests or
+blanket-rebaselining expectations. Some failures occur during module loading.
+
+| Suite | Failing reports |
+| --- | ---: |
+| `tests/textButtons.test.cjs` | 1 |
+
+Environment unchanged: Node 24.19.0, TypeScript 5.9.3, React/DOM/renderer 19.2.3,
+jsdom 26.1.0, PGlite 0.5.16, Mapillary JS 4.1.2, pbf 5.1.2, vector-tile 3.0.0 and
+pako 2.2.0. Test-only packages remain outside the host and widget.
+
+
+
+
+
+
+
+
+
+
+
+
+
+---
+
+# Historical stage-63 baseline — 19 November 2026
+
+Current source is `609b81c` plus uncommitted stages 47–63. Every portable suite
+remains included; unresolved failures still make the runner exit nonzero.
+See [reproduction and fixture conventions](portable-tests.md).
+
+| Check | Result and scope |
+| --- | --- |
+| Complete portable Node run | **2,265 tests: 2,263 passed, 2 failed**, all 186 files, zero skipped. |
+| Focused locale/catalog checks | **59 passed**; no new cases. |
+| Effective text equivalence | All **1,210 runtime and 171 settings** merged messages identical before/after. |
+| Catalog cleanup | Remove 44 runtime and eight settings entries identical to US base; 41/19 genuine overrides remain. |
+| Assertions | Replace two arbitrary size ceilings with three semantic inheritance checks; all other 47 assertion calls retained. |
+| Negative controls | Reintroducing a redundant override or corrupting a placeholder each fails the regional contract. Temporary copies only. |
+| Source scope | Only two UK catalog files changed under `src/`; other 447 source/frozen files unchanged. No dependency changes. |
+| Isolated bundle | ExB **1.20.0** runtime/settings: zero errors, zero warnings. Not target 1.21 acceptance. |
+
+The old runtime override ceiling failed at 85 entries. Replacing that ceiling
+exposed 44 runtime overrides exactly equal to base text; eight settings overrides
+were also redundant. Removing them preserves effective messages while restoring
+the documented differences-only model. All keys, values, placeholders, metre
+length units, meter devices, locale selection and regional formatting stay checked.
+
+The partial-catalog contract now requires inherited messages, unchanged merged-key
+coverage and exact inherited values; it does not encode arbitrary limits of 80/40.
+Existing checks still reject unknown, unchanged or placeholder-incompatible
+overrides. No frozen JSON was rewritten and no cases were removed or added.
+
+The former regional failure is resolved and the two other failing names remain
+unchanged. No live SDK/browser/RTL, semantic whole-project typecheck, multilingual
+host or ExB 1.21 acceptance is claimed. The bundle checker is transpile-only.
+
+## Remaining failures
+
+Reports below remain unresolved; diagnose each rather than dropping tests or
+blanket-rebaselining expectations. Some failures occur during module loading.
+
+| Suite | Failing reports |
+| --- | ---: |
+| `tests/screenDirectionCone.test.cjs` | 1 |
+| `tests/textButtons.test.cjs` | 1 |
+
+Environment unchanged: Node 24.19.0, TypeScript 5.9.3, React/DOM/renderer 19.2.3,
+jsdom 26.1.0, PGlite 0.5.16, Mapillary JS 4.1.2, pbf 5.1.2, vector-tile 3.0.0 and
+pako 2.2.0. Test-only packages remain outside the host and widget.
+
+
+
+
+
+
+
+
+
+
+
+
+---
+
+# Historical stage-62 baseline — 19 November 2026
+
+Current source is `609b81c` plus uncommitted stages 47–62. Every portable suite
+remains included; unresolved failures still make the runner exit nonzero.
+See [reproduction and fixture conventions](portable-tests.md).
+
+| Check | Result and scope |
+| --- | --- |
+| Complete portable Node run | **2,265 tests: 2,262 passed, 3 failed**, across all 186 files; zero skipped. |
+| Focused preview/note/crop checks | **20 passed** across three suites. |
+| Assertions | All 16 original linked-preview assertion calls retained; one current-format case adds 13 assertions. |
+| Comparison with recorded stage 61 | Detection-preview failure resolved; other three failing names unchanged. No newly failing names. |
+| Negative controls | Dropping saved attachment identity fails the current-format case; accepting zero-width crops fails the original validation case. Temporary copies only. |
+| Production/frozen scope | All 449 files under `src/` and `tests/fixtures/` unchanged from stage 61. No production dependency changes. |
+
+The old case expected `detectionNoteDescription` to emit a legacy HTTPS link.
+Current descriptions serialize a `urn:mapillary-detection` reference; actual crop
+capture remains separately gated by `includePreview` in the runtime. The legacy
+case now explicitly calls its actual link producer, preserving round-trip and
+credential/byte assertions. A separate case reads current descriptions with
+`attachmentMetadata`, checking provenance, optional attachment identity, bounds,
+legacy compatibility and absence of credentials/image bytes.
+
+This is an explicit representation-contract migration, not a change to capture,
+storage, publication or preview activation. No assertion calls or frozen JSON were
+removed. One new case increases the total by one. The temporary test-dependency
+directory was missing after resume and was recreated with the recorded package
+versions; host packages were not modified. Counts are compared with the recorded
+stage-61 baseline; the old ephemeral full report was unavailable after resume.
+
+No new bundle, browser capture/IndexedDB, actual SDK/Enterprise upload,
+ExB 1.21, multilingual or live service acceptance is claimed. Production source
+is unchanged and the available host remains 1.20.
+
+## Remaining failures
+
+Reports below remain unresolved; diagnose each rather than dropping tests or
+blanket-rebaselining expectations. Some failures occur during module loading.
+
+| Suite | Failing reports |
+| --- | ---: |
+| `tests/regionalLocales.test.cjs` | 1 |
+| `tests/screenDirectionCone.test.cjs` | 1 |
+| `tests/textButtons.test.cjs` | 1 |
+
+Environment unchanged: Node 24.19.0, TypeScript 5.9.3, React/DOM/renderer 19.2.3,
+jsdom 26.1.0, PGlite 0.5.16, Mapillary JS 4.1.2, pbf 5.1.2, vector-tile 3.0.0 and
+pako 2.2.0. Test-only packages remain outside the host and widget.
+
+
+
+
+
+
+
+
+
+
+
+---
+
+# Historical stage-61 baseline — 18 November 2026
 
 Current source is `609b81c` plus uncommitted stages 47–61. Every portable suite
 remains included; unresolved failures still make the runner exit nonzero.

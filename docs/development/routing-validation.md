@@ -1,3 +1,8 @@
+<!-- stage65-checkpoint-afca751 -->
+## Stage 65 validation checkpoint
+
+This summary supersedes historical baseline/file-availability/build-status statements retained below. The current checkpoint is afca751, based on 609b81c, with the restored integration/selection modules and [isolated checker](isolated-build-check.md). Use the [complete portable runner](portable-tests.md) and [current baseline](test-baseline.md), not an obsolete focused-file inventory as a substitute for the full run. All 2,265 portable tests pass. The user supplied a passing isolated ExB 1.21.0 result; real route-budget, cancellation, geometry and provider/browser acceptance still follow the current feature contracts and [target worksheet](exb-1.21-validation.md). Existing routing history below is preserved.
+
 <!-- isolated-build-check-stage47 -->
 > Stage 47 update: `tools/check-exb-build.cjs` is now restored. Statements below describing its absence concern the earlier baseline. See [current usage, results and limitations](isolated-build-check.md). The available 1.20 result is not target 1.21 browser validation.
 

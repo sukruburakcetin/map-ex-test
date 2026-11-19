@@ -2,6 +2,8 @@
 
 Install these additional packages in the Experience Builder **client** directory, not inside the widget. Use the host-supported Node version and preserve its lockfile. Full host setup is in the [installation guide](../installation.md).
 
+First follow the installation guide's [directory verification](../installation.md#confirm-the-directory-before-installing). The terminal must identify the intended `exb-client` package before running either command. A working widget can otherwise hide packages resolved from a parent `node_modules`. Verify both direct declarations and resolution after installation; see [missing-dependency diagnosis](../installation.md#if-the-widget-works-but-dependencies-appear-missing).
+
 **Experience Builder 1.20 (npm):**
 
 ```sh

@@ -69,7 +69,27 @@ Keep **`src/runtime/assets`** with the source. It contains the bundled traffic-s
 
 ## 4. Install the widget's extra dependencies
 
-Return to the host's **`client` directory**. Do not run these commands from the widget folder or from `server`.
+Install into the host's **`client` package**. A package command targets your current directory; opening a new terminal may put you in your user folder instead. Do not run it from the widget, `server`, Desktop or your user folder.
+
+### Confirm the directory before installing
+
+For **Windows CMD**, replace this example path with your real installation path:
+
+```bat
+cd /d "C:\path\to\arcgis-experience-builder-1.21\client"
+```
+
+In PowerShell use `Set-Location "C:\path\to\arcgis-experience-builder-1.21\client"`; on macOS/Linux use `cd /path/to/experience-builder/client`. For 1.20, select that installation's client instead. From the standard widget folder, `cd ../../..` also reaches its owning client.
+
+Then run this check **before either install command below**:
+
+```sh
+node -e "const p=require('./package.json'); if(p.name!=='exb-client') throw new Error('STOP: open the Experience Builder client folder'); console.log(process.cwd()); console.log(p.name+' '+p.version)"
+```
+
+Continue only if the printed path is the intended installation's `client` folder and the package is `exb-client` at the expected version. If it fails, correct the directory first; do not run `npm init` or create a new package in that location.
+
+### Install using that host's package manager
 
 **Experience Builder 1.20:**
 
@@ -108,6 +128,25 @@ npm ls mapillary-js pbf @mapbox/vector-tile pako --depth=0
 ```sh
 pnpm list mapillary-js pbf @mapbox/vector-tile pako --depth=0
 ```
+
+All four packages should be listed as direct dependencies of **this `exb-client` package**, with the reviewed versions. Keep its `package.json` and lockfile together when sharing the host setup.
+
+### If the widget works but dependencies appear missing
+
+Node searches parent `node_modules` folders when it cannot find a package locally. For example, a client under Desktop can accidentally use `C:\Users\YourName\node_modules`. That is an ordinary ancestor installation, not proof the packages were installed in the client. A running application may work on your machine while a clean installation elsewhere fails.
+
+From the verified client directory, check both declaration and resolution:
+
+```sh
+node -e "const p=require('./package.json'); for(const n of ['mapillary-js','pbf','@mapbox/vector-tile','pako']) console.log(n+': '+(p.dependencies?.[n]||'NOT declared in this client'))"
+node -e "for(const n of ['mapillary-js','pbf','@mapbox/vector-tile','pako']) { try { console.log(n+': '+require.resolve(n)) } catch { console.log(n+': NOT FOUND') } }"
+```
+
+`pnpm list --depth=0` shows direct package declarations; `require.resolve` shows what Node can actually find, including ancestors. Neither alone explains the whole setup. With pnpm, resolved paths can include symlinks and its virtual store, so compare declarations and package-manager output as well as paths.
+
+If the client declares only some packages and the others resolve from an ancestor, run the appropriate install command above **from the confirmed client** to declare all four there. You do not need to delete the ancestor installation; other projects may use it. Restart the development client after changing dependencies so the result does not depend on a previous in-memory compilation.
+
+The isolated checker currently checks its selected dependency folder and the client's `node_modules`; it does not follow every ancestor searched by Node. Its “Missing” message means the package was not found in those checked folders. For diagnosing an existing ancestor-based setup, you can supply its reviewed folder explicitly with `--dependencies "C:\Users\YourName\node_modules"`. This allows a diagnostic build, but does not make the client dependency declaration reproducible. See the [isolated build guide](development/isolated-build-check.md).
 
 ## 5. Configure and start
 

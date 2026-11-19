@@ -225,3 +225,60 @@ credential forwarding or revision truncation in temporary copies must fail.
 These client checks complement the shipped PostgreSQL/RLS suites in the full run;
 they do not establish deployed operator roles, real service permissions or browser
 attachment persistence.
+
+## Detection preview representation
+
+The linked-preview fixture distinguishes the legacy HTTPS link producer/parser
+from current note descriptions, which use `urn:mapillary-detection` attachment
+metadata. Legacy round-trip assertions use `detectionPreviewLink`; current
+descriptions are read through `attachmentMetadata`. Provenance without an
+attachment ID does not assert an image was captured. Actual capture remains gated
+by `includePreview` in the runtime and is separate from metadata serialization.
+
+The existing assertion calls remain; the one legacy case has an explicit current
+producer, and an added case checks current reference IDs/bounds, optional saved
+attachment identity, legacy compatibility and absence of image bytes/credentials.
+Temporary dropped-attachment-ID and accepted-zero-width mutations must fail.
+Field-note and crop-ownership suites complement this check; real browser capture,
+IndexedDB and Enterprise upload acceptance are separate.
+
+## UK regional overrides
+
+UK catalogs are partial overrides of the US base, not catalogs with a fixed
+maximum number of entries. The regional contract checks genuine inheritance,
+merged-key coverage, valid/different overrides, matching placeholders and the
+distinction between length units and meter devices. It no longer caps runtime
+and settings overrides at arbitrary counts of 80 and 40.
+
+Stage 63 removes only entries byte-for-byte equal to base text. Compare every
+effective merged runtime/settings value before and after; a locale-only cleanup
+must not change user-visible text. Temporary redundant-override and corrupted
+placeholder controls must fail. Host locale selection and formatting assertions
+remain; controlled checks do not establish full browser/RTL acceptance.
+
+## Phone SVG fallback projection
+
+The close-zoom SVG fixture checks the current ground-plane transform, not the
+retired camera-facing phone mode. Its independent linear projection has east
+scale 1000 and north scale 100; the normalized matrix is `[1,0,0,0.1,0,0]`, shared
+by marker and fan. The original nominal circle/fan geometry, visibility, overlay
+reuse and zoom-return checks remain. Nominal SVG geometry does not imply an
+unforeshortened 14-screen-pixel circle in 3D.
+
+`mobileCloseZoomIndicator` controls local sampling in the native-marker owner; it
+does not select a camera-facing SVG mode. Existing native-marker tests complement
+the fallback contract. Temporary flat-fan or separate-marker transforms must fail;
+controlled projections do not establish real mobile SDK/terrain/browser behavior.
+
+## Detection display text actions
+
+The display menu's six text-button JSX sites, including localized percentage
+presets, use the existing `mly-text-action` class. The audit remains unchanged: do
+not add exclusions for these controls. Stage 65 adds only those six class
+attributes; removing those additions reproduces the exact prior source, including
+callbacks, ARIA, state, inline styles and popup lifecycle.
+
+The existing full-source policy audit rejects the pre-change control in a
+temporary copy. Existing detection display/label tests cover delegation and
+independent settings. Real translated narrow-menu, coarse-pointer and fullscreen
+portal layout still require target-host browser acceptance.

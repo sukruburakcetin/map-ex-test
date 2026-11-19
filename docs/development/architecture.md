@@ -1,3 +1,8 @@
+<!-- stage65-checkpoint-afca751 -->
+## Stage 65 architecture checkpoint
+
+This checkpoint summary supersedes older baseline/build-status statements retained below. Runtime orchestration and request/map ownership remain in widget.tsx; stateless viewer surface, fullscreen chrome and image tray use dedicated components/styles, with runtime state in src/runtime/widgetState.ts. See the [runtime reading guide](runtime-reading-guide.md), [viewer boundary](viewer-presentation.md), [current portable baseline](test-baseline.md) and [checkpoint evidence](checkpoint-2026-11-19.md). The portable baseline is 2,265 passes. User-supplied isolated ExB 1.21.0 compilation passed with zero errors/warnings and browser smoke checks were reported good; detailed device/feature, semantic and production packaging acceptance remain separate. Existing architectural notes below are preserved.
+
 # Widget architecture
 
 `src/runtime/widget.tsx` coordinates Experience Builder/ArcGIS view lifecycle and cross-feature interaction. `src/setting/setting.tsx` owns builder configuration. Feature modules under `src/features/` own bounded resources and pure helpers; `src/components/` composes the viewer UI, `src/styles/` its styles, and `src/i18n/` presentation/localization.
