@@ -11,11 +11,9 @@ export function mergeHoverBearingMetadata(cached: any, response: any, imageId: s
  if (!response || response.error || String(response.id) !== imageId) throw new Error('Hover metadata image mismatch');
  return { ...cached, ...response, __hoverBearingLoaded: true };
 }
-/** A panorama's cone represents a preview direction, not its complete field of view. */
-export function hoverPreviewBearing(data: any, viewerHeading: unknown): number | undefined {
- const bearing = data?.is_pano && typeof viewerHeading === 'number' && Number.isFinite(viewerHeading) ? viewerHeading
-  : Number.isFinite(data?.computed_compass_angle) ? data.computed_compass_angle
-  : Number.isFinite(data?.compass_angle) ? data.compass_angle
-  : data?.is_pano && typeof viewerHeading === 'number' && Number.isFinite(viewerHeading) ? viewerHeading : undefined;
+/** The map preview belongs to its capture, independently of live viewer readiness/heading. */
+export function hoverPreviewBearing(data: any, _viewerHeading?: unknown): number | undefined {
+ const bearing = Number.isFinite(data?.computed_compass_angle) ? data.computed_compass_angle
+  : Number.isFinite(data?.compass_angle) ? data.compass_angle : undefined;
  return bearing === undefined ? undefined : ((bearing % 360) + 360) % 360;
 }

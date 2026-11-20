@@ -12,10 +12,43 @@ function cardIcon(doc: Document, kind: 'creator' | 'calendar'): SVGSVGElement | 
 interface RetainedHoverImage { id: string; url: string; image: HTMLImageElement; preview: HTMLElement }
 // One current thumbnail per tooltip host. Detached/changed cards cannot reuse it.
 const retainedHoverImages = new WeakMap<HTMLElement, RetainedHoverImage>();
+// Retain only already-loaded small thumbnails. Fresh metadata must still supply the exact image ID/URL.
+const decodedHoverImages = new WeakMap<HTMLElement, Map<string, HTMLImageElement>>();
+const decodedKey = (id: string, url: string): string => JSON.stringify([id, url]);
+function recallDecoded(host: HTMLElement, id: string, url: string): HTMLImageElement | undefined {
+  if (!id || !url) return;
+  const cache = decodedHoverImages.get(host), key = decodedKey(id, url), image = cache?.get(key);
+  if (!image) return;
+  cache!.delete(key);
+  if (!image.complete || image.naturalWidth <= 0) return;
+  cache!.set(key, image);
+  return image;
+}
+function rememberDecoded(host: HTMLElement, id: string, url: string, image: HTMLImageElement): void {
+  if (!id || !url || !image.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0 ||
+    image.naturalWidth > 256 || image.naturalHeight > 512) return;
+  let cache = decodedHoverImages.get(host);
+  if (!cache) decodedHoverImages.set(host, cache = new Map());
+  const key = decodedKey(id, url); cache.delete(key); cache.set(key, image);
+  while (cache.size > 4) {
+    const oldest = cache.keys().next().value!;
+    const retired = cache.get(oldest)!; cache.delete(oldest);
+    retired.onload = null; retired.onerror = null;
+  }
+}
+/** Release retained pixels/callbacks on widget cleanup. Target leave preserves bounded warm reuse. */
+export function clearImageryHoverCardCache(host: HTMLElement | null | undefined): void {
+  if (!host) return;
+  const current = retainedHoverImages.get(host);
+  if (current) { current.image.onload = null; current.image.onerror = null; }
+  for (const image of decodedHoverImages.get(host)?.values() || []) { image.onload = null; image.onerror = null; }
+  retainedHoverImages.delete(host); decodedHoverImages.delete(host);
+}
+
 
 /** Build a non-interactive preview with textContent and stable dimensions.
  * Same-image enrichment keeps the existing loading/decoded image; target changes
- * never borrow its pixels. Weak ownership introduces no thumbnail history cache.
+ * never borrow another target's pixels. A four-entry host-owned decoded-image cache makes exact revisits immediate.
  */
 export function renderImageryHoverCard(host: HTMLElement, data: any, fallbackDate?: unknown, loading = false, l10n: Presentation = englishPresentation, onSettled?: () => void): void {
   const id = data?.id == null ? '' : String(data.id);
@@ -24,6 +57,7 @@ export function renderImageryHoverCard(host: HTMLElement, data: any, fallbackDat
   const reuse = !!id && !!url && previous?.id === id && previous.url === url &&
     previous.preview.parentNode === host && host.style.display !== 'none' &&
     (!previous.image.complete || previous.image.naturalWidth > 0);
+  const recalled = reuse ? undefined : recallDecoded(host, id, url);
   retainedHoverImages.delete(host);
   Object.assign(host.style, styles.shell); if (!host.style.width || host.style.width === 'max-content') host.style.width = '240px'; host.style.display = 'block'; host.setAttribute('role', 'tooltip');
   l10n.release(host); l10n.bind(host,'dir',()=>l10n.locale==='ar'?'rtl':'ltr'); host.textContent = ''; const doc = host.ownerDocument;
@@ -41,14 +75,14 @@ export function renderImageryHoverCard(host: HTMLElement, data: any, fallbackDat
   date.appendChild(icon); date.appendChild(label); host.appendChild(date);
   const preview = doc.createElement('div'); Object.assign(preview.style, styles.preview); l10n.bind(preview,"textContent",()=>loading || data?.thumb_256_url ? l10n.text("Loading preview…") : l10n.text("Preview unavailable")); host.appendChild(preview);
   if (data?.thumb_256_url) {
-    const image = reuse ? previous!.image : doc.createElement('img');
+    const image = reuse ? previous!.image : recalled || doc.createElement('img');
     Object.assign(image.style, styles.image); l10n.bind(image,"alt",()=>l10n.text("Street imagery preview")); image.decoding = 'async';
     const retained = { id, url, image, preview }; retainedHoverImages.set(host, retained);
     const current = () => retainedHoverImages.get(host) === retained && preview.parentNode === host;
-    const show = () => { if (current()) { preview.textContent = ''; preview.appendChild(image); onSettled?.(); } };
+    const show = () => { if (current()) { preview.textContent = ''; preview.appendChild(image); rememberDecoded(host, id, url, image); onSettled?.(); } };
     image.onload = show;
     image.onerror = () => { if (current()) { l10n.bind(preview,"textContent",()=>l10n.text("Preview unavailable")); onSettled?.(); } };
-    if (reuse) { if (image.complete && image.naturalWidth > 0) show(); }
+    if (reuse || recalled) { if (image.complete && image.naturalWidth > 0) show(); }
     else image.src = data.thumb_256_url;
   } else if (!loading) onSettled?.();
 }

@@ -1,0 +1,6 @@
+{
+  "source": "stage 67 on commit 0264ff5; exact stationary URL watcher blocks",
+  "bind": "          if (this.viewUrlStationaryHandle) {\n            this.viewUrlStationaryHandle.remove();\n            this.viewUrlStationaryHandle = null;\n          }\n\n          this.viewUrlStationaryHandle = view.watch(\"stationary\", (stationary) => {\n            if (!stationary) {\n              return;\n            }\n\n            if (this.state.jimuMapView?.view !== view || !view.map || view.destroyed) {\n              return;\n            }\n\n            this.refreshActivePulseAnchor(view);\n            if (this._isFlyInActive) {\n              return;\n            }\n\n            /*\n             * Map position belongs in the URL even when\n             * no Mapillary image has been selected yet.\n             *\n             * pKey is added only when imageId exists.\n             */\n\n            this.updateUrlWithCurrentImage(this.state.imageId ?? undefined);\n          });",
+  "clear": "    if (this.viewUrlStationaryHandle) {\n      this.viewUrlStationaryHandle.remove();\n      this.viewUrlStationaryHandle = null;\n    }",
+  "defaults": "private viewUrlStationaryHandle: __esri.WatchHandle | null = null;"
+}

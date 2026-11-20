@@ -18,7 +18,7 @@ function setup(cached){
 
 test('existing card without bearing is enriched once and cone reuses cached result',async()=>{const x=setup({id:'A',thumb_256_url:'thumb'});x.w.updateTurboHover(x.graphic,0,0);await x.run();assert.equal(x.calls(),1);assert.equal(x.shows[0][1],45);assert.equal(x.cache.get('A').thumb_256_url,'thumb');x.w._currentHoveredFeatureId=null;x.w.updateTurboHover(x.graphic,0,0);await x.run();assert.equal(x.calls(),1)});
 test('bearing received after pointer leave cannot create cone or update metadata cache',async()=>{const x=setup({id:'A'});let release;x.response(()=>new Promise(resolve=>release=resolve));x.w.updateTurboHover(x.graphic,0,0);const pending=x.run();while(!release)await new Promise(r=>setImmediate(r));x.w._turboHoverInfoAbort.abort();release({id:'A',compass_angle:30});await pending;assert.equal(x.shows.length,0);assert.equal(x.cache.get('A').__hoverBearingLoaded,undefined)});
-test('panorama cached heading policy uses current viewer preview direction without a request',async()=>{const x=setup({id:'A',is_pano:true,computed_compass_angle:null,compass_angle:null});x.w.updateTurboHover(x.graphic,0,0);await x.run();assert.equal(x.calls(),0);assert.equal(x.shows[0][1],287)});
+test('panorama with missing metadata has no invented heading and makes no request',async()=>{const x=setup({id:'A',is_pano:true,computed_compass_angle:null,compass_angle:null});x.w.updateTurboHover(x.graphic,0,0);await x.run();assert.equal(x.calls(),0);assert.equal(x.shows[0][1],undefined)});
 
 for(const [type,zoom]of [['2d',7],['3d',8]])test(`${type} zoom ${zoom} uses the clicked nearby frame bearing instead of the line representative`,async()=>{const x=setup({id:'A',computed_compass_angle:10});x.w.state.jimuMapView.view.zoom=zoom;x.w.state.jimuMapView.view.type=type;x.graphic.attributes.sequence_id='sequence';x.graphic.geometry={longitude:-85.766008,latitude:37.606740};const target={key:'line',location:{lon:-85.766008,lat:37.606740}};x.w.prepareCoverageFrameHover=()=>x.w._coverageFrameHoverTarget=target;let lookups=0;x.w.ensureCoverageFrameLookup=()=>({resolve:async()=>{lookups++;return 'B'}});x.response(async()=>({id:'B',compass_angle:170,is_pano:false}));x.w.updateTurboHover(x.graphic,0,0);await x.run();assert.equal(lookups,1);assert(x.urls[0].includes('/B?'));assert.equal(x.shows[0][1],170);assert.equal(x.cache.get('A').computed_compass_angle,10);assert.equal(x.cache.get('B').compass_angle,170);assert.equal(x.w._currentHoveredFeatureId,'A')});
 test('moving along one representative invalidates only old metadata while keeping its pulse identity',async()=>{const x=setup();x.w.state.jimuMapView.view.zoom=8;x.graphic.attributes.sequence_id='sequence';x.graphic.geometry={longitude:0,latitude:0};let release,key=0;const hints=['B','C'];x.w.prepareCoverageFrameHover=()=>x.w._coverageFrameHoverTarget={key:String(++key),location:{lon:key,lat:0}};x.w.ensureCoverageFrameLookup=()=>({resolve:async(_v,_s,p)=>p.lon===1?new Promise(r=>release=r):hints[1]});x.response(async()=>({id:'C',computed_compass_angle:210,is_pano:false}));x.w.updateTurboHover(x.graphic,0,0);const first=x.run();while(!release)await new Promise(r=>setImmediate(r));x.w.updateTurboHover(x.graphic,1,0);await x.run();release('B');await first;assert.equal(x.calls(),1);assert(x.urls[0].includes('/C?'));assert.equal(x.shows.length,1);assert.equal(x.shows[0][1],210);assert.equal(x.w._currentHoveredFeatureId,'A')});
@@ -49,3 +49,24 @@ test('expired production metadata is refreshed instead of treated as a warm hove
  assert.equal(x.shows.length,0);assert.equal(x.timers.length,1);
  await x.run();assert.equal(x.calls(),1);assert.equal(x.shows[0][1],45);
 });
+
+for(const type of ['2d','3d'])for(const zoom of [3,8])test(`${type} zoom ${zoom}: panorama preview bearing is stable across fresh and warm viewer state`,()=>{
+ const x=setup({id:'A',is_pano:true,computed_compass_angle:132,compass_angle:110});
+ Object.assign(x.w.state.jimuMapView.view,{type,zoom});
+ x.w._lastBearing=0;x.w.updateTurboHover(x.graphic,0,0);
+ assert.equal(x.shows[0][1],132);assert.equal(x.calls(),0);assert.equal(x.timers.length,0);
+ x.w._currentHoveredFeatureId=null;x.w._lastBearing=287;x.w.updateTurboHover(x.graphic,0,0);
+ assert.equal(x.shows[1][1],132);assert.equal(x.calls(),0);assert.equal(x.timers.length,0);
+});
+test('cold panorama metadata uses capture bearing after the existing single dwell/request',async()=>{
+ const x=setup();Object.assign(x.w.state.jimuMapView.view,{type:'2d',zoom:3});x.w._lastBearing=0;
+ x.response(async()=>({id:'A',is_pano:true,computed_compass_angle:201,compass_angle:180}));
+ x.w.updateTurboHover(x.graphic,0,0);assert.equal(x.calls(),0);assert.equal(x.timers.length,1);assert.equal(x.pulses(),1);
+ await x.run();assert.equal(x.calls(),1);assert.equal(x.shows[0][1],201);
+ x.w._currentHoveredFeatureId=null;x.w._lastBearing=45;x.w.updateTurboHover(x.graphic,0,0);
+ assert.equal(x.shows[1][1],201);assert.equal(x.calls(),1);assert.equal(x.timers.length,0);
+});
+
+test('cold regional lookup shows an honest placeholder before awaiting frame identity',async()=>{const x=setup();regional(x);let release;x.w.ensureCoverageFrameLookup=()=>({resolve:()=>new Promise(r=>release=r)});x.response(async()=>({id:'B',compass_angle:170}));x.w.updateTurboHover(x.graphic,0,0);const work=x.run();while(!release)await new Promise(r=>setImmediate(r));assert.equal(x.cards[0][1],null);assert.equal(x.cards[0][3],true);assert.equal(x.calls(),0);assert.equal(x.shows.length,0);release('B');await work;assert.equal(x.calls(),1);assert.equal(x.shows[0][1],170);});
+test('failed regional identity resolution settles the placeholder as unavailable',async()=>{const x=setup();regional(x);x.w.ensureCoverageFrameLookup=()=>({resolve:async()=>undefined});x.w.updateTurboHover(x.graphic,0,0);await x.run();assert.equal(x.cards[0][3],true);assert.equal(x.cards.at(-1)[3],false);assert.equal(x.calls(),0);assert.equal(x.shows.length,0);});
+test('hover enrichment explicitly uses interactive queue priority',async()=>{const x=setup();let priority;x.w.runSequenceBackground=(work,signal,p)=>{priority=p;return work(signal);};x.w.updateTurboHover(x.graphic,0,0);await x.run();assert.equal(priority,'hover');assert.equal(x.calls(),1);});

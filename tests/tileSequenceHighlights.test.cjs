@@ -115,3 +115,20 @@ test('zoom-out resizes old and newly committed fragments while a later tile is p
  let resolve;const {owner,host,state}=setup({load:tile=>tile[0]===8194?new Promise(r=>resolve=r):Promise.resolve(new ArrayBuffer(1))});let resolution=156543.03392804097/2**23;host.resolution=()=>resolution;await owner.select('A');const old=state.selected.find(g=>g.geometry.type==='point'),initial=old.symbol.size;
  state.tiles.push([8193,8192,14],[8194,8192,14]);const work=owner.refresh();await new Promise(r=>setImmediate(r));const counts=[state.loads,state.decodes,state.created];resolution*=32;owner.refreshSymbols();assert(old.symbol.size<initial);const visible=state.selected.filter(g=>g.geometry.type==='point');assert.equal(visible.length,2);assert(visible.every(g=>g.symbol.size===old.symbol.size));assert.deepEqual([state.loads,state.decodes,state.created],counts);resolve(new ArrayBuffer(1));await work;assert(state.selected.filter(g=>g.geometry.type==='point').every(g=>g.symbol.size===old.symbol.size));
 });
+
+test('clearing selected presentation is synchronous, keeps hover and reuses cached geometry',async()=>{
+ const {owner,state}=setup();await owner.select('A');await owner.hover('B');const loads=state.loads,decodes=state.decodes,hover=state.hover.slice();
+ const clearing=owner.select(null);assert.deepEqual(state.selected,[]);assert.deepEqual(state.hover,hover);await clearing;assert.equal(state.loads,loads);assert.equal(state.decodes,decodes);
+ await owner.select('A');assert.equal(state.selected.length,2);assert.equal(state.loads,loads);assert.equal(state.decodes,decodes);
+});
+test('late selected geometry cannot revive a retired sequence while the next image opens',async()=>{
+ let finish;const wait=new Promise(resolve=>finish=resolve),{owner,state}=setup({load:()=>wait});
+ const old=owner.select('A');await new Promise(resolve=>setImmediate(resolve));assert.equal(state.loads,1);const clearing=owner.select(null);assert.deepEqual(state.selected,[]);finish(new ArrayBuffer(1));await Promise.all([old,clearing]);assert.deepEqual(state.selected,[]);
+});
+test('3D selection clearing hides only its cached layer without a new tile or layer',async()=>{
+ const {NativeTileHighlightCache}=load('features/coverage/NativeTileHighlightCache');const layers=[],retired=[];const {owner,state,host}=setup();
+ const cache=new NativeTileHighlightCache({create:(style,id)=>({style,id,visible:true,destroy(){retired.push(id);}}),attach:layer=>layers.push(layer),remove:()=>{}},{version:8,sources:{turbo:{}},layers:host.styles});host.native=(role,id)=>cache.show(role,id);
+ await owner.select('A');await owner.hover('B');const selected=layers.find(layer=>layer.id==='mapillary-cached-selected-A'),hover=layers.find(layer=>layer.id==='mapillary-cached-hover-B');assert(selected.visible);assert(hover.visible);const count=layers.length;
+ const clearing=owner.select(null);assert.equal(selected.visible,false);assert.equal(hover.visible,true);await clearing;assert.equal(layers.length,count);assert.equal(state.loads,0);assert.equal(state.decodes,0);assert.deepEqual(retired,[]);
+ await owner.select('A');assert.equal(selected.visible,true);assert.equal(layers.length,count);
+});

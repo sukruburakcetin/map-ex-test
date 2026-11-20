@@ -1,6 +1,7 @@
 type Work = (signal: AbortSignal) => unknown | Promise<unknown>;
 type Job = {
   work: Work;
+  priority: 'normal' | 'hover';
   controller: AbortController;
   signal?: AbortSignal;
   abort?: () => void;
@@ -11,7 +12,7 @@ type Job = {
 };
 const cancelled = () => new DOMException('Cancelled', 'AbortError');
 
-/** FIFO scheduler for optional metadata; foreground imagery stays outside this queue.
+/** Bounded scheduler for optional metadata (FIFO by default, fair hover priority); foreground imagery stays outside this queue.
  * Pausing defers new jobs without interrupting existing requests. Caller cancellation
  * rejects promptly, but physical work retains its slot until it settles, including
  * work that ignores abort. clear() cancels current jobs and permits later reuse.
@@ -21,6 +22,7 @@ export class BackgroundRequestQueue {
   private running = new Set<Job>();
   private paused = false;
   private clearing = false;
+  private lastStartedHover = false;
   private completed = 0;
   private aborted = 0;
 
@@ -36,13 +38,16 @@ export class BackgroundRequestQueue {
     return { active: this.running.size, queued: this.queue.length, completed: this.completed, aborted: this.aborted };
   }
 
-  run<T>(work: (signal: AbortSignal) => Promise<T>, signal?: AbortSignal): Promise<T> {
+  run<T>(work: (signal: AbortSignal) => Promise<T>, signal?: AbortSignal, priority: 'normal' | 'hover' = 'normal'): Promise<T> {
     if (signal?.aborted) return Promise.reject(cancelled());
     return new Promise<T>((resolve, reject) => {
-      const job: Job = { work, controller: new AbortController(), signal,
+      const job: Job = { work, priority, controller: new AbortController(), signal,
         resolve: value => resolve(value as T), reject, state: 'queued', settled: false };
       job.abort = () => this.cancel(job);
-      this.queue.push(job);
+      if (priority === 'hover') {
+        const firstNormal = this.queue.findIndex(queued => queued.priority === 'normal');
+        if (firstNormal >= 0) this.queue.splice(firstNormal, 0, job); else this.queue.push(job);
+      } else this.queue.push(job);
       signal?.addEventListener('abort', job.abort, { once: true });
       // A host signal wrapper can abort while installing its listener.
       if (signal?.aborted) this.cancel(job);
@@ -99,8 +104,13 @@ export class BackgroundRequestQueue {
   private drain(): void {
     if (this.paused || this.clearing) return;
     while (this.running.size < this.limit && this.queue.length) {
-      const job = this.queue.shift()!;
+      // Default FIFO dispatch keeps its original shift path. A promoted hover permits a waiting
+      // normal job next; active requests are never preempted or oversubscribed.
+      const normal = this.lastStartedHover && this.queue[0].priority === 'hover'
+        ? this.queue.findIndex(job => job.priority === 'normal') : -1;
+      const job = normal > 0 ? this.queue.splice(normal, 1)[0] : this.queue.shift()!;
       if (job.settled) continue;
+      this.lastStartedHover = job.priority === 'hover';
       job.state = 'running'; this.running.add(job);
       // Reserve the slot before entering user work; throws are handled like any
       // rejected request, and cancellation before this microtask starts no work.

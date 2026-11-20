@@ -15,23 +15,25 @@ const { SharedTileRequests } = load('features/coverage/SharedTileRequests');
 const { SequenceTileIndex } = load('features/coverage/SequenceTileIndex');
 const { BackgroundRequestQueue } = load('features/imagery/BackgroundRequestQueue');
 const { SequencePerformance } = load('features/imagery/SequencePerformance');
+const { fetchCoverageTile } = load('features/coverage/coverageTileTransport');
+const { waitForSequencePaint } = load('features/imagery/sequencePaint');
 const { SequenceDemandData } = load('features/imagery/SequenceDemandData');
 const { sequenceRouteMemoryStats } = load('features/imagery/sequenceMemoryBudget');
 const { TurboTileCache } = load('utils/turboCoverageUtils');
 const source = fs.readFileSync(path.join(root, 'src/runtime/widget.tsx'), 'utf8');
 const sf = ts.createSourceFile('widget.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
 const widget = sf.statements.find(node => ts.isClassDeclaration(node) && node.name.text === 'Widget');
-const names = ['getTurboTileBuffer', 'fetchTurboTileBuffer', 'getSequenceTileIndex', 'runSequenceBackground',
+const names = ['_coverageTileTransportHost', 'getTurboTileBuffer', 'fetchTurboTileBuffer', 'getSequenceTileIndex', 'runSequenceBackground',
   'sequenceDiagnosticsSnapshot', 'buildCachedSequencePreview', 'loadSequenceById', 'waitForSequencePaint',
   'highlightSequenceOnVTL', 'clearSequenceCache', 'loadDetections', 'clearDetectionOverlays', 'updateNativeSequenceSelection',
   '_sequenceVisibilityChange'];
 const member = name => widget.members.find(node => node.name?.getText(sf) === name).getText(sf);
 let tileLayers = {}, decodes = 0;
-const Runtime = new Function('VectorTile', 'Pbf', 'TILE_URLS', 'sequenceRouteMemoryStats', 'CACHE_KEYS', 'sequenceCacheStore', 'GRAPH_API',
+const Runtime = new Function('VectorTile', 'Pbf', 'TILE_URLS', 'sequenceRouteMemoryStats', 'CACHE_KEYS', 'sequenceCacheStore', 'GRAPH_API', 'waitForSequencePaint', 'fetchCoverageTile',
   compile('class Runtime {' + names.map(member).join('\n') + '}') + '; return Runtime;')(
     class { constructor() { decodes++; this.layers = tileLayers; } }, class {},
     { COVERAGE: 'https://tiles.invalid/{z}/{x}/{y}' }, sequenceRouteMemoryStats,
-    { SEQUENCE: 'test-sequence', GEO_PREFIX: 'test-geo:' }, { clear: async () => {} }, { BASE: 'https://graph.invalid' });
+    { SEQUENCE: 'test-sequence', GEO_PREFIX: 'test-geo:' }, { clear: async () => {} }, { BASE: 'https://graph.invalid' }, waitForSequencePaint, fetchCoverageTile);
 const flush = () => new Promise(resolve => setImmediate(resolve));
 function deferred() { let resolve, reject; const promise = new Promise((a, b) => { resolve = a; reject = b; }); return { promise, resolve, reject }; }
 function mockFetch(t, fetch) { const previous = global.fetch; global.fetch = fetch; t.after(() => { global.fetch = previous; }); }

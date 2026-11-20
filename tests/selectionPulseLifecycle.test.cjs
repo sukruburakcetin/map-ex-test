@@ -23,6 +23,7 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
 function deferred() { let resolve; return { promise: new Promise(done => { resolve = done; }), resolve: value => resolve(value) }; }
 function setup(type = '2d') {
   const w = new Runtime(), events = [], moves = new Map(), graphics = [];
+  w._nativeSequenceSelection = { select() {} };
   const view = { type, graphics: { forEach: callback => graphics.slice().forEach(callback), remove: graphic => { const index = graphics.indexOf(graphic); if (index >= 0) graphics.splice(index, 1); }, add: graphic => graphics.push(graphic) }, goTo: async () => {} };
   const oldImage = { id: 'old-image', lon: 29, lat: 41 };
   w.state = { sequenceImages: [oldImage], imageId: oldImage.id, sequenceId: 'old-sequence', selectedSequenceId: 'old-sequence',

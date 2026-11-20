@@ -6,7 +6,7 @@ const Harness=new Function(ts.transpileModule('class Harness{'+body+'}',{compile
 const flush=()=>new Promise(r=>setImmediate(r));
 function setup(){
  const w=new Harness(),events=[],moves=new Map();w._owned=source=>source;w.state={sequenceImages:[],jimuMapView:{view:{}},isLoading:false,turboModeActive:true};w.sequenceCoordsCache={};w._selectionRequestId=0;
- w._liveSequenceFrames={cancelPending(){},beginSelection(id){this.sequenceId=id;events.push('seed')},finish(){},remember(){},find(){},current:null};w._liveFrameDetails={clear(){}};w._nearbyDiscovery={cancel(){}};
+ w._liveSequenceFrames={cancelPending(){},beginSelection(id){this.sequenceId=id;events.push('seed')},finish(){},remember(){},find(){},current:null};w._nativeSequenceSelection={select(){}};w._liveFrameDetails={clear(){}};w._nearbyDiscovery={cancel(){}};
  w.clearGreenPulse=w.clearConeGraphics=w.clearActiveSequenceLayer=()=>{};w.drawPulsingPoint=()=>({});w.drawCone=()=>{};w.coneLengths=[1];w.coneSpreads=[1];w.zoomStepIndex=0;w.checkForTimeTravel=()=>{};w.ensureImageViewer=()=>events.push('viewer');
  w.setState=(patch,callback)=>{const next=typeof patch==='function'?patch(w.state):patch;if(next)Object.assign(w.state,next);if(next?.isLoading===false)events.push('loading-cleared');callback?.()};
  w.mapillaryViewer={moveTo(id){events.push('move:'+id);return new Promise((resolve,reject)=>moves.set(id,{resolve,reject}))},getImage:async()=>({id:w.state.imageId,originalLngLat:{lng:1,lat:2}})};
@@ -84,4 +84,34 @@ test('a coverage click opens imagery without requesting image-info disclosure or
  const {w,moves}=setup();w.props={config:{hideInfoBox:false}};w._imageInformationRequest=0;let forced=0;w.forceUpdate=()=>forced++;
  const task=w.loadSequenceById('A','1',undefined,false,false,0);await flush();moves.get('1').resolve({id:'1',originalLngLat:{lng:1,lat:2},capturedAt:123});await task;
  assert.equal(w.state.imageId,'1');assert.equal(w.state.isLoading,false);assert.equal(w._imageInformationRequest,0);assert.equal(forced,0);
+});
+
+test('switching sequences hides the old blue highlight synchronously before viewer navigation',async()=>{
+ const {w,events,moves}=setup();w.state.sequenceId='A';w.state.imageId='old';let selected='A';
+ w._nativeSequenceSelection={select:id=>{selected=id;events.push('retire-highlight');return Promise.resolve();}};
+ w.clearGreenPulse=()=>events.push('clear-marker');w.clearConeGraphics=()=>events.push('clear-cone');
+ const work=w.loadSequenceById('B','2');assert.equal(selected,null);assert(events.includes('clear-marker'));assert(events.includes('clear-cone'));assert(!events.includes('move:2'));
+ await flush();assert(events.indexOf('retire-highlight')<events.indexOf('move:2'));assert(!events.includes('route'));moves.get('2').resolve({id:'2',originalLngLat:{lng:1,lat:2}});await work;
+});
+test('same-sequence point changes retain the valid selected sequence highlight',async()=>{
+ const {w,moves}=setup();w.state.sequenceId='A';let retired=0;w._nativeSequenceSelection={select:()=>{retired++;}};
+ const work=w.loadSequenceById('A','2');await flush();assert.equal(retired,0);moves.get('2').resolve({id:'2',originalLngLat:{lng:1,lat:2}});await work;assert.equal(retired,0);
+});
+test('retiring a highlight does not await its returned promise or delay image dispatch',async()=>{
+ const {w,events,moves}=setup();w.state.sequenceId='A';w._nativeSequenceSelection={select:()=>new Promise(()=>{})};
+ const work=w.loadSequenceById('B','2');await flush();assert(events.includes('move:2'));assert(!events.includes('route'));assert(!events.includes('metadata'));moves.get('2').resolve({id:'2',originalLngLat:{lng:1,lat:2}});await work;
+});
+
+function nativeSelectionLifecycle(w){
+ const method=widget.members.find(n=>n.name?.getText(sf)==='updateNativeSequenceSelection').getText(sf),Runtime=new Function(ts.transpileModule('class Runtime{'+method+'};return Runtime;',{compilerOptions:{target:ts.ScriptTarget.ES2020}}).outputText)();
+ let selected='A';w._nativeSequenceSelection={select:id=>{selected=id;return Promise.resolve();},cancelPending(){}};const setState=w.setState;w.setState=(patch,callback)=>{const was=w.state.isLoading;setState(patch,callback);if(was!==w.state.isLoading)Runtime.prototype.updateNativeSequenceSelection.call(w);};
+ w.state.sequenceId='A';w.state.imageId='old';w.state.selectedSequenceId='A';w._lastSuccessfulSelection={sequenceId:'A',selectedSequenceId:'A',imageId:'old',sequenceImages:[{id:'old',lon:1,lat:2}]};w._liveSequenceFrames.begin=()=>{};return ()=>selected;
+}
+test('failed image opening restores the previous highlight through the existing readiness lifecycle',async()=>{
+ const {w,moves}=setup(),selected=nativeSelectionLifecycle(w),work=w.loadSequenceById('B','2');assert.equal(selected(),null);await flush();moves.get('2').reject(Error('unavailable'));await work;assert.equal(w.state.sequenceId,'A');assert.equal(selected(),'A');assert.equal(w.state.isLoading,false);
+});
+test('cancelling an opening restores the old highlight and a late result cannot overwrite it',async()=>{
+ const {w,moves}=setup(),selected=nativeSelectionLifecycle(w),work=w.loadSequenceById('B','2');await flush();assert.equal(selected(),null);
+ const arrow=widget.members.find(n=>n.name?.getText(sf)==='cancelNearestFrameSelection').initializer.getText(sf);new Function(ts.transpileModule('return ('+arrow+');',{compilerOptions:{target:ts.ScriptTarget.ES2020}}).outputText).call(w)();
+ assert.equal(selected(),'A');assert.equal(w.state.imageId,'old');moves.get('2').resolve({id:'2',originalLngLat:{lng:3,lat:4}});await work;assert.equal(selected(),'A');assert.equal(w.state.imageId,'old');
 });

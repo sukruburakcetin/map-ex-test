@@ -38,8 +38,8 @@ const svg='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect 
   }
   {
    const {page}=await fixture();await page.evaluate(()=>render());await page.waitForFunction(()=>host.querySelector('img')?.naturalWidth>0);
-   assert.equal(await page.evaluate(()=>{host.textContent='';host.style.display='none';render();return images.length===2;}),true);checks++;await page.close();
+   assert.equal(await page.evaluate(()=>{host.textContent='';host.style.display='none';render();return images.length===1&&host.querySelector('img')===images[0];}),true);checks++;await page.close();
   }
-  assert.deepEqual(errors,[]);console.log(checks+' Chromium checks passed: decoded/pending retention, stale target exclusion, URL changes, live locale, failure retry and cleared-card isolation.');
+  assert.deepEqual(errors,[]);console.log(checks+' Chromium checks passed: decoded/pending retention, stale target exclusion, URL changes, live locale, failure retry and exact decoded revisit.');
  }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

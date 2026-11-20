@@ -1,3 +1,18 @@
+import { coverageZoneProperties } from "../features/coverage/coverageZoneProperties";
+import { ZoomWarningTimer } from "../features/coverage/ZoomWarningTimer";
+import { downloadImageFile } from "../features/imagery/downloadImageFile";
+import { zoomToImagesTarget } from "../features/navigation/zoomToImagesTarget";
+import { SequenceDiagnostics } from "../features/imagery/SequenceDiagnostics";
+import { fetchCoverageTile } from "../features/coverage/coverageTileTransport";
+import { waitForCoverageReady } from "../features/coverage/coverageReadiness";
+import { PendingCoverageHover } from "../features/coverage/PendingCoverageHover";
+import { HoverAnchorProjection } from "../features/imagery/HoverAnchorProjection";
+import { CurrentImageBearing } from "../features/imagery/CurrentImageBearing";
+import { streetBearing } from "../features/point-cloud/streetBearing";
+import { waitForSequencePaint } from "../features/imagery/sequencePaint";
+import { StationaryUrlBindings } from "../features/navigation/StationaryUrlBindings";
+import { TurboViewBindings } from "../features/coverage/TurboViewBindings";
+import { ViewZoomBindings } from "../features/navigation/ViewZoomBindings";
 import type { WidgetState as State } from "./widgetState";
 import { ViewerSurface } from "../components/ViewerSurface";
 import { FullscreenViewer } from "../components/FullscreenViewer";
@@ -230,7 +245,7 @@ import { findNearbySequenceFrame } from "../features/coverage/nearbySequenceFram
 import { CoverageFrameLookup, coverageFrameKey } from "../features/coverage/CoverageFrameLookup";
 import { RepresentativePickCache } from "../features/coverage/RepresentativePickCache";
 import { DelayedHoverStatus } from "../features/imagery/DelayedHoverStatus";
-import { renderImageryHoverCard, positionImageryHoverCard, renderMapFeatureHoverLabel } from "../features/imagery/hoverCard";
+import { clearImageryHoverCardCache, renderImageryHoverCard, positionImageryHoverCard, renderMapFeatureHoverLabel } from "../features/imagery/hoverCard";
 import { fetchGraphJson } from '../services/mapillary/graphJson';
 import { queryEnterpriseNotesPage } from '../features/field-notes/enterpriseList';
 import { matchesEnterpriseLayerUrl, resolveEnterpriseNotesEndpoint } from '../features/field-notes/enterpriseEndpoint';
@@ -320,10 +335,29 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private trafficSignsStationaryHandle: IHandle | null = null;
   private trafficSignsZoomHandle: __esri.WatchHandle | null = null;
   private objectsZoomHandle: __esri.WatchHandle | null = null;
-  private turboStationaryHandle: IHandle | null = null;
-  private turboZoomHandle: __esri.WatchHandle | null = null;
+  private readonly _turboViewBindings = new TurboViewBindings<__esri.MapView | __esri.SceneView>({
+    currentView: () => this.state.jimuMapView?.view,
+    active: () => this.state.turboModeActive,
+    username: () => this.state.turboFilterUsername,
+    configuredCreator: () => this.props.config.turboCreator,
+    debounce: debounceUtil,
+    enableCoverage: creator => creator ? this.enableTurboCoverageLayer(creator) : this.enableTurboCoverageLayer(),
+    refreshPulse: view => this.refreshActivePulseAnchor(view),
+    resumePreview: () => {
+      if (this.state.sequenceId && this._selectionAbort && !this._liveSequenceFrames.complete)
+        void this.showCachedSequencePreview(this.state.sequenceId, this._selectionRequestId, this._selectionAbort.signal);
+    },
+    refreshSymbols: () => this._nativeSequenceSelection.refreshSymbols(),
+    showHelp: () => this.showTurboInteractionHelp(),
+  });
   private highlightHandle: any = null;
-  private viewUrlStationaryHandle: __esri.WatchHandle | null = null;
+  private readonly _stationaryUrlBindings = new StationaryUrlBindings<__esri.MapView | __esri.SceneView>({
+    currentView: () => this.state.jimuMapView?.view,
+    flyIn: () => this._isFlyInActive,
+    imageId: () => this.state.imageId,
+    refreshPulse: view => this.refreshActivePulseAnchor(view),
+    updateUrl: imageId => this.updateUrlWithCurrentImage(imageId),
+  });
 
   // Cancellation flags
   private _cancelTrafficSignsFetch: boolean = false;
@@ -1079,8 +1113,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private readonly _sequencePerformance = new SequencePerformance();
   private _tileRequestToken: string | null = null;
   private _reverseGeocodeAbort: AbortController | null = null;
-  private _sequenceDiagnosticsEntry: object | null = null;
-  private _sequenceLongTaskObserver: PerformanceObserver | null = null;
+  private readonly _sequenceDiagnostics = new SequenceDiagnostics({
+    snapshot: () => this.sequenceDiagnosticsSnapshot(),
+    reset: () => { this._sequencePerformance.reset(); this._nearbyDiscovery?.resetStats(); },
+    recordLongTask: duration => this._sequencePerformance.recordLongTask(duration),
+  });
   private _hoverSequenceTiming: { finish(): void; cancel(): void } | undefined;
   private _imageSequenceTiming: { finish(): void; cancel(): void } | undefined;
   private _hoverTimingAbort: AbortController | null = null;
@@ -1425,10 +1462,18 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private sequenceCoordsCache: Record<string, { id: string; lat: number; lon: number }[]> = {};
   private _directionDiscovery: DirectionHoverDiscovery | null = null;
   private _hoverTimeout: any = null;
+  private readonly _pendingCoverageHover = new PendingCoverageHover<__esri.MapView | __esri.SceneView>(
+    view => !this._sharedNotesDisposed && this.state.jimuMapView?.view === view && !view.destroyed && view.stationary !== false && this.props.state !== 'CLOSED' && this.props.visible !== false && !this._workspaceNoteLocation?.active,
+    () => typeof document === 'undefined' ? null : document.createElement('div'));
   private _hoverPreviewStatus = new DelayedHoverStatus(hoverPreviewLoading => {
+    this._pendingCoverageHover?.loading(hoverPreviewLoading);
     if (!this._sharedNotesDisposed) this.setState({ hoverPreviewLoading });
   });
-  private _zoomWarningTimeout: any = null;
+  private readonly _zoomWarningTimer = new ZoomWarningTimer({
+    show: message => this.setState({ zoomWarningMessage: message, turboWarningAction: undefined, turboWarningIsHelp: false }),
+    hide: () => this.setState({ zoomWarningMessage: undefined }),
+    clear: () => this.setState({ zoomWarningMessage: undefined, turboWarningAction: undefined, turboWarningIsHelp: false }),
+  });
   private _currentHoveredFeatureId: string | null = null;
   private _coverageSelectionTargets = new CoverageSelectionTargets<__esri.Point>();
   private _directionBindings: DirectionHoverBindings | null = null;
@@ -1445,14 +1490,31 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private coneLengths = [10, 15, 20, 30];
   private zoomStepIndex = 0;
   private _lastBearing: number = 0;
-  private _coneCameraWatch: __esri.WatchHandle | null = null;
+  private readonly _currentImageBearing = new CurrentImageBearing<Viewer>((viewer, imageId, bearing) => {
+    if (this.mapillaryViewer !== viewer || String(this.state.imageId) !== imageId) return;
+    this._lastBearing = this._sharedStartupBearing ?? bearing;
+    const view = this.state.jimuMapView?.view;
+    if (view) this.requestConeRedraw(view);
+  });
   private _coneRedrawRaf: number | null = null;
+  private readonly _viewZoomBindings = new ViewZoomBindings<__esri.MapView | __esri.SceneView>({
+    currentView: () => this.state.jimuMapView?.view,
+    flyIn: () => this._isFlyInActive,
+    imageId: () => this.state.imageId,
+    qualityActive: () => this.state.qualityViewActive,
+    debounce: debounceUtil,
+    updateUrl: imageId => this.updateUrlWithCurrentImage(imageId),
+    publishZoom: currentZoom => this.setState({ currentZoom }),
+    refreshPulse: view => this.refreshActivePulseAnchor(view),
+    refreshMarkers: () => this.refreshSequenceMarkerWindow(),
+    redrawCone: view => this.requestConeRedraw(view),
+    showWarning: (message, duration) => this.showZoomWarning(message, duration),
+    clearWarning: () => this.clearZoomWarning(),
+  });
 
   // Debounced function
   private debouncedTurboFilter: (() => void) & { cancel?: () => void };
   private _debouncedBearingUrlUpdate: (() => void) & { cancel?: () => void } = Object.assign(() => { }, { cancel: () => { } });
-  private _debouncedZoomUrlUpdate: (() => void) & { cancel?: () => void } = Object.assign(() => { }, { cancel: () => { } });
-  private zoomDisplayHandle: __esri.WatchHandle | null = null;
   private _sequenceRequests = new SharedSequenceRequests((id, token, signal, progress) => this.fetchSequenceWithCoords(id, token, signal, progress));
   private _sequenceDemand = new SequenceDemandData((url, signal) => this.runSequenceBackground(requestSignal => this.fetchMapillaryJson(url, this.accessToken, requestSignal), signal));
   private _localSequenceTask: { key: string; request: number; signal: AbortSignal; promise: Promise<void> } | null = null;
@@ -1723,6 +1785,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private bindMapillaryEvents() {
     const profileEventViewer = this.mapillaryViewer;
     if (!this.mapillaryViewer) return;
+    this._currentImageBearing?.invalidate();
 
     // Clear any existing green pulse before binding new events
     this.clearGreenPulse();
@@ -1809,18 +1872,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         };
       }
 
-      // Set initial bearing and draw cone
-      this.mapillaryViewer
-        .getBearing()
-        .then((b: number) => {
-          if (typeof b === "number") {
-            this._lastBearing = this._sharedStartupBearing ?? b;
-            redrawCone();
-          }
-        })
-        .catch(() => {
-          redrawCone();
-        });
+      // Bearing readiness is image-scoped; a load-time snapshot can belong to an older camera.
+      redrawCone();
 
       // Bind native playing events and pause-intent listeners through one lifecycle owner.
       this._playbackBindings ??= new PlaybackBindings(this._playbackBindingsHost);
@@ -1835,7 +1888,9 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     // 2. Bearing Change Event
     this.mapillaryViewer.on("bearing", (event: any) => {
       if (this.mapillaryViewer !== profileEventViewer) return;
-      this._lastBearing = this._sharedStartupBearing ?? event.bearing;
+      // The SDK audits this event; its payload can precede the current image's camera.
+      this._lastBearing = this._sharedStartupBearing ?? this._currentImageBearing?.read(profileEventViewer, this.state.imageId) ?? this._lastBearing;
+      this._currentImageBearing?.refresh(profileEventViewer);
 
       /**
        * Cone drawing in SceneView is relatively expensive.
@@ -1893,6 +1948,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       // turn into a lateral jump that cancels the user's latest image request.
       if ((this.state.isLoading || this._imageryOpeningRequest != null) && this._selectionRetry &&
         String(event.image.id) !== String(this._selectionRetry.imageId)) return;
+      this._currentImageBearing?.image(profileEventViewer, String(event.image.id));
       this.highlightNearbyPin(null);
       const firstImageForViewer = this._profileConfirmedViewer !== profileEventViewer;
       this._profileConfirmedViewer = profileEventViewer;
@@ -2293,7 +2349,12 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const current = () => requestId === this._selectionRequestId && !controller.signal.aborted && this.state.jimuMapView?.view === jimuMapView?.view;
     if (this.currentGreenGraphic?.attributes?.image_id !== String(startImageId)) this.clearGreenPulse();
     this._userPaused = true;
+    this._currentImageBearing?.select(this.mapillaryViewer, String(startImageId), nearestToClick);
     this.clearConeGraphics();
+    // Cancelled highlight jobs keep their already-painted graphics. Retire the
+    // old selected role now, before awaiting image navigation, without touching
+    // coverage styles or the geometry cache. Same-sequence navigation reuses it.
+    if (this.state.turboModeActive && this.state.sequenceId && this.state.sequenceId !== sequenceId) void this._nativeSequenceSelection.select(null);
 
     const { jimuMapView } = this.state;
     if (!jimuMapView) return;
@@ -2363,6 +2424,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       if (typeof document !== 'undefined' && document.visibilityState === 'visible' && typeof requestAnimationFrame === 'function')
         await this.waitForSequencePaint(controller.signal);
       if (!current() || this.mapillaryViewer !== viewer) return;
+      // moveTo resolution alone is not proof that its camera has rendered. Reuse only
+      // the SDK image event's identity, after the already-existing presentation wait.
+      if (this._profileConfirmedViewer === viewer && this._profileConfirmedImageId === String(startImageId) && String(openedImage?.id) === String(startImageId))
+        this._currentImageBearing?.image(viewer, String(startImageId));
       imageTiming?.finish();
       this._imageryOpeningRequest = null;
 
@@ -3090,6 +3155,9 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     if (resetState || fullRemove) { this._placesExploreAbort?.abort(); this._places?.dispose(); this._places = null; this._placesView = null; }
     this.highlightNearbyPin(null);
     this.clearSequenceDiagnostics();
+    this._pendingCoverageHover?.clear();
+    clearImageryHoverCardCache(this.tooltipDiv);
+    this._currentImageBearing?.invalidate();
     this._hoverTimingAbort?.abort(); this._hoverSequenceTiming?.cancel();
     this._imageSequenceTiming?.cancel(); this._imageSequenceTiming = undefined;
     this._hoverTimingTarget = null;
@@ -3152,12 +3220,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._nativeSequenceSelection.detach();
 
     // Clean up zoom watcher and cancel any pending zoom URL update
-    this._coneCameraWatch?.remove(); this._coneCameraWatch = null;
-    if (this.zoomDisplayHandle) {
-      this.zoomDisplayHandle.remove();
-      this.zoomDisplayHandle = null;
-    }
-    this._debouncedZoomUrlUpdate.cancel?.();
+    this._viewZoomBindings.clear();
 
     // Clean up direction hover graphic
     this.clearDirectionHighlight();
@@ -3211,14 +3274,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         this.objectsZoomHandle.remove();
         this.objectsZoomHandle = null;
       }
-      if (this.turboStationaryHandle) {
-        this.turboStationaryHandle.remove();
-        this.turboStationaryHandle = null;
-      }
-      if (this.turboZoomHandle) {
-        this.turboZoomHandle.remove();
-        this.turboZoomHandle = null;
-      }
+      this._turboViewBindings.clear();
 
       this.setState({
         trafficSignsActive: false,
@@ -5290,39 +5346,14 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this.setState({ isDownloading: true });
 
     try {
-      const url = `${GRAPH_API.BASE}/${imageId}?fields=thumb_2048_url&access_token=${this.accessToken}`;
-      const resp = await fetch(url);
-      const data = await resp.json();
-      const imageUrl = data.thumb_2048_url;
-
-      if (!imageUrl) {
+      const downloaded = await downloadImageFile(imageId, sequenceImages, this.accessToken, GRAPH_API.BASE);
+      if (!downloaded) {
         this.showToast(
           <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <Icons.Warning size={14} />  {this._t('appHighResolutionImageNotAvailable')} </span>,
         );
         return;
       }
-
-      const imageResp = await fetch(imageUrl);
-      const blob = await imageResp.blob();
-      const blobUrl = URL.createObjectURL(blob);
-
-      let filename = `mapillary_${imageId}.jpg`;
-      const currentImg = sequenceImages.find((img) => img.id === imageId);
-
-      if (currentImg && currentImg.captured_at) {
-        const dateStr = new Date(currentImg.captured_at).toISOString().split("T")[0];
-        filename = `mapillary_${imageId}_${dateStr}.jpg`;
-      }
-
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(blobUrl);
 
       this.showToast(
         <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -5433,29 +5464,9 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this.setState({ turboLoading: false, turboUpdatingVisible: false });
   }
 
-  /** Style loading can finish before its visible tiles: wait for the layer view too. */
-  private async waitForTurboCoverageReady(view: __esri.MapView | __esri.SceneView, layer: __esri.VectorTileLayer, signal: AbortSignal) {
-    const cancelled = () => new DOMException("Cancelled", "AbortError");
-    if (signal.aborted) throw cancelled();
-    await new Promise<void>((resolve, reject) => {
-      let handle: __esri.WatchHandle | undefined;
-      let settled = false;
-      let deadline: ReturnType<typeof setTimeout> | undefined;
-      const finish = (error?: unknown) => {
-        if (settled) return;
-        settled = true; if (deadline) clearTimeout(deadline); handle?.remove(); signal.removeEventListener("abort", abort);
-        if (error) reject(error); else resolve();
-      };
-      const abort = () => finish(cancelled());
-      signal.addEventListener("abort", abort, { once: true });
-      // SceneView can keep updating at globe scale. Do not leave UX pending forever.
-      deadline = setTimeout(() => finish(new Error("Coverage readiness timed out")), 15000);
-      view.whenLayerView(layer).then(layerView => {
-        if (settled) return;
-        handle = layerView.watch("updating", updating => { if (!updating) finish(); });
-        if (!layerView.updating) finish();
-      }).catch(error => finish(error));
-    });
+  /** Keep ArcGIS view/layer selection here; readiness resources belong to coverage. */
+  private waitForTurboCoverageReady(view: __esri.MapView | __esri.SceneView, layer: __esri.VectorTileLayer, signal: AbortSignal): Promise<void> {
+    return waitForCoverageReady(view, layer, signal);
   }
 
   /** Stable highlights: cached decoded geometry in 2D, fixed native terrain styles in 3D. */
@@ -5669,11 +5680,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   }
 
   /** Optional metadata yields new starts while imagery opens; playback uses one slot. */
-  private runSequenceBackground<T>(work: (signal: AbortSignal) => Promise<T>, signal?: AbortSignal): Promise<T> {
+  private runSequenceBackground<T>(work: (signal: AbortSignal) => Promise<T>, signal?: AbortSignal, priority: 'normal' | 'hover' = 'normal'): Promise<T> {
     this._backgroundRequests.setPaused(!!this.state.isLoading || this._imageryOpeningRequest != null);
     this._backgroundRequests.setLimit(this._userPaused === false ? 1 : 2);
     this._sequencePerformance?.count('backgroundRequests');
-    return this._backgroundRequests.run(work, signal);
+    return this._backgroundRequests.run(work, signal, priority);
   }
 
   private async getSequenceTileIndex(buffer: ArrayBuffer, signal: AbortSignal) {
@@ -5707,24 +5718,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   }
 
   private clearSequenceDiagnostics() {
-    this._sequenceLongTaskObserver?.disconnect(); this._sequenceLongTaskObserver = null;
-    const registry = typeof window === 'undefined' ? undefined : (window as any).__mapillarySequencePerformance;
-    if (registry && registry[this.props.id] === this._sequenceDiagnosticsEntry) delete registry[this.props.id];
-    this._sequenceDiagnosticsEntry = null;
+    this._sequenceDiagnostics.clear(this.props.id);
   }
 
   private syncSequenceDiagnostics() {
-    this.clearSequenceDiagnostics();
-    if (!this.props.config.debugMode || this.props.state === 'CLOSED' || typeof window === 'undefined') return;
-    const registry = (window as any).__mapillarySequencePerformance ??= Object.create(null);
-    const entry = { snapshot: () => this.sequenceDiagnosticsSnapshot(), reset: () => { this._sequencePerformance.reset(); this._nearbyDiscovery?.resetStats(); } };
-    registry[this.props.id] = entry; this._sequenceDiagnosticsEntry = entry;
-    if (typeof PerformanceObserver !== 'undefined' && PerformanceObserver.supportedEntryTypes?.includes('longtask')) {
-      this._sequenceLongTaskObserver = new PerformanceObserver(list => {
-        for (const task of list.getEntries()) this._sequencePerformance.recordLongTask(task.duration);
-      });
-      this._sequenceLongTaskObserver.observe({ type: 'longtask', buffered: false });
-    }
+    this._sequenceDiagnostics.sync(this.props.id, !!this.props.config.debugMode, this.props.state === 'CLOSED');
   }
 
   /** Reuse raw tile bytes or share an in-flight tile request; decoding and selection remain separate consumers. */
@@ -5748,46 +5746,17 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     return result;
   }
 
-  /** Fetch coverage bytes with bounded retry, token-identity checks and cache publication; the shared-request owner calls this transport. */
-  private async fetchTurboTileBuffer(tile: [number, number, number], signal: AbortSignal, token: string): Promise<ArrayBuffer> {
-    const [x, y, z] = tile, key = `${z}/${x}/${y}`;
-    const url = `${TILE_URLS.COVERAGE.replace("{z}", String(z)).replace("{x}", String(x)).replace("{y}", String(y))}?access_token=${token}`;
-    const timing = this._sequencePerformance?.begin('tile-load');
-    this._sequencePerformance?.count('tileRequests');
-    try {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
-        try {
-          const response = await fetch(url, { signal });
-          if (response.status === 204 || response.status === 404) {
-            if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
-            const empty = new ArrayBuffer(0);
-            if (this.accessToken !== token) throw new DOMException("Cancelled", "AbortError");
-            this._turboTileCache.set(key, empty); timing?.finish();
-            return empty;
-          }
-          if (!response.ok) {
-            if (attempt === 0 && (response.status === 429 || response.status >= 500)) {
-              await new Promise(resolve => setTimeout(resolve, 200));
-              continue;
-            }
-            const error = new Error(`Turbo tile ${key}: HTTP ${response.status}`) as Error & { status: number };
-            error.status = response.status;
-            throw error;
-          }
-          const buffer = await response.arrayBuffer();
-          if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
-          if (this.accessToken !== token) throw new DOMException("Cancelled", "AbortError");
-          this._turboTileCache.set(key, buffer); timing?.finish();
-          return buffer;
-        } catch (err) {
-          const status = (err as any)?.status;
-          if (signal.aborted || (err as any)?.name === "AbortError" || attempt === 1 || (status && status !== 429 && status < 500)) throw err;
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-      }
-      throw new Error(`Turbo tile ${key} could not load`);
-    } finally { timing?.cancel(); }
+  /** Stable bindings avoid allocating a transport adapter for each tile request. */
+  private readonly _coverageTileTransportHost = {
+    getToken: () => this.accessToken,
+    begin: () => this._sequencePerformance?.begin('tile-load'),
+    count: () => this._sequencePerformance?.count('tileRequests'),
+    publish: (key: string, buffer: ArrayBuffer) => this._turboTileCache.set(key, buffer),
+  };
+
+  /** Shared-request ownership stays here; the coverage feature owns transport mechanics. */
+  private fetchTurboTileBuffer(tile: [number, number, number], signal: AbortSignal, token: string): Promise<ArrayBuffer> {
+    return fetchCoverageTile(tile, signal, token, TILE_URLS.COVERAGE, this._coverageTileTransportHost);
   }
 
   private async visitTurboCoverage(bbox: TurboBbox, filters: TurboFilters, signal: AbortSignal, visit: (point: TurboPoint) => void) {
@@ -6084,33 +6053,17 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this.clearZoomWarning();
   }
 
-  private async getZoomToImagesTarget(view: __esri.MapView | __esri.SceneView, signal: AbortSignal): Promise<number[] | __esri.Point | null> {
-    const id = this.state.imageId;
-    if (id) {
-      const selected = this.state.sequenceImages?.find((image: any) => String(image.id) === String(id)) || this._lastSuccessfulSelection?.sequenceImages?.find((image: any) => String(image.id) === String(id));
-      if (selected && Number.isFinite(selected.lon) && Number.isFinite(selected.lat) && Math.abs(selected.lon) <= 180 && Math.abs(selected.lat) <= 90) return [selected.lon, selected.lat];
-      const graphic = this.currentGreenGraphic;
-      if (String(graphic?.attributes?.image_id) === String(id) && graphic?.geometry?.type === "point") return graphic.geometry as __esri.Point;
-    }
-    // In a tilted globe view the screen center can be sky; sample lower ground before falling back to view.center.
-    let ground: __esri.Point | null = null;
-    for (const fraction of [0.5, 0.65, 0.8]) {
-      try { ground = view.toMap({ x: view.width / 2, y: view.height * fraction }) as __esri.Point; } catch (_) { ground = null; }
-      if (ground && Number.isFinite(ground.longitude) && Number.isFinite(ground.latitude)) break;
-      ground = null;
-    }
-    ground = ground || view.center;
-    if (!ground) return null;
-    if (view.zoom < 14 && this.turboCoverageLayer && !signal.aborted) {
-      try {
-        const pixel = view.toScreen(ground);
-        if (pixel) {
-          const nearby = await this.pickTurboRepresentative(pixel, view, signal, false, Math.min(160, Math.max(32, Math.min(view.width, view.height) * 0.15)));
-          if (nearby?.geometry?.type === "point") return nearby.geometry as __esri.Point;
-        }
-      } catch (_) { /* Missing/filtered coverage must not prevent navigation to the looked-at ground. */ }
-    }
-    return ground;
+  private readonly _zoomToImagesTargetHost = {
+    imageId: () => this.state.imageId,
+    images: () => this.state.sequenceImages,
+    fallbackImages: () => this._lastSuccessfulSelection?.sequenceImages,
+    graphic: () => this.currentGreenGraphic,
+    hasCoverage: () => !!this.turboCoverageLayer,
+    pick: (pixel: { x: number; y: number }, view: __esri.MapView | __esri.SceneView, signal: AbortSignal, radius: number) => this.pickTurboRepresentative(pixel, view, signal, false, radius),
+  };
+
+  private getZoomToImagesTarget(view: __esri.MapView | __esri.SceneView, signal: AbortSignal): Promise<number[] | __esri.Point | null> {
+    return zoomToImagesTarget<__esri.Point, __esri.MapView | __esri.SceneView>(view, signal, this._zoomToImagesTargetHost);
   }
 
   private async handleTurboWarningAction(action: "show" | "data" | "tilt" | "zoom" | "retry" | undefined = this.state.turboWarningAction) {
@@ -6340,6 +6293,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   }
 
   private clearTurboHoverDetails(preserveSequenceHighlight = false) {
+    this._pendingCoverageHover?.clear();
     if (this._coverageFrameHoverTimer) clearTimeout(this._coverageFrameHoverTimer);
     this._coverageFrameHoverTimer = null; this._coverageFrameHoverTarget = null;
     this._coverageFrameLookup?.clearHover();
@@ -6411,7 +6365,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         this._turboHoverBearing ??= new HoverBearingSector(
           properties => new this.ArcGISModules.Point(properties), () => document.createElement('div'));
         this._turboHoverBearing.show(this._turboHoverAnchor,
-          hoverPreviewBearing(data, this._lastBearing), !!data.is_pano);
+          hoverPreviewBearing(data), !!data.is_pano);
       }
       renderImageryHoverCard(this.tooltipDiv, data, fallbackDate, undefined, this._presentation, finishPreview);
       this.highlightSequenceOnVTL(data.sequence || attrs.sequence_id || null);
@@ -6425,7 +6379,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
           });
           if (!response.ok) throw new Error(`Image details: HTTP ${response.status}`);
           return response.json();
-        }, controller.signal);
+        }, controller.signal, 'hover');
         if (!isCurrent()) return;
         const data = mergeHoverBearingMetadata(cached, responseData, previewId);
         this._turboMetadataCache.set(previewId, data);
@@ -6438,6 +6392,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       this._hoverTimeout = null;
       if (!isCurrent()) return;
       try {
+        if (!cachedPreviewId) renderImageryHoverCard(this.tooltipDiv, null, undefined, true, this._presentation, finishPreview);
         const previewId = cachedPreviewId || await hoverBearingImageId({
           imageId, sequenceId,
           representative: !!attrs.turbo_representative, zoom: view?.zoom ?? 0, location,
@@ -6445,7 +6400,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
           frames, organizationId, signal: controller.signal,
           distance: distanceMeters, lookup: (sequence, point, signal) => this.ensureCoverageFrameLookup().resolve(view, sequence, point, signal)
         });
-        if (!isCurrent() || !previewId) { finishPreview?.(); return; }
+        if (!isCurrent()) { finishPreview?.(); return; }
+        if (!previewId) { renderImageryHoverCard(this.tooltipDiv, null, undefined, false, this._presentation, finishPreview); return; }
         if (localKey) this._hoverBearingHints.remember(view, frames, localKey, previewId);
         const fallbackDate = previewId === imageId ? attrs.captured_at : undefined;
         const entry = this._turboMetadataCache.get(previewId);
@@ -6549,17 +6505,24 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       this._ownedMapResources.addGraphic(view, hover);
     }
     const started = performance.now();
+    const projection = new HoverAnchorProjection<__esri.Point, __esri.MapView | __esri.SceneView>();
+    let positionAnchor: HTMLElement | null = null, positionX = NaN, positionY = NaN;
     const animate = (now: number) => {
       if (this._turboHoverGraphic !== hover || this.state.jimuMapView?.view !== view || view.destroyed) return;
       const size = 8.5 - 2.5 * Math.cos((now - started) * Math.PI * 2 / 1200);
       const overlay = this._turboHoverOverlay;
       if (overlay) {
-        const p = view.toScreen(hover.geometry as __esri.Point);
+        const p = projection.project(view, hover.geometry as __esri.Point);
         const visible = p && Number.isFinite(p.x) && Number.isFinite(p.y) && p.x >= 0 && p.y >= 0 && p.x <= view.width && p.y <= view.height;
         const anchor = this._turboHoverAnchor;
         if (anchor) {
-          anchor.style.display = visible ? "block" : "none";
-          if (visible) { anchor.style.left = `${p.x}px`; anchor.style.top = `${p.y}px`; }
+          const display = visible ? "block" : "none";
+          if (anchor.style.display !== display) anchor.style.display = display;
+          if (visible) {
+            if (positionAnchor !== anchor) { positionAnchor = anchor; positionX = positionY = NaN; }
+            if (positionX !== p.x) { anchor.style.left = `${p.x}px`; positionX = p.x; }
+            if (positionY !== p.y) { anchor.style.top = `${p.y}px`; positionY = p.y; }
+          }
         }
         if (visible) { overlay.style.width = `${size}px`; overlay.style.height = `${size}px`; }
         this._turboHoverBearing?.update(view, hover.geometry, visible ? p : null, now);
@@ -6953,36 +6916,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
     const is3D = jimuMapView.view.type === "3d";
 
-    const zoneGraphic = new Graphic({
-      geometry: {
-        type: "polygon",
-        rings: [
-          [
-            [west, south],
-            [east, south],
-            [east, north],
-            [west, north],
-            [west, south],
-          ],
-        ],
-        spatialReference: {
-          wkid: 4326,
-        },
-      },
-
-      symbol: {
-        type: "simple-fill",
-
-        color: is3D ? [30, 144, 255, 0.04] : [30, 144, 255, 0.14],
-
-        outline: {
-          type: "simple-line",
-          color: [30, 144, 255, 1],
-          width: is3D ? 4 : 3,
-          style: "solid",
-        },
-      } as any,
-    });
+    const zoneGraphic = new Graphic(coverageZoneProperties(west, south, east, north, is3D));
 
     (zoneGraphic as any).__isCoverageZone = true;
     this._ownedMapResources.addGraphic(jimuMapView.view, zoneGraphic);
@@ -8815,37 +8749,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private getStreetBearing(): number {
     const { imageId } = this.state;
     const sequenceImages = this._pointCloudSequenceContext?.imageId === imageId ? this._pointCloudSequenceContext.points : this.state.sequenceImages;
-    if (!sequenceImages || !imageId) return this._lastBearing || 0;
-
-    const currentIdx = sequenceImages.findIndex((img) => String(img.id) === String(imageId));
-    if (currentIdx === -1) return this._lastBearing || 0;
-
-    const currentImg = sequenceImages[currentIdx];
-
-    // 1. Look ahead at least 15 meters to bypass GPS jitter
-    for (let i = currentIdx + 1; i < sequenceImages.length; i++) {
-      const img = sequenceImages[i];
-      if (distanceMeters(currentImg.lat, currentImg.lon, img.lat, img.lon) >= 15) {
-        return calculateBearing(currentImg.lat, currentImg.lon, img.lat, img.lon);
-      }
-    }
-
-    // 2. If at the end, look behind at least 15 meters
-    for (let i = currentIdx - 1; i >= 0; i--) {
-      const img = sequenceImages[i];
-      if (distanceMeters(img.lat, img.lon, currentImg.lat, currentImg.lon) >= 15) {
-        return calculateBearing(img.lat, img.lon, currentImg.lat, currentImg.lon);
-      }
-    }
-
-    // 3. Fallback to immediate neighbors
-    if (currentIdx < sequenceImages.length - 1) {
-      return calculateBearing(currentImg.lat, currentImg.lon, sequenceImages[currentIdx + 1].lat, sequenceImages[currentIdx + 1].lon);
-    } else if (currentIdx > 0) {
-      return calculateBearing(sequenceImages[currentIdx - 1].lat, sequenceImages[currentIdx - 1].lon, currentImg.lat, currentImg.lon);
-    }
-
-    return this._lastBearing || 0;
+    return streetBearing(sequenceImages, imageId, this._lastBearing || 0);
   }
 
   // #endregion POINT CLOUD
@@ -10114,6 +10018,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const pendingPlaceCrop = this.state.pendingFieldNote?.placeId && this.state.pendingFieldNote.attachmentId;
     if (pendingPlaceCrop) void deleteDetectionCrop(pendingPlaceCrop).catch(() => { });
     if (this._placeWorkspaceCrop) { void deleteDetectionCrop(this._placeWorkspaceCrop).catch(() => { }); this._placeWorkspaceCrop = null; }
+    this._pendingCoverageHover?.clear();
     this._coverageHoverResume?.dispose(); this._coverageHoverResume = null; this._coverageHoverHandler = null;
     this._presentationHandle?.remove(); this._presentationHandle = null;
     this._placesImageryCache?.clear(); this._placesImageryCache = null;
@@ -10157,10 +10062,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     window.removeEventListener("keyup", this.handleNudgeKeyUp);
 
     // Clear warning timeout
-    if (this._zoomWarningTimeout) {
-      clearTimeout(this._zoomWarningTimeout);
-      this._zoomWarningTimeout = null;
-    }
+    this._zoomWarningTimer.cancel();
   }
 
   /** Reattach enabled detection coverage and legend presentation to the newly active ArcGIS view. */
@@ -10202,6 +10104,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._pointCloudMapLayer?.invalidate();
     this._rings?.onViewChange(view);
 
+    this._pendingCoverageHover?.clear();
     this._coverageHoverResume?.dispose(); this._coverageHoverResume = null; this._coverageHoverHandler = null;
     // Remove click / hover handlers from the previous active view
     ++this._mapClickRevision;
@@ -10228,10 +10131,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
      * Important: do this before attaching anything
      * to the new jmv.
      */
-    if (this.viewUrlStationaryHandle) {
-      this.viewUrlStationaryHandle.remove();
-      this.viewUrlStationaryHandle = null;
-    }
+    this._stationaryUrlBindings.clear();
 
     this.log("Active MapView set - Attaching Handlers");
 
@@ -10330,6 +10230,13 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
           if (!viewStartupCurrent()) return;
           await this.restoreRoutingLoginView(view);
           if (!viewStartupCurrent()) return;
+          // Start visible coverage before restoring optional tools. Keep the existing
+          // ready-view/camera gates and request owner; do not wait for imagery or
+          // prefetch pointer tiles. Observe errors immediately if restoration throws.
+          this.ensureAlwaysOnCoverageLayer();
+          const coverageReady = this.enableTurboCoverageLayer().catch(error => {
+            if (viewStartupCurrent() && (error as any)?.name !== "AbortError") console.warn("[MapView] Coverage initialization failed:", error);
+          });
           this.restoreMapGraphics();
           this.syncPlaces();
           if (this._pointCloudAcquisition.result && this.state.pointCloudVisible) {
@@ -10342,13 +10249,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
           this.restoreMapillaryFeatureLayersForView(jmv);
 
-          /*
-           * Fresh preview / page reload:
-           * apply the configured always-on coverage
-           * once the new MapView really exists.
-           */
-          this.ensureAlwaysOnCoverageLayer();
-          await this.enableTurboCoverageLayer();
+          // Optional restoration proceeds while the same coverage task loads.
+          await coverageReady;
           if (!viewStartupCurrent()) return;
 
           /*
@@ -10379,34 +10281,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
            * Then attach the persistent URL
            * stationary watcher.
            */
-          if (this.viewUrlStationaryHandle) {
-            this.viewUrlStationaryHandle.remove();
-            this.viewUrlStationaryHandle = null;
-          }
-
-          this.viewUrlStationaryHandle = view.watch("stationary", (stationary) => {
-            if (!stationary) {
-              return;
-            }
-
-            if (this.state.jimuMapView?.view !== view || !view.map || view.destroyed) {
-              return;
-            }
-
-            this.refreshActivePulseAnchor(view);
-            if (this._isFlyInActive) {
-              return;
-            }
-
-            /*
-             * Map position belongs in the URL even when
-             * no Mapillary image has been selected yet.
-             *
-             * pKey is added only when imageId exists.
-             */
-
-            this.updateUrlWithCurrentImage(this.state.imageId ?? undefined);
-          });
+          this._stationaryUrlBindings.bind(view);
         }).catch(error => {
           if (viewStartupCurrent() && (error as any)?.name !== "AbortError") console.warn("[MapView] Resource restoration failed:", error);
         });
@@ -10415,92 +10290,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       },
     );
 
-    // ZOOM WATCHER
-    /*
-     * ZOOM / URL SYNC
-     *
-     * There must be exactly ONE zoom watcher for
-     * the currently active JimuMapView.
-     */
-
-    /*
-     * Remove the previous MapView's watcher before
-     * attaching anything to the new 2D/3D view.
-     */
-    this._coneCameraWatch?.remove(); this._coneCameraWatch = null;
-    if (this.zoomDisplayHandle) {
-      this.zoomDisplayHandle.remove();
-      this.zoomDisplayHandle = null;
-    }
-
-    /*
-     * Cancel a pending URL write belonging to the
-     * previous view.
-     */
-    this._debouncedZoomUrlUpdate.cancel?.();
-
-    /*
-     * Build the debounce before the watcher uses it.
-     */
-    this._debouncedZoomUrlUpdate = debounceUtil(() => {
-      /*
-       * Ignore a callback if another 2D/3D
-       * MapView became active meanwhile.
-       */
-      if (this.state.jimuMapView?.view !== view || !view.map || view.destroyed) {
-        return;
-      }
-
-      if (this._isFlyInActive) {
-        return;
-      }
-
-      this.updateUrlWithCurrentImage(this.state.imageId ?? undefined);
-    }, 600);
-
-    /*
-     * Initialize STATUS from THIS view.
-     */
-    this.setState({
-      currentZoom: view.zoom,
-    });
-
-    /*
-     * Attach ONE watcher to THIS view only.
-     */
-    this.zoomDisplayHandle = view.watch("zoom", (newZoom: number) => {
-      /*
-       * Critical 2D/3D guard:
-       * an obsolete MapView is never allowed
-       * to overwrite the displayed zoom.
-       */
-      if (this.state.jimuMapView?.view !== view || !view.map || view.destroyed) {
-        return;
-      }
-
-      this.refreshActivePulseAnchor(view);
-      this.setState({
-        currentZoom: newZoom,
-      });
-
-      this._debouncedZoomUrlUpdate();
-      void this.refreshSequenceMarkerWindow();
-
-      this.requestConeRedraw(view);
-
-      /*
-       * Keep quality hint behavior.
-       */
-      if (this.state.qualityViewActive) {
-        if (newZoom < ZOOM.TILE_FETCH) {
-          this.showZoomWarning("Quality bands are based on sequence-level averages until you zoom in further.", 0);
-        } else {
-          this.clearZoomWarning();
-        }
-      }
-    });
-
-    if (view.type === '3d') this._coneCameraWatch = view.watch('camera', () => this.requestConeRedraw(view));
+    this._viewZoomBindings.bind(view);
 
     // Restore manual Turbo Mode or Auto-Initialize if Config is ON
     {
@@ -10509,37 +10299,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       // Apply the Turbo vector tile style to the newly bound 2D/3D view.
       this._loadedTurboFiltersKey = "";
 
-      if (this.turboStationaryHandle) this.turboStationaryHandle.remove();
-
-      this.turboStationaryHandle = view.watch(
-        "stationary",
-        debounceUtil(async (isStationary) => {
-          if (this.state.jimuMapView?.view !== view || !view.map || view.destroyed) return;
-          if (isStationary && this.state.turboModeActive) {
-            const stateFilter = this.state.turboFilterUsername.trim();
-            const configFilter = this.props.config.turboCreator || "";
-            const effectiveFilter = stateFilter || configFilter;
-
-            if (effectiveFilter) {
-              await this.enableTurboCoverageLayer(effectiveFilter);
-            } else {
-              await this.enableTurboCoverageLayer();
-            }
-            this.refreshActivePulseAnchor(view);
-            if (this.state.sequenceId && this._selectionAbort && !this._liveSequenceFrames.complete)
-              void this.showCachedSequencePreview(this.state.sequenceId, this._selectionRequestId, this._selectionAbort.signal);
-          }
-        }, TIMING.TURBO_DEBOUNCE_MS),
-      );
-
-      if (this.turboZoomHandle) this.turboZoomHandle.remove();
-      this.turboZoomHandle = view.watch(view.type === '2d' ? ["zoom", "rotation"] : "zoom", () => {
-        if (this.state.jimuMapView?.view !== view || !view.map || view.destroyed) return;
-        this._nativeSequenceSelection.refreshSymbols();
-        if (this.state.turboModeActive) {
-          this.showTurboInteractionHelp();
-        }
-      });
+      this._turboViewBindings.bind(view);
 
       // Wait for view to be completely ready before checking zoom and fetching!
 
@@ -10615,6 +10375,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
     // CLICK HANDLER
     this.mapClickHandle = view.on("click", async (evt) => {
+      this._pendingCoverageHover?.clear();
       if (this.props.state === "CLOSED" || this.props.visible === false) return;
       if (this._isFlyInActive) (view as any).animation?.stop();
       this._sharedStartupImageId = null; this._sharedStartupBearing = null; this._isFlyInActive = false; this._sharedStateRestoreComplete = true;
@@ -10976,6 +10737,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
           if (hoverController.signal.aborted || this.state.jimuMapView?.view !== view) return;
           const finishCoveragePreview = this.state.turboModeActive && this.turboCoverageLayer
             ? this._hoverPreviewStatus?.begin(hoverController.signal) : undefined;
+          const finishPending = this.state.turboModeActive && this.turboCoverageLayer && view.zoom < 14
+            ? this._pendingCoverageHover?.begin(view, screenPoint, hoverController.signal) : undefined;
           const coverage = this.state.turboModeActive && this.turboCoverageLayer
             ? (view.zoom < 14
               ? this.pickTurboRepresentative(screenPoint, view, hoverController.signal, true)
@@ -10983,10 +10746,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
             : Promise.resolve(null);
           let featureOwnsHover = false;
           const coverageFeedback = coverage.then(picked => {
+            finishPending?.();
             if (hoverController.signal.aborted || featureOwnsHover || this.state.jimuMapView?.view !== view) return;
             if (picked) this.updateTurboHover(picked, globalX, globalY);
             else this.clearTurboHoverDetails();
-          }).catch(() => { if (!hoverController.signal.aborted && !featureOwnsHover) this.clearTurboHoverDetails(); }).finally(() => finishCoveragePreview?.());
+          }).catch(() => { if (!hoverController.signal.aborted && !featureOwnsHover) this.clearTurboHoverDetails(); }).finally(() => { finishPending?.(); finishCoveragePreview?.(); });
           const hit = await this.hitTestHoverLayers(view, screenPoint);
           if (hoverController.signal.aborted || this.state.jimuMapView?.view !== view) return;
 
@@ -11374,6 +11138,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const view = this.state.jimuMapView?.view;
     if (!view || !this.ArcGISModules || ![lon, lat, heading, radiusMeters, spreadDeg].every(Number.isFinite) || radiusMeters <= 0 || spreadDeg <= 0 || spreadDeg >= 180) return null;
     if (this._currentImagePresentation && !this._currentImagePresentation.owns(view.map)) return null;
+    if (this.mapillaryViewer) {
+      const confirmed = this._currentImageBearing?.read(this.mapillaryViewer, this.state.imageId);
+      if (confirmed === undefined) { this.clearConeGraphics(); return null; }
+      heading = this._sharedStartupBearing ?? confirmed;
+    }
     const screenCone = this.ensureScreenDirectionCone();
     if (screenCone) {
       const anchor = this.getCoverageDisplayPosition(String(this.state.imageId), lon, lat);
@@ -11496,16 +11265,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   /** Yield two animation frames for presentation; reject cancellation or a document hidden at entry. */
   private waitForSequencePaint(signal: AbortSignal): Promise<void> {
-    if (signal.aborted || typeof document === 'undefined' || document.visibilityState !== 'visible')
-      return Promise.reject(new DOMException('Cancelled', 'AbortError'));
-    return new Promise((resolve, reject) => {
-      let frame = 0;
-      const cleanup = () => { signal.removeEventListener('abort', abort); if (frame) cancelAnimationFrame(frame); };
-      const abort = () => { cleanup(); reject(new DOMException('Cancelled', 'AbortError')); };
-      signal.addEventListener('abort', abort, { once: true });
-      frame = requestAnimationFrame(() => { frame = requestAnimationFrame(() => { cleanup(); resolve(); }); });
-      if (signal.aborted) abort();
-    });
+    return waitForSequencePaint(signal);
   }
 
   // #region UTILITIES
@@ -11540,32 +11300,12 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
    * @param duration Time in ms. If 0, the message stays indefinitely until cleared manually.
    */
   private showZoomWarning(message: string, duration: number = TIMING.WARNING_DEFAULT_MS) {
-    // 1. Clear previous timer to prevent conflicts
-    if (this._zoomWarningTimeout) {
-      clearTimeout(this._zoomWarningTimeout);
-      this._zoomWarningTimeout = null;
-    }
-
-    // 2. Set the message
-    this.setState({ zoomWarningMessage: message, turboWarningAction: undefined, turboWarningIsHelp: false });
-
-    // 3. If duration > 0, set a timer to auto-hide.
-    // If duration is 0, do nothing (it stays visible).
-    if (duration > 0) {
-      this._zoomWarningTimeout = setTimeout(() => {
-        this.setState({ zoomWarningMessage: undefined });
-        this._zoomWarningTimeout = null;
-      }, duration);
-    }
+    this._zoomWarningTimer.show(message, duration);
   }
 
-  // Helper to manually clear the warning
+  // Manual clearing also resets the warning action, unlike automatic expiry.
   private clearZoomWarning() {
-    if (this._zoomWarningTimeout) {
-      clearTimeout(this._zoomWarningTimeout);
-      this._zoomWarningTimeout = null;
-    }
-    this.setState({ zoomWarningMessage: undefined, turboWarningAction: undefined, turboWarningIsHelp: false });
+    this._zoomWarningTimer.clear();
   }
 
   /**
