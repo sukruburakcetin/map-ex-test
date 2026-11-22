@@ -4,7 +4,7 @@ const compile=s=>{const result=ts.transpileModule(s,{compilerOptions:{target:ts.
 const m={exports:{}};new Function('module','exports',compile(fs.readFileSync(root+'/src/features/routing/CaptureSolveHistory.ts','utf8')))(m,m.exports);const {CaptureSolveHistory}=m.exports;
 const fixture=JSON.parse(fs.readFileSync(__dirname+'/fixtures/captureSolveHistory.baseline.json'));
 const previous=new Function(compile(fixture.initialize+'return {record(finalRoute,solvedOpportunities,actualExtraMinutes){'+fixture.update+'},get best(){return {route:bestRoute,opportunities:bestRouteOpportunities,extraMinutes:bestActualExtraMinutes};}};'));
-const source=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8'),match=source.match(/captureSolveHistory\.record\([^;]+;/);assert(match);
+const source=require('./helpers/captureExecutionSource.cjs').captureExecutionSource(),match=source.match(/captureSolveHistory\.record\([^;]+;/);assert(match);
 const adapter=new Function('captureSolveHistory','finalRoute','solvedOpportunities','actualExtraMinutes',compile(match[0]));
 function compare(sequence){
  const old=previous(),history=new CaptureSolveHistory();assert.deepEqual(history.best,old.best);

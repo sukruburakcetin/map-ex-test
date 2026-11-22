@@ -5,7 +5,7 @@ const baseline=JSON.parse(fs.readFileSync(__dirname+'/fixtures/trialPreflightQua
 const helperFactory=new Function('require','module','exports',compile(fs.readFileSync(root+'/src/features/routing/trialPreflightQuality.ts','utf8')));
 function helper(distanceMeters){const m={exports:{}};helperFactory(()=>({distanceMeters}),m,m.exports);return m.exports.hasBrokenTrialOpportunity;}
 const oldPredicates=baseline.blocks.map(b=>new Function('trialPreflight','trialStops','trialCaptureOwners','distanceMeters',compile(b.owner+b.predicate+'return trialHasBrokenOpportunity;')));
-const widget=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8');
+const widget=require('./helpers/captureExecutionSource.cjs').captureExecutionSource();
 const starts=[...widget.matchAll(/const trialHasBrokenOpportunity = hasBrokenTrialOpportunity\(/g)];assert.equal(starts.length,3);
 const adapters=starts.map(({index})=>new Function('trialPreflight','trialStops','trialCaptureOwners','hasBrokenTrialOpportunity',compile(widget.slice(index,widget.indexOf(');',index)+2)+'return trialHasBrokenOpportunity;')));
 const row=(durations=[0,5,0],stops=[[0,0],[.001,0],[.002,0],[.003,0]],owners=['A','A'],direct=100)=>({durations,stops,owners,direct});

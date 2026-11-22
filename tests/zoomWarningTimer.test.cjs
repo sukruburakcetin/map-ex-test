@@ -38,5 +38,5 @@ for(const [name,scenario] of Object.entries(scenarios))test('unchanged zoom warn
  const results=[];for(const kind of ['original','extracted']){const f=fixture(kind);scenario(f);results.push(f.snapshot());}assert.deepEqual(results[1],results[0]);
 });
 test('widget teardown retains resource-only warning cancellation at its original cleanup boundary',()=>{
- const unmount=widget.members.find(n=>n.name?.getText(sf)==='componentWillUnmount');assert.equal(unmount.body.statements.at(-1).getText(sf),'this._zoomWarningTimer.cancel();');assert(!source.includes('this._zoomWarningTimeout'));
+ const unmount=widget.members.find(n=>n.name?.getText(sf)==='componentWillUnmount');assert(unmount.getText(sf).includes('unmountWidget(this.widgetTeardownHost())'));const teardown=require('./helpers/widgetTeardownSource.cjs');assert.equal(teardown.phase('unmountWidget').body.statements.at(-1).getText(teardown.ast),'host.zoomWarningTimer.cancel();');assert(!source.includes('this._zoomWarningTimeout'));
 });

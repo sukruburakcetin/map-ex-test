@@ -8,7 +8,7 @@ const golden=JSON.parse(fs.readFileSync(__dirname+'/fixtures/captureCoverageRepo
 const fixture=JSON.parse(fs.readFileSync(__dirname+'/fixtures/captureRouteScoring.baseline.json'));
 const summaryKeys=['missingMeters','staleMeters','targetedCaptureMeters','finalSelectedNovelMeters','finalSelectedBaselineOverlapMeters','finalSelectedAnchorCount'];
 const previous=new Function('activeOpportunities','routeCoverage','incrementalCoverage','summarizeCaptureOpportunities',compile(golden.body+'return {'+summaryKeys.join(',')+'};'));
-const widget=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8');
+const widget=require('./helpers/captureExecutionSource.cjs').captureExecutionSource();
 const a=widget.indexOf('      const { finalSelectedNovelMeters, finalSelectedBaselineOverlapMeters, finalSelectedAnchorCount } = reportCaptureRouteCoverage('),b=widget.indexOf('      /*\n       * 9. STORE FINAL ROUTE RESULT',a);assert(a>0&&b>a);
 const adapter=new Function('activeOpportunities','routeCoverage','incrementalCoverage','reportCaptureRouteCoverage',compile(widget.slice(a,b)+'return {finalSelectedNovelMeters,finalSelectedBaselineOverlapMeters,finalSelectedAnchorCount};'));
 function freeze(value){if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;}

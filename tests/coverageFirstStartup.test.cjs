@@ -3,15 +3,11 @@ const ts = require(process.env.MAPILLARY_TYPESCRIPT || 'typescript');
 const source = fs.readFileSync(path.join(__dirname, '../src/runtime/widget.tsx'), 'utf8');
 const sf = ts.createSourceFile('widget.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
 const widget = sf.statements.find(n => ts.isClassDeclaration(n) && n.name?.text === 'Widget');
-const method = widget.members.find(n => n.name?.getText(sf) === 'onActiveViewChange');
-let callback;
-function visit(n) {
-  if (ts.isCallExpression(n) && n.expression.getText(sf) === 'view.when' && n.arguments[0]?.modifiers?.some(m => m.kind === ts.SyntaxKind.AsyncKeyword)) callback = n.arguments[0];
-  ts.forEachChild(n, visit);
-}
-visit(method);
-assert(callback, 'exercise the production ready-view callback');
-const code = ts.transpileModule('return (' + callback.getText(sf) + ');', { compilerOptions: { target: ts.ScriptTarget.ES2020 } }).outputText;
+const {createStartupCallback} = require('./helpers/activeViewStartupSource.cjs');
+const factory = widget.members.find(n => n.name?.getText(sf) === 'activeViewStartupHost');
+const featureCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/features/navigation/activeViewStartup.ts'), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS } }).outputText;
+const feature = {exports:{}}; new Function('exports', featureCode)(feature.exports);
+const bindHost = ts.transpileModule('return class Harness { ' + factory.getText(sf) + ' };', {compilerOptions:{target:ts.ScriptTarget.ES2020}}).outputText;
 const deferred = () => { let resolve, reject; const promise = new Promise((a,b) => { resolve=a; reject=b; }); return {promise,resolve,reject}; };
 const flush = async () => { for (let i=0;i<15;i++) await Promise.resolve(); };
 function fixture() {
@@ -24,7 +20,8 @@ function fixture() {
     _stationaryUrlBindings:{bind:()=>events.push('watcher')},
   };
   for (const name of ['restoreMapGraphics','syncPlaces','syncSharedFieldNotes','restoreMapillaryFeatureLayersForView']) w[name]=()=>events.push(name);
-  const run = new Function('view','viewStartupCurrent','dimensionChanged','previousScale','previousCenter','jmv','console',code).call(w,view,()=>current,false,1,null,{view},{warn:(...args)=>warnings.push(args)}).bind(w);
+  w.activeViewStartupHost = new Function('console', bindHost)({warn:(...args)=>warnings.push(args)}).prototype.activeViewStartupHost;
+  const run = createStartupCallback(w,{view,current:()=>current,dimensionChanged:false,previousScale:1,previousCenter:null},{view},feature.exports.restoreActiveView,{warn:(...args)=>warnings.push(args)});
   return {w,events,warnings,modules,camera,coverage,run,invalidate:()=>{current=false;}};
 }
 test('coverage waits for modules and restored camera, then starts before optional restoration without waiting for tiles',async()=>{

@@ -6,7 +6,7 @@ const fs=require('fs'),path=require('path'),test=require('node:test'),assert=req
 const compile=s=>ts.transpileModule(s,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText;
 const m={exports:{}};englishFunction('module','exports',compile(fs.readFileSync(root+'/src/features/point-cloud/PointCloudHitRouting.ts','utf8')))(m,m.exports);
 const fixture=JSON.parse(fs.readFileSync(__dirname+'/fixtures/pointCloudHitRouting.baseline.json','utf8'));const source=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8'),sf=ts.createSourceFile('widget.tsx',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX),cl=sf.statements.find(n=>ts.isClassDeclaration(n)&&n.name.text==='Widget');const adapter=cl.members.find(n=>n.name?.getText(sf)==='_pointCloudHits').getText(sf);
-const call='if (this._pointCloudHits.route(response.results)) return;';assert.equal(source.split(call).length,2);
+const call='if (this._pointCloudHits.route(response.results)) return;';assert.equal(fs.readFileSync(root+'/src/features/navigation/mapClickDispatch.ts','utf8').split('if (host.cloudHits.route(response.results)) return;').length,2);assert(source.includes('get cloudHits() { return widget._pointCloudHits; }'));
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b});return{promise,resolve,reject}},flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve()};
 const geom=()=>({longitude:10,latitude:20,z:30});const hit=(attributes={pointIndex:2,originalIndex:0},geometry=geom())=>({layer:{id:'point-cloud-layer'},graphic:{attributes,geometry}});
 function setup(kind,{hold=false,batched=false}={}){

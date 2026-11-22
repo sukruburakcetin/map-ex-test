@@ -39,7 +39,9 @@ function deferred() { let resolve, reject; const promise = new Promise((a, b) =>
 function mockFetch(t, fetch) { const previous = global.fetch; global.fetch = fetch; t.after(() => { global.fetch = previous; }); }
 function setup() {
   let now = 100;
-  const w = new Runtime();
+  const w = require('./helpers/sequenceOpeningSource.cjs').install(new Runtime());
+  // This harness extracts methods without running widget field initializers.
+  w._reverseAddressEnrichment = { cancel() {}, clear() {} };
   w.state = { isLoading: false, turboModeActive: true, sequenceImages: [], jimuMapView: { view: { type: '2d' } } };
   w._ownedMapResources = new OwnedMapResources();
   w.clearDirectionHighlight = w.clearClickRipples = w.clearTurboHover = () => {};

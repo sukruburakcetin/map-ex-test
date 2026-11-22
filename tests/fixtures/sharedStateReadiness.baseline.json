@@ -1,0 +1,3 @@
+{
+  "method": "  private async restoreSharedStateWhenReady(view: __esri.MapView | __esri.SceneView, current: () => boolean) {\n    if (this._sharedStateRestoreComplete) return;\n    try {\n      await view.when();\n      if (!current() || this._sharedStateRestoreComplete) return;\n      await this.ensureArcGISModules();\n      if (!current() || this._sharedStateRestoreComplete) return;\n      await this.checkUrlForSharedState(current);\n    } catch (error) {\n      if (current() && (error as any)?.name !== \"AbortError\") console.warn(\"[MapView] Shared-link initialization failed:\", error);\n    }\n  }\n"
+}

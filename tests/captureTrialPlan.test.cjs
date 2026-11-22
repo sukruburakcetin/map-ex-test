@@ -5,7 +5,7 @@ function load(name){if(cache.has(name))return cache.get(name);const m={exports:{
 const {prepareCaptureTrial}=load('features/routing/captureTrialPlan'),{buildFinalRouteStops}=load('utils/routeOptimizer'),{captureStopOwners}=load('features/routing/captureRouteScoring');
 const golden=JSON.parse(fs.readFileSync(__dirname+'/fixtures/captureTrialPlan.baseline.json'));
 const rows=JSON.parse(fs.readFileSync(__dirname+'/fixtures/captureRouteScoring.baseline.json')).opportunities;
-const source=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8'),starts=[...source.matchAll(/const \{ trialOpportunities, trialCaptureOwners, trialStops \} = prepareCaptureTrial\(/g)];assert.equal(starts.length,3);
+const source=require('./helpers/captureExecutionSource.cjs').captureExecutionSource(),starts=[...source.matchAll(/const \{ trialOpportunities, trialCaptureOwners, trialStops \} = prepareCaptureTrial\(/g)];assert.equal(starts.length,3);
 const keys=['activeOpportunities','pair','probeCandidate','candidate','startPt','endPt','buildFinalRouteStops','buildCaptureStopOwners'];
 const result='return {trialOpportunities,trialCaptureOwners,trialStops};';
 const previous=golden.blocks.map(b=>new Function(...keys,compile(b+result)));

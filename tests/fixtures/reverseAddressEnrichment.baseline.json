@@ -1,0 +1,25 @@
+{
+  "method": "  private fetchReverseGeocode = async (lat: number, lon: number) => {\n    this._reverseGeocodeAbort?.abort();\n    const controller = new AbortController(); this._reverseGeocodeAbort = controller;\n    const imageId = this.state.imageId, view = this.state.jimuMapView?.view;\n    try {\n      await this.runSequenceBackground(signal => fetchReverseAddress(lat, lon, address => {\n        if (!signal.aborted && this.state.imageId === imageId && this.state.jimuMapView?.view === view) this.setState({ address });\n      }, signal), controller.signal);\n    } catch (error) { if (!controller.signal.aborted) console.warn('[Mapillary] Address enrichment unavailable:', error); }\n    finally { if (this._reverseGeocodeAbort === controller) this._reverseGeocodeAbort = null; }\n  };",
+  "lifecycle": [
+    {
+      "name": "bindMapillaryEvents",
+      "sha256": "ca66661252fee51e901df2a56221b9685d57bb039a014332b678b56bae838314"
+    },
+    {
+      "name": "loadSequenceById",
+      "sha256": "0e5506dd13455145f57e1d7485049ce250fe59e3e419726f2bc4b5246ae6a187"
+    },
+    {
+      "name": "clearSequenceCache",
+      "sha256": "8fb0e49bca7bb1c7ce22852c8c3e22d98f17144504401b7818b1665dade56e1c"
+    },
+    {
+      "name": "cleanupWidgetEnvironment",
+      "sha256": "adeac9d7e124f8f610c3c6b9d90b0710294ec41cb3a3fdf32b670296a2165f65"
+    },
+    {
+      "name": "onActiveViewChange",
+      "sha256": "e23c953792bbd496e2887d14a9d63701521b9a46192f247b4904c6aee4e89731"
+    }
+  ]
+}

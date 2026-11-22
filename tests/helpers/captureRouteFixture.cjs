@@ -22,16 +22,18 @@ function opportunity(index){
  return {id:'op-'+index,tier:'none',segments:[seg],lengthMeters:100,valueMeters:100*(index+1),priority:1,entryPoint:start,exitPoint:end,midpoint:start,baselinePosition:index,baselineDistanceMeters:100,estimatedDetourMeters:500,estimatedDetourMinutes:3,routePoints:[start,end],novelMeters:100,novelMissingMeters:100,novelStaleMeters:0,baselineOverlapMeters:0};
 }
 const result=(minutes=12,marker=1)=>({durationMinutes:minutes,distanceMeters:minutes*100,paths:[[[0,marker],[.02,marker]]]});
-function fixture({preflight=false,replacement=false,emptyCorridor=false,emptySelection=false}={}){
- const calls=[],solves=[],preflights=[],draws=[],coverage=[],errors=[],toasts=[],states=[],opportunities=[0,1,2].map(opportunity);
- const ctx={jsx:()=>null,OwnedMessage:()=>null,console:{log(){},warn:(...args)=>calls.push(['warning',...args]),error:(...args)=>errors.push(args)},setTimeout,clearTimeout};
+function fixture({preflight=false,replacement=false,emptyCorridor=false,emptySelection=false,methodSource=null,jsxTrace=false,opportunityCount=3}={}){
+ const calls=[],solves=[],preflights=[],draws=[],coverage=[],errors=[],toasts=[],states=[],opportunities=Array.from({length:opportunityCount},(_,index)=>index).map(opportunity);
+ const ctx={jsx:(tag,props,...children)=>jsxTrace?{tag:typeof tag==='function'?'OwnedMessage':tag,props,children}:null,OwnedMessage:()=>null,console:{log(){},warn:(...args)=>calls.push(['warning',...args]),error:(...args)=>errors.push(args)},setTimeout,clearTimeout};
  for(const name of ['captureTrialPlan','captureSelectionReport','replacementProbeComparison','preflightQuality','captureCoverageReport','finalCaptureSelection','captureRouteData','CaptureSolveHistory','captureRouteGeometry','RouteGeneration','captureRouteScoring','finalSolveBatchPruning','preflightBatchPruning','preflightDiagnostics','trialPreflightQuality','replacementPairRanking','captureNetworkPenalties','budgetProbeComparison','adaptiveNetworkRemoval'])Object.assign(ctx,load('features/routing/'+name));
  Object.assign(ctx,load('utils/routeOptimizer'),load('utils/geoUtils'));
  ctx.selectAdaptiveCaptureOpportunities=()=>({opportunities:emptyCorridor?[]:replacement?[...opportunities,opportunity(3)]:opportunities,selection:{opportunities:emptySelection?[]:opportunities,estimatedExtraMinutes:9,estimatedCaptureMeters:300,stopReason:'exhausted',usedAnchorSlots:6,rejectedForBudgetCount:0,rejectedForAnchorCount:0},selectedCorridorWidth:180});
+ ctx.prepareCaptureRoute=load('features/routing/captureRoutePreparation',{'features/routing/adaptiveCaptureSelection':{selectAdaptiveCaptureOpportunities:ctx.selectAdaptiveCaptureOpportunities}},new Map()).prepareCaptureRoute;
  ctx.evaluateRouteCoverage=(paths,targets)=>{coverage.push({paths,targets});return {coveredTargetMeters:targets.length*100,noneCoveredMeters:targets.length*100,staleCoveredMeters:0,coveragePercent:100,touchedSegmentCount:targets.length,fullyCoveredSegmentCount:targets.length,segmentResults:targets,totalTargetMeters:targets.length*100};};
  ctx.evaluateIncrementalRouteCoverage=()=>({baselineCoveredMeters:0,finalCoveredMeters:100,sharedCoveredMeters:0,incrementalCoveredMeters:100,incrementalNoneMeters:100,incrementalStaleMeters:0,incrementalPercent:100});
  Object.assign(ctx,load('features/routing/captureRouteEvaluation',{'utils/geoUtils':{...load('utils/geoUtils'),evaluateRouteCoverage:ctx.evaluateRouteCoverage,evaluateIncrementalRouteCoverage:ctx.evaluateIncrementalRouteCoverage}},new Map()));
- vm.createContext(ctx);vm.runInContext(compile('class Fixture{'+['generateEsriDetourRoute','cancelCaptureRouteGeneration','releaseCaptureRouteLoginView','clearCaptureRoute'].map(member).join('\n')+'};globalThis.Fixture=Fixture;'),ctx);
+ ctx.executeCaptureRoute=load('features/routing/executeCaptureRoute',{'features/routing/captureRoutePreparation':{prepareCaptureRoute:ctx.prepareCaptureRoute},'features/routing/captureRouteEvaluation':{evaluateFinalCaptureRoute:ctx.evaluateFinalCaptureRoute}},new Map()).executeCaptureRoute;
+ vm.createContext(ctx);vm.runInContext(compile('class Fixture{'+['_captureRoutePreparationHost','captureRouteExecutionHost','generateEsriDetourRoute','cancelCaptureRouteGeneration','releaseCaptureRouteLoginView','clearCaptureRoute'].map(name=>name==='generateEsriDetourRoute'&&methodSource?methodSource:member(name)).join('\n')+'};globalThis.Fixture=Fixture;'),ctx);
  const w=new ctx.Fixture(),view={map:{},destroyed:false};
  const api={kind:preflight?'osrm':'world',label:'controlled',solve:options=>{const d=deferred();solves.push({options,...d});return d.promise;}};
  if(preflight)api.preflightOrderedStops=(stops,signal)=>{const d=deferred();preflights.push({stops,signal,...d});return d.promise;};
@@ -39,6 +41,6 @@ function fixture({preflight=false,replacement=false,emptyCorridor=false,emptySel
  const start=()=>w.generateEsriDetourRoute(w.state.routeStartPoint,w.state.routeEndPoint,5);
  const baseline=async()=>{const pending=start();await flush();assert.equal(solves.length,1);solves[0].resolve(result(10,0));await flush();return {pending};};
  const fittingPreflight=entry=>({durationMinutes:12,waypointSnapDistancesMeters:entry.stops.map(()=>0),legDurationMinutes:entry.stops.slice(1).map(()=>.1)});
- return {w,view,api,calls,solves,preflights,draws,coverage,errors,toasts,states,opportunities,start,baseline,fittingPreflight};
+ return {w,view,api,context:ctx,calls,solves,preflights,draws,coverage,errors,toasts,states,opportunities,start,baseline,fittingPreflight};
 }
 module.exports={fixture,result,deferred,flush};

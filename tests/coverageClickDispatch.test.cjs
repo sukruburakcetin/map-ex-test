@@ -10,50 +10,8 @@ const { coverageClickHitTest } = owner.exports;
 const nearestModule = { exports: {} };
 new Function('module','exports',compile(fs.readFileSync(path.join(__dirname,'../src/features/coverage/nearestLoadedFrame.ts'),'utf8')))(nearestModule,nearestModule.exports);
 const { nearestLoadedFrame } = nearestModule.exports;
-const source = fs.readFileSync(path.join(__dirname, '../src/runtime/widget.tsx'), 'utf8');
-const syntax = ts.createSourceFile('widget.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-let click;
-function visit(node) {
-  if (ts.isCallExpression(node) && node.expression.getText(syntax) === 'view.on' && node.arguments[0]?.text === 'click') click = node.arguments[1];
-  ts.forEachChild(node, visit);
-}
-visit(syntax);
 const flush = () => new Promise(resolve => setImmediate(resolve));
-function setup({ hovered = true, priority, detection = false, regional = false } = {}) {
-  let release;
-  const hits = new Promise(resolve => { release = resolve; });
-  const trace = [], geometry = { type: 'point', longitude: 1, latitude: 2 };
-  const view = { type: '3d', zoom: regional ? 8 : 19.9, stationary: true, destroyed: false,
-    toScreen: () => ({ x: 100, y: 100 }), toMap: () => geometry,
-    hitTest: () => { trace.push('SDK hit test'); return hits; } };
-  const widget = { props: { state: 'OPENED' }, state: { turboModeActive: true, jimuMapView: { view },
-    objectsActive: detection, placesActive: priority === 'places' },
-    turboCoverageLayer: {}, _turboRequestCount: 1,
-    _fieldNoteMap: { clearHighlight() {}, hasPickTargets: false, noteForGraphic: () => null },
-    _coverageSelectionTargets: { snapshot: () => hovered && !regional ? { imageId: 'exact-image', sequenceId: 'sequence', geometry } : null, retain() {} },
-    coverageSelectionContext: () => ({}), _pointCloudHits: { route: () => false },
-    _turboMetadataCache: { get: () => undefined },
-    ArcGISModules: { Graphic: class { constructor(properties) { Object.assign(this, properties); } } },
-    setState(update) { Object.assign(this.state, update); },
-    pickMapFeature: async () => { trace.push('native detection pick'); return null; },
-    pickTurboGraphic: async () => ({ geometry, attributes: { image_id: 'exact-image', sequence_id: 'sequence' } }),
-    getCoverageDisplayPosition: () => ({ lon: 1, lat: 2 }), drawClickRipple() {},
-    loadSequenceById: async (...args) => { trace.push(['open image', args[0], args[1]]); },
-    showPlacesHit: () => false, showToast() {}, _t: key => key, updateTurboPickWarning() {},
-  };
-  if (priority === 'notes') widget._sharedNotesLayer = {};
-  if (priority === 'cloud') widget._pointCloudMapLayer = { layer: {} };
-  if (priority === 'features') widget.mapillaryObjectsFeatureLayer = {};
-  if (regional) {
-    widget._turboHoverGraphic = { geometry };
-    widget._turboHoveredScreen = { x: 100, y: 100 };
-    widget._currentHoveredFeatureId = 'representative';
-  }
-  const handler = new Function('view', 'coverageClickHitTest', 'nearestLoadedFrame', 'TURBO_LIMITS', 'LAYER_IDS', 'webMercatorUtils', 'distanceMeters', 'GRAPH_API', compile('return (' + click.getText(syntax) + ');')).call(widget, view, coverageClickHitTest, nearestLoadedFrame,
-    { pickRadiusPx: 8 }, { OBJECTS_FL: 'objects', TRAFFIC_SIGNS_FL: 'signs', TURBO_COVERAGE: 'coverage' },
-    { webMercatorToGeographic: point => point }, () => 0, { BASE: 'unused' });
-  return { widget, view, trace, handler: () => handler({ x: 100, y: 100, stopPropagation() {} }), release };
-}
+const {setup}=require('./helpers/mapClickFixture.cjs');
 
 test('confirmed hovered point reaches image opening without SDK hit testing or inactive detection work', async () => {
   const x = setup(); await x.handler();

@@ -39,7 +39,7 @@ function dispatch(resolve){
  const view={destroyed:false,toMap:()=>({longitude:1,latitude:1}),hitTest:async()=>({results:[route]})};
  const w={_fieldNoteMap:{clearHighlight(){},hasPickTargets:false,noteForGraphic(){return null}},props:{state:'OPENED'},state:{jimuMapView:{view},turboModeActive:true,placesActive:true},_places:owner,_placesTilesOwner:owner,_placesVectorLayer:tiles,
  _coverageSelectionTargets:{snapshot:()=>null},coverageSelectionContext:()=>({}),_sharedNotesLayer:null,_pointCloudHits:{route:()=>false},setState(){},showPlacesHit:()=>false,placesBusy:()=>false,loadSequenceById:async()=>{coverage++}};
- const handler=new Function('view','TURBO_LIMITS','coverageClickHitTest','tilePlace',compiled).call(w,view,{pickRadiusPx:10},coverageClickHitTest,tilePlace);
+ const handler=require('./helpers/mapClickSource.cjs').createMapClickHandler(w,view,{TURBO_LIMITS:{pickRadiusPx:10},coverageClickHitTest,tilePlace});
  return{handler,w,event:{x:10,y:10,stopPropagation(){stopped++}},get stats(){return{opened,coverage,stopped,cancelled}}};
 }
 test('actual widget dispatcher opens POI hits once and sends misses through existing sequence navigation',async()=>{
@@ -106,15 +106,16 @@ test('map/list hover uses one outline and the existing chooser handles unloaded 
   owner.clear();assert.equal(owner.stats.choices,0);
  }finally{owner.dispose();assert.equal(layers.length,0);global.document=savedDocument;global.window=savedWindow}
 });
-const hoverStart=widget.indexOf('          let place = this._places?.hit(hit.results);'),hoverEnd=widget.indexOf('          if (place && !hoverController.signal.aborted)',hoverStart);
+const hoverSource=fs.readFileSync(path.join(root,'src/features/navigation/mapHoverDispatch.ts'),'utf8');
+const hoverStart=hoverSource.indexOf('let place = host.places?.hit(hit.results);'),hoverEnd=hoverSource.indexOf('if (place && !hoverController.signal.aborted)',hoverStart);
 assert(hoverStart>=0&&hoverEnd>hoverStart);
-const hoverCompiled=ts.transpileModule('return async () => {'+widget.slice(hoverStart,hoverEnd)+'; return { place, nativeNearbyCount }; }',{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText;
+const hoverCompiled=ts.transpileModule('return async () => {'+hoverSource.slice(hoverStart,hoverEnd)+'; return { place, nativeNearbyCount }; }',{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText;
 function hoverDispatch(coverage,resolveHover){
  const changes=[],view={};let requests=0;
  const owner={hit:()=>null,setMapHover:place=>changes.push(place?.id||null)};
  const source={version:1,resolveHover:(...args)=>{requests++;return resolveHover(...args)}};
  const w={_places:owner,_placesTilesOwner:owner,_placesVectorLayer:source,state:{jimuMapView:{view}},placesBusy:()=>false};
- const run=new Function('view','coverage','hoverController','screenPoint','hit','tilePlace',hoverCompiled).call(w,view,coverage,new AbortController(),{x:0,y:0},{results:[]},tilePlace);
+ const run=new Function('host','view','coverage','hoverController','screenPoint','hit','tilePlace',hoverCompiled)(require('./helpers/mapHoverSource.cjs').bindHoverHost(w),view,coverage,new AbortController(),{x:0,y:0},{results:[]},tilePlace);
  return{run,w,source,changes,get requests(){return requests}};
 }
 test('actual hover pipeline keeps coverage preview authoritative and rejects ownership changes',async()=>{

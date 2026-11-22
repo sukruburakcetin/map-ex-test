@@ -5,7 +5,7 @@ const m={exports:{}};new Function('module','exports',compile(fs.readFileSync(roo
 const golden=JSON.parse(fs.readFileSync(__dirname+'/fixtures/preflightSnaps.baseline.json'));
 const result='return {badSnapDiagnostics,hardBadSnapOwners};';
 const previous=new Function('snapDiagnostics','hardSnapRejectMeters',compile(golden.body+result));
-const source=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8'),a=source.indexOf('            const { badSnapDiagnostics, hardBadSnapOwners } = classifyPreflightSnaps('),b=source.indexOf('            if (hardBadSnapOwners.size)',a);assert(a>0&&b>a);
+const source=require('./helpers/captureExecutionSource.cjs').captureExecutionSource(),a=source.indexOf('            const { badSnapDiagnostics, hardBadSnapOwners } = classifyPreflightSnaps('),b=source.indexOf('            if (hardBadSnapOwners.size)',a);assert(a>0&&b>a);
 const adapter=new Function('snapDiagnostics','hardSnapRejectMeters','classifyPreflightSnaps',compile(source.slice(a,b)+result));
 const snap=(owner='A',snapDistanceMeters=60,stopIndex=1)=>Object.freeze({owner,snapDistanceMeters,stopIndex});
 function compare(rows,threshold=60){Object.freeze(rows);const before=structuredClone(rows),oldLogs=[],newLogs=[];

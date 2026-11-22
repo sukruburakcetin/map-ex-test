@@ -6,7 +6,7 @@ const {selectFinalCaptureRoute}=m.exports;
 const baseline=JSON.parse(fs.readFileSync(__dirname+'/fixtures/finalCaptureSelection.baseline.json'));
 const keys=['finalRoute','finalRouteOpportunities','bestRoute','bestRouteOpportunities','bestActualExtraMinutes','baselineMinutes','spareMinutes','finalBudgetTolerance'];
 const previous=new Function('console',...keys,compile(baseline.body+'return {route:finalRoute,opportunities:finalRouteOpportunities,lastRouteExtraMinutes};'));
-const source=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8');
+const source=require('./helpers/captureExecutionSource.cjs').captureExecutionSource();
 const start=source.indexOf('      const finalSelection = selectFinalCaptureRoute('),end=source.indexOf('      /*\n       * From here onward',start);assert(start>0&&end>start);
 const adapter=new Function('console','selectFinalCaptureRoute',...keys,compile(source.slice(start,end)+'return {...finalSelection,route:finalRoute,opportunities:finalRouteOpportunities};'));
 function value(overrides={}){return {finalRoute:Object.freeze({durationMinutes:20,id:'last'}),finalRouteOpportunities:Object.freeze([{id:'last-selection'}]),bestRoute:Object.freeze({durationMinutes:18,id:'best'}),bestRouteOpportunities:Object.freeze([{id:'best-selection'}]),bestActualExtraMinutes:8,baselineMinutes:10,spareMinutes:5,finalBudgetTolerance:1,...overrides};}

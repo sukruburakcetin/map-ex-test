@@ -20,8 +20,8 @@ for(const reason of ['budget','opportunity-cap','anchor-cap','exhausted'])test('
 for(const value of [NaN,Infinity,-Infinity,0])test('numeric semantics '+value,()=>compare({estimate:value,capture:value,width:value}));
 test('logger failure retains partial emission and propagation',()=>{for(const throwAt of [1,4,10,12])compare({throwAt});});
 test('varied selections retain ordering and anchor diagnostics',()=>{for(let i=0;i<40;i++)compare({rows:opportunities.slice(0,i%(opportunities.length+1)),estimate:i/3,cap:i});});
-test('actual widget adapter retains guards and feedback between report calls',()=>{
- const source=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8');
- const corridor=source.indexOf('reportCaptureCorridor(opportunities, selectedCorridorWidth, message => this.log(message));'),guard=source.indexOf('if (!opportunities.length)',corridor),selection=source.indexOf('reportCaptureSelection(selection, this.CAPTURE_ROUTE_CONFIG.maxFinalStops, message => this.log(message));',guard),empty=source.indexOf('if (!selection.opportunities.length)',selection),progress=source.indexOf('usedMinutes: selection.estimatedExtraMinutes',empty);
+test('preparation workflow retains guards and feedback between report calls',()=>{
+ const source=fs.readFileSync(root+'/src/features/routing/captureRoutePreparation.ts','utf8');
+ const corridor=source.indexOf('reportCaptureCorridor(opportunities, selectedCorridorWidth, message => host.log(message));'),guard=source.indexOf('if (!opportunities.length)',corridor),selection=source.indexOf('reportCaptureSelection(selection, host.config().maxFinalStops, message => host.log(message));',guard),empty=source.indexOf('if (!selection.opportunities.length)',selection),progress=source.indexOf('host.progress(selection.estimatedExtraMinutes, spareMinutes)',empty);
  assert(corridor>0&&guard>corridor&&selection>guard&&empty>selection&&progress>empty);
 });

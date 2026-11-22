@@ -5,7 +5,7 @@ const m={exports:{}};new Function('module','exports',compile(fs.readFileSync(roo
 const {rankCaptureReplacementPairs}=m.exports;
 const fixture=JSON.parse(fs.readFileSync(__dirname+'/fixtures/replacementPairRanking.baseline.json'));
 const old=new Function('activeOpportunities','replacementCandidatePool','permanentlyRejectedOpportunityIds',compile(fixture.body+'return probePairs;'));
-const source=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8'),start=source.indexOf('                const probePairs = rankCaptureReplacementPairs('),end=source.indexOf('\n                let bestReplacement:',start);assert(start>0&&end>start);
+const source=require('./helpers/captureExecutionSource.cjs').captureExecutionSource(),start=source.indexOf('                const probePairs = rankCaptureReplacementPairs('),end=source.indexOf('\n                let bestReplacement:',start);assert(start>0&&end>start);
 const adapter=new Function('activeOpportunities','replacementCandidatePool','permanentlyRejectedOpportunityIds','rankCaptureReplacementPairs',compile(source.slice(start,end)+'return probePairs;'));
 const opportunity=(id,value=100,position=0,anchors=1)=>({id,valueMeters:value,baselinePosition:position,routePoints:Array.from({length:anchors},(_,i)=>[i,0])});
 function compare(active=[],pool=[],rejected=new Set(),max=10){

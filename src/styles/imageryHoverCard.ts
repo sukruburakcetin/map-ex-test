@@ -7,3 +7,17 @@ export const imageryHoverCardStyles = {
   preview: { width: '100%', height: '120px', marginTop: '10px', borderRadius: '8px', overflow: 'hidden', background: '#1c3930', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aec7bb', fontSize: '11px' },
   image: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
 } as const;
+
+/** Initial hidden tooltip shell; rich hover-card styling is applied by the existing imagery renderer. */
+export const imageryTooltipStyle = {
+  position: "fixed",
+  pointerEvents: "none",
+  background: "rgba(0,0,0,0.7)",
+  color: "#fff",
+  padding: "4px 8px",
+  borderRadius: "4px",
+  zIndex: 999,
+  fontSize: "11px",
+  display: "none",
+  maxWidth: "250px",
+} as const;

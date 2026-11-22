@@ -1,0 +1,5 @@
+{
+  "method": "  private showToast(message: React.ReactNode, duration: number = 2500, owner?: \"point-cloud-progress\") {\n    if (this._toastTimer) clearTimeout(this._toastTimer);\n    this._toastOwner = owner;\n    this.setState({ toastMessage: typeof message === \"string\" ? <OwnedMessage source={message} /> : message });\n    this._toastTimer = setTimeout(() => {\n      this.setState({ toastMessage: undefined });\n      this._toastOwner = undefined;\n      this._toastTimer = null;\n    }, duration);\n  }\n",
+  "dismiss": "    dismissProgress: () => {\n      if (this._toastOwner === \"point-cloud-progress\") {\n        if (this._toastTimer) clearTimeout(this._toastTimer);\n        this._toastTimer = null; this._toastOwner = undefined;\n        this.setState({ toastMessage: undefined });\n      }\n    },",
+  "fields": "  private _toastTimer: ReturnType<typeof setTimeout> | null = null;\n  private _toastOwner: \"point-cloud-progress\" | undefined;"
+}

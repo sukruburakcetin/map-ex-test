@@ -70,9 +70,14 @@ test('real optimizer produces identical results and diagnostics',t=>{
   const result=compare({real:true});
   assert.ok(result.value.selection.opportunities.length>0);
 });
-test('widget forwards current inputs once and retains UI validation after selection',()=>{
+test('preparation workflow forwards current inputs once and retains UI validation after selection',()=>{
   const widget=fs.readFileSync(path.join(root,'src/runtime/widget.tsx'),'utf8');
-  assert.match(widget,/const \{ opportunities, selection, selectedCorridorWidth \} = selectAdaptiveCaptureOpportunities\(\{\s*targets: optimizerTargets,\s*baselineCoordinates,\s*baselineSpeedMetersPerMinute,\s*spareMinutes,\s*config: this.CAPTURE_ROUTE_CONFIG,\s*log: \(\.\.\.args\) => this.log\(\.\.\.args\),\s*\}\);/);
+  const preparation=fs.readFileSync(path.join(root,'src/features/routing/captureRoutePreparation.ts'),'utf8');
+  assert.match(preparation,/const \{ opportunities, selection, selectedCorridorWidth \} = selectAdaptiveCaptureOpportunities\(\{\s*targets: optimizerTargets,\s*baselineCoordinates,\s*baselineSpeedMetersPerMinute,\s*spareMinutes,\s*config: host\.config\(\),\s*log: \(\.\.\.args\) => host\.log\(\.\.\.args\),\s*\}\);/);
   assert.ok(!widget.includes('for (let corridorIndex ='));
-  assert.ok(widget.includes('if (!selection.opportunities.length)'));
+  assert.ok(!preparation.includes('for (let corridorIndex ='));
+  assert.ok(preparation.includes('if (!selection.opportunities.length)'));
+  const execution=fs.readFileSync(path.join(root,'src/features/routing/executeCaptureRoute.ts'),'utf8');
+  assert.ok(execution.includes('prepareCaptureRoute(baselineRoute, spareMinutes, host.preparation)'));
+  assert.ok(widget.includes('preparation: this._captureRoutePreparationHost'));
 });

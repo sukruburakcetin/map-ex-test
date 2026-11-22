@@ -6,7 +6,7 @@ const {scoreCaptureNetworkPenalties}=m.exports;
 const fixture=JSON.parse(fs.readFileSync(__dirname+'/fixtures/captureNetworkPenalties.baseline.json'));
 const parameters=['preflightLegs','activeOpportunities','spareMinutes','qualityCleanupMode','pathologicalOwnerIds'];
 const old=new Function(...parameters,compile(fixture.body+'return {badLegThresholdMinutes,networkPenaltyByOpportunity,networkPruneCandidates};'));
-const source=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8'),start=source.indexOf('            const { networkPruneCandidates } = scoreCaptureNetworkPenalties('),end=source.indexOf('\n            /*\n             * Do not batch-delete',start);assert(start>0&&end>start);
+const source=require('./helpers/captureExecutionSource.cjs').captureExecutionSource(),start=source.indexOf('            const { networkPruneCandidates } = scoreCaptureNetworkPenalties('),end=source.indexOf('\n            /*\n             * Do not batch-delete',start);assert(start>0&&end>start);
 const adapter=new Function(...parameters,'scoreCaptureNetworkPenalties',compile(source.slice(start,end)+'return networkPruneCandidates;'));
 const opportunity=(id,valueMeters=100)=>({id,valueMeters});
 const leg=(fromOwner,toOwner,durationMinutes)=>({fromOwner,toOwner,durationMinutes});

@@ -5,7 +5,7 @@ const compile=source=>{const r=ts.transpileModule(source,{compilerOptions:{targe
 const m={exports:{}};new Function('module','exports',compile(fs.readFileSync(root+'/src/features/routing/finalSolveBatchPruning.ts','utf8')))(m,m.exports);
 const {planFinalSolveBatchPruning}=m.exports;
 const baseline=JSON.parse(fs.readFileSync(__dirname+'/fixtures/finalSolveBatchPruning.baseline.json'));
-const widget=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8');
+const widget=require('./helpers/captureExecutionSource.cjs').captureExecutionSource();
 const start=widget.indexOf('        const pruning = planFinalSolveBatchPruning('),end=widget.indexOf('\n      }',start);
 assert(start>0&&end>start);
 const oldResult=`return {opportunities:activeOpportunities,activeEstimatedMinutes,correctionFactor,targetEstimatedMinutes,estimatedMinutesToRemove,removeIds,removedEstimatedMinutes};`;

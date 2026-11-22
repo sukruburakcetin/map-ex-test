@@ -10,7 +10,7 @@ const golden=JSON.parse(fs.readFileSync(__dirname+'/fixtures/captureRouteEvaluat
 const rows=JSON.parse(fs.readFileSync(__dirname+'/fixtures/captureRouteScoring.baseline.json')).opportunities;
 const result='return {finalPaths,activeRouteCoverageTargets,routeCoverage,incrementalCoverage,combinedCoordinates};';
 const previous=new Function('finalRoute','baselinePaths','activeOpportunities','normalizeCaptureRoutePaths','activeCaptureCoverageTargets','evaluateRouteCoverage','evaluateIncrementalRouteCoverage',compile(golden.body+result));
-const source=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8'),a=source.indexOf('      const { finalPaths, activeRouteCoverageTargets, routeCoverage, incrementalCoverage, combinedCoordinates } = evaluateFinalCaptureRoute('),b=source.indexOf('      await this.drawCaptureRoute(finalPaths, run.current);',a);assert(a>0&&b>a);
+const source=require('./helpers/captureExecutionSource.cjs').captureExecutionSource(),a=source.indexOf('      const { finalPaths, activeRouteCoverageTargets, routeCoverage, incrementalCoverage, combinedCoordinates } = evaluateFinalCaptureRoute('),b=source.indexOf('      await this.drawCaptureRoute(finalPaths, run.current);',a);assert(a>0&&b>a);
 const adapter=new Function('finalRoute','baselinePaths','activeOpportunities','evaluateFinalCaptureRoute',compile(source.slice(a,b)+result));
 function freeze(v){if(v&&typeof v==='object'){Object.values(v).forEach(freeze);Object.freeze(v);}return v;}
 function compare({paths=[[[0,0],[.001,0]]],baselinePaths=[[[0,0],[.001,0]]],opportunities=rows,tolerance=25,spacing=5,real=false,fail}={}){

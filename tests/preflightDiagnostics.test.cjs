@@ -9,7 +9,7 @@ function load(relative,overrides={},cache=new Map()){
 const fixture=JSON.parse(fs.readFileSync(__dirname+'/fixtures/preflightDiagnostics.baseline.json'));
 const oldSnap=new Function('preflight','preflightStops','captureStopOwners',compile(fixture.owner+fixture.snap+'return snapDiagnostics;'));
 const oldLegs=new Function('preflight','preflightStops','captureStopOwners','distanceMeters',compile(fixture.owner+fixture.legs+'return {preflightLegs,worstPreflightLegs};'));
-const widget=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8');
+const widget=require('./helpers/captureExecutionSource.cjs').captureExecutionSource();
 const snapStart=widget.indexOf('            const snapDiagnostics = buildPreflightSnapDiagnostics('),snapEnd=widget.indexOf('            const { badSnapDiagnostics, hardBadSnapOwners } =',snapStart);
 const legStart=widget.indexOf('            const { preflightLegs, worstPreflightLegs } = buildPreflightLegDiagnostics('),legEnd=widget.indexOf('\n            this.log(',legStart);
 assert(snapStart>0&&legStart>snapStart);

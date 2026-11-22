@@ -12,4 +12,4 @@ Maintain a reproducible Experience Builder 1.20 build/smoke environment. Run foc
 
 ## Ownership refactoring
 
-Continue extracting runtime orchestration in small, behavior-preserving changes. Preserve image-first opening, request generations, foreground priority, selection identity, cache bounds and explicit field-note publication. Current owners are in [architecture](architecture.md). Earlier completed extraction notes remain in [history](../history/README.md) as evidence, not a current task list.
+Follow the [finite remaining-work plan](refactoring-remaining-work.md), audited at stage 87: 12 work packages with completion criteria and a provisional 21–34 reviewable-change estimate. Start with P01 routing orchestration; prefer coherent feature-sized changes over unrelated tiny-helper stages. Preserve image-first opening, request generations, foreground priority, selection identity, cache bounds and explicit field-note publication. Current owners are in [architecture](architecture.md). Historical extraction notes remain evidence, not the active task list. Browser acceptance and product-release readiness remain separate gates.

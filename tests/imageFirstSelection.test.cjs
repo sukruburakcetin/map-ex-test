@@ -5,7 +5,9 @@ const body=['loadSequenceById','refreshLocalSequence'].map(name=>widget.members.
 const Harness=new Function(ts.transpileModule('class Harness{'+body+'}',{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText+';return Harness;')();
 const flush=()=>new Promise(r=>setImmediate(r));
 function setup(){
- const w=new Harness(),events=[],moves=new Map();w._owned=source=>source;w.state={sequenceImages:[],jimuMapView:{view:{}},isLoading:false,turboModeActive:true};w.sequenceCoordsCache={};w._selectionRequestId=0;
+ const w=require('./helpers/sequenceOpeningSource.cjs').install(new Harness()),events=[],moves=new Map();
+  // This harness extracts methods without running widget field initializers.
+  w._reverseAddressEnrichment = { cancel() {}, clear() {} };w._owned=source=>source;w.state={sequenceImages:[],jimuMapView:{view:{}},isLoading:false,turboModeActive:true};w.sequenceCoordsCache={};w._selectionRequestId=0;
  w._liveSequenceFrames={cancelPending(){},beginSelection(id){this.sequenceId=id;events.push('seed')},finish(){},remember(){},find(){},current:null};w._nativeSequenceSelection={select(){}};w._liveFrameDetails={clear(){}};w._nearbyDiscovery={cancel(){}};
  w.clearGreenPulse=w.clearConeGraphics=w.clearActiveSequenceLayer=()=>{};w.drawPulsingPoint=()=>({});w.drawCone=()=>{};w.coneLengths=[1];w.coneSpreads=[1];w.zoomStepIndex=0;w.checkForTimeTravel=()=>{};w.ensureImageViewer=()=>events.push('viewer');
  w.setState=(patch,callback)=>{const next=typeof patch==='function'?patch(w.state):patch;if(next)Object.assign(w.state,next);if(next?.isLoading===false)events.push('loading-cleared');callback?.()};
@@ -29,11 +31,9 @@ test('metadata failure after opening does not roll back the displayed image',asy
  const {w,moves}=setup(),task=w.loadSequenceById('A','1');await flush();moves.get('1').resolve({id:'1'});await task;assert.equal(w.state.imageId,'1');assert.equal(w.state.isLoading,false);assert.match(w.state.selectionError,/Image is open/);
 });
 test('an older viewer image event cannot cancel a newer click while it is opening',async()=>{
- let callback;function visit(node){if(ts.isCallExpression(node)&&node.expression.getText(sf)==='this.mapillaryViewer.on'&&node.arguments[0]?.text==='image')callback=node.arguments[1];ts.forEachChild(node,visit)}visit(widget);assert(callback);
- const code=ts.transpileModule('const factory=function(){return ('+callback.getText(sf)+')}',{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText;
- const viewer={},factory=new Function('profileEventViewer',code+';return factory;')(viewer);
+ const viewer={};
  const state={mapillaryViewer:viewer,state:{isLoading:true},_selectionRetry:{imageId:'new'}};
- const handler=factory.call(state);await handler({image:{id:'old'}});assert.equal(state._profileConfirmedImageId,undefined);assert.equal(state._selectionRetry.imageId,'new');
+ const handler=require('./helpers/viewerImageTrackingSource.cjs').createHandler(state,viewer);await handler({image:{id:'old'}});assert.equal(state._profileConfirmedImageId,undefined);assert.equal(state._selectionRetry.imageId,'new');
 });
 
 function liveOwner(){const mod={exports:{}};new Function('module','exports',ts.transpileModule(fs.readFileSync(path.join(__dirname,'../src/features/imagery/LiveSequenceFrames.ts'),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText)(mod,mod.exports);return new mod.exports.LiveSequenceFrames(async()=>{throw Error('unnecessary metadata')})}

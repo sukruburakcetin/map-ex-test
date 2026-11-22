@@ -7,7 +7,7 @@ const {buildPreflightLegDiagnostics}=load('features/routing/preflightDiagnostics
 const baseline=JSON.parse(fs.readFileSync(__dirname+'/fixtures/preflightQuality.baseline.json'));
 const result='return {pathologicalInternalLegs,networkQualityFits,qualityCleanupMode,pathologicalOwnerIds};';
 const previous=new Function('preflightLegs','budgetFits',compile(baseline.body+result));
-const widget=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8');
+const widget=require('./helpers/captureExecutionSource.cjs').captureExecutionSource();
 const start=widget.indexOf('            const { pathologicalInternalLegs, networkQualityFits, qualityCleanupMode, pathologicalOwnerIds } = classifyPreflightQuality('),end=widget.indexOf('            if (pathologicalInternalLegs.length)',start);assert(start>0&&end>start);
 const adapter=new Function('preflightLegs','budgetFits','classifyPreflightQuality',compile(widget.slice(start,end)+result));
 const leg=(fromOwner='A',toOwner=fromOwner,directMeters=450,durationMinutes=4.5)=>({fromStop:1,toStop:2,fromOwner,toOwner,directMeters,durationMinutes});

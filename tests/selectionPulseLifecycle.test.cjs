@@ -6,7 +6,7 @@ const compile = source => ts.transpileModule(source, { compilerOptions: { target
 const source = fs.readFileSync(process.env.PULSE_WIDGET_SOURCE || path.join(root, 'src/runtime/widget.tsx'), 'utf8');
 const sf = ts.createSourceFile('widget.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
 const widget = sf.statements.find(node => ts.isClassDeclaration(node) && node.name.text === 'Widget');
-const members = ['loadSequenceById', 'clearActiveSequenceGraphics', 'prepareDemandSequence', 'toggleFullscreen', 'bindMapillaryEvents'];
+const members = ['loadSequenceById', 'clearActiveSequenceGraphics', 'prepareDemandSequence', 'toggleFullscreen', 'bindMapillaryEvents','viewerImageTrackingHost'];
 const member = name => widget.members.find(node => node.name?.getText(sf) === name).getText(sf);
 const moduleFor = file => { const m = { exports: {} }; new Function('module', 'exports', compile(fs.readFileSync(file, 'utf8')))(m, m.exports); return m.exports; };
 const { LiveSequenceFrames } = moduleFor(path.join(root, 'src/features/imagery/LiveSequenceFrames.ts'));
@@ -16,13 +16,15 @@ class Viewer {
   constructor(options) { this.options = options; this.events = new Map(); newViewerEvents.push(this); }
   on(name, callback) { this.events.set(name, callback); }
 }
-const Runtime = new Function('Viewer', 'readCachedSequenceCoordinates', 'debounceUtil', 'setTimeout',
+const Runtime = new Function('Viewer', 'readCachedSequenceCoordinates', 'debounceUtil', 'setTimeout', 'trackViewerImage',
   compile('class Runtime {' + members.map(member).join('\n') + '}') + '; return Runtime;')(
-  Viewer, async (cache, id) => cache[id] || null, callback => callback, immediateTimer);
+  Viewer, async (cache, id) => cache[id] || null, callback => callback, immediateTimer, require('./helpers/viewerImageTrackingSource.cjs').trackViewerImage);
 const flush = () => new Promise(resolve => setImmediate(resolve));
 function deferred() { let resolve; return { promise: new Promise(done => { resolve = done; }), resolve: value => resolve(value) }; }
 function setup(type = '2d') {
-  const w = new Runtime(), events = [], moves = new Map(), graphics = [];
+  const w = require('./helpers/viewerEventsSource.cjs').install(require('./helpers/sequenceOpeningSource.cjs').install(new Runtime()),{setTimeout:immediateTimer}), events = [], moves = new Map(), graphics = [];
+  // This harness extracts methods without running widget field initializers.
+  w._reverseAddressEnrichment = { cancel() {}, clear() {} };
   w._nativeSequenceSelection = { select() {} };
   const view = { type, graphics: { forEach: callback => graphics.slice().forEach(callback), remove: graphic => { const index = graphics.indexOf(graphic); if (index >= 0) graphics.splice(index, 1); }, add: graphic => graphics.push(graphic) }, goTo: async () => {} };
   const oldImage = { id: 'old-image', lon: 29, lat: 41 };

@@ -16,7 +16,7 @@ function visit(node){if(ts.isCallExpression(node)&&node.expression.getText(sf)==
    w._hoverPreviewStatus=new module.DelayedHoverStatus(value=>events.push(value));
    const handler=new Function('view','TURBO_LIMITS','LAYER_IDS',handlerCode).call(w,view,{pickRadiusPx:8,hoverRadiusPx:8},{OBJECTS_FL:'objects',TRAFFIC_SIGNS_FL:'signs'});
    handler({x:100,y:100});await new Promise(resolve=>setTimeout(resolve,500));w._hoverPreviewStatus.dispose();return{events,picks,warnings,lookups};
-  },{ownerCode:compile(fs.readFileSync(path.join(root,'src/features/imagery/DelayedHoverStatus.ts'),'utf8')),handlerCode:compile('let hoverHitTestTimeout=null;return ('+pointer.getText(sf)+');')});
+  },{ownerCode:compile(fs.readFileSync(path.join(root,'src/features/imagery/DelayedHoverStatus.ts'),'utf8')),handlerCode:require('./helpers/mapHoverSource.cjs').browserPointerCode()});
   assert.deepEqual(result,{events:[true,false],picks:1,warnings:0,lookups:1});console.log('PASS Chromium: native timers show/clear status and production low-zoom hover reaches the preview');
  }finally{await browser.close()}
 })().catch(error=>{console.error(error);process.exitCode=1});

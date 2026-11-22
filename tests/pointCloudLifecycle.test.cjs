@@ -2,13 +2,15 @@
  * Recording owners and queued state callbacks expose teardown, progress and live-view boundaries.
  */
 const fs=require('fs'),path=require('path'),test=require('node:test'),assert=require('node:assert/strict'),ts=require(process.env.MAPILLARY_TYPESCRIPT||'typescript'),root=path.resolve(__dirname,'..');
-const compile=s=>ts.transpileModule(s,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText;
+const compile=s=>ts.transpileModule(s,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText;
 const m={exports:{}};new Function('module','exports',compile(fs.readFileSync(root+'/src/features/point-cloud/PointCloudLifecycle.ts','utf8')))(m,m.exports);
 const fixture=JSON.parse(fs.readFileSync(__dirname+'/fixtures/pointCloudLifecycle.baseline.json','utf8'));const sf=ts.createSourceFile('widget.tsx',fs.readFileSync(root+'/src/runtime/widget.tsx','utf8'),ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX),cl=sf.statements.find(n=>ts.isClassDeclaration(n)&&n.name.text==='Widget');
-const actual=['_pointCloudLifecycle','clearPointCloud','togglePointCloud'].map(name=>cl.members.find(n=>n.name?.getText(sf)===name).getText(sf)).join('\n');
+const actual=['_toastNotifications','_pointCloudLifecycle','clearPointCloud','togglePointCloud'].map(name=>cl.members.find(n=>n.name?.getText(sf)===name).getText(sf)).join('\n');
 function setup(kind,{batched=false,state={}}={}){
  const trace=[],pending=[];let fail=null;const record=(name,...args)=>{trace.push([name,...args]);if(fail===name)throw Error('failed '+name)};
- const Harness=new Function('PointCloudLifecycle','clearTimeout',compile('class Widget{'+(kind==='baseline'?fixture.handlers:actual)+'};return Widget;'))(m.exports.PointCloudLifecycle,id=>record('cancelToast',id));const w=new Harness();
+ const toast={exports:{}};new Function('module','exports','clearTimeout',compile(fs.readFileSync(root+'/src/features/notifications/ToastNotifications.ts','utf8')))(toast,toast.exports,id=>record('cancelToast',id));
+ const Harness=new Function('ToastNotifications','PointCloudLifecycle','clearTimeout',compile('class Widget{'+(kind==='baseline'?fixture.handlers:actual)+'};return Widget;'))(toast.exports.ToastNotifications,m.exports.PointCloudLifecycle,id=>record('cancelToast',id));const w=new Harness();
+ if(kind!=='baseline')Object.defineProperties(w,{_toastOwner:{get:()=>w._toastNotifications.owner,set:value=>w._toastNotifications.owner=value},_toastTimer:{get:()=>w._toastNotifications.timer,set:value=>w._toastNotifications.timer=value}});
  const view={map:{},destroyed:false};w.state={isMeasureMode:true,isSightMode:true,isViewshedMode:true,isLassoMode:true,showCalibrationPanel:true,pointCloudVisible:true,pointCloudLoading:true,pointCloudPrevious:true,pointCloudAutoPaused:true,pointCloudSummary:'ready',pointCloudAvailable:true,pointCloudIncomplete:true,jimuMapView:{view},...state};
  w._toastOwner='point-cloud-progress';w._toastTimer=7;w._filteredPointCloudPoints=[{}];w._pointCloudSequenceContext={id:'A'};
  const a={active:true,following:true,result:{id:'A'},stopMode(){record('stop');this.active=false},cancel:reason=>record('cancel',reason),releaseResult(){record('release');this.result=null}};w._pointCloudAcquisition=a;

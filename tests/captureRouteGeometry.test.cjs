@@ -51,8 +51,8 @@ for(const change of ['cancel','view','map','destroy'])test('pending layer load r
 test('a valid new layer attaches and draws only after loading',async()=>{
   const f=setup(false),pending=f.w.drawCaptureRoute([[0,0],[1,1]]);assert.deepEqual(f.calls,['load']);f.resolve();await pending;assert.deepEqual(f.calls,['load','attach','clear']);assert.equal(f.graphics.length,2);
 });
-test('final evaluation stays before drawing and publication in the widget',()=>{
-  const method=member('generateEsriDetourRoute');
+test('final evaluation stays before drawing and publication in the execution workflow',()=>{
+  const method=require('./helpers/captureExecutionSource.cjs').captureExecutionSource();
   const evaluate=method.indexOf('= evaluateFinalCaptureRoute({');
   const draw=method.indexOf('await this.drawCaptureRoute(finalPaths, run.current);',evaluate);
   const check=method.indexOf('run.check();',draw);

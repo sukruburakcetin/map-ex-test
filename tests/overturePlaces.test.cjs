@@ -33,7 +33,7 @@ test('actual map-click handler opens direct POI hits before coverage guards or w
  let callback;function visit(n){if(ts.isCallExpression(n)&&n.expression.getText(sf)==='view.on'&&n.arguments[0]?.text==='click')callback=n.arguments[1];ts.forEachChild(n,visit);}visit(sf);assert(callback);
  const view={destroyed:false,toMap:()=>({longitude:1,latitude:1}),hitTest:async()=>({results:[{layer:{id:'places'}}]})};let opened=0,picks=0;
  const w={_fieldNoteMap:{clearHighlight(){},hasPickTargets:false,noteForGraphic(){return null}},props:{state:'OPENED'},state:{jimuMapView:{view},turboModeActive:true,placesActive:true},_coverageSelectionTargets:{snapshot:()=>null},coverageSelectionContext:()=>({}),_sharedNotesLayer:null,_pointCloudHits:{route:()=>false},setState(){},showPlacesHit(){opened++;return true;},pickMapFeature(){picks++;throw Error('must not pick coverage or features for direct POI');}};
- const make=new Function('view','TURBO_LIMITS','coverageClickHitTest',compile('return '+callback.getText(sf)));const handler=make.call(w,view,{pickRadiusPx:10},coverageClickHitTest);await handler({x:20,y:20});assert.equal(opened,1);assert.equal(picks,0);
+ const handler=require('./helpers/mapClickSource.cjs').createMapClickHandler(w,view,{TURBO_LIMITS:{pickRadiusPx:10},coverageClickHitTest});await handler({x:20,y:20});assert.equal(opened,1);assert.equal(picks,0);
  view.destroyed=true;await handler({x:20,y:20});assert.equal(opened,1);
 });
 test('POI click stops automatic popup handling before asynchronous hitTest and retains a missed marker ID',async()=>{
@@ -41,7 +41,7 @@ test('POI click stops automatic popup handling before asynchronous hitTest and r
  let resolve,stopped=0,opened=0,target;const view={destroyed:false,toMap:()=>({longitude:1,latitude:1}),hitTest:()=>new Promise(r=>resolve=r)};
  const owner={screenTarget:()=> 'gers-1'};
  const w={_fieldNoteMap:{clearHighlight(){},hasPickTargets:false,noteForGraphic(){return null}},props:{state:'OPENED'},state:{jimuMapView:{view},turboModeActive:true,placesActive:true},_places:owner,_coverageSelectionTargets:{snapshot:()=>null},coverageSelectionContext:()=>({}),_sharedNotesLayer:null,_pointCloudHits:{route:()=>false},setState(){},showPlacesHit(results,id){assert.deepEqual(results,[]);target=id;opened++;return true;}};
- const handler=new Function('view','TURBO_LIMITS','coverageClickHitTest',compile('return '+callback.getText(sf))).call(w,view,{pickRadiusPx:10},coverageClickHitTest);const pending=handler({x:10,y:10,stopPropagation(){stopped++;}});assert.equal(stopped,1);assert.equal(opened,0);resolve({results:[]});await pending;assert.equal(target,'gers-1');assert.equal(opened,1);
+ const handler=require('./helpers/mapClickSource.cjs').createMapClickHandler(w,view,{TURBO_LIMITS:{pickRadiusPx:10},coverageClickHitTest});const pending=handler({x:10,y:10,stopPropagation(){stopped++;}});assert.equal(stopped,1);assert.equal(opened,0);resolve({results:[]});await pending;assert.equal(target,'gers-1');assert.equal(opened,1);
 });
 const nearby=load('nearbyPlaceImagery');const distance=load('geoUtils').distanceMeters;
 /** Bind the actual source identity and imagery helpers to the extracted runtime method. */
@@ -194,7 +194,7 @@ test('POI hover reuses one SDK hit test and keeps its label when coverage resolv
   const view={zoom:16,container:{getBoundingClientRect:()=>({left:0,top:0,right:400,bottom:400})}},place={id:'p',name:'Library',category:'public_library'};
   const picked={attributes:{image_id:'coverage'}};
   const w={state:{jimuMapView:{view},turboModeActive:true},turboCoverageLayer:{},tooltipDiv:{},_places:{hit:()=>place,hoverLabel:()=> 'Library · public library',setHover:id=>hovered=id},hitTestHoverLayers:async()=>{tests++;return{results:[]}},pickTurboGraphic:()=>late?new Promise(r=>resolveCoverage=r):Promise.resolve(picked),pickMapFeature:async()=>null,clearTurboHoverDetails:()=>label='',updateTurboHover:()=>label='coverage'};
-  const handler=new Function('TURBO_LIMITS','renderMapFeatureHoverLabel','setTimeout','clearTimeout','window','view',compile('let hoverHitTestTimeout=null; return '+callback.getText(sf))).call(w,{hoverRadiusPx:8,pickRadiusPx:10},(host,text)=>label=text,work=>{task=work;return 1},()=>{},{innerWidth:400,innerHeight:400},view);
+  const handler=require('./helpers/mapHoverSource.cjs').createPointerHandler(w,view,{TURBO_LIMITS:{hoverRadiusPx:8,pickRadiusPx:10},LAYER_IDS:{},renderMapFeatureHoverLabel:(host,text)=>label=text,setTimeout:work=>{task=work;return 1},clearTimeout:()=>{},window:{innerWidth:400,innerHeight:400}});
   handler({x:20,y:20});await task();if(late){resolveCoverage(picked);await flush();}
   assert.equal(tests,1);assert.equal(label,'Library · public library');assert.equal(hovered,'p');
  }

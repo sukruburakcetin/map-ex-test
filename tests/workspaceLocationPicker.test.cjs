@@ -14,6 +14,6 @@ test('runtime adapter restores cursor and cancels pick when the note/map owner c
 });
 test('actual click handler consumes only the chosen map point before coverage or local annotation',async()=>{
  let handler;function visit(node){if(ts.isBinaryExpression(node)&&node.left.getText(sf)==='this.mapClickHandle'&&ts.isCallExpression(node.right))handler=node.right.arguments[1].getText(sf);ts.forEachChild(node,visit);}visit(cl);assert(handler);
- let stopped=0;const view={toMap:()=>({longitude:1,latitude:2})},Harness=new Function('view',compile('class Harness{handler='+handler+'};return Harness;'))(view),w=new Harness(),points=[];w.props={state:'OPENED'};w._workspaceNoteLocation=new WorkspaceLocationPicker();w._workspaceNoteLocation.begin(view,point=>points.push(point),()=>{});
+ let stopped=0;const view={toMap:()=>({longitude:1,latitude:2})},w={},points=[];w.handler=require('./helpers/mapClickSource.cjs').createMapClickHandler(w,view);w.props={state:'OPENED'};w._workspaceNoteLocation=new WorkspaceLocationPicker();w._workspaceNoteLocation.begin(view,point=>points.push(point),()=>{});
  await w.handler({stopPropagation(){stopped++;}});assert.equal(stopped,1);assert.deepEqual(points,[{lon:1,lat:2}]);
 });

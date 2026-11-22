@@ -3,7 +3,7 @@ const ts=require(process.env.MAPILLARY_TYPESCRIPT||'typescript'),root=path.resol
 const compile=source=>{const r=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS},reportDiagnostics:true});assert.equal(r.diagnostics.filter(d=>d.category===1).length,0);return r.outputText;};
 const m={exports:{}};new Function('module','exports',compile(fs.readFileSync(root+'/src/features/routing/adaptiveNetworkRemoval.ts','utf8')))(m,m.exports);const {planAdaptiveNetworkRemoval}=m.exports;
 const baseline=JSON.parse(fs.readFileSync(__dirname+'/fixtures/adaptiveNetworkRemoval.baseline.json'));
-const source=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8'),start=source.indexOf('              const { targetedRemovalLimit, networkRemoveIds, removals } = planAdaptiveNetworkRemoval('),end=source.indexOf('\n              if (networkRemoveIds.size)',start),fullEnd=source.indexOf('\n            }\n\n            /*',end);assert(start>0&&fullEnd>end);
+const source=require('./helpers/captureExecutionSource.cjs').captureExecutionSource(),start=source.indexOf('              const { targetedRemovalLimit, networkRemoveIds, removals } = planAdaptiveNetworkRemoval('),end=source.indexOf('\n              if (networkRemoveIds.size)',start),fullEnd=source.indexOf('\n            }\n\n            /*',end);assert(start>0&&fullEnd>end);
 const params=['networkPruneCandidates','activeOpportunities','overrunRatio','projectedExtraMinutes','allowedExtraMinutes','planAdaptiveNetworkRemoval'];
 const previous=new Function(...params,compile(baseline.body+'return {targetedRemovalLimit,networkRemoveIds};'));
 const adapter=new Function(...params,compile(source.slice(start,end)+'return {targetedRemovalLimit,networkRemoveIds};'));

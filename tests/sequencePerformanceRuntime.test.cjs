@@ -42,6 +42,8 @@ function callback(expression, type) {
   return result;
 }
 function bindCallback(node, receiver, globals) {
+  if(node.getText(syntax).includes('trackViewerImage'))return require('./helpers/viewerImageTrackingSource.cjs').createHandler(receiver,globals.profileEventViewer,globals.redrawCone);
+  if(node.getText(syntax).includes('dispatchMapClick'))return require('./helpers/mapClickSource.cjs').createMapClickHandler(receiver,globals.view,globals);
   return new Function(...Object.keys(globals), compile('const factory = function () { return (' + node.getText(syntax) + '); };') + '; return factory;')(
     ...Object.values(globals)).call(receiver);
 }
@@ -113,7 +115,7 @@ test('actual image event cancels obsolete enrichment without starting replacemen
   w.setState = patch => applied.push(patch); w.updateProfileIndicator = () => {}; w.highlightNearbyPin = image => assert.equal(image,null);
   w._liveSequenceFrames = { resolve: async () => null };
   const pending = w.checkForTimeTravel('A');
-  const image = bindCallback(callback('this.mapillaryViewer.on', 'image'), w, { profileEventViewer: viewer });
+  const image = require('./helpers/viewerImageTrackingSource.cjs').createHandler(w,viewer);
   await image({ image: { id: 'A' } }); assert.equal(fetched[0].signal.aborted, false); assert.equal(fetched.length, 1);
   await image({ image: { id: 'B' } }); assert.equal(fetched[0].signal.aborted, true); assert.equal(fetched.length, 1);
   held.resolve({ ok: true, json: async () => ({ computed_geometry: null }) }); await pending;
@@ -134,7 +136,7 @@ test('a stale cross-sequence image event cannot replace the clicked image while 
     highlightNearbyPin(image) { assert.equal(image,null); },
     setState() { throw new Error('An obsolete event must not update the current selection'); },
   };
-  const image = bindCallback(callback('this.mapillaryViewer.on', 'image'), w, { profileEventViewer: viewer });
+  const image = require('./helpers/viewerImageTrackingSource.cjs').createHandler(w,viewer);
   await image({ image: { id: 'previous-image', sequenceId: 'previous-sequence' } });
   assert.deepEqual(resolved, []); assert.deepEqual(cancelled, []); assert.deepEqual(queueChanges, []);
   assert.equal(selection.signal.aborted, false); assert.equal(w._selectionRequestId, 7);

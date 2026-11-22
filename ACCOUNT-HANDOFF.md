@@ -1,3 +1,293 @@
+<!-- widget-teardown-stage102 -->
+## Stage 102 — P05 teardown completion
+
+`src/features/lifecycle/widgetTeardown.ts` now owns common cleanup and final-unmount ordering. Concrete bindings call existing owners and reset their live slots; no replacement resource registry was added. Partial/full cleanup rules, owned-map isolation, viewer-removal error handling, fresh reset arrays, startup-first invalidation and final listener/observer/DOM release retain their behavior. The shared-link readiness gate now reuses `activeViewStartup.ts`.
+
+P05 implementation is complete across stages 100–102, within its three-change allowance. P01–P05 are implementation-complete; P06–P12 remain seven packages, provisionally 10–17 further changes. Next: P06 fullscreen/resize transitions. Full ExB 1.21/browser acceptance remains under P12.
+
+Validation and scope: [widget teardown](docs/development/widget-teardown.md). Portable tests: 3,360 / 229 files, zero failures/skips in workspace and installer-produced copy. Strict modules/actual SDK boundary and targeted installed-host adapter/readiness checks pass; isolated ExB 1.20 build has zero errors/warnings. Mutation, BOM/CRLF and guarded installer checks pass. Widget: 9,854 lines, 79 fewer than stage 101 and 301 fewer across P05.
+
+<!-- widget-update-stage101 -->
+## Stage 101 — P05 update/reopen reconciliation
+
+`src/features/lifecycle/widgetUpdate.ts` now coordinates `componentDidUpdate` through three ordered phases: feature demand, visibility/reopen, and configuration. The widget retains a forwarding entry and live typed bindings. Existing request/resource owners and state callbacks remain reused; no scheduling, guard, subscription or reopen policy was added.
+
+P01–P04 remain implementation-complete. P05 has used two of its 2–3 changes; full cleanup/unmount coordination remains the final planned P05 change. P05–P12 remain eight packages, provisionally 11–18 further changes: one final P05 plus the original 10–17 for P06–P12. ExB 1.21/browser acceptance remains under P12.
+
+Validation and scope: [widget update](docs/development/widget-update.md). Portable tests: 3,322 / 227 files, zero failures/skips in workspace and installer-produced copy. Strict feature/actual SDK control boundary and targeted installed-host adapter checks pass; isolated ExB 1.20 build has zero errors/warnings. Mutation, BOM/CRLF and guarded installer checks pass. Widget: 9,933 lines, 155 fewer than stage 100 and 222 fewer across P05 so far.
+
+<!-- widget-startup-stage100 -->
+## Stage 100 — P05 startup lifecycle
+
+`src/features/lifecycle/widgetStartup.ts` now coordinates mount-time startup and existing startup invalidation. The widget binds live instance revision/abort/timer/DOM slots and concrete feature operations; no second lifetime owner was added. Presets still precede layer creation, awaits remain revision-guarded, and deferred sprites/listeners/observer/stylesheet retain their original order. Initial tooltip styling moved into the existing hover-card style file.
+
+P01–P04 remain implementation-complete. P05 has used one of its 2–3 changes; update/reopen reconciliation and complete teardown remain. Next: component-update feature effects, then cleanup/unmount ordering. P05–P12 remain eight packages, provisionally 11–19 further changes. Live ExB 1.21/browser acceptance remains under P12.
+
+Validation and scope: [widget startup](docs/development/widget-startup.md). Portable tests: 3,274 / 226 files, zero failures/skips in workspace and installer-produced copy. Strict feature/real-SDK resize boundary and targeted host-adapter checks pass; isolated ExB 1.20 build has zero errors/warnings. Mutation, BOM/CRLF and reversible-installer checks pass. Widget: 10,088 lines, 67 fewer than stage 99.
+
+<!-- sequence-opening-stage99 -->
+## Stage 99 — P04 sequence-opening coordination
+
+`src/features/imagery/sequenceOpening.ts` now owns the foreground capture-opening policy: cancellation, same-route reuse, nearest/local fallback, image-first navigation, optional coordinate hydration, recovery and timing cleanup. The widget keeps a forwarding method and typed live bindings to existing owners. No frame/request/cache owner, request, dependency or viewer subscription was added.
+
+P04 implementation is complete across stages 97–99 (image events, viewer binding and explicit sequence opening); live-host acceptance remains under P12. Viewer construction/fullscreen belongs to P06, React disposal to P05 and coverage/analysis to P09. Next: begin P05 React lifecycle and teardown. Eight packages P05–P12 remain, provisionally 12–20 changes; this is not a whole-widget completion claim.
+
+Validation and exact scope are in [sequence opening](docs/development/sequence-opening.md). Portable tests: 3,252 / 225 files, zero failures/skips in workspace and installer-produced copy. Isolated ExB 1.20 build: zero errors/warnings. Strict feature/real-SDK compatibility, targeted adapter checks, BOM/CRLF, mutation and guarded rollback checks pass. Full ExB 1.21/browser acceptance remains pending. Widget: 10,155 lines, 103 fewer than stage 98 and 249 fewer across P04.
+
+<!-- viewer-event-binding-stage98 -->
+
+## Stage 98 continuation — P04 viewer events
+
+Viewer load/bearing/image registration, wheel/zoom, cone redraw, URL debounce and direction scheduling now live in `viewerEventBinding.ts`, reusing image tracking and existing bearing/playback owners. Live capability bindings retain original timing, guard scope and cleanup slots. Playback construction remains before SDK sequence lookup. No new dependency, request, timer, subscription or viewer is introduced.
+
+P04 remains in progress after two changes. Next: explicit sequence opening/transition extraction and P04 completion review. P01–P03 remain implementation-complete with live acceptance pending. Widget size is 10,258 lines; nine packages provisionally need 13–21 further changes, including one final P04 change within its original 2–3 allowance.
+
+Validation: 3,219 passing portable tests / 224 files in workspace and clean installer-produced copy, zero failures or skips. Strict feature-module and real Mapillary Viewer contract checks pass. Isolated ExB 1.20 module-graph build: zero errors/warnings. BOM/CRLF, targeted mutation and reversible installer checks pass. Full ExB 1.21/browser acceptance remains pending under P12.
+
+See [the viewer-event checkpoint](docs/development/viewer-event-binding.md) and [the finite plan](docs/development/refactoring-remaining-work.md). No commit/push or full-host browser acceptance is implied.
+
+<!-- viewer-image-tracking-stage97 -->
+
+## Stage 97 continuation — P04 image tracking
+
+The complete SDK image-event workflow now lives in `viewerImageTracking.ts`: confirmed-image guards, metadata resolution, lateral sequence updates, map presentation and latest-frame secondary work. The widget registers a direct promise-forwarding event thunk and binds live typed capabilities once per viewer binding. Existing frame/detail/request/presentation owners, state callback order and guard scopes are preserved. No dependency, timer, request or async handoff is added.
+
+P04 is in progress after its first change. Next: remaining load/bearing/event lifetime coordination and explicit sequence opening, reusing existing owners. P01–P03 remain implementation-complete with live acceptance pending. Widget size is 10,373 lines; nine packages remain, provisionally 13–22 further changes. This is not full-widget completion.
+
+Validation: 3,187 passing portable tests / 223 files in workspace and clean installer-produced copy, zero failures or skips. Strict feature-module checking and a React-style generic commit-contract check pass. Isolated ExB 1.20 module-graph build: zero errors/warnings. BOM/CRLF comparisons, targeted mutation and reversible installer checks pass. Full ExB 1.21/provider/browser acceptance remains pending under P12.
+
+See [the image-tracking checkpoint](docs/development/viewer-image-tracking.md) and [the finite plan](docs/development/refactoring-remaining-work.md). No commit/push or full-host browser acceptance is implied.
+
+<!-- detection-hover-stage96 -->
+
+## Stage 96 continuation — P03 implementation complete
+
+Detection component hover/click, delayed tag updates, target flashing and listener/timer cleanup now live in `src/features/detections/detectionHover.ts`. The widget binds live viewer/label/draft capabilities. Existing component hooks, captured-viewer cleanup, 50ms/500ms timings, label modes, verified marker locations and stale-hit guards are preserved. No dependency, request, implicit publication or async handoff is added.
+
+**P03 implementation is complete in stages 94–96; live-host acceptance remains pending under P12.** The synchronous click-preview preparation stays as an explicit widget identity/capability binding, with exact/regional preview and cancellation coverage; dispatch/priority/transport remain feature-owned. Next: P04 viewer events and image/sequence coordination. Nine packages remain, provisionally 14–23 further changes. Widget size is 10,404 lines; the overall minimal-core checkpoint is not complete.
+
+Validation: 3,158 passing portable tests / 222 files in workspace and clean installer-produced copy, zero failures or skips. Strict detection-hover module checking against the installed Mapillary/PBF/vector-tile declarations passes without temporary type aliases. Isolated ExB 1.20 module-graph build: zero errors/warnings. BOM/CRLF, targeted mutation and reversible installer checks pass. Full ExB 1.21/browser acceptance remains pending under P12.
+
+See [the detection-hover review](docs/development/detection-hover.md) for retained boundaries, validation limits and installation, and [the finite plan](docs/development/refactoring-remaining-work.md). Source was recovered after the workspace reconnect; temporary dependencies were restored outside the repository. No commit/push or full-host browser acceptance is implied.
+
+## Stage 95 continuation — P03 hover dispatch
+
+`createMapHoverHandler` now owns pointer dispatch and its shared map-leave/touch/resume timer lifetime, reusing existing owners. The widget supplies live typed capabilities and registers click before the returned pointer handler. Independent coverage picking, optional detection isolation, cloud/POI tooltip priority and stale-result guards retain their original order. No dependency, request, delay or async handoff is added.
+
+P03 remains in progress after two changes. Next: detection-hover extraction and review of retained click-preview preparation, then P03 completion review within its 2–3-change allowance. P01/P02 are implementation-complete; full live acceptance remains pending. Widget size: 10,557 lines. The remaining ten packages provisionally require 15–24 further changes: one final P03 change plus the original 14–23 allowance for P04–P12.
+
+Validation: 3,129 passing portable tests / 221 files in workspace and clean installer-produced copy, zero failures or skips. Isolated ExB 1.20 module-graph build: zero errors/warnings. Targeted SDK-aware module checking, BOM/CRLF comparisons, mutation and reversible installer checks pass. Native Chromium confirms low-zoom hover status appears/clears and the preview opens in the isolated harness. Full ExB 1.21/browser acceptance remains pending under P12.
+
+See [the hover checkpoint](docs/development/map-hover-dispatch.md) for ownership/validation limits and [the finite plan](docs/development/refactoring-remaining-work.md). No commit/push or full-host browser acceptance is implied.
+
+## Stage 94 continuation — P03 click dispatch
+
+Ordered map-click dispatch now lives in `src/features/navigation/mapClickDispatch.ts`, reusing coverage hit-test, nearest-frame, Places and note helpers. The widget retains synchronous preview/revision capture and live typed capability bindings; the event thunk directly returns the feature promise. Priority, original await/guard positions, lazy transport and mutable request ownership are preserved. No dependency, timer or service request is added.
+
+P03 is in progress after its first change. Next: pointer/hover dispatch, container/touch/resume wiring and detection hover, retaining existing owners and precedence. P01/P02 remain implementation-complete with live acceptance pending. Widget size is 10,704 lines; the overall minimal-entry-point goal remains open.
+
+Validation: 3,093 passing portable tests / 220 files in both workspace and clean installer-produced copy, zero failures or skips. The isolated ExB 1.20 module-graph build has zero errors/warnings. Targeted SDK-aware click-module type checking, BOM/CRLF comparisons, mutation checks and reversible installer checks pass. Live ExB 1.21/browser acceptance remains pending under P12.
+
+See [the click checkpoint](docs/development/map-click-dispatch.md) for ownership/type-check limits and [the finite remaining plan](docs/development/refactoring-remaining-work.md). No commit/push or browser acceptance is implied.
+
+## Stage 93 continuation — P02 implementation complete
+
+`ActiveViewTransfer.attach` now coordinates React-committed startup, independent shared-link restoration and existing zoom/Turbo/layer-order attachments. The readiness callback directly returns the stage-91 restoration promise; error guards, attachment order and deferred-commit timing are preserved. The widget supplies typed feature/SDK bindings rather than startup policy. No new dependency, request, timer or async handoff is added.
+
+**P02 implementation is complete in stages 91–93; live-host acceptance remains pending under P12.** Transfer revisions, ordered teardown, startup and attachment registration have one coordinator. Click/pointer policy remains explicitly in P03. Next: extract the map click ladder and then pointer/hover dispatch while preserving precedence and stale-hit rejection. Ten packages remain, provisionally 16–26 further reviewable changes.
+
+Validation: 3,066 passing portable tests / 219 files in both workspace and clean installer-produced copy, zero failures or skips. Strict navigation-module TypeScript and the isolated ExB 1.20 module-graph build pass; the build has zero errors/warnings. Reversible installer, BOM/CRLF and targeted mutation checks pass. Live ExB 1.21/browser acceptance remains pending under P12.
+
+See [the attachment checkpoint](docs/development/active-view-attachment.md) and [the finite remaining plan](docs/development/refactoring-remaining-work.md). Widget size is 10,911 lines; the overall minimal-entry-point goal is not complete. No commit/push or browser acceptance is implied.
+
+## Stage 92 continuation
+
+`ActiveViewTransfer` now owns transfer revisions, current-view/map identity and ordered synchronous transfer policy. Full cleanup invalidates that same owner. The widget binds existing tool, interaction, presentation and request owners; React commitment and stage-91 startup retain their order. No new async boundary, request or dependency is added.
+
+P02 remains in progress after two changes. Next: committed-view startup registration and owned non-interaction attachments, then P03 click/pointer dispatch. Widget size is 10,926 lines; the remaining feature bindings are explicit and do not establish minimal-entry-point completion.
+
+Validation: 3,046 passing portable tests / 218 files in both workspace and clean installer-produced copy, with zero failures or skips. Strict transfer-module TypeScript and the isolated ExB 1.20 module-graph build pass; the build has zero errors/warnings. Reversible installer and BOM/CRLF checks pass. Live ExB 1.21/browser acceptance remains pending.
+
+See [the transfer checkpoint](docs/development/active-view-transfer.md) and [the finite remaining plan](docs/development/refactoring-remaining-work.md). No commit/push or browser acceptance is implied.
+
+## Stage 91 continuation
+
+Committed-view restoration order now lives in `src/features/navigation/activeViewStartup.ts`, with narrow per-view operations bound by the widget. Coverage-first loading, guarded awaits, optional-tool ordering, cone/URL restoration and independent shared-link startup are preserved. Transfer teardown and click/pointer wiring remain in the widget; **P02 is in progress, not complete**. Next: transfer/invalidation and owned attachments, coordinating P03 without changing interaction precedence.
+
+Validation: 3,017 passing portable tests / 217 files in the workspace and clean installer-produced copy; zero failures or skips. Strict feature-module TypeScript and the isolated ExB 1.20 module-graph build pass with zero errors/warnings. Reversible installer checks cover dry-run, repeat application, BOM/CRLF source, local documentation history, unknown edits and exact guarded rollback. Live ExB 1.21/browser acceptance remains pending.
+
+Use [the checkpoint guide](docs/development/active-view-startup.md) and [the finite remaining plan](docs/development/refactoring-remaining-work.md). No commit/push or live-host acceptance is implied.
+
+<!-- capture-route-warning-stage90 -->
+
+## Stage 90 — routing warning fix and P01 implementation review (21 November 2026)
+
+Reproduced the pre-existing real-widget warning defect without the fixture-only Widget.warn stub: when one over-budget opportunity remained, an undefined this.warn caused a generic route failure instead of publishing the existing fallback result. One production binding now uses console.warn. This deliberate bug fix changes no provider call, threshold, pruning/retry policy, result selection or actual-duration summary; cancelled results remain guarded.
+
+P01 implementation is complete across stages 88–90: widget entry 42 lines, per-run host 54 lines, routing execution feature-owned without widget/DOM/Jimu/SDK coupling. Keep the explicit ordered provider loop over existing helpers; avoid request frameworks or per-probe awaits for line-count reduction. P11 owns legacy comment/source-anchor cleanup. P01 live-host acceptance is pending under P12, not claimed complete. Next: P02 active-view lifecycle/P03 interaction boundaries. Eleven packages remain, provisionally 18–29 reviewable changes including final validation/docs.
+
+Validation: 2,993 passing portable tests / 216 files in both workspace and clean installer-produced copy, zero failures or skips. Six new real-binding regressions pass after reproducing the TypeError before the fix; reverting the binding fails them again. Existing execution/preparation/policy comparisons remain unchanged. Isolated ExB 1.20 module-graph build has zero errors/warnings. BOM/CRLF regressions and reversible installer checks pass, including local plan preservation, missing-plan creation, unknown edits and exact rollback. Live-host/provider/browser acceptance remains pending.
+
+Details: docs/development/capture-route-warning.md. Canonical plan: docs/development/refactoring-remaining-work.md. Installer: apply-capture-route-warning-fix.cjs requires stage-89 source, preserves local histories and supports guarded exact rollback. No dependency/Git/deployment or external provider operation. Latest user-supplied ExB 1.21 build still covers stage 86.
+
+<!-- capture-route-execution-stage89 -->
+
+## Stage 89 — P01 routing orchestration, part 2 (21 November 2026)
+
+Moved ordered asynchronous execution into src/features/routing/executeCaptureRoute.ts with per-run endpoints/budget/RouteRun and a narrow routing-only host. Widget retains entry/context guards, UI/camera refs and ownership callbacks; it forwards the execution promise directly while preserving pre-run rejected promises. Existing preparation/policy helpers, operational await/check order, provider flows, publication and finalization are retained. Widget is 921 lines shorter (11,007). No new provider/request/cache/timer/dependency or performance claim.
+
+Existing full-run comparisons remain; policy assertions follow current execution through a shared test-only host adapter without substituting algorithms/guards. New cases cover entry promises, camera/finalization failures, timer identity, newer-run ownership and await/promise forwarding. P01 is still in progress: the feature coordinator needs its final probe/decision/readability review and acceptance; P02–P12 remain pending. Latest user-supplied ExB 1.21 build covers stage 86, not this source.
+
+Validation: 2,987 passing portable tests / 215 files in both workspace and clean installer-produced copy, zero failures or skips. Seventeen new execution cases augment the retained 38 preparation/full-run comparisons and existing policy/integration suites. Strict feature-module TypeScript and the isolated ExB 1.20 module-graph build pass with zero errors/warnings. Ordered-stop/post-draw/finalization mutation checks, 55-case BOM/CRLF comparison and reversible installer checks pass; local plan edits and missing-plan creation are covered. No live provider/browser acceptance is inferred.
+
+Details: docs/development/capture-route-execution.md. Canonical next work: docs/development/refactoring-remaining-work.md. Installer: apply-capture-route-execution-refactor.cjs requires reviewed stage-88 source and preserves local doc history with guarded rollback. No commit/push/deployment.
+
+<!-- capture-route-preparation-stage88 -->
+
+## Stage 88 — P01 routing orchestration, part 1 (21 November 2026)
+
+Started the finite plan's P01. Extracted synchronous baseline/local opportunity preparation into src/features/routing/captureRoutePreparation.ts, reusing existing adaptive selection and reporting. Widget retains provider/auth creation, baseline solve, camera restoration, run checks and all await positions. UI/report/progress order and borrowed data identity remain. Widget is 109 lines shorter (11,928); generateEsriDetourRoute is 121 lines shorter (1,016).
+
+Frozen-original/current full-run trace comparisons now cover direct and OSRM-shaped preflight routing, retries, pruning/replacement, cancellation, failures, geometry and publication. Local edge cases cover speed/geometry/identity/feedback. Existing assertions remain; harness and adaptive wiring locations follow the moved boundary. No extra await, request, dependency, cache or performance claim. ExB 1.21/live provider/browser acceptance remains pending; latest user build confirmation covers stage 86.
+
+Validation: 2,970 passing portable tests / 214 files in both the workspace and clean installer-produced copy, zero failures or skips. Thirty-eight new comparisons comprise 22 frozen/current full-run traces and 16 local preparation cases. Existing routing integration/cancellation assertions remain; method-only harnesses and two location-sensitive wiring assertions follow the new boundary. Strict module TypeScript, isolated ExB 1.20 module-graph build (zero errors/warnings), speed/progress/borrowed-identity mutation checks, BOM/CRLF comparison and reversible installer checks pass. Installer checks cover dry-run, repeat, exact rollback, unknown/missing/edited source, local history, targeted plan updates, missing-plan creation, later edits, corrupt backups and symlink refusal.
+
+P01 is not complete. Next: ordered preflight/pruning/replacement coordination using the trace fixtures; P02–P12 remain pending. Canonical progress: docs/development/refactoring-remaining-work.md. Details: docs/development/capture-route-preparation.md. Installer: apply-capture-route-preparation-refactor.cjs requires stage-87 source, preserves local doc history and supports exact guarded rollback. No commit/push/deployment.
+
+<!-- refactoring-audit-20261121 -->
+
+## Remaining-work audit — stage 87 checkpoint (21 November 2026)
+
+The canonical continuation plan is docs/development/refactoring-remaining-work.md. This documentation checkpoint adds no runtime stage and supersedes earlier open-ended “next bounded responsibility” directions. The audited widget has 12,037 lines; its largest routing/view/render members span 1,137/766/590 lines. Stages 78–87 reduced widget size by 168 lines, so the prior 10–20-stage estimate was too optimistic for the minimal-entry-point goal.
+
+The finite plan defines 12 work packages, provisionally 21–34 reviewable changes including final validation/documentation, with explicit completion criteria. Next: P01 routing orchestration, starting with full-run behavior evidence and baseline-solve/opportunity preparation. Reuse existing owners, preserve behavior/request order and avoid a facade that merely mirrors the whole widget. Update package progress rather than choosing another unrelated tiny helper.
+
+No source, tests, dependencies or runtime behavior changed for this audit; no new build/test acceptance is claimed. Stage 87 remains at 2,932 portable passes / 213 files and isolated ExB 1.20 build acceptance; the latest user-supplied ExB 1.21 build covers stage 86. The exact-source browser matrix remains pending apart from the narrow earlier sequence-transition confirmation. No commit/push/deployment.
+
+Validated this documentation-only change by comparing all runtime/test/tool file hashes and the manifest before/after. Installer checks passed for LF/BOM/CRLF, dry-run, repeat application, exact rollback, preserved local notes, unknown/missing/edited targets, later edits, corrupt backups and symlink refusal. No portable suite or build rerun was needed for unchanged code.
+
+Delivery: apply-refactoring-roadmap-audit.cjs updates documentation only, preserves local history and supports dry-run/exact guarded rollback. Read the canonical plan before the next implementation.
+
+<!-- arcgis-modules-stage87 -->
+
+## Stage 87 — lazy ArcGIS module initialization (21 November 2026)
+
+Extracted initialization promise ownership into src/services/arcgis/ArcGISModuleInitialization.ts. Widget binds live readiness, existing SDK loading, module publication and logging. Exact 13 IDs/slots, single pending loader, publication/log order, rejected-current retry and retained successful task remain. Existing caller lifecycle guards are unchanged. No new module, request, global cache, dependency, disposal policy or await; no measured speedup claimed.
+
+The user supplied a successful stage-86 isolated ExB 1.21 build (7,800 ms, zero errors/warnings). Browser acceptance and stage-87 ExB 1.21 validation remain unconfirmed.
+
+Validation: 2,932 passing portable tests / 213 files in both the workspace and clean installer-produced copy, zero failures or skips. Sixteen new comparisons cover readiness, module IDs/slots/identity, concurrent initialization, retry/failure boundaries, retained successful tasks and stable owner forwarding; existing startup/lifecycle suites are unchanged. Strict module TypeScript, isolated ExB 1.20 module-graph build (zero errors/warnings), ID/slot/retry mutation checks, BOM/CRLF comparison and reversible installer checks pass. Installer checks cover dry-run, repeat, exact rollback, local documentation preservation, unknown/missing source, later edits, symlinks and corrupt backups.
+
+See docs/development/arcgis-module-initialization.md. Installer: apply-arcgis-module-initialization-refactor.cjs, requires reviewed stage-86 source; dry-run, exact backups, repeat verification and guarded uninstall preserve local documentation histories. No commit/push/deployment. Next: stage-87 ExB 1.21 build and startup/active-map smoke, then another bounded coordinator responsibility.
+
+<!-- profile-mode-stage86 -->
+
+## Stage 86 — elevation-profile mode/cone coordination (21 November 2026)
+
+Extracted profile toggle and cone redraw policy into src/features/elevation/profileMode.ts. Widget binds React scheduling, route-failure reset, existing update/clear, feedback and cone drawing. Captured click target, callback order, readiness feedback, unawaited profile work and cone dimension/bearing timing remain. No new dependency, request, timer, guard or await; no measured speedup claimed.
+
+The user supplied a successful stage-85 isolated ExB 1.21 build (7,574 ms, zero errors/warnings). Browser acceptance and stage-86 ExB 1.21 validation remain unconfirmed.
+
+Validation: 2,916 passing portable tests / 212 files in both the workspace and clean installer-produced copy, zero failures or skips. Thirty-five new comparisons cover route feedback, captured targets, callback state, cone dimensions/bearing order, absent frames, unawaited work, failures and stable host forwarding; existing elevation suites are unchanged. Strict module TypeScript, isolated ExB 1.20 module-graph build (zero errors/warnings), captured-target/reset/bearing mutation checks, BOM/CRLF comparison and reversible installer checks pass. Installer checks cover dry-run, repeat, exact rollback, local documentation preservation, unknown/missing source, later edits, symlinks and corrupt backups.
+
+See docs/development/profile-mode.md. Installer: apply-profile-mode-refactor.cjs, requires reviewed stage-85 source; dry-run, exact backups, repeat verification and guarded uninstall preserve local documentation histories. No commit/push/deployment. Next: stage-86 ExB 1.21 build and profile toggle/readiness/cone smoke, then another bounded coordinator responsibility.
+
+<!-- solar-mode-stage85 -->
+
+## Stage 85 — solar mode coordination (21 November 2026)
+
+Extracted enable/disable policy into src/features/solar/solarMode.ts. Widget binds React scheduling, live mode, conflicting-tool cleanup, localized feedback and solar update/clear. Config eligibility, updater-time cleanup/order/replay, callback-time mode, 3000 ms feedback and unawaited rendering remain. No new dependency, request, timer, revision or cleanup policy; no measured speedup claimed.
+
+The user supplied a successful stage-84 isolated ExB 1.21 build (7,781 ms, zero errors/warnings). Browser acceptance and stage-85 ExB 1.21 validation remain unconfirmed.
+
+Validation: 2,881 passing portable tests / 211 files in both the workspace and clean installer-produced copy, zero failures or skips. Forty-one new comparisons cover conflicting-tool flags, strict config, updater/callback state and timing, replay, unawaited rendering, failures and stable host forwarding; existing solar suites remain unchanged. Strict module TypeScript, isolated ExB 1.20 module-graph build (zero errors/warnings), previous-state/callback/cleanup mutation checks, BOM/CRLF comparison and reversible installer checks pass. Installer checks cover dry-run, repeat, exact rollback, local documentation preservation, unknown/missing source, later edits, symlinks and corrupt backups.
+
+See docs/development/solar-mode.md. Installer: apply-solar-mode-refactor.cjs, requires reviewed stage-84 source; dry-run, exact backups, repeat verification and guarded uninstall preserve local documentation histories. No commit/push/deployment. Next: stage-85 ExB 1.21 build and solar toggle/conflicting-tool smoke, then another bounded coordinator responsibility.
+
+<!-- solar-model-stage84 -->
+
+## Stage 84 — solar model workflow (21 November 2026)
+
+Extracted solar update orchestration into src/features/solar/updateSolarModel.ts. Widget binds live context, localized feedback, SDK loading and existing map/viewer/lighting owners. Astronomy, timestamp/horizon checks, captured-map use, lazy-load revision/mode/config/view guards, render order and lighting predicates are preserved. No day/night filter, new request, timer, cache, revision policy, dependency or awaited step; no measured speedup claimed.
+
+The user supplied a successful stage-83 isolated ExB 1.21 build (7,662 ms, zero errors/warnings). Browser acceptance and stage-84 ExB 1.21 validation remain unconfirmed.
+
+Validation: 2,840 passing portable tests / 210 files in both the workspace and clean installer-produced copy, zero failures or skips. Forty new comparisons cover eligibility, timestamp/horizon feedback, cold/warm layer paths, captured-map and live-view behavior, lighting predicates, ordering and failure propagation; existing solar suites remain unchanged. Strict module TypeScript, isolated ExB 1.20 module-graph build (zero errors/warnings), revision/horizon/lighting mutation checks, BOM/CRLF comparison and reversible installer checks pass. Installer checks cover dry-run, repeat, exact rollback, local documentation preservation, unknown/missing source, later edits, symlinks and corrupt backups.
+
+See docs/development/solar-model-workflow.md. Installer: apply-solar-model-workflow-refactor.cjs, requires reviewed stage-83 source; dry-run, exact backups, repeat verification and guarded uninstall preserve local documentation histories. No commit/push/deployment. Next: stage-84 ExB 1.21 build and solar cold/warm/2D/3D smoke, then another bounded coordinator responsibility.
+
+<!-- navigation-feedback-stage83 -->
+
+## Stage 83 — navigation feedback presentation/styles (21 November 2026)
+
+Extracted center-map and heading-sync toast content into src/features/navigation/NavigationFeedback.tsx and its layout into src/styles/navigationFeedback.ts. Widget retains navigation, heading state, translation binding and toast publication. Icons, text keys, whitespace/fragments, evaluation order, default duration and fresh style objects remain. No new dependency, request, timer or navigation policy; no measured speedup claimed.
+
+The user supplied a successful stage-82 isolated ExB 1.21 build (7,847 ms, zero errors/warnings). Browser acceptance and stage-83 ExB 1.21 validation remain unconfirmed.
+
+Validation: 2,800 passing portable tests / 209 files in both the workspace and clean installer-produced copy, zero failures or skips. Twenty-four new comparisons cover JSX/style output, translation/evaluation order, navigation/state/toast boundaries, locales, queued updates and style identity. Existing tests are unchanged. Isolated ExB 1.20 module-graph build (zero errors/warnings), icon/size/layout mutation checks, BOM/CRLF comparison and reversible installer checks pass. Installer checks cover dry-run, repeat, exact rollback, local documentation preservation, unknown/missing source, later edits, symlinks and corrupt backups.
+
+See docs/development/navigation-feedback.md. Installer: apply-navigation-feedback-refactor.cjs, requires reviewed stage-82 source; dry-run, exact backups, repeat verification and guarded uninstall preserve local documentation histories. No commit/push/deployment. Next: stage-83 ExB 1.21 build and center/heading feedback smoke, then another bounded coordinator responsibility.
+
+<!-- sequence-profile-stage82 -->
+
+## Stage 82 — sequence elevation-profile workflow (21 November 2026)
+
+Extracted route preparation and profile-generation orchestration into src/features/elevation/updateSequenceProfile.ts. Widget binds live context, existing route demand, localized short-route UI, controller and indicator/log publication. Existing await/guard order, borrowed route, short-route clear/disable/notify order, controller predicate and post-controller indicator behavior are preserved. No new request, traversal, timer, revision, cache or dependency; no measured speedup claimed.
+
+The user supplied a successful stage-81 isolated ExB 1.21 build (8,933 ms, zero errors/warnings). Browser acceptance and stage-82 ExB 1.21 validation remain unconfirmed.
+
+Validation: 2,776 passing portable tests / 208 files in both the workspace and clean installer-produced copy, zero failures or skips. Thirty-three new comparisons cover route demand, stale context, short-route UI, controller eligibility, completion/error boundaries and stable host forwarding; existing elevation tests are unchanged. Strict module TypeScript, isolated ExB 1.20 module-graph build (zero errors/warnings), stale-sequence/short-route/controller-predicate mutation checks, BOM/CRLF comparison tests and reversible installer checks pass. Installer checks cover dry-run, repeat, exact rollback, local documentation preservation, unknown/missing source, later edits, symlinks and corrupt backups.
+
+See docs/development/sequence-profile-workflow.md. Installer: apply-sequence-profile-workflow-refactor.cjs, requires reviewed stage-81 source; dry-run, exact backups, repeat verification and guarded uninstall preserve local documentation histories. No commit/push/deployment. Next: stage-82 ExB 1.21 build and profile route-loading/indicator smoke, then another bounded coordinator responsibility.
+
+<!-- point-marker-stage81 -->
+
+## Stage 81 — point marker properties (21 November 2026)
+
+Extracted clicked-location and legacy sequence-point geometry/symbol property factories into src/features/map-graphics/pointMarkerProperties.ts. Widget retains ArcGIS allocation, Turbo/context guards, tags, deduplication, batching, attachment and stored references. Exact 2D/3D styles, attribute rules, color identity and fresh nested objects are preserved. No new dependency, request, layer, timer or render loop; no measured speedup claimed.
+
+The user supplied a successful stage-80 isolated ExB 1.21 build (8,067 ms, zero errors/warnings). Browser acceptance and stage-81 ExB 1.21 validation remain unconfirmed.
+
+Validation: 2,743 passing portable tests / 207 files in both the workspace and clean installer-produced copy, zero failures or skips. Thirty-two new cases compare frozen marker methods against actual runtime/property construction, including ownership traces and color/fresh-object identity. Existing native-sequence assertions remain unchanged. Strict module TypeScript, isolated ExB 1.20 module-graph build (zero errors/warnings), mutation checks for 3D offset/attributes/marker size, BOM/CRLF comparison and reversible installer checks pass. Installer checks cover dry-run, repeat, exact rollback, documentation preservation, unknown/missing source, later edits, symlinks and corrupt backups.
+
+See docs/development/point-marker-properties.md. Installer: apply-point-marker-properties-refactor.cjs, requires reviewed stage-80 source; dry-run, exact backups, repeat verification and guarded uninstall preserve local documentation histories. No commit/push/deployment. Next: stage-81 ExB 1.21 build and marker/legacy/Turbo smoke, then another bounded coordinator responsibility.
+
+<!-- toast-notifications-stage80 -->
+
+## Stage 80 — toast notification ownership (21 November 2026)
+
+Extracted toast timer/progress ownership into src/features/notifications/ToastNotifications.ts. Widget retains React/localization, message publication, default duration and feature callers. Cloud cleanup dismisses matching progress only, preserving newer unrelated notifications. Existing timer truthiness, all-duration scheduling, expiry/dismissal order and failure behavior remain. No new dependency, timer, request or cleanup policy; no measured speedup claimed.
+
+The user supplied a successful stage-79 isolated ExB 1.21 build (7,672 ms, zero errors/warnings). Browser acceptance and stage-80 ExB 1.21 validation remain unconfirmed.
+
+Validation: 2,711 passing portable tests / 206 files in both the workspace and clean installer-produced copy, zero failures or skips. Twenty-nine new cases compare frozen stage-79 toast behavior with the actual extracted module/widget adapter. Both existing point-cloud harnesses bind the real toast owner and retain their assertions. Strict module TypeScript, isolated ExB 1.20 module-graph build (zero errors/warnings), mutation checks for owner matching/replacement cancellation/expiry reset, BOM/CRLF comparison tests and reversible installer checks pass. Installer checks cover dry-run, repeat, exact rollback, local documentation preservation, unknown/missing source, later edits, symlinks and corrupt backups.
+
+See docs/development/toast-notifications.md. Installer: apply-toast-notifications-refactor.cjs, requires reviewed stage-79 source; dry-run, exact backup, repeat verification and guarded uninstall preserve local documentation history. No commit/push/deployment. Next: stage-80 ExB 1.21 build and toast/progress smoke, then another bounded coordinator responsibility.
+
+<!-- nearby-selection-stage79 -->
+
+## Stage 79 — Nearby image selection (21 November 2026)
+
+Extracted Nearby tray navigation/heading restoration into src/features/imagery/NearbyImageSelection.ts. Widget keeps live context bindings, preview/selection publication, cone redraw and logging. The existing pose helper, two awaits, confirmation/identity guards, publication order and error boundaries are preserved. No new dependencies, requests, timers, prefetch or lifecycle policy; no measured speedup claimed.
+
+The user supplied a successful stage-78 isolated ExB 1.21 build (7,926 ms, zero errors/warnings). That does not establish stage-78 browser smoke or stage-79 host acceptance. Existing sequence-transition browser confirmation remains recorded separately.
+
+Validation: 2,682 passing portable tests / 205 files in the workspace and clean installer-produced copy, zero failures or skips. Thirty new cases compare frozen original/current navigation traces; the existing object/Nearby lifecycle assertions are unchanged and use the actual owner. Strict isolated TypeScript (actual NearbyImage/pose declarations), isolated ExB 1.20 module-graph build (zero errors/warnings), mutation checks for revision/selection/confirmed-image guards, and BOM/CRLF comparison tests pass. Reversible installer checks cover dry-run, repeat verification, exact rollback, local documentation preservation, unknown/missing source, later edits, symlinks and corrupt backups.
+
+See docs/development/nearby-image-selection.md. Delivery: apply-nearby-image-selection-refactor.cjs, requires reviewed stage-78 source. Supports dry-run, exact backups, repeat verification and guarded uninstall while preserving local documentation histories. No commit/push/deployment. Next: stage-79 ExB 1.21 build and Nearby navigation smoke, then another bounded coordinator responsibility.
+
+<!-- reverse-address-stage78 -->
+
+## Stage 78 — reverse-address enrichment (21 November 2026)
+
+Continued from origin/main `40648033d0a4f6104cfc67340bc3fc22cc296138` after reading MAPILLARY-ACCOUNT-HANDOFF-2026-11-20.md. The user confirmed the preceding sequence-transition fix is applied and working in ExB. Its broader 2D/3D failure/cancellation matrix and the current stage's ExB 1.21 build/browser checks are not inferred from that report.
+
+Extracted optional address request ownership into src/features/imagery/ReverseAddressEnrichment.ts. Widget binds live selection/view identity, the existing background queue and UI/log publication. All five cancellation boundaries retain their placement; service formatting/fetching and the sequence-highlight fix are unchanged. No new dependencies, requests, timers or scheduling policy. No measured speedup claimed.
+
+Validation: 2,652 passing portable tests / 204 files in both the workspace and clean installer-produced copy, zero failures or skips; strict extracted-module TypeScript and isolated ExB 1.20 module-graph build (zero errors/warnings). The fetched checkpoint independently passed 2,626 / 203. The prior handoff's extra 19 profiler cases were not tracked in origin `4064803`; current counts describe the fetched repository, not that separate workspace. The 26 added cases include five lifecycle-placement checks. Three method-only test harnesses now bind the extracted owner seam; their assertions remain unchanged. Mutation checks detect removed stale-image/abort guards and broken current-controller cleanup. Installer checks cover dry-run, repeat, BOM/CRLF, exact rollback, unknown/missing source, later edits, symlinks and corrupt backups.
+
+Validation and delivery details: docs/development/reverse-address-enrichment.md. Installer: apply-reverse-address-enrichment-refactor.cjs; reviewed stage77-plus-fix source required; dry-run, exact backup, repeat verification and guarded uninstall. Preserve local documentation history. No commit/push/deployment. Next: host address-enrichment smoke checks, then inspect another bounded coordinator responsibility.
+
 <!-- sequence-transition-fix -->
 
 ## Fix — retire the previous sequence highlight at image-selection start (20 November 2026)

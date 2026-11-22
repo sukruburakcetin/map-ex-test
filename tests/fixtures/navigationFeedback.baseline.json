@@ -1,0 +1,6 @@
+{
+  "methods": {
+    "handleCenterMap": "private handleCenterMap = () => {\n    const { imageId, sequenceImages, jimuMapView } = this.state;\n    if (!imageId || !jimuMapView) return;\n\n    const currentImg = sequenceImages.find((img) => img.id === imageId);\n    if (currentImg) {\n      this.navigateMapView(jimuMapView.view,\n        {\n          center: [currentImg.lon, currentImg.lat],\n          zoom: Math.max(jimuMapView.view.zoom, 17),\n        },\n        { animate: true, duration: 800 },\n      );\n\n      this.showToast(\n        <span style={{ display: \"flex\", alignItems: \"center\", gap: \"6px\" }}>\n          <Icons.Crosshair size={14} />  {this._t('appMapCenteredOnCurrentFrame')} </span>,\n      );\n    }\n  };",
+    "handleToggleSyncHeading": "private handleToggleSyncHeading = () => {\n    const newSyncHeading = !this.state.syncHeading;\n    this.setState({ syncHeading: newSyncHeading });\n\n    this.showToast(\n      <span style={{ display: \"flex\", alignItems: \"center\", gap: \"6px\" }}>\n        {newSyncHeading ? (\n          <>\n            <Icons.CompassLocked size={14} />  {this._t('appMapRotationSyncedToCamera')} </>\n        ) : (\n          <>\n            <Icons.CompassUnlocked size={14} />  {this._t('appMapRotationUnlocked')} </>\n        )}\n      </span>,\n    );\n  };"
+  }
+}

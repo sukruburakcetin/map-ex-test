@@ -10,7 +10,7 @@ function setup({type='3d',pick,feature,hit}={}){
   pickTurboGraphic:pick||(async()=>({attributes:{image_id:'image'}})),hitTestHoverLayers:hit||(async()=>({results:[]})),pickMapFeature:feature||(async()=>null),
   updateTurboHover:()=>trace.push('imagery'),clearTurboHoverDetails:()=>trace.push('clear'),
   log:()=>trace.push('debug'),updateTurboPickWarning:()=>trace.push('warning'),_t:key=>key};
- const handler=new Function('view','TURBO_LIMITS','LAYER_IDS','setTimeout','clearTimeout','renderMapFeatureHoverLabel',compile('let hoverHitTestTimeout=null;return ('+pointer.getText(sf)+');')).call(w,view,{pickRadiusPx:8,hoverRadiusPx:8},{OBJECTS_FL:'objects',TRAFFIC_SIGNS_FL:'signs'},fn=>{jobs.push(fn);return jobs.length},()=>{},()=>trace.push('feature label'));
+ const handler=require('./helpers/mapHoverSource.cjs').createPointerHandler(w,view,{TURBO_LIMITS:{pickRadiusPx:8,hoverRadiusPx:8},LAYER_IDS:{OBJECTS_FL:'objects',TRAFFIC_SIGNS_FL:'signs'},setTimeout:fn=>{jobs.push(fn);return jobs.length},clearTimeout:()=>{},renderMapFeatureHoverLabel:()=>trace.push('feature label')});
  return{w,view,trace,move:()=>handler({x:100,y:100}),run:()=>jobs.shift()()};
 }
 for(const type of ['2d','3d'])test(`${type}: failed native detection lookup preserves successful coverage hover without an imagery error`,async()=>{

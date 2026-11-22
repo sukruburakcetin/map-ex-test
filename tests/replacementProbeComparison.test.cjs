@@ -5,7 +5,7 @@ const m={exports:{}};new Function('module','exports',compile(fs.readFileSync(roo
 const {chooseCaptureReplacementProbe}=m.exports;
 const golden=JSON.parse(fs.readFileSync(__dirname+'/fixtures/replacementProbeComparison.baseline.json'));
 const previous=new Function('bestReplacement','pair','trialOpportunities','trialExtraMinutes',compile(golden.body+'return bestReplacement;'));
-const widget=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8');
+const widget=require('./helpers/captureExecutionSource.cjs').captureExecutionSource();
 const a=widget.indexOf('                  bestReplacement = chooseCaptureReplacementProbe('),b=widget.indexOf('\n                }',a);assert(a>0&&b>a);
 const adapter=new Function('chooseCaptureReplacementProbe','bestReplacement','pair','trialOpportunities','trialExtraMinutes',compile(widget.slice(a,b)+'return bestReplacement;'));
 const current=()=>Object.freeze({opportunities:Object.freeze([{id:'old'}]),addId:'old-add',removeId:'old-remove',extraMinutes:3,valueGain:100});

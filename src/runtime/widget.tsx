@@ -1,3 +1,15 @@
+import { cleanupWidgetEnvironment, unmountWidget, type WidgetTeardownHost } from '../features/lifecycle/widgetTeardown';
+import { reconcileWidgetUpdate, type WidgetUpdateHost } from '../features/lifecycle/widgetUpdate';
+import { mountWidget, disposeWidgetStartup, type WidgetStartupHost } from '../features/lifecycle/widgetStartup';
+import { openSequence, type SequenceOpeningHost, type OpeningState } from '../features/imagery/sequenceOpening';
+import { bindViewerEvents, type ViewerEventsHost } from '../features/imagery/viewerEventBinding';
+import type { ViewerImageTrackingHost } from '../features/imagery/viewerImageTracking';
+import { bindDetectionHover, type DetectionHoverHost } from '../features/detections/detectionHover';
+import { createMapHoverHandler, type MapHoverHost } from '../features/navigation/mapHoverDispatch';
+import { dispatchMapClick, type MapClickHost, type PreparedMapClick } from '../features/navigation/mapClickDispatch';
+import { ActiveViewTransfer, type ActiveViewTransferHost, type ActiveViewAttachmentHost } from '../features/navigation/ActiveViewTransfer';
+import { restoreActiveView, restoreSharedStateWhenReady, type ActiveViewStartupHost } from '../features/navigation/activeViewStartup';
+import { executeCaptureRoute, type CaptureRouteExecutionHost } from '../features/routing/executeCaptureRoute';
 import { coverageZoneProperties } from "../features/coverage/coverageZoneProperties";
 import { ZoomWarningTimer } from "../features/coverage/ZoomWarningTimer";
 import { downloadImageFile } from "../features/imagery/downloadImageFile";
@@ -22,35 +34,29 @@ import { createMinimapClickHandler } from "../features/minimap/minimapSelection"
 import { buildMinimapLayers } from "../features/minimap/minimapLayers";
 import { resolveMinimapBasemap } from "../features/minimap/minimapBasemap";
 import { renderCaptureRouteGraphics } from "../features/routing/captureRouteRenderer";
-import { prepareCaptureTrial } from "../features/routing/captureTrialPlan";
-import { evaluateFinalCaptureRoute } from "../features/routing/captureRouteEvaluation";
-import { reportCaptureCorridor, reportCaptureSelection } from "../features/routing/captureSelectionReport";
+
+
 import { planRuntimeRoutingEngineChange, planRuntimeTravelModeChange } from "../features/routing/runtimeRoutingSettings";
 import { discoverPortalRoutingService, isRoutingAuthenticationFailure } from "../features/routing/routingAuthentication";
 import { createRoutePointGraphic } from "../features/routing/routePointGraphic";
 import { createCaptureProvider } from "../features/routing/captureProviderFactory";
 import { resolveCaptureRoutingProvider, type ResolvedRoutingProvider } from "../features/routing/routingProviderResolution";
-import { chooseCaptureReplacementProbe, type CaptureReplacementProbe } from "../features/routing/replacementProbeComparison";
-import { classifyPreflightQuality, classifyPreflightSnaps } from "../features/routing/preflightQuality";
-import { reportCaptureRouteCoverage } from "../features/routing/captureCoverageReport";
-import { selectFinalCaptureRoute } from "../features/routing/finalCaptureSelection";
-import { buildCaptureRouteData } from "../features/routing/captureRouteData";
-import { CaptureSolveHistory } from "../features/routing/CaptureSolveHistory";
-import { planAdaptiveNetworkRemoval } from "../features/routing/adaptiveNetworkRemoval";
-import {
-  chooseNetworkBudgetProbe, chooseProgressBudgetProbe, chooseFittingBudgetProbe,
-  type NetworkBudgetProbe, type ProgressBudgetProbe, type FittingBudgetProbe,
-} from "../features/routing/budgetProbeComparison";
-import { scoreCaptureNetworkPenalties } from "../features/routing/captureNetworkPenalties";
-import { rankCaptureReplacementPairs } from "../features/routing/replacementPairRanking";
-import { hasBrokenTrialOpportunity } from "../features/routing/trialPreflightQuality";
-import { buildPreflightSnapDiagnostics, buildPreflightLegDiagnostics } from "../features/routing/preflightDiagnostics";
-import { planPreflightBatchPruning } from "../features/routing/preflightBatchPruning";
-import { planFinalSolveBatchPruning } from "../features/routing/finalSolveBatchPruning";
-import { selectAdaptiveCaptureOpportunities } from "../features/routing/adaptiveCaptureSelection";
-import {
-  scoreCaptureTargets, captureStopOwners,
-} from '../features/routing/captureRouteScoring';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import { type CaptureRoutePreparationHost } from "../features/routing/captureRoutePreparation";
+import { scoreCaptureTargets } from '../features/routing/captureRouteScoring';
 import { DetectionLayerController } from '../features/detections/DetectionLayerController';
 import { RouteGeneration } from '../features/routing/RouteGeneration';
 import { OwnedMapResources } from '../features/map-graphics/OwnedMapResources';
@@ -58,10 +64,8 @@ import { type CategoryDisplayMode, categoryMatcher, selectedCategoryCodes, type 
 import { placesSourceKey, placesSourceKind } from '../features/places/placesSource';
 import { PortalPlacesSource } from '../features/places/PortalPlacesSource';
 import { placesApiEndpoints } from '../features/places/placesApi';
-import { nearestLoadedFrame } from '../features/coverage/nearestLoadedFrame';
-import { coverageClickHitTest } from '../features/coverage/coverageClickDispatch';
-import { CoverageTouchHover } from '../features/coverage/CoverageTouchHover';
-import { CoverageHoverResume } from '../features/coverage/CoverageHoverResume';
+import type { CoverageTouchHover } from '../features/coverage/CoverageTouchHover';
+import type { CoverageHoverResume } from '../features/coverage/CoverageHoverResume';
 import { hoverBearingImageId, HoverBearingHintCache } from '../features/imagery/hoverBearingTarget';
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
@@ -131,7 +135,6 @@ import {
   insetBbox,
   segmentMidpointInBbox,
   lonLatToWebMercator,
-  getSunPosition,
 } from "../utils/geoUtils";
 import { buildAllFilters } from "../utils/filterBuilder";
 import { organizationFilterId } from "../utils/organizationFilter";
@@ -185,7 +188,6 @@ import { showLocalNotesClearedFeedback } from '../features/field-notes/LocalNote
 import { FieldNoteDraft } from '../features/field-notes/FieldNoteDraft';
 import { showFieldNoteDraftFeedback } from '../features/field-notes/FieldNoteDraftFeedback';
 import { PointCloudAnnotationPicker } from '../features/field-notes/PointCloudAnnotationPicker';
-import type { AnnotationMapPoint } from '../features/field-notes/PointCloudAnnotationPicker';
 import { PointCloudHitRouting } from '../features/point-cloud/PointCloudHitRouting';
 import type { PointCloudHitGeometry } from '../features/point-cloud/PointCloudHitRouting';
 import { PointCloudTools } from '../features/point-cloud/PointCloudTools';
@@ -215,10 +217,10 @@ import { Viewer, OutlineTag, PolygonGeometry, geodeticToEnu, RenderPass } from "
 import { PanoramaDetectionLabels } from '../features/detections/PanoramaDetectionLabels';
 import { DetectionNoteAction } from '../features/detections/DetectionNoteAction';
 import { MapSpriteLoading } from '../features/detections/MapSpriteLoading';
-import { createNoteObjectChoice, deferNoteObjectPopup } from '../features/detections/NoteObjectChoice';
+import { createNoteObjectChoice } from '../features/detections/NoteObjectChoice';
 import { attachmentMetadata, captureDetectionCrop, storeDetectionCrop, readDetectionCrop, deleteDetectionCrop } from '../features/detections/detectionImageAttachment';
 import { validDetectionNoteLocation, mappedDetectionLocation } from '../features/detections/detectionNote';
-import type { DetectionNoteSelection, DetectionNoteDestination } from '../features/detections/detectionNote';
+import type { DetectionNoteDestination } from '../features/detections/detectionNote';
 import type { DetectionPreviewLoader } from '../features/detections/detectionPreview';
 import { defaultDetectionExplorer, detectionGroup, showDetection } from '../features/detections/detectionExploration';
 import type { DetectionExplorerOptions, DetectionSummary } from '../features/detections/detectionExploration';
@@ -234,9 +236,9 @@ import { ImageUtilityGroup } from "../components/ImageUtilityGroup";
 import type { FilterOption, NearbyImage, AssociatedImage } from "../components/types";
 import { FieldNote, FieldNoteAttachments } from "../components/types";
 import { FieldNotesPanel } from "../components/FieldNotesPanel";
-import { buildFinalRouteStops } from "../utils/routeOptimizer";
-import type { RouteTargetSegment, CaptureOpportunity } from "../utils/routeOptimizer";
-import type { RoutingResult, RoutingProvider, CaptureTravelMode } from "../utils/routingTypes";
+
+import type { RouteTargetSegment } from "../utils/routeOptimizer";
+import type { RoutingProvider, CaptureTravelMode } from "../utils/routingTypes";
 import type { RoutingEngine } from "../config";
 import { TURBO_LIMITS, TurboSpatialIndex, TurboIndexCache, TurboTileCache, turboTiles, visitTurboImageLayer, turboPointMatches, turboTileStyle, turboFootprintBboxes, TurboMetadataCache, detectionThumbnailBounds } from "../utils/turboCoverageUtils";
 import { MAPILLARY_IMAGE } from "../utils/mapillary-image-base64";
@@ -245,7 +247,7 @@ import { findNearbySequenceFrame } from "../features/coverage/nearbySequenceFram
 import { CoverageFrameLookup, coverageFrameKey } from "../features/coverage/CoverageFrameLookup";
 import { RepresentativePickCache } from "../features/coverage/RepresentativePickCache";
 import { DelayedHoverStatus } from "../features/imagery/DelayedHoverStatus";
-import { clearImageryHoverCardCache, renderImageryHoverCard, positionImageryHoverCard, renderMapFeatureHoverLabel } from "../features/imagery/hoverCard";
+import { clearImageryHoverCardCache, renderImageryHoverCard, positionImageryHoverCard } from "../features/imagery/hoverCard";
 import { fetchGraphJson } from '../services/mapillary/graphJson';
 import { queryEnterpriseNotesPage } from '../features/field-notes/enterpriseList';
 import { matchesEnterpriseLayerUrl, resolveEnterpriseNotesEndpoint } from '../features/field-notes/enterpriseEndpoint';
@@ -267,7 +269,15 @@ import { loadTimeTravelPreview } from '../features/imagery/timeTravelPreview';
 import { TimeTravelAvailability } from '../features/imagery/timeTravel';
 import { CachedSequencePreview } from '../features/imagery/CachedSequencePreview';
 import { copyCoordinates } from '../services/browser/coordinateClipboard';
-import { fetchReverseAddress } from '../services/geocoding/reverseAddress';
+import { clickedLocationPointProperties, legacySequencePointProperties } from '../features/map-graphics/pointMarkerProperties';
+import { updateSequenceProfile, type SequenceProfileHost } from '../features/elevation/updateSequenceProfile';
+import { mapCenteredFeedback, headingSyncFeedback } from '../features/navigation/NavigationFeedback';
+import { updateSolarModel, type SolarModelHost } from '../features/solar/updateSolarModel';
+import { toggleSolarMode, type SolarModeHost } from '../features/solar/solarMode';
+import { toggleProfileMode, type ProfileModeHost } from '../features/elevation/profileMode';
+import { ArcGISModuleInitialization } from '../services/arcgis/ArcGISModuleInitialization';
+import { ToastNotifications } from '../features/notifications/ToastNotifications';
+import { ReverseAddressEnrichment } from '../features/imagery/ReverseAddressEnrichment';
 import { resolveCreatorId } from '../features/coverage/creatorLookup';
 import { buildPointCloudCsv } from '../features/point-cloud/csvExport';
 import { downloadCaptureRouteGPX } from '../features/routing/gpxExport';
@@ -281,6 +291,7 @@ import type { LiveSequenceFrame } from '../features/imagery/LiveSequenceFrames';
 import { SharedSequenceRequests } from '../features/imagery/sharedSequenceRequests';
 import { sequenceCacheStore } from '../features/imagery/sequenceCacheStore';
 import { NearbyImageDiscovery } from '../features/imagery/nearbyDiscovery';
+import { NearbyImageSelection } from '../features/imagery/NearbyImageSelection';
 import { NearbyImageHighlight, nearbyImagePose } from '../features/imagery/nearbyHighlight';
 import type { SequenceCoordinate, SequenceProgress } from '../features/imagery/sequenceCoordinates';
 
@@ -1112,7 +1123,13 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   private readonly _sequencePerformance = new SequencePerformance();
   private _tileRequestToken: string | null = null;
-  private _reverseGeocodeAbort: AbortController | null = null;
+  private readonly _reverseAddressEnrichment = new ReverseAddressEnrichment<__esri.MapView | __esri.SceneView>({
+    imageId: () => this.state.imageId,
+    view: () => this.state.jimuMapView?.view,
+    runBackground: (work, signal) => this.runSequenceBackground(work, signal),
+    publish: address => this.setState({ address }),
+    warn: error => console.warn('[Mapillary] Address enrichment unavailable:', error),
+  });
   private readonly _sequenceDiagnostics = new SequenceDiagnostics({
     snapshot: () => this.sequenceDiagnosticsSnapshot(),
     reset: () => { this._sequencePerformance.reset(); this._nearbyDiscovery?.resetStats(); },
@@ -1348,13 +1365,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     measurement: () => this._measurement,
     sight: () => this._sight,
     rings: () => this._rings,
-    dismissProgress: () => {
-      if (this._toastOwner === "point-cloud-progress") {
-        if (this._toastTimer) clearTimeout(this._toastTimer);
-        this._toastTimer = null; this._toastOwner = undefined;
-        this.setState({ toastMessage: undefined });
-      }
-    },
+    dismissProgress: () => this._toastNotifications.dismiss("point-cloud-progress"),
     cancelNudge: () => this._debouncedNudgeRender?.cancel?.(),
     clearViewerData: () => {
       this._pointCloudSequenceContext = null;
@@ -1478,8 +1489,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _coverageSelectionTargets = new CoverageSelectionTargets<__esri.Point>();
   private _directionBindings: DirectionHoverBindings | null = null;
   private detectionTagMap: Map<string, string> = new Map();
-  private _toastTimer: ReturnType<typeof setTimeout> | null = null;
-  private _toastOwner: "point-cloud-progress" | undefined;
+  private readonly _toastNotifications = new ToastNotifications<React.ReactNode>({
+    show: message => this.setState({ toastMessage: typeof message === "string" ? <OwnedMessage source={message} /> : message }),
+    hide: () => this.setState({ toastMessage: undefined }),
+  });
 
   // Backup arrays to reset filter dropdowns to their initial state
   private _fullTrafficSignsOptions: Array<{ value: string; label: string; iconUrl: string | null }> = [];
@@ -1542,7 +1555,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   /** Scopes native coverage setup/loading feedback to the current coverage revision. */
   private _turboRequestCount: number = 0;
   /** Invalidates delayed setup/shared-link work when the active map view is replaced. */
-  private _viewStartupRevision = 0;
+  private readonly _activeViewTransfer = new ActiveViewTransfer<__esri.MapView | __esri.SceneView>(this.activeViewTransferHost());
   private _startupUrlParameters: URLSearchParams | null = null;
   private _sharedStateRestoreComplete: boolean = false;
   private _isFlyInActive: boolean = false;
@@ -1777,280 +1790,132 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }, 300);
   }
 
+  /** Bind live image-tracking capabilities once per viewer event binding; no work starts during binding. */
+  private viewerImageTrackingHost(): ViewerImageTrackingHost<Viewer, __esri.MapView | __esri.SceneView> {
+    const widget = this;
+    return {
+      get currentView() { return widget.state.jimuMapView?.view; },
+      get syncMap() { return widget.props.config.syncMapWithImage; },
+      get loading() { return widget.state.isLoading; },
+      get imageId() { return widget.state.imageId; },
+      get sequenceId() { return widget.state.sequenceId; },
+      get viewerNote() { return widget.state.viewerDetectionNote; },
+      get profileActive() { return widget.state.isElevationProfileActive; },
+      get detectionsActive() { return widget.state.detectionsActive; },
+      get solarActive() { return widget.state.isSolarMode; },
+      get currentViewer() { return widget.mapillaryViewer; },
+      get openingRequest() { return widget._imageryOpeningRequest; },
+      set openingRequest(value) { widget._imageryOpeningRequest = value; },
+      get retry() { return widget._selectionRetry; },
+      set retry(value) { widget._selectionRetry = value; },
+      get bearing() { return widget._currentImageBearing; },
+      get confirmedViewer() { return widget._profileConfirmedViewer; },
+      set confirmedViewer(value) { widget._profileConfirmedViewer = value; },
+      get confirmedImageId() { return widget._profileConfirmedImageId; },
+      set confirmedImageId(value) { widget._profileConfirmedImageId = value; },
+      get initialImage() { return widget._isInitialImageLoad; },
+      get noteReview() { return widget._placeNoteReview; },
+      get stopRoute() { return widget._stopRoutePreview; },
+      get detectionAbort() { return widget._detectionAbort; },
+      get timeTravel() { return widget._timeTravelAvailability; },
+      get nearby() { return widget._nearbyDiscovery; },
+      get frames() { return widget._liveSequenceFrames; },
+      get places() { return widget._places; },
+      get performance() { return widget._sequencePerformance; },
+      get paused() { return widget._userPaused; },
+      get address() { return widget._reverseAddressEnrichment; },
+      get requestId() { return widget._selectionRequestId; },
+      set requestId(value) { widget._selectionRequestId = value; },
+      get selectionAbort() { return widget._selectionAbort; },
+      set selectionAbort(value) { widget._selectionAbort = value; },
+      get background() { return widget._backgroundRequests; },
+      get deferredRequest() { return widget._localSequenceDeferredRequest; },
+      set deferredRequest(value) { widget._localSequenceDeferredRequest = value; },
+      get optimisticId() { return widget._nearbySelectedId; },
+      set optimisticId(value) { widget._nearbySelectedId = value; },
+      get details() { return widget._liveFrameDetails; },
+      get flying() { return widget._isFlyInActive; },
+      highlightNearbyPin: (...args) => this.highlightNearbyPin(...args),
+      updateProfileIndicator: (...args) => this.updateProfileIndicator(...args),
+      applyCustomCameraAngle: (...args) => this.applyCustomCameraAngle(...args),
+      cancelDetectionNoteLocation: (...args) => this.cancelDetectionNoteLocation(...args),
+      clearPendingNoteGraphic: (...args) => this.clearPendingNoteGraphic(...args),
+      commit: (...args) => this.setState(...args),
+      updatePlacesCamera: (...args) => this.updatePlacesCamera(...args),
+      clearActiveSequenceLayer: (...args) => this.clearActiveSequenceLayer(...args),
+      prepareDemandSequence: (...args) => this.prepareDemandSequence(...args),
+      checkAndLoadNextPointCloud: (...args) => this.checkAndLoadNextPointCloud(...args),
+      updateMinimapTracking: (...args) => this.updateMinimapTracking(...args),
+      refreshSequenceMarkerWindow: (...args) => this.refreshSequenceMarkerWindow(...args),
+      refreshLocalSequence: (...args) => this.refreshLocalSequence(...args),
+      syncMapToImage: (...args) => this.syncMapToImage(...args),
+      loadDetections: (...args) => this.loadDetections(...args),
+      updateViewerFieldNoteMarkers: (...args) => this.updateViewerFieldNoteMarkers(...args),
+      checkForTimeTravel: (...args) => this.checkForTimeTravel(...args),
+      updateSolarGraphics: (...args) => this.updateSolarGraphics(...args),
+      fetchReverseGeocode: (...args) => this.fetchReverseGeocode(...args),
+      updateUrlWithCurrentImage: (...args) => this.updateUrlWithCurrentImage(...args),
+      fetchNearbyImages: (...args) => this.fetchNearbyImages(...args),
+      hasDraft: () => !!(this.state.pendingFieldNote || this.state.detectionWorkspaceDraft || this._detectionWorkspaceMarkerOwner),
+      clearDetectionMarkers: () => { this._detectionViewerMarkers?.dispose(); this._detectionViewerMarkers = null; },
+      clearDetectionImageData: () => { this._detectionImageData = null; },
+      clearPanoramaLabels: () => { this._panoramaDetectionLabels?.dispose(); this._panoramaDetectionLabels = null; },
+      publishPulse: frame => { this.currentGreenGraphic = this.drawPulsingPoint(frame.lon, frame.lat, [0, 255, 0, 1], frame.id); },
+      rememberSelection: newId => { this._lastSuccessfulSelection = { sequenceImages: this.state.sequenceImages, imageId: newId, sequenceId: this.state.sequenceId, selectedSequenceId: this.state.selectedSequenceId }; },
+    };
+  }
+
   /**
    * Bind image, camera and playback callbacks to the current Mapillary viewer.
    * Rebinding clears current map feedback; callers restoring feedback must do so afterward.
    * Event handlers coordinate live selection state with feature-owned renderers and background metadata.
    */
   private bindMapillaryEvents() {
-    const profileEventViewer = this.mapillaryViewer;
-    if (!this.mapillaryViewer) return;
-    this._currentImageBearing?.invalidate();
+    bindViewerEvents(this.viewerEventsHost());
+  }
 
-    // Clear any existing green pulse before binding new events
-    this.clearGreenPulse();
-
-    // Also clear any existing cone graphics
-    this.clearConeGraphics();
-
-    // Debounced URL bearing update, rebuilds on every bindMapillaryEvents call
-    // so it always closes over the latest imageId/lat/lon from state
-    this._debouncedBearingUrlUpdate = debounceUtil(() => {
-      // Skip while fly-in is active, Mapillary keeps firing bearing events
-      // as it transitions to the image's natural compass angle, which would
-      // overwrite the shared bearing in the URL before the user even sees it.
-      if (this._isFlyInActive) return;
-      const { imageId, sequenceImages } = this.state;
-      if (!imageId) return;
-      const img = this._liveSequenceFrames.find(imageId) || sequenceImages.find((s) => s.id === imageId);
-      if (img) this.updateUrlWithCurrentImage(imageId, img.lat, img.lon);
-    }, 600);
-
-    // Define local redraw helper, pass specific coordinates
-    const redrawCone = (lon?: number, lat?: number) => {
-      const view = this.state.jimuMapView?.view;
-      if (!view) return;
-
-      // If Turbo Mode is active and no specific sequence is selected,
-      // we should not draw the camera cone.
-      if (this.state.turboModeActive && !this.state.selectedSequenceId) {
-        this.clearConeGraphics();
-        return;
-      }
-
-      // If no coordinates provided, get from current image
-      if (lon === undefined || lat === undefined) {
-        const currentId = this.state.imageId;
-        if (!currentId) return;
-        const img = this._liveSequenceFrames.current || this._liveSequenceFrames.find(currentId);
-        if (!img) return;
-        lon = img.lon;
-        lat = img.lat;
-      }
-
-      // Bearing events already supply the latest bearing. Never await per redraw.
-      const bearing = this._lastBearing || 0;
-
-      const length = this.coneLengths[this.zoomStepIndex];
-      const spread = this.coneSpreads[this.zoomStepIndex];
-
-      // drawCone() already clears the previous cone internally
-      this.drawCone(lon, lat, bearing, length, spread);
+  /** Bind live viewer-event capabilities without starting SDK listeners, timers or rendering while binding. */
+  private viewerEventsHost(): ViewerEventsHost<Viewer, __esri.MapView | __esri.SceneView> {
+    const widget = this;
+    return {
+      get view() { return widget.state.jimuMapView?.view; },
+      get syncMap() { return widget.props.config.syncMapWithImage; },
+      get sequenceImages() { return widget.state.sequenceImages; },
+      get imageId() { return widget.state.imageId; },
+      get turbo() { return widget.state.turboModeActive; },
+      get selectedSequence() { return widget.state.selectedSequenceId; },
+      get syncHeading() { return widget.state.syncHeading; },
+      get locked() { return widget.state.lockToImage; },
+      get viewer() { return widget.mapillaryViewer; },
+      get bearing() { return widget._currentImageBearing; },
+      get flying() { return widget._isFlyInActive; },
+      get frames() { return widget._liveSequenceFrames; },
+      get lastBearing() { return widget._lastBearing; },
+      set lastBearing(value) { widget._lastBearing = value; },
+      get coneLengths() { return widget.coneLengths; },
+      get coneSpreads() { return widget.coneSpreads; },
+      get zoomStep() { return widget.zoomStepIndex; },
+      set zoomStep(value) { widget.zoomStepIndex = value; },
+      get sharedBearing() { return widget._sharedStartupBearing; },
+      get coneRaf() { return widget._coneRedrawRaf; },
+      set coneRaf(value) { widget._coneRedrawRaf = value; },
+      get bearingUrl() { return widget._debouncedBearingUrlUpdate; },
+      set bearingUrl(value) { widget._debouncedBearingUrlUpdate = value; },
+      clearGreenPulse: (...args) => this.clearGreenPulse(...args),
+      clearConeGraphics: (...args) => this.clearConeGraphics(...args),
+      updateUrlWithCurrentImage: (...args) => this.updateUrlWithCurrentImage(...args),
+      drawCone: (...args) => this.drawCone(...args),
+      setupDirectionHover: (...args) => this.setupDirectionHover(...args),
+      updateMinimapTracking: (...args) => this.updateMinimapTracking(...args),
+      navigateMapView: (...args) => this.navigateMapView(...args),
+      imageTrackingHost: (...args) => this.viewerImageTrackingHost(...args),
+      container: () => this.viewerContainer.current,
+      debounce: debounceUtil,
+      bindPlayback: () => {
+        this._playbackBindings ??= new PlaybackBindings(this._playbackBindingsHost);
+        this._playbackBindings.bind(this.mapillaryViewer!.getComponent("sequence"), this.viewerContainer.current);
+      },
     };
-
-    // 1. Viewer Load Event
-    this.mapillaryViewer.on("load", () => {
-      // Zoom component logic
-      const zoomComponent: any = this.mapillaryViewer.getComponent("zoom");
-      if (zoomComponent && zoomComponent._zoomDelta$) {
-        zoomComponent._zoomDelta$.subscribe((delta: number) => {
-          if (delta > 0 && this.zoomStepIndex < this.coneSpreads.length - 1) {
-            this.zoomStepIndex++;
-          } else if (delta < 0 && this.zoomStepIndex > 0) {
-            this.zoomStepIndex--;
-          }
-          redrawCone();
-        });
-      }
-
-      // Disable Keyboard Zoom
-      const keyboardComponent: any = this.mapillaryViewer.getComponent("keyboard");
-      if (keyboardComponent?.keyZoom) {
-        keyboardComponent.keyZoom.disable();
-      }
-
-      // Custom Wheel Logic
-      if (this.viewerContainer.current) {
-        this.viewerContainer.current.onwheel = (evt: WheelEvent) => {
-          evt.preventDefault();
-          if (evt.deltaY < 0) {
-            this.zoomStepIndex = Math.min(this.zoomStepIndex + 1, this.coneSpreads.length - 1);
-          } else {
-            this.zoomStepIndex = Math.max(this.zoomStepIndex - 1, 0);
-          }
-          redrawCone();
-        };
-      }
-
-      // Bearing readiness is image-scoped; a load-time snapshot can belong to an older camera.
-      redrawCone();
-
-      // Bind native playing events and pause-intent listeners through one lifecycle owner.
-      this._playbackBindings ??= new PlaybackBindings(this._playbackBindingsHost);
-      this._playbackBindings.bind(this.mapillaryViewer.getComponent("sequence"), this.viewerContainer.current);
-    });
-
-    // Setup Direction Component Hover with delay
-    setTimeout(() => {
-      this.setupDirectionHover();
-    }, 500); // 500ms delay to ensure component is loaded
-
-    // 2. Bearing Change Event
-    this.mapillaryViewer.on("bearing", (event: any) => {
-      if (this.mapillaryViewer !== profileEventViewer) return;
-      // The SDK audits this event; its payload can precede the current image's camera.
-      this._lastBearing = this._sharedStartupBearing ?? this._currentImageBearing?.read(profileEventViewer, this.state.imageId) ?? this._lastBearing;
-      this._currentImageBearing?.refresh(profileEventViewer);
-
-      /**
-       * Cone drawing in SceneView is relatively expensive.
-       *
-       * Mapillary can emit several bearing events before the browser
-       * has rendered the next frame. Instead of rebuilding the cone
-       * for every single event, collapse them into one redraw per frame.
-       *
-       * The most recent bearing is always kept in this._lastBearing.
-       */
-      if (this._coneRedrawRaf == null) {
-        this._coneRedrawRaf = requestAnimationFrame(() => {
-          this._coneRedrawRaf = null;
-
-          redrawCone();
-          this.updateMinimapTracking();
-        });
-      }
-
-      // Debounced URL update
-      this._debouncedBearingUrlUpdate();
-
-      const view = this.state.jimuMapView?.view;
-
-      if (view && view.type === "3d" && this.props.config.syncMapWithImage === true && !this._isFlyInActive && this.state.syncHeading && (this.state.lockToImage || view.stationary !== false)) {
-        const activeImg = this._liveSequenceFrames.current || this._liveSequenceFrames.find(this.state.imageId);
-
-        if (activeImg && this.state.lockToImage) {
-          this.navigateMapView(view,
-            {
-              center: [activeImg.lon, activeImg.lat],
-              heading: event.bearing,
-            },
-            {
-              animate: false,
-            },
-          );
-        } else {
-          this.navigateMapView(view,
-            {
-              heading: event.bearing,
-            },
-            {
-              animate: false,
-            },
-          );
-        }
-      }
-    });
-
-    // 3. Image Change Event
-    this.mapillaryViewer.on("image", async (event: any) => {
-      if (this.mapillaryViewer !== profileEventViewer) return;
-      // A previous moveTo can emit while a newer click is opening. It must not
-      // turn into a lateral jump that cancels the user's latest image request.
-      if ((this.state.isLoading || this._imageryOpeningRequest != null) && this._selectionRetry &&
-        String(event.image.id) !== String(this._selectionRetry.imageId)) return;
-      this._currentImageBearing?.image(profileEventViewer, String(event.image.id));
-      this.highlightNearbyPin(null);
-      const firstImageForViewer = this._profileConfirmedViewer !== profileEventViewer;
-      this._profileConfirmedViewer = profileEventViewer;
-      this._profileConfirmedImageId = String(event.image.id);
-      this.updateProfileIndicator();
-      // Apply custom angle if set in config
-      // Only apply custom angle on the initial load, not during sequence navigation
-      if (this._isInitialImageLoad && firstImageForViewer) {
-        this.applyCustomCameraAngle();
-      }
-      const newId = String(event.image.id);
-      if (newId !== String(this.state.imageId)) this._placeNoteReview?.cancel();
-      this._stopRoutePreview?.();
-      if (this.state.viewerDetectionNote && this.state.viewerDetectionNote.imageId !== newId) {
-        this.cancelDetectionNoteLocation();
-        if (!this.state.pendingFieldNote && !this.state.detectionWorkspaceDraft && !this._detectionWorkspaceMarkerOwner) this.clearPendingNoteGraphic();
-        this.setState({ viewerDetectionNote: null, detectionNotePicking: false });
-      }
-      this._detectionViewerMarkers?.dispose(); this._detectionViewerMarkers = null;
-      this._detectionImageData = null;
-      this._panoramaDetectionLabels?.dispose(); this._panoramaDetectionLabels = null;
-      this._detectionAbort?.abort();
-      this._timeTravelAvailability?.cancelUnless(newId);
-      this._nearbyDiscovery?.cancel();
-      const view = this.state.jimuMapView?.view;
-      if (!view) return;
-      let newImg: LiveSequenceFrame | null;
-      try { newImg = await this._liveSequenceFrames.resolve(event.image); }
-      catch (error) {
-        if (this.mapillaryViewer === profileEventViewer) console.warn('[Mapillary tracking] Current image metadata unavailable:', error);
-        return;
-      }
-      if (!newImg || this.mapillaryViewer !== profileEventViewer || this.state.jimuMapView?.view !== view || !this._liveSequenceFrames.isCurrent(newImg)) return;
-      const frame = newImg;
-      if (this._places) this.updatePlacesCamera(frame.lon, frame.lat);
-      this._sequencePerformance?.playbackFrame(!this._userPaused, typeof document === 'undefined' || document.visibilityState === 'visible');
-      this._reverseGeocodeAbort?.abort();
-      const didLateralJump = this.state.sequenceId !== frame.sequenceId;
-      if (didLateralJump) {
-        // A sequence change starts only cache reuse and a nearby window; tracking never awaits it.
-        const routeRequestId = ++this._selectionRequestId; this._selectionAbort?.abort();
-        this._imageryOpeningRequest = null;
-        this._places?.controller.sync();
-        this._backgroundRequests?.setPaused(false);
-        this._selectionRetry = null;
-        this._localSequenceDeferredRequest = routeRequestId;
-        const controller = new AbortController(); this._selectionAbort = controller;
-        this.clearActiveSequenceLayer();
-        this.setState(() => !this._liveSequenceFrames.isCurrent(frame) || this.state.jimuMapView?.view !== view || this.mapillaryViewer !== profileEventViewer ? null : ({
-          sequenceId: frame.sequenceId, selectedSequenceId: frame.sequenceId,
-          sequenceImages: [frame], sequenceRouteLoading: false, sequenceRouteProgress: undefined,
-          isLoading: false, imageryRepresentative: false, selectionError: undefined, selectionCanRetry: false
-        }), () => {
-          if (routeRequestId === this._selectionRequestId && !controller.signal.aborted && this._liveSequenceFrames.sequenceId === frame.sequenceId && this.state.jimuMapView?.view === view)
-            void this.prepareDemandSequence(frame.sequenceId, routeRequestId, controller, view);
-        });
-      }
-
-      // Update State with New ID
-      this.setState(() => !this._liveSequenceFrames.isCurrent(frame) || this.state.jimuMapView?.view !== view || this.mapillaryViewer !== profileEventViewer ? null : ({
-        imageId: newId,
-        sequenceImages: this._liveSequenceFrames.visible(frame)
-      }), () => {
-        if (this.mapillaryViewer !== profileEventViewer || this.state.jimuMapView?.view !== view || !this._liveSequenceFrames.isCurrent(frame)) return;
-        this._nearbySelectedId = null; // real imageId is now in state, clear the optimistic selection
-
-        // 1. FRESH LOOKUP: Ensure we have the exact coordinates for the active ID
-        // This guarantees the graphics are drawn exactly where the new image is.
-        const activeImg = frame;
-        this.checkAndLoadNextPointCloud(newId);
-        // GUARD: Only access coordinates if activeImg was found!
-        if (activeImg) {
-          // Update elevation readout and profile chart needle
-          if (this.state.isElevationProfileActive) {
-            this.updateProfileIndicator();
-          }
-          // Reuse the same-image marker; drawPulsingPoint replaces a different image.
-          this.currentGreenGraphic = this.drawPulsingPoint(activeImg.lon, activeImg.lat, [0, 255, 0, 1], activeImg.id);
-          this._lastSuccessfulSelection = { sequenceImages: this.state.sequenceImages, imageId: newId, sequenceId: this.state.sequenceId, selectedSequenceId: this.state.selectedSequenceId };
-
-          redrawCone(activeImg.lon, activeImg.lat);
-          this.updateMinimapTracking();
-          void this.refreshSequenceMarkerWindow();
-          void this.refreshLocalSequence();
-
-          // 3. Map Synchronization Logic (With Offset)
-          if (this.props.config.syncMapWithImage === true) this.syncMapToImage(activeImg, view);
-        }
-      });
-
-      // Secondary work is latest-frame-only and capped; it cannot delay tracking.
-      this._liveFrameDetails.queue(() => {
-        if (this.mapillaryViewer !== profileEventViewer || this.state.jimuMapView?.view !== view || !this._liveSequenceFrames.isCurrent(frame)) return;
-        if (this.state.detectionsActive) this.loadDetections(newId);
-        this.updateViewerFieldNoteMarkers();
-        this.checkForTimeTravel(newId);
-        if (this.state.isSolarMode) this.updateSolarGraphics();
-        this.fetchReverseGeocode(frame.lat, frame.lon);
-        if (!this._isFlyInActive) this.updateUrlWithCurrentImage(newId, frame.lat, frame.lon);
-        if (this._userPaused) this.fetchNearbyImages(frame.lat, frame.lon, newId);
-      });
-    });
   }
 
   // #region DIRECTION HOVER SYSTEM
@@ -2320,192 +2185,88 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
    * @param startImageId Capture to open before optional sequence hydration.
    */
   private async loadSequenceById(sequenceId: string, startImageId: string, clickPoint?: { lon: number; lat: number }, representative = false, nearestToClick = false, clickStartedAt?: number) {
-    this._nearbyDiscovery?.cancel();
-    this.highlightNearbyPin?.(null);
-    this._stopRoutePreview?.();
-    if (this._sharedStartupImageId && String(startImageId) !== this._sharedStartupImageId) {
-      this._sharedStartupImageId = null; this._sharedStartupBearing = null; this._isFlyInActive = false;
-      (this.state.jimuMapView?.view as any)?.animation?.stop();
-    }
-    // Reuse completed geometry in its current view. Other selections open first,
-    // then reuse cached geometry or request only a nearby coordinate window.
-    const loadedSequence = this.state.sequenceImages;
-    const reuseLoadedRoute = !nearestToClick && !!this.mapillaryViewer &&
-      this.state.sequenceId === sequenceId && !this.state.sequenceRouteLoading &&
-      this._lastSuccessfulSelection?.sequenceImages === loadedSequence &&
-      this._lastSuccessfulSelection?.sequenceId === sequenceId &&
-      (this.state.turboModeActive || (this._activeSequenceOverlay?.view === this.state.jimuMapView?.view &&
-        !!this._activeSequenceOverlay?.layer && this.state.jimuMapView?.view.map?.layers.includes(this._activeSequenceOverlay.layer))) &&
-      this._liveSequenceFrames.sequenceId === sequenceId && this._liveSequenceFrames.complete === loadedSequence &&
-      this._liveSequenceLine?.sequenceId === sequenceId && !!this._liveSequenceFrames.find(String(startImageId));
-    const requestId = ++this._selectionRequestId;
-    this._localSequenceDeferredRequest = requestId;
-    this._selectionAbort?.abort(); this._liveSequenceFrames.cancelPending(); this._liveFrameDetails.clear();
-    if (String(this.state.imageId) !== String(startImageId)) this._timeTravelAvailability?.clear();
-    this._cachedSequencePreview?.clear();
-    const controller = new AbortController(); this._selectionAbort = controller;
-    const previous = this.mapillaryViewer ? this._lastSuccessfulSelection : null;
-    this._selectionRetry = { sequenceId, imageId: startImageId, clickPoint, nearestToClick };
-    const current = () => requestId === this._selectionRequestId && !controller.signal.aborted && this.state.jimuMapView?.view === jimuMapView?.view;
-    if (this.currentGreenGraphic?.attributes?.image_id !== String(startImageId)) this.clearGreenPulse();
-    this._userPaused = true;
-    this._currentImageBearing?.select(this.mapillaryViewer, String(startImageId), nearestToClick);
-    this.clearConeGraphics();
-    // Cancelled highlight jobs keep their already-painted graphics. Retire the
-    // old selected role now, before awaiting image navigation, without touching
-    // coverage styles or the geometry cache. Same-sequence navigation reuses it.
-    if (this.state.turboModeActive && this.state.sequenceId && this.state.sequenceId !== sequenceId) void this._nativeSequenceSelection.select(null);
+    return openSequence(sequenceId, startImageId, clickPoint, representative, nearestToClick, clickStartedAt, this.sequenceOpeningHost());
+  }
 
-    const { jimuMapView } = this.state;
-    if (!jimuMapView) return;
-    const imageTiming = typeof document !== 'undefined' && document.visibilityState !== 'visible'
-      ? undefined : this._sequencePerformance?.begin('click-image', clickStartedAt);
-    this._imageSequenceTiming = imageTiming;
-    this._sequencePerformance?.count('clicks');
-    this._imageryOpeningRequest = requestId;
-    this._placesExploreAbort?.abort(); this._places?.controller.sync();
-    this._backgroundRequests?.setPaused(true);
-    this._reverseGeocodeAbort?.abort();
-    this._detectionAbort?.abort();
-
-    if (clickPoint && Number.isFinite(clickPoint.lon) && Number.isFinite(clickPoint.lat)) {
-      this.drawPulsingPoint(clickPoint.lon, clickPoint.lat, [0, 255, 0, 1], startImageId);
-    }
-    this.setState({ nearbyLoading: false, isLoading: true, imageryRepresentative: representative && !nearestToClick, sequenceRouteProgress: undefined, sequenceRouteLoading: false, selectionError: undefined, selectionCanRetry: false });
-
-    if (this.state.isElevationProfileActive && !reuseLoadedRoute) this.clearElevationProfile();
-
-    let imageOpened = false;
-    let viewerTiming: ReturnType<SequencePerformance['begin']> | undefined;
-    try {
-      // Fetch only the selected image first; full route loading must not block opening imagery.
-      // Lines need coordinate resolution; exact image points keep their fast opening path.
-      if (nearestToClick && clickPoint && Number.isFinite(clickPoint.lon) && Number.isFinite(clickPoint.lat)) {
-        let nearest = await this.nearestCoverageImage(sequenceId, clickPoint, controller.signal);
-        if (!current()) return;
-        if (!nearest) {
-          // Resolve only this location; ordinary clicks never enumerate a route.
-          const nearby = await this.getSequencesInBBox(clickPoint.lon, clickPoint.lat, this.accessToken);
-          if (!current()) return;
-          const candidates = nearby.find(candidate => String(candidate.sequenceId) === String(sequenceId))?.images || [];
-          nearest = candidates.reduce((best, image) => !best || image.dist < best.dist ? image : best, undefined as typeof candidates[number] | undefined)?.id;
-
-        }
-        if (!nearest) throw new Error("No image coordinates are available for this sequence");
-        startImageId = nearest;
-        this._selectionRetry = { sequenceId, imageId: startImageId };
-      }
-      // Seed tracking cheaply so the viewer's image event belongs to this request.
-      // No Graph coordinate lookup or sequence restyle may delay moveTo.
-      this._liveSequenceFrames.beginSelection(sequenceId);
-      const seed = this._liveSequenceFrames.complete || [];
-      await new Promise<void>(resolve => {
-        const cancelled = () => resolve(); controller.signal.addEventListener("abort", cancelled, { once: true });
-        this.setState(() => !current() ? null : ({
-          sequenceImages: seed, imageId: startImageId, sequenceId,
-          selectedSequenceId: sequenceId, hasTimeTravel: false
-        }), () => {
-          controller.signal.removeEventListener("abort", cancelled); resolve();
-        });
-      });
-      if (!current()) return;
-      this.ensureImageViewer(startImageId);
-      const viewer = this.mapillaryViewer;
-      if (!viewer) throw new Error("Image viewer is not ready");
-      // Separate widget dispatch latency from the SDK's image-opening promise.
-      if (clickStartedAt !== undefined) this._sequencePerformance?.begin('click-dispatch', clickStartedAt).finish();
-      viewerTiming = this._sequencePerformance?.begin('viewer-open');
-      const openedImage = previous?.imageId === startImageId ? await viewer.getImage() : await viewer.moveTo(startImageId);
-      if (!current() || this.mapillaryViewer !== viewer) return;
-      viewerTiming?.finish();
-      imageOpened = true;
-      // Give the confirmed image a visible browser frame before optional cache/metadata work.
-      this.setState({ isLoading: false, imageryRepresentative: false });
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible' && typeof requestAnimationFrame === 'function')
-        await this.waitForSequencePaint(controller.signal);
-      if (!current() || this.mapillaryViewer !== viewer) return;
-      // moveTo resolution alone is not proof that its camera has rendered. Reuse only
-      // the SDK image event's identity, after the already-existing presentation wait.
-      if (this._profileConfirmedViewer === viewer && this._profileConfirmedImageId === String(startImageId) && String(openedImage?.id) === String(startImageId))
-        this._currentImageBearing?.image(viewer, String(startImageId));
-      imageTiming?.finish();
-      this._imageryOpeningRequest = null;
-
-      this._places?.controller.sync();
-      this._backgroundRequests?.setPaused(false);
-      this.updateNativeSequenceSelection();
-      const location = openedImage?.originalLngLat ?? openedImage?.lngLat;
-      const selected = location && Number.isFinite(location.lng) && Number.isFinite(location.lat)
-        ? { id: startImageId, lon: location.lng, lat: location.lat, captured_at: openedImage.capturedAt }
-        : await this.getSelectedImageCoords(sequenceId, startImageId, controller.signal);
-      if (!current()) return;
-      this._liveSequenceFrames.remember(sequenceId, [selected]);
-      const updatedSequence = this._liveSequenceFrames.complete || [selected];
-      this.setState(() => !current() ? null : ({ sequenceImages: updatedSequence }));
-      this.checkForTimeTravel(startImageId);
-      this.currentGreenGraphic = this.drawPulsingPoint(selected.lon, selected.lat, [0, 255, 0, 1], startImageId);
-
-      if (reuseLoadedRoute) {
-        this._localSequenceDeferredRequest = null;
-        void this.refreshSequenceMarkerWindow();
-        this.setState({ isLoading: false, imageryRepresentative: false });
-        if (clickPoint) this.drawPoint(clickPoint.lon, clickPoint.lat);
-        if (this.state.isElevationProfileActive) this.updateProfileIndicator();
-        const active = this._liveSequenceFrames.current || this._liveSequenceFrames.find(this.state.imageId);
-        if (active && String(active.id) === String(this.state.imageId)) this.drawCone(active.lon, active.lat, this._lastBearing || 0, this.coneLengths[this.zoomStepIndex], this.coneSpreads[this.zoomStepIndex]);
-        this._lastSuccessfulSelection = { sequenceImages: loadedSequence, imageId: this.state.imageId, sequenceId, selectedSequenceId: sequenceId };
-        this._selectionRetry = null;
-        return;
-      }
-
-      if (previous?.sequenceId && previous.sequenceId !== sequenceId) this.clearActiveSequenceGraphics(previous.sequenceId, true);
-      this.clearActiveSequenceLayer();
-      this.setState({ isLoading: false });
-      const active = this._liveSequenceFrames.current || this._liveSequenceFrames.find(this.state.imageId) || selected;
-      if (!this._liveSequenceFrames.current && String(active.id) === String(this.state.imageId)) {
-        this.drawPulsingPoint(active.lon, active.lat, [0, 255, 0, 1], active.id);
-        this.drawCone(active.lon, active.lat, this._lastBearing || 0, this.coneLengths[this.zoomStepIndex], this.coneSpreads[this.zoomStepIndex]);
-      }
-      this._lastSuccessfulSelection = { sequenceImages: updatedSequence, imageId: active.id, sequenceId, selectedSequenceId: sequenceId };
-      void this.prepareDemandSequence(sequenceId, requestId, controller, jimuMapView.view);
-    } catch (err) {
-      if (!current()) return;
-      this._localSequenceDeferredRequest = null;
-      if (imageOpened) {
-        this.setState({ sequenceRouteLoading: false, selectionError: this._owned("Image is open, but map tracking could not load. Retry to refresh its location."), selectionCanRetry: true });
-        return;
-      }
-      this.setState({ sequenceRouteLoading: false });
-      this.clearGreenPulse(); this.clearConeGraphics();
-      if (previous) {
-        if (previous.sequenceId) {
-          this._liveSequenceFrames.begin(previous.sequenceId, previous.sequenceImages);
-          if (this.sequenceCoordsCache[previous.sequenceId] === previous.sequenceImages) this._liveSequenceFrames.finish(previous.sequenceId, previous.sequenceImages);
-        }
-        this.setState(previous, () => {
-          if (!current()) return;
-          const image = previous.sequenceImages.find((p: any) => p.id === previous.imageId);
-          if (image) {
-            this.drawPulsingPoint(image.lon, image.lat, [0, 255, 0, 1], image.id);
-            this.drawCone(image.lon, image.lat, this._lastBearing || 0, this.coneLengths[this.zoomStepIndex], this.coneSpreads[this.zoomStepIndex]);
-          }
-        });
-      }
-      if (!previous) { this._lastSuccessfulSelection = null; this.setState({ imageId: null, sequenceImages: [], sequenceId: null, selectedSequenceId: null }); }
-      const status = (err as any)?.status;
-      const unavailable = status === 401 || status === 403 || status === 404;
-      this.setState({ selectionError: unavailable ? this._owned("This image is unavailable. Choose another point.") : this._owned("Image could not load. Check your connection, retry, or choose another point."), selectionCanRetry: !unavailable });
-    } finally {
-      viewerTiming?.cancel();
-      imageTiming?.cancel();
-      if (this._imageSequenceTiming === imageTiming) this._imageSequenceTiming = undefined;
-      if (requestId === this._selectionRequestId) {
-        this._imageryOpeningRequest = null;
-        this._places?.controller.sync();
-        this._backgroundRequests?.setPaused(false);
-        this.setState({ isLoading: false });
-      }
-    }
+  /** Bind live selection owners and concrete SDK/GIS presentation without retaining a state snapshot. */
+  private sequenceOpeningHost(): SequenceOpeningHost<Viewer, __esri.MapView | __esri.SceneView, __esri.Graphic> {
+    const widget = this;
+    return {
+      get backgroundRequests() { return widget._backgroundRequests; },
+      get cachedSequencePreview() { return widget._cachedSequencePreview; },
+      get currentImageBearing() { return widget._currentImageBearing; },
+      get detectionAbort() { return widget._detectionAbort; },
+      get imageSequenceTiming() { return widget._imageSequenceTiming; },
+      set imageSequenceTiming(value) { widget._imageSequenceTiming = value; },
+      get imageryOpeningRequest() { return widget._imageryOpeningRequest; },
+      set imageryOpeningRequest(value) { widget._imageryOpeningRequest = value; },
+      get isFlyInActive() { return widget._isFlyInActive; },
+      set isFlyInActive(value) { widget._isFlyInActive = value; },
+      get lastBearing() { return widget._lastBearing; },
+      get lastSuccessfulSelection() { return widget._lastSuccessfulSelection; },
+      set lastSuccessfulSelection(value) { widget._lastSuccessfulSelection = value; },
+      get liveFrameDetails() { return widget._liveFrameDetails; },
+      get liveSequenceFrames() { return widget._liveSequenceFrames; },
+      get liveSequenceLine() { return widget._liveSequenceLine; },
+      get localSequenceDeferredRequest() { return widget._localSequenceDeferredRequest; },
+      set localSequenceDeferredRequest(value) { widget._localSequenceDeferredRequest = value; },
+      get nativeSequenceSelection() { return widget._nativeSequenceSelection; },
+      get nearbyDiscovery() { return widget._nearbyDiscovery; },
+      translate: (...args) => this._owned(...args),
+      get places() { return widget._places; },
+      get placesExploreAbort() { return widget._placesExploreAbort; },
+      get profileConfirmedImageId() { return widget._profileConfirmedImageId; },
+      get profileConfirmedViewer() { return widget._profileConfirmedViewer; },
+      get reverseAddressEnrichment() { return widget._reverseAddressEnrichment; },
+      get selectionAbort() { return widget._selectionAbort; },
+      set selectionAbort(value) { widget._selectionAbort = value; },
+      get selectionRequestId() { return widget._selectionRequestId; },
+      set selectionRequestId(value) { widget._selectionRequestId = value; },
+      get selectionRetry() { return widget._selectionRetry; },
+      set selectionRetry(value) { widget._selectionRetry = value; },
+      get sequencePerformance() { return widget._sequencePerformance; },
+      get sharedStartupBearing() { return widget._sharedStartupBearing; },
+      set sharedStartupBearing(value) { widget._sharedStartupBearing = value; },
+      get sharedStartupImageId() { return widget._sharedStartupImageId; },
+      set sharedStartupImageId(value) { widget._sharedStartupImageId = value; },
+      get stopRoutePreview() { return widget._stopRoutePreview; },
+      get timeTravelAvailability() { return widget._timeTravelAvailability; },
+      get userPaused() { return widget._userPaused; },
+      set userPaused(value) { widget._userPaused = value; },
+      get accessToken() { return widget.accessToken; },
+      checkForTimeTravel: (...args) => this.checkForTimeTravel(...args),
+      clearActiveSequenceGraphics: (...args) => this.clearActiveSequenceGraphics(...args),
+      clearActiveSequenceLayer: (...args) => this.clearActiveSequenceLayer(...args),
+      clearConeGraphics: (...args) => this.clearConeGraphics(...args),
+      clearElevationProfile: (...args) => this.clearElevationProfile(...args),
+      clearGreenPulse: (...args) => this.clearGreenPulse(...args),
+      get coneLengths() { return widget.coneLengths; },
+      get coneSpreads() { return widget.coneSpreads; },
+      get currentGreenGraphic() { return widget.currentGreenGraphic; },
+      set currentGreenGraphic(value) { widget.currentGreenGraphic = value; },
+      drawCone: (...args) => this.drawCone(...args),
+      drawPoint: (...args) => this.drawPoint(...args),
+      drawPulsingPoint: (...args) => this.drawPulsingPoint(...args),
+      ensureImageViewer: (...args) => this.ensureImageViewer(...args),
+      getSelectedImageCoords: (...args) => this.getSelectedImageCoords(...args),
+      getSequencesInBBox: (...args) => this.getSequencesInBBox(...args),
+      highlightNearbyPin: (...args) => this.highlightNearbyPin?.(...args),
+      get viewer() { return widget.mapillaryViewer; },
+      nearestCoverageImage: (...args) => this.nearestCoverageImage(...args),
+      prepareDemandSequence: (...args) => this.prepareDemandSequence(...args),
+      refreshSequenceMarkerWindow: (...args) => this.refreshSequenceMarkerWindow(...args),
+      get sequenceCoordsCache() { return widget.sequenceCoordsCache; },
+      // React's generic Pick<State, Key> cannot infer this feature-owned subset; keep the key-specific bridge local.
+      commit: <Key extends keyof OpeningState>(update: Pick<OpeningState, Key> | (() => Pick<OpeningState, Key> | null), after?: () => void) =>
+        this.setState<Key>(update as Pick<State, Key> | (() => Pick<State, Key> | null), after),
+      get state() { return widget.state; },
+      updateNativeSequenceSelection: (...args) => this.updateNativeSequenceSelection(...args),
+      updateProfileIndicator: (...args) => this.updateProfileIndicator(...args),
+      waitForSequencePaint: (...args) => this.waitForSequencePaint(...args),
+      get zoomStepIndex() { return widget.zoomStepIndex; },
+      get routeOverlayVisible() { return widget._activeSequenceOverlay?.view === widget.state.jimuMapView?.view && !!widget._activeSequenceOverlay?.layer && !!widget.state.jimuMapView?.view.map?.layers.includes(widget._activeSequenceOverlay.layer); },
+      stopMapAnimation: () => { (this.state.jimuMapView?.view as any)?.animation?.stop(); },
+    };
   }
 
   // Fetch nearby sequences (single API call)
@@ -3020,7 +2781,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._selectionAbort?.abort(); this._selectionAbort = null;
     this._imageryOpeningRequest = null;
     this._places?.controller.sync();
-    this._reverseGeocodeAbort?.abort(); this._reverseGeocodeAbort = null;
+    this._reverseAddressEnrichment.clear();
     this._detectionAbort?.abort(); this._detectionAbort = null;
     this._backgroundRequests?.clear(); this._backgroundRequests?.setPaused(false);
     this._sequenceDemand.clear(); this._userPaused = true;
@@ -3146,200 +2907,175 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
    * Shared-view cleanup targets registered widget resources rather than unrelated map content.
    */
   private cleanupWidgetEnvironment(resetState: boolean = false, fullRemove: boolean = true) {
-    this.cancelCaptureRouteGeneration();
-    this._mapSpriteLoading.clearAll();
-    this._stopRoutePreview?.();
-    this._sharedStartupImageId = null; this._sharedStartupBearing = null; this._isFlyInActive = false;
-    if (resetState || fullRemove) this.clearSelectedMapFeature?.();
-    this._currentImagePresentation?.release();
-    if (resetState || fullRemove) { this._placesExploreAbort?.abort(); this._places?.dispose(); this._places = null; this._placesView = null; }
-    this.highlightNearbyPin(null);
-    this.clearSequenceDiagnostics();
-    this._pendingCoverageHover?.clear();
-    clearImageryHoverCardCache(this.tooltipDiv);
-    this._currentImageBearing?.invalidate();
-    this._hoverTimingAbort?.abort(); this._hoverSequenceTiming?.cancel();
-    this._imageSequenceTiming?.cancel(); this._imageSequenceTiming = undefined;
-    this._hoverTimingTarget = null;
-    this._timeTravelAvailability?.clear(); this._cachedSequencePreview?.clear();
-    this._reverseGeocodeAbort?.abort(); this._reverseGeocodeAbort = null;
-    this._imageryOpeningRequest = null;
-    this._places?.controller.sync();
-    this._backgroundRequests?.clear(); this._backgroundRequests?.setPaused(false);
-    this._sharedTileRequests?.clear(); this._sequenceTileIndex?.clear();
-    this._sequencePerformance?.playbackFrame(false);
-    this._liveSequenceFrames.clear(); this._liveFrameDetails.clear(); this._sequenceDemand.clear();
-    this._turboClickPickAbort?.abort(); this._coverageFrameLookup?.clear();
-    if (this._coverageFrameHoverTimer) clearTimeout(this._coverageFrameHoverTimer);
-    this._coverageFrameHoverTimer = null; this._coverageFrameHoverTarget = null;
-    this.setState({ coverageFrameResolving: false });
-    if (fullRemove) {
-      ++this._viewStartupRevision;
-      this._isFlyInActive = false;
-      this._sequenceRequests?.dispose(); this.clearSharedNotesView(); this.clearFieldNotesGroup();
-    }
-    if (this._routingLoginExpiry) clearTimeout(this._routingLoginExpiry);
-    this._routingLoginExpiry = null; this._routingLoginView = null;
-    this._lasso?.clear();
-    this._measurement?.dispose();
-    this._rings?.clear();
-    this._pointCloudAcquisition.cancel('cleanup');
-    if (fullRemove) { this.clearPointCloud(true); this._pointCloudCache.clear(); }
-    this.cancelCoverageAnalysis();
-    this.stopCoverageRendering();
-    this.clearMapLegendLayer();
-    this.clearSolarGraphics();
-    this._selectionRequestId++; this._selectionAbort?.abort(); this._selectionAbort = null;
-    this._lastSuccessfulSelection = null; this._selectionRetry = null;
-    this.clearActiveSequenceLayer();
-    if (this._objectPopupView?.popup?.content === this._objectPopupContent) this._objectPopupView.closePopup();
-    this._objectPopupContent = null; this._objectPopupView = null;
-    this._mapFeatureExportAbort?.abort();
-    this.clearDetectionOverlays();
-    this._alternateNavigationAbort?.abort(); this._objectDetailsAbort?.abort(); ++this._objectDetailsRequest; ++this._alternateNavigationRequest; this._objectDetailsCache.clear();
-    this._mapFeatureClickAbort?.abort(); this._mapFeatureTiles.clear(); this._mapFeatureIndexes.clear(); this._selectedMapFeature = null;
-    this.finishTurboLoading();
-    this.clearClickRipples();
-    this.clearGreenPulse();
-    // Responsive layout remounts must release both full renderers, not only
-    // hide their marker part while a fan/mesh and animation remain attached.
-    this._nativeCurrentImageMarker?.clear();
-    this._screenDirectionCone?.clear();
-    this._cameraCone?.dispose(this.state.jimuMapView?.view);
+    cleanupWidgetEnvironment(resetState, fullRemove, this.widgetTeardownHost());
+  }
 
-    if (this._coneRedrawRaf != null) {
-      cancelAnimationFrame(this._coneRedrawRaf);
-      this._coneRedrawRaf = null;
-    }
-
-    this._nearbyDiscovery?.cancelTimer();
-    this.stopSafePlayback();
-    this._playbackBindings?.clear();
-    this._nearbyDiscovery?.cancelRequest();
-
-    this._nativeSequenceSelection.detach();
-
-    // Clean up zoom watcher and cancel any pending zoom URL update
-    this._viewZoomBindings.clear();
-
-    // Clean up direction hover graphic
-    this.clearDirectionHighlight();
-    this.clearTurboHover();
-    this.clearElevationProfile();
-
-    // Release direction subscription and touch listeners from their original container.
-    this._directionBindings?.clear();
-
-    this._sight?.dispose();
-
-    this.clearViewshed();
-
-    if (fullRemove && this.state.jimuMapView?.view?.graphics) {
-      const { view } = this.state.jimuMapView;
-      this._ownedMapResources.clearGraphics(view);
-    }
-
-    if (fullRemove) {
-      ++this._mapClickRevision; // Pending SDK results cannot survive close/reopen.
-      this._turboMapLeaveCleanup?.();
-      this._turboMapLeaveCleanup = null;
-      this.disableTurboCoverageLayer();
-      // listener removals
-      if (this.mapClickHandle) {
-        this.mapClickHandle.remove();
-        this.mapClickHandle = null;
-      }
-      if (this.pointerMoveHandle) {
-        this.pointerMoveHandle.remove();
-        this.pointerMoveHandle = null;
-      }
-
-      this._cancelObjectsFetch = true;
-      this._cancelTrafficSignsFetch = true;
-
-      // watcher removals
-      if (this.trafficSignsStationaryHandle) {
-        this.trafficSignsStationaryHandle.remove();
-        this.trafficSignsStationaryHandle = null;
-      }
-      if (this.trafficSignsZoomHandle) {
-        this.trafficSignsZoomHandle.remove();
-        this.trafficSignsZoomHandle = null;
-      }
-      if (this.objectsStationaryHandle) {
-        this.objectsStationaryHandle.remove();
-        this.objectsStationaryHandle = null;
-      }
-      if (this.objectsZoomHandle) {
-        this.objectsZoomHandle.remove();
-        this.objectsZoomHandle = null;
-      }
-      this._turboViewBindings.clear();
-
-      this.setState({
-        trafficSignsActive: false,
-        objectsActive: false,
-        tilesActive: false,
-      });
-    }
-
-    if (this.state.jimuMapView?.view?.map && fullRemove) {
-      const { view } = this.state.jimuMapView;
-
-      // Detach only layers created here; borrowed coverage layers stay on the host map.
-      this._ownedMapResources.removeLayers(view.map);
-
-      // Nullify References
-      this.mapillaryVTLayer = null;
-      this._detectionLayers.reset('signs');
-      this.mapillaryTrafficSignsFeatureLayer = null;
-      this._detectionLayers.reset('objects');
-      this.mapillaryObjectsFeatureLayer = null;
-      this.turboCoverageLayer = null;
-      this.turboCoverageLayerView = null;
-
-      this.setState({ turboModeActive: false });
-    }
-
-    // viewer destruction and rest of the method
-    if (this.mapillaryViewer) {
-      try {
-        this._lasso?.cancelGesture();
-        this._measurement?.detachViewer();
-        this.mapillaryViewer.remove();
-      } catch (err) { }
-      this.mapillaryViewer = null;
-    }
-    if (this.viewerContainer.current) {
-      this.viewerContainer.current.innerHTML = "";
-    }
-
-    if (resetState) {
-      this.setState({
-        imageId: null,
-        sequenceId: null,
-        sequenceImages: [],
-        placesActive: false, placesPanelOpen: false, selectedPlace: null, placesShowLink: false, placesList: [], placesCameraDistance: null,
-        lon: null,
-        lat: null,
-        isFullscreen: false,
-        address: null,
-        tilesActive: false,
-        trafficSignsActive: false,
-        objectsActive: false,
-        availableSequences: [],
-        selectedSequenceId: null,
-        noImageMessageVisible: false,
-        turboModeActive: false,
-        turboFilterUsername: "",
-        turboFilterOrganization: "",
-        turboFilterStartDate: "",
-        turboFilterEndDate: "",
-        turboFilterIsPano: undefined,
-        turboFilterOnFoot: undefined,
-        showTurboFilterBox: false,
-      });
-    }
+  /** Bind concrete resource operations and live slots; ordered cleanup policy stays in the lifecycle feature. */
+  private widgetTeardownHost(): WidgetTeardownHost<__esri.MapView | __esri.SceneView, Viewer> {
+    const widget = this;
+    return {
+      get backgroundRequests() { return widget._backgroundRequests; },
+      get cachedSequencePreview() { return widget._cachedSequencePreview; },
+      get cameraCone() { return widget._cameraCone; },
+      get coverageSelectionTargets() { return widget._coverageSelectionTargets; },
+      get currentImagePresentation() { return widget._currentImagePresentation; },
+      get directionBindings() { return widget._directionBindings; },
+      get hoverPreviewStatus() { return widget._hoverPreviewStatus; },
+      get hoverTimingAbort() { return widget._hoverTimingAbort; },
+      get imageryOpeningRequest() { return widget._imageryOpeningRequest; }, set imageryOpeningRequest(value) { widget._imageryOpeningRequest = value; },
+      get lasso() { return widget._lasso; },
+      get liveFrameDetails() { return widget._liveFrameDetails; },
+      get liveSequenceFrames() { return widget._liveSequenceFrames; },
+      get mapFeatureExportAbort() { return widget._mapFeatureExportAbort; },
+      get mapSpriteLoading() { return widget._mapSpriteLoading; },
+      get measurement() { return widget._measurement; },
+      get nativeCurrentImageMarker() { return widget._nativeCurrentImageMarker; },
+      get nativeSequenceSelection() { return widget._nativeSequenceSelection; },
+      get nearbyDiscovery() { return widget._nearbyDiscovery; },
+      get pendingCoverageHover() { return widget._pendingCoverageHover; },
+      get places() { return widget._places; },
+      get playbackBindings() { return widget._playbackBindings; },
+      get pointCloudAcquisition() { return widget._pointCloudAcquisition; },
+      get pointCloudCache() { return widget._pointCloudCache; },
+      get reverseAddressEnrichment() { return widget._reverseAddressEnrichment; },
+      get rings() { return widget._rings; },
+      get screenDirectionCone() { return widget._screenDirectionCone; },
+      get sequenceDemand() { return widget._sequenceDemand; },
+      get sequencePerformance() { return widget._sequencePerformance; },
+      get sequenceTileIndex() { return widget._sequenceTileIndex; },
+      get sequenceVisibilityChange() { return widget._sequenceVisibilityChange; },
+      get sharedTileRequests() { return widget._sharedTileRequests; },
+      get sight() { return widget._sight; },
+      get stopRoutePreview() { return widget._stopRoutePreview; },
+      get timeTravelAvailability() { return widget._timeTravelAvailability; },
+      get turboViewBindings() { return widget._turboViewBindings; },
+      get viewZoomBindings() { return widget._viewZoomBindings; },
+      get zoomWarningTimer() { return widget._zoomWarningTimer; },
+      cancelCaptureRouteGeneration: (...args) => this.cancelCaptureRouteGeneration(...args),
+      cancelCoverageAnalysis: (...args) => this.cancelCoverageAnalysis(...args),
+      cleanupEnvironment: (...args) => this.cleanupWidgetEnvironment(...args),
+      clearActiveSequenceLayer: (...args) => this.clearActiveSequenceLayer(...args),
+      clearClickRipples: (...args) => this.clearClickRipples(...args),
+      clearDetectionOverlays: (...args) => this.clearDetectionOverlays(...args),
+      clearDirectionHighlight: (...args) => this.clearDirectionHighlight(...args),
+      clearElevationProfile: (...args) => this.clearElevationProfile(...args),
+      clearFieldNotesGroup: (...args) => this.clearFieldNotesGroup(...args),
+      clearGreenPulse: (...args) => this.clearGreenPulse(...args),
+      clearMapLegendLayer: (...args) => this.clearMapLegendLayer(...args),
+      clearPointCloud: (...args) => this.clearPointCloud(...args),
+      clearSelectedMapFeature: (...args) => this.clearSelectedMapFeature?.(...args),
+      clearSequenceDiagnostics: (...args) => this.clearSequenceDiagnostics(...args),
+      clearSolarGraphics: (...args) => this.clearSolarGraphics(...args),
+      clearTurboHover: (...args) => this.clearTurboHover(...args),
+      clearViewshed: (...args) => this.clearViewshed(...args),
+      disableTurboCoverageLayer: (...args) => this.disableTurboCoverageLayer(...args),
+      finishTurboLoading: (...args) => this.finishTurboLoading(...args),
+      get handleFullscreenChange() { return widget.handleFullscreenChange; },
+      get handleNudgeKeyDown() { return widget.handleNudgeKeyDown; },
+      get handleNudgeKeyUp() { return widget.handleNudgeKeyUp; },
+      get handleWindowResize() { return widget.handleWindowResize; },
+      highlightNearbyPin: (...args) => this.highlightNearbyPin(...args),
+      get mapClickHandle() { return widget.mapClickHandle; }, set mapClickHandle(value) { widget.mapClickHandle = value; },
+      get viewer() { return widget.mapillaryViewer; }, set viewer(value) { widget.mapillaryViewer = value; },
+      get objectsStationaryHandle() { return widget.objectsStationaryHandle; }, set objectsStationaryHandle(value) { widget.objectsStationaryHandle = value; },
+      get objectsZoomHandle() { return widget.objectsZoomHandle; }, set objectsZoomHandle(value) { widget.objectsZoomHandle = value; },
+      get pointerMoveHandle() { return widget.pointerMoveHandle; }, set pointerMoveHandle(value) { widget.pointerMoveHandle = value; },
+      get resizeObserver() { return widget.resizeObserver; }, set resizeObserver(value) { widget.resizeObserver = value; },
+      stopCoverageRendering: (...args) => this.stopCoverageRendering(...args),
+      stopSafePlayback: (...args) => this.stopSafePlayback(...args),
+      get tooltipDiv() { return widget.tooltipDiv; }, set tooltipDiv(value) { widget.tooltipDiv = value; },
+      get trafficSignsStationaryHandle() { return widget.trafficSignsStationaryHandle; }, set trafficSignsStationaryHandle(value) { widget.trafficSignsStationaryHandle = value; },
+      get trafficSignsZoomHandle() { return widget.trafficSignsZoomHandle; }, set trafficSignsZoomHandle(value) { widget.trafficSignsZoomHandle = value; },
+      resetSharedStartup: () => { this._sharedStartupImageId = null; this._sharedStartupBearing = null; this._isFlyInActive = false; },
+      retirePlaces: () => { this._placesExploreAbort?.abort(); this._places?.dispose(); this._places = null; this._placesView = null; },
+      cancelImageryReadiness: () => {
+        this._currentImageBearing?.invalidate();
+        this._hoverTimingAbort?.abort();
+        this._hoverSequenceTiming?.cancel();
+        this._imageSequenceTiming?.cancel();
+        this._imageSequenceTiming = undefined;
+        this._hoverTimingTarget = null;
+      },
+      cancelCoveragePicks: () => {
+        this._turboClickPickAbort?.abort();
+        this._coverageFrameLookup?.clear();
+        if (this._coverageFrameHoverTimer) clearTimeout(this._coverageFrameHoverTimer);
+        this._coverageFrameHoverTimer = null;
+        this._coverageFrameHoverTarget = null;
+        this.setState({ coverageFrameResolving: false });
+      },
+      retireViewRequests: () => { this._activeViewTransfer.invalidate(); this._isFlyInActive = false; this._sequenceRequests?.dispose(); this.clearSharedNotesView(); this.clearFieldNotesGroup(); },
+      clearRoutingLogin: () => { if (this._routingLoginExpiry) clearTimeout(this._routingLoginExpiry); this._routingLoginExpiry = null; this._routingLoginView = null; },
+      invalidateSelection: () => { this._selectionRequestId++; this._selectionAbort?.abort(); this._selectionAbort = null; this._lastSuccessfulSelection = null; this._selectionRetry = null; },
+      closeOwnedObjectPopup: () => { if (this._objectPopupView?.popup?.content === this._objectPopupContent) this._objectPopupView.closePopup(); this._objectPopupContent = null; this._objectPopupView = null; },
+      cancelDetectionWork: () => {
+        this._alternateNavigationAbort?.abort();
+        this._objectDetailsAbort?.abort();
+        ++this._objectDetailsRequest;
+        ++this._alternateNavigationRequest;
+        this._objectDetailsCache.clear();
+        this._mapFeatureClickAbort?.abort();
+        this._mapFeatureTiles.clear();
+        this._mapFeatureIndexes.clear();
+        this._selectedMapFeature = null;
+      },
+      cancelConeRedraw: () => { if (this._coneRedrawRaf != null) { cancelAnimationFrame(this._coneRedrawRaf); this._coneRedrawRaf = null; } },
+      retireMapPicking: () => {
+        ++this._mapClickRevision;
+        this._turboMapLeaveCleanup?.();
+        this._turboMapLeaveCleanup = null;
+      },
+      cancelDetectionFetches: () => { this._cancelObjectsFetch = true; this._cancelTrafficSignsFetch = true; },
+      dropLayerBindings: () => {
+        this.mapillaryVTLayer = null;
+        this._detectionLayers.reset('signs');
+        this.mapillaryTrafficSignsFeatureLayer = null;
+        this._detectionLayers.reset('objects');
+        this.mapillaryObjectsFeatureLayer = null;
+        this.turboCoverageLayer = null;
+        this.turboCoverageLayerView = null;
+      },
+      retirePlacesTiles: () => { ++this._placesTilesStartRevision; this._placesConfiguredRequest = null; this._placesConfiguredUrl = null; this._placesVectorLayer?.stop(); this._placesVectorLayer = null; },
+      retirePlaceNotes: () => {
+        this._placeNoteDisposed = true;
+        this._placeNoteReview?.cancel();
+        const pendingPlaceCrop = this.state.pendingFieldNote?.placeId && this.state.pendingFieldNote.attachmentId;
+        if (pendingPlaceCrop) void deleteDetectionCrop(pendingPlaceCrop).catch(() => { });
+        if (this._placeWorkspaceCrop) { void deleteDetectionCrop(this._placeWorkspaceCrop).catch(() => { });
+        this._placeWorkspaceCrop = null;
+        }
+      },
+      retireHoverBindings: () => {
+        this._coverageHoverResume?.dispose();
+        this._coverageHoverResume = null;
+        this._coverageHoverHandler = null;
+        this._presentationHandle?.remove();
+        this._presentationHandle = null;
+        this._placesImageryCache?.clear();
+        this._placesImageryCache = null;
+      },
+      disposeUnmountPlaces: () => { this._placesExploreAbort?.abort(); this._places?.dispose(); this._places = null; },
+      clearNearbyHintTimer: () => { if (this._nearbyFramesHintTimer !== null) clearTimeout(this._nearbyFramesHintTimer); this._nearbyFramesHintTimer = null; },
+      disposeTerrain: () => { this._sceneTerrain?.dispose(); this._sceneTerrain = null; },
+      retireOrganizationLookup: () => {
+        this._organizationNameDisposed = true;
+        ++this._organizationNameRevision;
+        if (this._organizationNameTimer !== null) clearTimeout(this._organizationNameTimer);
+        this._organizationNameTimer = null;
+        this._organizationNames?.dispose();
+        this._organizationNames = null;
+      },
+      disposeAlignmentDiagnostic: () => { this._coverageAlignmentDiagnostic?.dispose(); this._coverageAlignmentDiagnostic = null; },
+      markSharedNotesDisposed: () => { this._sharedNotesDisposed = true; },
+      get view() { return widget.state.jimuMapView?.view; },
+      container: () => this.viewerContainer.current,
+      clearOwnedGraphics: view => this._ownedMapResources.clearGraphics(view),
+      removeOwnedLayers: view => this._ownedMapResources.removeLayers(view.map),
+      clearHoverCard: () => clearImageryHoverCardCache(this.tooltipDiv),
+      resetSelection: patch => this.setState(patch),
+      resetDetectionState: () => this.setState({ trafficSignsActive: false, objectsActive: false, tilesActive: false }),
+      setTurboInactive: () => this.setState({ turboModeActive: false }),
+    };
   }
 
   /**
@@ -3902,182 +3638,28 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
    * Labels controls all detection text; hover and target state only emphasize outlines.
    */
   private setupDetectionHover(tagComponent: any, tags: OutlineTag[]) {
-    if (!this.viewerContainer.current) return;
+    bindDetectionHover(tagComponent, tags, this.detectionHoverHost());
+  }
 
-    const container = this.viewerContainer.current;
-    const detectionViewer = this.mapillaryViewer;
-    const detectionImageId = String(this.state.imageId);
-
-    // Store original tag configurations
-    const tagConfigs = new Map<string, { text: string; color: number; bounds?: { x: number; y: number; width: number; height: number } }>();
-    tags.forEach((tag) => {
-      const detectionValue = this.getDetectionValueFromTagId(tag.id);
-      const labelFull = detectionValue
-        .split("--")
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, " "))
-        .join(" ");
-      const color = getDetectionColor(detectionValue) || 0x72b8dc;
-
-      tagConfigs.set(tag.id, { text: labelFull, color, bounds: detectionThumbnailBounds((tag.geometry as PolygonGeometry).polygon) });
-    });
-
-    let currentHoveredId: string | null = null;
-    let selectedId: string | null = null;
-    let disposed = false;
-    let hitRevision = 0;
-    let updateTimeout: any = null;
-
-    // Flashing State Variables
-    let flashState = true;
-    let flashInterval: any = null;
-
-    const updateTags = (hoveredId: string | null, isFlashUpdate: boolean = false) => {
-      // Only skip update if nothing changed and it wasn't triggered by the flash interval
-      if (currentHoveredId === hoveredId && !isFlashUpdate) return;
-      currentHoveredId = hoveredId;
-
-      if (disposed) return;
-      const activeIds = new Set([hoveredId, selectedId, this.state.targetDetectionId].filter(Boolean) as string[]);
-      const allLabels = (this.state.detectionExplorer?.labelMode ?? 'all') === 'all';
-      this._panoramaDetectionLabels?.setActive(allLabels ? null : activeIds);
-      tagComponent.removeAll();
-
-      const updatedTags: OutlineTag[] = [];
-      tags.forEach((tag) => {
-        const config = tagConfigs.get(tag.id);
-        if (!config) return;
-
-        const isHovered = tag.id === hoveredId;
-        const isTarget = tag.id === this.state.targetDetectionId;
-
-        const shouldShowText = this.state.showAiTags && (allLabels || activeIds.has(tag.id));
-
-        // Defaults
-        let lineColor = config.color;
-        let fillColor = config.color;
-        let fillOpacity = 0;
-        let lineWidth = 1;
-
-        // 1. Target Priority (Flashing Empty Box)
-        if (isTarget) {
-          lineColor = flashState ? 0xffff00 : 0xff3333; // Flash Yellow <-> Bright Red
-          fillOpacity = 0.0; // Completely empty inside
-          lineWidth = 4; // Thick border to show vertices clearly
-        }
-        // 2. Hover State (More solid fill)
-        else if (isHovered || tag.id === selectedId) {
-          fillOpacity = 0.15;
-          lineWidth = 3;
-        }
-
-        try {
-          const geometry = new PolygonGeometry((tag.geometry as PolygonGeometry).polygon);
-          const newTag = new OutlineTag(tag.id, geometry, {
-            text: shouldShowText ? config.text : "",
-            textColor: isTarget ? 0xffff00 : 0xffffff,
-            lineColor: lineColor,
-            lineWidth: lineWidth,
-            lineOpacity: isTarget || isHovered || tag.id === selectedId ? 1 : 0.65,
-            fillColor: fillColor,
-            fillOpacity: fillOpacity,
-          });
-          updatedTags.push(newTag);
-        } catch (err) {
-          console.warn("Error updating tag", tag.id, err);
-        }
-      });
-
-      if (updatedTags.length > 0) {
-        tagComponent.add(updatedTags);
-      }
+  /** Bind viewer/draft/label state without starting listeners or timers during binding. */
+  private detectionHoverHost(): DetectionHoverHost {
+    return {
+      container: () => this.viewerContainer.current,
+      viewer: () => this.mapillaryViewer,
+      imageId: () => this.state.imageId,
+      value: id => this.getDetectionValueFromTagId(id),
+      targetId: () => this.state.targetDetectionId,
+      labelMode: () => this.state.detectionExplorer?.labelMode ?? 'all',
+      labels: () => this._panoramaDetectionLabels,
+      showLabels: () => this.state.showAiTags,
+      detectionsActive: () => this.state.detectionsActive,
+      cancelLocation: () => this.cancelDetectionNoteLocation(),
+      mappedLocation: selection => mappedDetectionLocation(selection, { featureId: this.state.selectedFeatureMetadata?.id, point: this.state.selectedFeatureLocation, images: this.state.alternateImages }),
+      hasDraft: () => !!(this.state.pendingFieldNote || this.state.detectionWorkspaceDraft || this._detectionWorkspaceMarkerOwner),
+      drawPending: (lon, lat) => this.drawPendingNoteGraphic(lon, lat),
+      clearPending: () => this.clearPendingNoteGraphic(),
+      select: selection => this.setState({ viewerDetectionNote: selection, detectionNotePicking: false }),
     };
-
-    (tagComponent as any)._refreshDetectionLabels = () => updateTags(currentHoveredId, true);
-
-    // If a target exists, start the flashing animation loop
-    if (this.state.targetDetectionId) {
-      flashInterval = setInterval(() => {
-        flashState = !flashState; // Toggle flash color
-        updateTags(currentHoveredId, true); // Force update tags
-      }, 500); // Flashes every half second
-    }
-
-    // Mouse move handler
-    const handleMouseMove = async (event: MouseEvent) => {
-      if (!this.mapillaryViewer) return;
-
-      const revision = ++hitRevision;
-      try {
-        const canvas = container.querySelector("canvas");
-        if (!canvas) return;
-
-        const rect = canvas.getBoundingClientRect();
-        const pixelPoint = [event.clientX - rect.left, event.clientY - rect.top];
-
-        const tagIds = await tagComponent.getTagIdsAt(pixelPoint);
-        if (disposed || revision !== hitRevision) return;
-        const hoveredTagId = tagIds.length > 0 ? tagIds[0] : null;
-
-        if (updateTimeout) clearTimeout(updateTimeout);
-
-        updateTimeout = setTimeout(() => {
-          updateTags(hoveredTagId, false);
-        }, 50);
-      } catch (err) {
-        if (disposed || revision !== hitRevision) return;
-        if (updateTimeout) clearTimeout(updateTimeout);
-        updateTimeout = setTimeout(() => updateTags(null, false), 50);
-      }
-    };
-
-    // Mouse leave handler
-    const handleMouseLeave = () => {
-      ++hitRevision;
-      if (updateTimeout) clearTimeout(updateTimeout);
-      updateTags(null, false);
-    };
-
-    const handleClick = async (event: MouseEvent) => {
-      const revision = ++hitRevision;
-      try {
-        const canvas = container.querySelector('canvas'); if (!canvas) return;
-        const rect = canvas.getBoundingClientRect();
-        const ids = await tagComponent.getTagIdsAt([event.clientX - rect.left, event.clientY - rect.top]);
-        if (disposed || revision !== hitRevision || this.mapillaryViewer !== detectionViewer || String(this.state.imageId) !== detectionImageId || !this.state.detectionsActive) return;
-        selectedId = ids[0] || null;
-        const config = selectedId ? tagConfigs.get(selectedId) : null;
-        this.cancelDetectionNoteLocation();
-        const selection: DetectionNoteSelection | null = config && selectedId ? { imageId: detectionImageId, detectionId: selectedId, title: config.text, bounds: config.bounds } : null;
-        if (selection) selection.location = mappedDetectionLocation(selection, { featureId: this.state.selectedFeatureMetadata?.id, point: this.state.selectedFeatureLocation, images: this.state.alternateImages });
-        if (!this.state.pendingFieldNote && !this.state.detectionWorkspaceDraft && !this._detectionWorkspaceMarkerOwner) {
-          if (selection?.location) this.drawPendingNoteGraphic(selection.location.lon, selection.location.lat);
-          else this.clearPendingNoteGraphic();
-        }
-        this.setState({ viewerDetectionNote: selection, detectionNotePicking: false });
-        updateTags(currentHoveredId, true);
-      } catch { /* A failed pick leaves the existing selection intact. */ }
-    };
-    // Click includes touch taps; this listener never consumes viewer gestures.
-    container.addEventListener('click', handleClick);
-    // Attach listeners
-    container.addEventListener("mousemove", handleMouseMove);
-    container.addEventListener("mouseleave", handleMouseLeave);
-
-    // Store cleanup function
-    const cleanup = () => {
-      if (disposed) return;
-      disposed = true; ++hitRevision;
-      detectionViewer?.off?.('remove', cleanup);
-      container.removeEventListener('click', handleClick);
-      if (updateTimeout) clearTimeout(updateTimeout);
-      if (flashInterval) clearInterval(flashInterval); // Kill the flashing interval
-      container.removeEventListener("mousemove", handleMouseMove);
-      container.removeEventListener("mouseleave", handleMouseLeave);
-      delete (tagComponent as any)._refreshDetectionLabels;
-      tagConfigs.clear();
-    };
-    (tagComponent as any)._detectionHoverCleanup = cleanup;
-    detectionViewer?.on?.('remove', cleanup);
   }
 
   // Retrieves the detection label/value associated with a given tag ID.
@@ -5144,16 +4726,12 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
    * The originating setup revision prevents stale views from owning restoration.
    */
   private async restoreSharedStateWhenReady(view: __esri.MapView | __esri.SceneView, current: () => boolean) {
-    if (this._sharedStateRestoreComplete) return;
-    try {
-      await view.when();
-      if (!current() || this._sharedStateRestoreComplete) return;
-      await this.ensureArcGISModules();
-      if (!current() || this._sharedStateRestoreComplete) return;
-      await this.checkUrlForSharedState(current);
-    } catch (error) {
-      if (current() && (error as any)?.name !== "AbortError") console.warn("[MapView] Shared-link initialization failed:", error);
-    }
+    return restoreSharedStateWhenReady(view, current, {
+      restored: () => this._sharedStateRestoreComplete,
+      modules: () => this.ensureArcGISModules(),
+      restore: () => this.checkUrlForSharedState(current),
+      warn: error => console.warn("[MapView] Shared-link initialization failed:", error),
+    });
   }
 
   // Helper method to handle the shared URL
@@ -7067,1150 +6645,125 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     }
   }
 
+  /** Bind local route preparation without moving provider awaits or run ownership. */
+  private readonly _captureRoutePreparationHost: CaptureRoutePreparationHost = {
+    targets: () => this.buildCaptureTargetSegments(),
+    config: () => this.CAPTURE_ROUTE_CONFIG,
+    log: (...args) => this.log(...args),
+    notify: (reason, spareMinutes) => {
+      if (reason === 'targets') this.showToast(this._t('appNoStaleOrMissingRoadsFoundInThisAnalysis'), 3500);
+      else if (reason === 'corridor') this.showToast(this._t('appNoSuitableStaleMissingRoadsFoundNearYourA'), 4500);
+      else this.showToast(<OwnedMessage source={"No beneficial capture detour found within {value0} minutes."} values={{ value0: String(spareMinutes) }} />, 4000);
+    },
+    progress: (usedMinutes, budgetMinutes) => this.setState({ routeGenerationProgress: { usedMinutes, budgetMinutes } }),
+  };
+
+  /** Bind one route run to UI/camera/ownership operations without exposing the widget to the optimizer. */
+  private captureRouteExecutionHost(routeView: __esri.MapView | __esri.SceneView): CaptureRouteExecutionHost {
+      return {
+          createProvider: () => this.createCaptureRoutingProvider(),
+          config: () => this.CAPTURE_ROUTE_CONFIG,
+          preparation: this._captureRoutePreparationHost,
+          coverageInput: () => ({ coverageSegments: this._coverageSegments?.length ?? 0,
+              coverageTiers: this._coverageSegmentTiers ? {
+                  fresh: this._coverageSegmentTiers.filter(tier => tier === 'fresh').length,
+                  aging: this._coverageSegmentTiers.filter(tier => tier === 'aging').length,
+                  stale: this._coverageSegmentTiers.filter(tier => tier === 'stale').length,
+                  none: this._coverageSegmentTiers.filter(tier => tier === 'none').length,
+              } : null }),
+          progress: (usedMinutes, budgetMinutes) => this.setState({ routeGenerationProgress: { usedMinutes, budgetMinutes } }),
+          log: (...args) => this.log(...args),
+          warn: (...args) => console.warn(...args),
+          consoleWarn: (...args) => console.warn(...args),
+          restoreCamera: current => this.restoreRoutingLoginView(routeView, current),
+          draw: (paths, current) => this.drawCaptureRoute(paths, current),
+          publish: data => this.setState({ routeData: data }),
+          ready: (extraMinutes, usefulKilometers) => this.showToast(<OwnedMessage source="🚗 Capture Route Ready · {minutes} min detour · {distance} km useful coverage" values={{ minutes: this._presentation.number(extraMinutes, { maximumFractionDigits: 0 }), distance: this._presentation.number(usefulKilometers, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }}/>, 5000),
+          error: err => {
+              console.error("[CaptureRoute] Error:", err);
+              const message = err instanceof Error ? err.message : String(err);
+              if (message.startsWith("Routing is not configured") || message.startsWith("No routing service is configured")) {
+                  this.showToast(message, 6000);
+              }
+              else if (this.isRoutingAuthenticationError(err)) {
+                  this.showToast(<OwnedMessage source="Routing authorization failed. Sign in to ArcGIS or ask the Experience author to configure a routing API key."/>, 6500);
+              }
+              else {
+                  this.showToast(this._t('appCouldNotGenerateCaptureRoute'), 4000);
+              }
+          },
+          retainLoginWindow: () => {
+              const snapshot = this._routingLoginView;
+              if (snapshot)
+                  this._routingLoginExpiry = setTimeout(() => {
+                      if (this._routingLoginView === snapshot)
+                          this._routingLoginView = null;
+                      this._routingLoginExpiry = null;
+                  }, 15000);
+          },
+          finish: run => {
+              const stillCurrent = run.current();
+              if (this._routeGeneration.finish(run)) {
+                  if (!stillCurrent)
+                      this.releaseCaptureRouteLoginView();
+                  this._captureRouteLoginView = null;
+                  if (!this._startupDisposed)
+                      this.setState({ isGeneratingRoute: false, routeGenerationProgress: null });
+              }
+          },
+      };
+  }
+
   /**
-   * Generate and refine a coverage-seeking route using the resolved ArcGIS or OSRM provider.
+   * Start an owned route execution through the routing feature.
+   * Forward its promise directly; pre-run failures retain the prior rejected-promise contract.
    * The RouteGeneration run owns provider requests and guards every asynchronous publication/drawing boundary.
    * Only the current run may publish route results, restore its login camera or clear its busy state.
    * @param startPt Start coordinate as [longitude, latitude] in WGS84 degrees.
    * @param endPt End coordinate as [longitude, latitude] in WGS84 degrees.
    * @param spareMinutes Additional travel-time budget beyond the direct route, in minutes.
    */
-  private generateEsriDetourRoute = async (startPt: [number, number], endPt: [number, number], spareMinutes: number) => {
-    const { jimuMapView } = this.state;
-
-    if (!jimuMapView?.view?.map || jimuMapView.view.destroyed) {
-      this.showToast(this._t('appMapViewIsReconnectingWaitForTheMapThen'), 4500);
-      return;
-    }
-    if (!this._coverageSegments || this._coverageSegments.length === 0) {
-      this.showToast(this._t('appRunStreetCoverageAnalysisFirst'), 3000);
-      return;
-    }
-
-    if (!this.ArcGISModules || this.state.isGeneratingRoute) return;
-    const routeView = jimuMapView.view, routeMap = routeView.map;
-    const segments = this._coverageSegments, tiers = this._coverageSegmentTiers, bbox = this._coverageAnalysisBbox;
-    const config = this.props.config, start = this.state.routeStartPoint, end = this.state.routeEndPoint;
-    const travelMode = this.state.routeTravelMode, engine = this.state.routingEngineOverride, budget = this.state.routeSpareMinutes;
-    const run = this._routeGeneration.begin(() => !this._startupDisposed && this.props.state !== 'CLOSED' && this.props.visible !== false &&
-      this.state.jimuMapView?.view === routeView && routeView.map === routeMap && !routeView.destroyed &&
-      this._coverageSegments === segments && this._coverageSegmentTiers === tiers && this._coverageAnalysisBbox === bbox && !this.state.coverageAnalysisLoading &&
-      this.props.config === config && this.state.routeStartPoint === start && this.state.routeEndPoint === end &&
-      this.state.routeTravelMode === travelMode && this.state.routingEngineOverride === engine && this.state.routeSpareMinutes === budget);
-    if (this.getEffectiveRoutingEngine() !== "osrm") this.rememberRoutingLoginView();
-    this._captureRouteLoginView = this.getEffectiveRoutingEngine() !== "osrm" ? this._routingLoginView : null;
-
-    this.setState({
-      isGeneratingRoute: true,
-      routeData: null,
-      routeGenerationProgress: null,
-    });
-
-    try {
-      /*
-       * Resolve routing authentication ONCE.
-       *
-       * The provider may change from portal → API key
-       * if AUTO fallback is required during baseline solve.
-       */
-      const routingProvider = await this.createCaptureRoutingProvider();
-      run.check();
-
-      /*
-       * Helpers
-       */
-
-      this.setState({
-        routeGenerationProgress: {
-          usedMinutes: 0,
-          budgetMinutes: spareMinutes,
-        },
-      });
-
-      this.log("[CaptureRoute] Solving baseline A → B...");
-
-      this.log("[CaptureRoute] Test input:", {
-        start: startPt,
-        end: endPt,
-
-        spareMinutes,
-
-        coverageSegments: this._coverageSegments?.length ?? 0,
-
-        coverageTiers: this._coverageSegmentTiers
-          ? {
-            fresh: this._coverageSegmentTiers.filter((tier) => tier === "fresh").length,
-
-            aging: this._coverageSegmentTiers.filter((tier) => tier === "aging").length,
-
-            stale: this._coverageSegmentTiers.filter((tier) => tier === "stale").length,
-
-            none: this._coverageSegmentTiers.filter((tier) => tier === "none").length,
-          }
-          : null,
-      });
-
-      const baselineRoute = await routingProvider.solve({
-        signal: run.signal,
-        stops: [startPt, endPt],
-
-        preserveStopOrder: true,
-
-        preserveEndpoints: true,
-      });
-      run.check();
-
-      /*
-       * The optimizer no longer needs to know how
-       * ArcGIS represented these values internally.
-       */
-      await this.restoreRoutingLoginView(routeView, run.current);
-      run.check();
-
-      const baselineMinutes = baselineRoute.durationMinutes;
-
-      const baselineDistanceMeters = baselineRoute.distanceMeters;
-
-      const baselineKilometers = baselineDistanceMeters / 1000;
-
-      const baselinePaths = baselineRoute.paths;
-
-      const baselineCoordinates: [number, number][] = baselinePaths.flatMap((path) => path);
-
-      if (baselineCoordinates.length < 2) {
-        throw new Error("Baseline route geometry is empty.");
-      }
-
-      /*
-       * Used only for local opportunity scoring.
-       *
-       * This is NOT used to replace ArcGIS routing.
-       */
-      const baselineSpeedMetersPerMinute = baselineMinutes > 0 ? baselineDistanceMeters / baselineMinutes : 400;
-
-      this.log(`[CaptureRoute] Baseline: ` + `${baselineKilometers.toFixed(2)} km / ` + `${baselineMinutes.toFixed(1)} min`);
-
-      this.log(`[CaptureRoute] Extra budget: ` + `${spareMinutes.toFixed(1)} min`);
-
-      /*
-       * 2. TARGET SEGMENTS
-       * buildCaptureTargetSegments() already knows which OSM
-       * segments are NONE / STALE.
-       * No ArcGIS call happens here.
-       */
-
-      const allTargets = this.buildCaptureTargetSegments();
-
-      if (!allTargets.length) {
-        this.showToast(this._t('appNoStaleOrMissingRoadsFoundInThisAnalysis'), 3500);
-        return;
-      }
-
-      /*
-       * Convert widget target objects into the optimizer's
-       * RouteTargetSegment structure.
-       */
-      const optimizerTargets = allTargets;
-
-      if (!optimizerTargets.length) {
-        this.showToast(this._t('appNoStaleOrMissingRoadsFoundInThisAnalysis'), 3500);
-
-        return;
-      }
-
-      this.log(`[CaptureRoute] Target segments: ` + `${optimizerTargets.length}`);
-
-      /*
-       * 3. ADAPTIVE LOCAL OPPORTUNITY GENERATION
-       *
-       * Start with the normal narrow corridor.
-       *
-       * Only expand farther from the A → B baseline when:
-       *
-       *   1. all opportunities in the current corridor were exhausted
-       *   2. we still have substantial estimated spare-time budget
-       *   3. another corridor width is available
-       *
-       * This keeps normal routes local while allowing short A → B
-       * routes with large spare-time budgets to search farther away.
-       */
-
-      const { opportunities, selection, selectedCorridorWidth } = selectAdaptiveCaptureOpportunities({
-        targets: optimizerTargets,
-        baselineCoordinates,
-        baselineSpeedMetersPerMinute,
-        spareMinutes,
-        config: this.CAPTURE_ROUTE_CONFIG,
-        log: (...args) => this.log(...args),
-      });
-
-      reportCaptureCorridor(opportunities, selectedCorridorWidth, message => this.log(message));
-
-      if (!opportunities.length) {
-        this.showToast(this._t('appNoSuitableStaleMissingRoadsFoundNearYourA'), 4500);
-
-        return;
-      }
-
-      /*
-       * 4. FINAL LOCAL TIME-BUDGET SELECTION RESULT
-       *
-       * `selection` now represents the result from whichever corridor
-       * was ultimately selected: 180m, 250m, or 350m.
-       */
-
-      reportCaptureSelection(selection, this.CAPTURE_ROUTE_CONFIG.maxFinalStops, message => this.log(message));
-
-      if (!selection.opportunities.length) {
-        this.showToast(<OwnedMessage source={"No beneficial capture detour found within {value0} minutes."} values={{ value0: String(spareMinutes) }} />, 4000);
-
-        return;
-      }
-
-      /*
-       * Show the LOCAL estimate while the final network route
-       * is being solved.
-       */
-      this.setState({
-        routeGenerationProgress: {
-          usedMinutes: selection.estimatedExtraMinutes,
-          budgetMinutes: spareMinutes,
-        },
-      });
-
-      /*
-       * 5. FINAL ROUTE SOLVE
-       * We deliberately keep the number of stops small.
-       *
-       * buildFinalRouteStops() should already:
-       *   - order opportunities along A → B
-       *   - create 2–3 useful anchors per opportunity
-       *   - avoid unnecessary dense waypoint generation
-       * The ArcGIS server receives the already ordered stops.
-       *
-       * findBestSequence = false
-       * means ArcGIS does NOT perform another stop optimization.
-       */
-
-      let activeOpportunities = [...selection.opportunities];
-
-      /*
-       * Full candidate pool from the selected corridor.
-       *
-       * Some opportunities may be removed by OSRM preflight.
-       * Once we have a valid route, we can cheaply test whether
-       * replacing a retained low-value opportunity with one of
-       * these excluded opportunities improves capture value.
-       */
-      const replacementCandidatePool = [...opportunities];
-
-      /*
-       * Never re-add opportunities proven intrinsically unsafe,
-       * such as badly snapped anchors or broken same-opportunity
-       * traversal.
-       */
-      const permanentlyRejectedOpportunityIds = new Set<string>();
-
-      let osrmReplacementPassesUsed = 0;
-
-      const maxOsrmReplacementPasses = 2;
-
-      /*
-       * Diagnostic helper.
-       *
-       * Mirrors buildFinalRouteStops() so every accepted
-       * capture stop can be traced back to the opportunity
-       * that created it.
-       *
-       * IMPORTANT:
-       * Keep this in sync with buildFinalRouteStops().
-       */
-      const buildCaptureStopOwners = (opportunities: CaptureOpportunity[]): string[] =>
-        captureStopOwners(opportunities, this.CAPTURE_ROUTE_CONFIG.maxFinalStops);
-
-      let finalRoute: RoutingResult | null = null;
-
-      let finalRouteOpportunities: CaptureOpportunity[] = [];
-
-      /*
-       * BEST ACTUAL ROUTE SEEN
-       *
-       * A retry after pruning SHOULD normally be shorter.
-       *
-       * But road-network topology can occasionally make a later
-       * waypoint set produce a worse route.
-       *
-       * Keep the best actual ArcGIS result as a safety fallback.
-       */
-      const captureSolveHistory = new CaptureSolveHistory<RoutingResult, CaptureOpportunity>();
-
-
-
-
-
-      let finalAttemptCount = 0;
-
-      for (let attempt = 0; attempt < this.CAPTURE_ROUTE_CONFIG.maxFinalRouteSolves; attempt++) {
-        finalAttemptCount++;
-        /*
-         * Build stops from the CURRENT set of opportunities.
-         *
-         * If the previous real ArcGIS solve exceeded the budget,
-         * the opportunity set may have been batch-pruned before
-         * reaching this attempt.
-         */
-
-        let captureStops = buildFinalRouteStops(activeOpportunities);
-
-        let captureStopOwners = buildCaptureStopOwners(activeOpportunities);
-
-        if (!captureStops.length) {
-          finalRoute = null;
-          break;
-        }
-
-        /*
-         * --------------------------------------------------------
-         * OSRM PREFLIGHT PRUNING
-         * --------------------------------------------------------
-         *
-         * OSRM can reveal pathological ordered waypoint transitions
-         * before we spend one of our authoritative route solves.
-         *
-         * Example:
-         *   25 m direct
-         *   3.6 km routed
-         *
-         * If the complete ordered preflight is already far above
-         * the user's spare-time budget, remove low-value /
-         * high-cost opportunities first and rebuild the stops.
-         *
-         * This does NOT consume a final route solve.
-         */
-        if (routingProvider.preflightOrderedStops) {
-          const maxPreflightPrunePasses = Math.min(12, Math.max(1, activeOpportunities.length - 1));
-          const hardSnapRejectMeters = 60;
-
-          let lastPreflightExtraMinutes: number | null = null;
-
-          for (let preflightPass = 0; preflightPass < maxPreflightPrunePasses; preflightPass++) {
-            const preflightStops: [number, number][] = [startPt, ...captureStops, endPt];
-
-            const preflight = await routingProvider.preflightOrderedStops(preflightStops, run.signal);
-            run.check();
-            const snapDiagnostics = buildPreflightSnapDiagnostics(
-              preflight.waypointSnapDistancesMeters, preflightStops.length, captureStopOwners,
-            );
-
-            const { badSnapDiagnostics, hardBadSnapOwners } = classifyPreflightSnaps(snapDiagnostics, hardSnapRejectMeters);
-
-            if (badSnapDiagnostics.length) {
-              this.log("[CaptureRoute] OSRM capture anchors snapping >40m:\n" + JSON.stringify(badSnapDiagnostics, null, 2));
-            }
-
-            if (hardBadSnapOwners.size) {
-              for (const owner of hardBadSnapOwners) {
-                permanentlyRejectedOpportunityIds.add(owner);
-              }
-              this.log("[CaptureRoute] OSRM removing badly snapped opportunities: " + Array.from(hardBadSnapOwners).join(", "));
-
-              activeOpportunities = activeOpportunities.filter((opportunity) => !hardBadSnapOwners.has(opportunity.id));
-
-              captureStops = buildFinalRouteStops(activeOpportunities);
-
-              captureStopOwners = buildCaptureStopOwners(activeOpportunities);
-
-              if (!captureStops.length) {
-                break;
-              }
-
-              /*
-               * Re-run preflight with the cleaned
-               * stop set before doing network
-               * penalty analysis.
-               */
-              continue;
-            }
-
-            const projectedExtraMinutes = preflight.durationMinutes - baselineMinutes;
-
-            lastPreflightExtraMinutes = projectedExtraMinutes;
-
-            const { preflightLegs, worstPreflightLegs } = buildPreflightLegDiagnostics(
-              preflight.legDurationMinutes, preflightStops, captureStopOwners,
-            );
-
-            this.log(
-              `[CaptureRoute] OSRM preflight ${preflightPass + 1}: ` + `${preflight.durationMinutes.toFixed(1)} min total / ` + `${projectedExtraMinutes.toFixed(1)} min extra`,
-            );
-
-            this.log("[CaptureRoute] OSRM preflight worst legs:\n" + JSON.stringify(worstPreflightLegs, null, 2));
-
-            const preflightTolerance = this.CAPTURE_ROUTE_CONFIG.finalBudgetToleranceMinutes ?? 0.25;
-
-            const budgetFits = projectedExtraMinutes <= spareMinutes + preflightTolerance;
-
-            const { pathologicalInternalLegs, networkQualityFits, qualityCleanupMode, pathologicalOwnerIds } = classifyPreflightQuality(
-              preflightLegs, budgetFits,
-            );
-            this.log("[CaptureRoute] SAME-OWNER quality guard active");
-
-            if (pathologicalInternalLegs.length) {
-              this.log("[CaptureRoute] OSRM pathological internal legs:\n" + JSON.stringify(pathologicalInternalLegs, null, 2));
-            }
-
-            if (budgetFits && networkQualityFits) {
-              /*
-               * --------------------------------------------------------
-               * NETWORK-AWARE REPLACEMENT
-               * --------------------------------------------------------
-               *
-               * We already have a valid route.
-               *
-               * Before accepting it, try a few one-for-one replacements:
-               *
-               *   remove retained opportunity A
-               *   add excluded opportunity B
-               *   restore baselinePosition order
-               *   ask OSRM Table
-               *
-               * We never scramble the A -> B ordering.
-               */
-              if (osrmReplacementPassesUsed < maxOsrmReplacementPasses) {
-                const allowedExtraMinutes = spareMinutes + preflightTolerance;
-
-                const probePairs = rankCaptureReplacementPairs({
-                  activeOpportunities, replacementCandidatePool, permanentlyRejectedOpportunityIds,
-                  maxFinalStops: this.CAPTURE_ROUTE_CONFIG.maxFinalStops,
-                });
-
-                let bestReplacement: CaptureReplacementProbe | null = null;
-
-                for (const pair of probePairs) {
-                  /*
-                   * Replace exactly one opportunity and restore
-                   * monotonic A -> B baseline ordering.
-                   */
-                  const { trialOpportunities, trialCaptureOwners, trialStops } = prepareCaptureTrial({
-                    activeOpportunities, removeId: pair.remove.id, add: pair.add,
-                    startPt, endPt, maxFinalStops: this.CAPTURE_ROUTE_CONFIG.maxFinalStops,
-                  });
-
-                  const trialPreflight = await routingProvider.preflightOrderedStops!(trialStops, run.signal);
-                  run.check();
-
-                  const trialExtraMinutes = trialPreflight.durationMinutes - baselineMinutes;
-
-                  /*
-                   * Reject newly introduced >60 m snapping.
-                   */
-                  const trialHasBadSnap = (trialPreflight.waypointSnapDistancesMeters ?? []).some(
-                    (snapMeters, index) => index > 0 && index < trialStops.length - 1 && snapMeters > hardSnapRejectMeters,
-                  );
-
-                  /*
-                   * Reject broken full-road traversal.
-                   *
-                   * Same rule as the normal quality gate:
-                   * the failure must occur INSIDE one opportunity.
-                   */
-                  const trialHasBrokenOpportunity = hasBrokenTrialOpportunity(
-                    trialPreflight.legDurationMinutes, trialStops, trialCaptureOwners,
-                  );
-
-                  const trialFits = trialExtraMinutes <= allowedExtraMinutes;
-
-                  this.log(
-                    `[CaptureRoute] OSRM replacement probe: ` +
-                    `remove ${pair.remove.id} / ` +
-                    `add ${pair.add.id} → ` +
-                    `${trialExtraMinutes.toFixed(1)} min extra · ` +
-                    `weighted value +${pair.valueGain.toFixed(0)} · ` +
-                    `snap=${trialHasBadSnap ? "bad" : "ok"} · ` +
-                    `quality=${trialHasBrokenOpportunity ? "bad" : "ok"}`,
-                  );
-
-                  /*
-                   * If the added opportunity itself introduces an
-                   * intrinsic hard failure, stop considering it later.
-                   *
-                   * The existing active route was already clean, so a
-                   * newly appearing hard snap / same-owner failure is
-                   * strong evidence against the added opportunity.
-                   */
-                  if (trialHasBadSnap || trialHasBrokenOpportunity) {
-                    permanentlyRejectedOpportunityIds.add(pair.add.id);
-
-                    continue;
-                  }
-
-                  if (!trialFits) {
-                    continue;
-                  }
-
-                  bestReplacement = chooseCaptureReplacementProbe(
-                    bestReplacement, pair, trialOpportunities, trialExtraMinutes,
-                  );
-                }
-
-                if (bestReplacement) {
-                  this.log(
-                    `[CaptureRoute] OSRM chosen replacement: ` +
-                    `remove ${bestReplacement.removeId} / ` +
-                    `add ${bestReplacement.addId} → ` +
-                    `${bestReplacement.extraMinutes.toFixed(1)} min extra · ` +
-                    `value +${bestReplacement.valueGain.toFixed(0)}`,
-                  );
-
-                  activeOpportunities = bestReplacement.opportunities;
-
-                  captureStops = buildFinalRouteStops(activeOpportunities);
-
-                  captureStopOwners = buildCaptureStopOwners(activeOpportunities);
-
-                  osrmReplacementPassesUsed++;
-
-                  /*
-                   * The replacement trial itself was already validated,
-                   * but rerun the normal preflight loop so all diagnostics
-                   * and subsequent replacement decisions use the new set.
-                   */
-                  lastPreflightExtraMinutes = bestReplacement.extraMinutes;
-
-                  continue;
-                }
-              }
-
-              /*
-               * Fits budget, full-road quality is good,
-               * and no better replacement was found.
-               */
-              break;
-            }
-
-            /*
-             * Nothing useful left to prune.
-             */
-            if (activeOpportunities.length <= 1) {
-              break;
-            }
-
-            /*
-             * --------------------------------------------------------
-             * OSRM NETWORK-AWARE PRUNING
-             * --------------------------------------------------------
-             *
-             * Prefer removing opportunities that participate in
-             * unusually expensive OSRM legs.
-             *
-             * This runs BEFORE the generic value/time pruning below.
-             */
-
-            const { networkPruneCandidates } = scoreCaptureNetworkPenalties({
-              preflightLegs, activeOpportunities, spareMinutes, qualityCleanupMode, pathologicalOwnerIds,
-            });
-
-            /*
-             * Do not batch-delete a dozen opportunities.
-             *
-             * Remove at most two network offenders, then ask OSRM
-             * again because topology changes non-linearly.
-             */
-            if (networkPruneCandidates.length) {
-              const allowedExtraMinutes = spareMinutes + preflightTolerance;
-
-              const overrunRatio = projectedExtraMinutes / Math.max(1, allowedExtraMinutes);
-              /*
-               * --------------------------------------------------------
-               * NEAR-BUDGET SURGICAL PRUNING
-               * --------------------------------------------------------
-               *
-               * When we're only slightly over budget, deleting the single
-               * highest-penalty opportunity can cause a huge non-linear
-               * topology collapse.
-               *
-               * Instead, cheaply probe several one-opportunity removals
-               * with OSRM Table and choose the candidate that lands closest
-               * to the budget without introducing a broken same-opportunity
-               * traversal.
-               */
-              const budgetOverrunMinutes = projectedExtraMinutes - allowedExtraMinutes;
-
-              if (budgetOverrunMinutes > 0 && budgetOverrunMinutes <= 5 && networkPruneCandidates.length > 1) {
-                const probeCandidates = networkPruneCandidates.slice(0, Math.min(5, networkPruneCandidates.length));
-
-                let bestProbe: NetworkBudgetProbe | null = null;
-
-                for (const probeCandidate of probeCandidates) {
-                  if (activeOpportunities.length <= 1) {
-                    break;
-                  }
-
-                  const { trialOpportunities, trialCaptureOwners, trialStops } = prepareCaptureTrial({
-                    activeOpportunities, removeId: probeCandidate.opportunity.id,
-                    startPt, endPt, maxFinalStops: this.CAPTURE_ROUTE_CONFIG.maxFinalStops,
-                  });
-
-                  const trialPreflight = await routingProvider.preflightOrderedStops!(trialStops, run.signal);
-                  run.check();
-
-                  const trialExtraMinutes = trialPreflight.durationMinutes - baselineMinutes;
-
-                  /*
-                   * Reject a trial if one selected opportunity
-                   * still contains an absurd internal traversal.
-                   */
-                  const trialHasBrokenOpportunity = hasBrokenTrialOpportunity(
-                    trialPreflight.legDurationMinutes, trialStops, trialCaptureOwners,
-                  );
-
-                  const trialFits = trialExtraMinutes <= allowedExtraMinutes;
-
-                  this.log(
-                    `[CaptureRoute] OSRM near-budget probe: ` +
-                    `remove ${probeCandidate.opportunity.id} → ` +
-                    `${trialExtraMinutes.toFixed(1)} min extra · ` +
-                    `weighted value lost=${probeCandidate.opportunity.valueMeters.toFixed(0)}m · ` +
-                    `quality=${trialHasBrokenOpportunity ? "bad" : "ok"}`,
-                  );
-
-                  if (!trialFits || trialHasBrokenOpportunity) {
-                    continue;
-                  }
-
-                  bestProbe = chooseNetworkBudgetProbe(
-                    bestProbe, probeCandidate.opportunity.id, trialExtraMinutes,
-                    probeCandidate.opportunity.valueMeters, projectedExtraMinutes,
-                  );
-                }
-
-                if (bestProbe) {
-                  this.log(
-                    `[CaptureRoute] OSRM near-budget chosen removal: ` +
-                    `${bestProbe.opportunityId} → ` +
-                    `${bestProbe.extraMinutes.toFixed(1)} min extra · ` +
-                    `lost=${bestProbe.valueLostMeters.toFixed(0)}m · ` +
-                    `relief=${bestProbe.reliefMinutes.toFixed(1)} min · ` +
-                    `cost=${bestProbe.valueLossPerReliefMinute.toFixed(1)}m/min`,
-                  );
-
-                  activeOpportunities = activeOpportunities
-                    .filter((opportunity) => opportunity.id !== bestProbe!.opportunityId)
-                    .sort((a, b) => a.baselinePosition - b.baselinePosition);
-
-                  captureStops = buildFinalRouteStops(activeOpportunities);
-
-                  captureStopOwners = buildCaptureStopOwners(activeOpportunities);
-
-                  continue;
-                }
-              }
-              /*
-               * Adaptive OSRM network pruning.
-               *
-               * When the ordered route is catastrophically over budget,
-               * removing only 1–2 opportunities per preflight pass wastes
-               * requests and may hit the preflight-pass ceiling before
-               * converging.
-               *
-               * As we approach the budget, pruning becomes conservative
-               * again because road-network topology is non-linear.
-               */
-              const { targetedRemovalLimit, networkRemoveIds, removals } = planAdaptiveNetworkRemoval(
-                networkPruneCandidates, activeOpportunities.length, overrunRatio,
-              );
-
-              this.log(
-                `[CaptureRoute] OSRM adaptive prune: ` +
-                `${projectedExtraMinutes.toFixed(1)}/${allowedExtraMinutes.toFixed(1)} min ` +
-                `(${overrunRatio.toFixed(2)}x) → ` +
-                `remove up to ${targetedRemovalLimit}`,
-              );
-
-              for (const candidate of removals) {
-                this.log(
-                  `[CaptureRoute] OSRM network removing: ` +
-                  `${candidate.opportunity.id} · ` +
-                  `penalty=${candidate.networkPenaltyMinutes.toFixed(1)} min · ` +
-                  `${candidate.penaltyPer100Meters.toFixed(2)} min/100m`,
-                );
-              }
-
-              if (networkRemoveIds.size) {
-                /*
-                 * If the route already fits the time budget and we are
-                 * pruning only because a SAME-OPPORTUNITY traversal is
-                 * pathological, do not allow that opportunity back later.
-                 */
-                if (qualityCleanupMode) {
-                  for (const id of networkRemoveIds) {
-                    permanentlyRejectedOpportunityIds.add(id);
-                  }
-                }
-                activeOpportunities = activeOpportunities.filter((opportunity) => !networkRemoveIds.has(opportunity.id)).sort((a, b) => a.baselinePosition - b.baselinePosition);
-
-                captureStops = buildFinalRouteStops(activeOpportunities);
-
-                captureStopOwners = buildCaptureStopOwners(activeOpportunities);
-
-                this.log(`[CaptureRoute] OSRM network pruned ` + `${networkRemoveIds.size} opportunity(s).`);
-
-                if (!captureStops.length) {
-                  break;
-                }
-
-                /*
-                 * Re-run OSRM immediately with the altered topology.
-                 *
-                 * Do NOT run the generic batch-pruner during this pass.
-                 */
-                continue;
-              }
-            }
-
-            /*
-             * --------------------------------------------------------
-             * NEAR-BUDGET GENERIC SINGLE-REMOVAL GUARD
-             * --------------------------------------------------------
-             *
-             * The network-specific candidate list can become empty
-             * even though OSRM is only a few minutes over budget.
-             *
-             * In that case NEVER fall through to the generic
-             * multi-opportunity batch pruner.
-             *
-             * Probe ordinary active opportunities one at a time
-             * with OSRM Table and remove at most ONE per pass.
-             */
-            const nearBudgetAllowedExtraMinutes = spareMinutes + preflightTolerance;
-
-            const nearBudgetOverrunMinutes = projectedExtraMinutes - nearBudgetAllowedExtraMinutes;
-
-            if (nearBudgetOverrunMinutes > 0 && nearBudgetOverrunMinutes <= 5 && activeOpportunities.length > 1) {
-              /*
-               * Start with the least efficient opportunities,
-               * but Table determines the real network result.
-               */
-              const genericProbeCandidates = [...activeOpportunities]
-                .map((opportunity) => ({
-                  opportunity,
-
-                  efficiency: opportunity.valueMeters / Math.max(0.25, opportunity.estimatedDetourMinutes),
-                }))
-                .sort((a, b) => a.efficiency - b.efficiency)
-                .slice(0, 5);
-
-              let bestFittingProbe: FittingBudgetProbe | null = null;
-
-              /*
-               * If none of the five removals gets completely
-               * under budget, still remember the best SINGLE
-               * removal so we make progress without batch pruning.
-               */
-              let bestProgressProbe: ProgressBudgetProbe | null = null;
-
-              for (const candidate of genericProbeCandidates) {
-                const { trialOpportunities, trialCaptureOwners, trialStops } = prepareCaptureTrial({
-                  activeOpportunities, removeId: candidate.opportunity.id,
-                  startPt, endPt, maxFinalStops: this.CAPTURE_ROUTE_CONFIG.maxFinalStops,
-                });
-
-                const trialPreflight = await routingProvider.preflightOrderedStops!(trialStops, run.signal);
-                run.check();
-
-                const trialExtraMinutes = trialPreflight.durationMinutes - baselineMinutes;
-
-                /*
-                 * Preserve the same full-road quality rule.
-                 */
-                const trialHasBrokenOpportunity = hasBrokenTrialOpportunity(
-                  trialPreflight.legDurationMinutes, trialStops, trialCaptureOwners,
-                );
-
-                this.log(
-                  `[CaptureRoute] OSRM generic near-budget probe: ` +
-                  `remove ${candidate.opportunity.id} → ` +
-                  `${trialExtraMinutes.toFixed(1)} min extra · ` +
-                  `weighted value lost=${candidate.opportunity.valueMeters.toFixed(0)} · ` +
-                  `quality=${trialHasBrokenOpportunity ? "bad" : "ok"}`,
-                );
-
-                if (trialHasBrokenOpportunity) {
-                  continue;
-                }
-
-                /*
-                 * Track the best one-removal improvement even
-                 * when it does not completely fit yet.
-                 */
-                bestProgressProbe = chooseProgressBudgetProbe(
-                  bestProgressProbe, candidate.opportunity.id, trialExtraMinutes,
-                  candidate.opportunity.valueMeters, projectedExtraMinutes,
-                );
-
-                if (trialExtraMinutes > nearBudgetAllowedExtraMinutes) {
-                  continue;
-                }
-
-                bestFittingProbe = chooseFittingBudgetProbe(
-                  bestFittingProbe, candidate.opportunity.id, trialExtraMinutes,
-                  candidate.opportunity.valueMeters, projectedExtraMinutes,
-                );
-              }
-
-              /*
-               * Prefer a removal that actually fits.
-               * Otherwise take the best SINGLE step toward
-               * the budget and preflight again.
-               */
-              const chosenNearBudgetProbe = bestFittingProbe ?? bestProgressProbe;
-
-              if (chosenNearBudgetProbe) {
-                this.log(
-                  `[CaptureRoute] OSRM generic near-budget chosen removal: ` +
-                  `${chosenNearBudgetProbe.opportunityId} → ` +
-                  `${chosenNearBudgetProbe.extraMinutes.toFixed(1)} min extra`,
-                );
-
-                activeOpportunities = activeOpportunities
-                  .filter((opportunity) => opportunity.id !== chosenNearBudgetProbe.opportunityId)
-                  .sort((a, b) => a.baselinePosition - b.baselinePosition);
-
-                captureStops = buildFinalRouteStops(activeOpportunities);
-
-                captureStopOwners = buildCaptureStopOwners(activeOpportunities);
-
-                /*
-                 * Critical:
-                 * never reach the generic batch pruner
-                 * from near-budget mode.
-                 */
-                continue;
-              }
-
-              /*
-               * Extremely defensive fallback:
-               *
-               * none of the Table probes improved the route.
-               * Still remove AT MOST ONE opportunity instead
-               * of allowing a 5-10 opportunity batch deletion.
-               */
-              const fallbackCandidate = genericProbeCandidates[0]?.opportunity;
-
-              if (fallbackCandidate) {
-                this.log(`[CaptureRoute] OSRM generic near-budget one-at-a-time fallback: ` + `${fallbackCandidate.id}`);
-
-                activeOpportunities = activeOpportunities.filter((opportunity) => opportunity.id !== fallbackCandidate.id).sort((a, b) => a.baselinePosition - b.baselinePosition);
-
-                captureStops = buildFinalRouteStops(activeOpportunities);
-
-                captureStopOwners = buildCaptureStopOwners(activeOpportunities);
-
-                continue;
-              }
-
-              break;
-            }
-            const preflightPruning = planPreflightBatchPruning({
-              opportunities: activeOpportunities, projectedExtraMinutes, spareMinutes, preflightTolerance,
-            });
-
-            this.log(
-              `[CaptureRoute] OSRM preflight prune: ` +
-              `actual/local=${preflightPruning.correctionFactor.toFixed(2)}, ` +
-              `active=${preflightPruning.activeEstimatedMinutes.toFixed(1)} min, ` +
-              `target=${preflightPruning.targetEstimatedMinutes.toFixed(1)} min, ` +
-              `remove≈${preflightPruning.estimatedMinutesToRemove.toFixed(1)} min`,
-            );
-
-            for (const opportunity of preflightPruning.removals) {
-              this.log(`[CaptureRoute] OSRM preflight removing: ` + `${opportunity.id} ` + `(${opportunity.estimatedDetourMinutes.toFixed(1)} min est)`);
-            }
-
-            /*
-             * Safety: if nothing was removable, stop preflight pruning.
-             */
-            if (!preflightPruning.removeIds.size) {
-              break;
-            }
-
-            activeOpportunities = preflightPruning.opportunities;
-
-            /*
-             * Rebuild the actual anchor list from the surviving
-             * opportunities before running another preflight.
-             */
-            captureStops = buildFinalRouteStops(activeOpportunities);
-            captureStopOwners = buildCaptureStopOwners(activeOpportunities);
-
-            this.log(`[CaptureRoute] OSRM preflight pruned ` + `${preflightPruning.removeIds.size} opportunities / ` + `${preflightPruning.removedEstimatedMinutes.toFixed(1)} estimated minutes.`);
-
-            this.log(`[CaptureRoute] OSRM preflight pruned ` + `${preflightPruning.removeIds.size} opportunities / ` + `${preflightPruning.removedEstimatedMinutes.toFixed(1)} estimated minutes.`);
-
-            if (!captureStops.length) {
-              break;
-            }
-          }
-
-          if (lastPreflightExtraMinutes !== null) {
-            this.log(`[CaptureRoute] OSRM preflight finished: ` + `${lastPreflightExtraMinutes.toFixed(1)} min extra`);
-          }
-        }
-
-        /*
-         * Preflight may have changed activeOpportunities,
-         * so captureStops now represents the final set that
-         * will actually be sent to the authoritative solve.
-         */
-        if (!captureStops.length) {
-          finalRoute = null;
-          break;
-        }
-
-        const solvedOpportunities = [...activeOpportunities];
-
-        this.log(`[CaptureRoute] Final stops: ` + `${captureStops.length}`);
-
-        const finalStops: [number, number][] = [startPt, ...captureStops, endPt];
-        const result = await routingProvider.solve({
-          signal: run.signal,
-          stops: finalStops,
-
-          preserveStopOrder: true,
-
-          preserveEndpoints: true,
-        });
-        run.check();
-
-        finalRoute = result;
-
-        finalRouteOpportunities = solvedOpportunities;
-
-        const finalMinutes = finalRoute.durationMinutes;
-
-        const actualExtraMinutes = finalMinutes - baselineMinutes;
-
-        /*
-         * REMEMBER BEST ACTUAL SOLVE
-         */
-        captureSolveHistory.record(finalRoute, solvedOpportunities, actualExtraMinutes);
-
-        this.log(`[CaptureRoute] Final: ` + `${finalMinutes.toFixed(1)} min`);
-
-        this.log(`[CaptureRoute] Actual extra: ` + `${actualExtraMinutes.toFixed(1)} min`);
-
-        /*
-         * REAL BUDGET CHECK
-         *
-         * The local estimate is only an estimate.
-         *
-         * ArcGIS's actual route time is authoritative here.
-         */
-        const budgetTolerance = this.CAPTURE_ROUTE_CONFIG.finalBudgetToleranceMinutes ?? 0.25;
-
-        if (actualExtraMinutes <= spareMinutes + budgetTolerance) {
-          this.log("[CaptureRoute] Route fits budget.");
-
-          break;
-        }
-
-        /*
-         * If the route exceeds the budget but there is
-         * only one opportunity left, we cannot prune further.
-         */
-        if (activeOpportunities.length <= 1) {
-          this.warn("[CaptureRoute] " + "Route still exceeds budget after pruning limit.");
-
-          break;
-        }
-
-        /*
-         * BATCH PRUNE FOR NEXT FINAL SOLVE
-         *
-         * We only have a small number of authoritative ArcGIS solves.
-         *
-         * Therefore, after seeing the REAL overrun, don't remove just
-         * one tiny opportunity. Estimate how much local detour cost
-         * must be removed and prune the least efficient opportunities
-         * until we reach that amount.
-         */
-
-        const hasAnotherSolve = attempt + 1 < this.CAPTURE_ROUTE_CONFIG.maxFinalRouteSolves;
-
-        if (!hasAnotherSolve) {
-          console.warn(`[CaptureRoute] Final solve still exceeds budget; ` + `no retry remains.`);
-
-          break;
-        }
-
-        /*
-         * Local estimated cost of the opportunities represented by
-         * this ArcGIS solve.
-         */
-        const pruning = planFinalSolveBatchPruning({
-          opportunities: activeOpportunities, actualExtraMinutes, spareMinutes, budgetTolerance,
-        });
-
-        this.log(
-          `[CaptureRoute] Batch prune calibration: ` +
-          `actual/local=${pruning.correctionFactor.toFixed(2)}, ` +
-          `active estimate=${pruning.activeEstimatedMinutes.toFixed(1)} min, ` +
-          `target estimate=${pruning.targetEstimatedMinutes.toFixed(1)} min, ` +
-          `remove≈${pruning.estimatedMinutesToRemove.toFixed(1)} min`,
-        );
-
-        for (const opportunity of pruning.removals) {
-          this.log(`[CaptureRoute] Batch removing: ` + `${opportunity.id} ` + `(${opportunity.estimatedDetourMinutes.toFixed(1)} min est)`);
-        }
-
-        activeOpportunities = pruning.opportunities;
-
-        this.log(`[CaptureRoute] Batch pruned ` + `${pruning.removeIds.size} opportunities / ` + `${pruning.removedEstimatedMinutes.toFixed(1)} estimated minutes.`);
-      }
-
-      /*
-       * FINAL VALIDATION
-       */
-
-      if (!finalRoute) {
-        throw new Error("Final capture route could not be generated.");
-      }
-
-      const { route: bestRoute, opportunities: bestRouteOpportunities, extraMinutes: bestActualExtraMinutes } = captureSolveHistory.best;
-      const finalBudgetTolerance = this.CAPTURE_ROUTE_CONFIG.finalBudgetToleranceMinutes ?? 0.25;
-
-      const finalSelection = selectFinalCaptureRoute({
-        finalRoute, finalRouteOpportunities, bestRoute, bestRouteOpportunities,
-        bestActualExtraMinutes, baselineMinutes, spareMinutes, finalBudgetTolerance,
-      });
-      const { lastRouteExtraMinutes } = finalSelection;
-
-      if (finalSelection.recovered) {
-        console.warn(
-          `[CaptureRoute] Final retry was worse. ` +
-          `Restoring best solve: ` +
-          `${bestActualExtraMinutes.toFixed(1)} min extra ` +
-          `instead of ` +
-          `${lastRouteExtraMinutes.toFixed(1)} min.`,
-        );
-      }
-      finalRoute = finalSelection.route;
-      finalRouteOpportunities = finalSelection.opportunities;
-
-      /*
-       * From here onward, these opportunities correspond
-       * exactly to the route stored in finalRoute.
-       */
-      activeOpportunities = [...finalRouteOpportunities];
-
-      const finalMinutes = finalRoute.durationMinutes;
-
-      const finalDistanceMeters = finalRoute.distanceMeters;
-
-      const finalKilometers = finalDistanceMeters / 1000;
-
-      const actualExtraMinutes = finalMinutes - baselineMinutes;
-
-      this.log(`[CaptureRoute] Completed with ` + `${finalAttemptCount} final solve(s).`);
-
-      this.log(`[CaptureRoute] Final distance: ` + `${finalKilometers.toFixed(2)} km`);
-
-      this.log(`[CaptureRoute] Final duration: ` + `${finalMinutes.toFixed(1)} min`);
-
-      this.log(`[CaptureRoute] Final extra: ` + `${actualExtraMinutes.toFixed(1)} min`);
-
-      this.log(`[CaptureRoute] Opportunity novel metres: ` + opportunities.map((opportunity) => opportunity.novelMeters.toFixed(0)).join(", "));
-
-      /*
-       * 6. DRAW FINAL ROUTE
-       */
-
-      const { finalPaths, activeRouteCoverageTargets, routeCoverage, incrementalCoverage, combinedCoordinates } = evaluateFinalCaptureRoute({
-        paths: finalRoute.paths, baselinePaths, activeOpportunities,
-        routeCoverageToleranceMeters: this.CAPTURE_ROUTE_CONFIG.routeCoverageToleranceMeters,
-        coverageSampleSpacingMeters: this.CAPTURE_ROUTE_CONFIG.coverageSampleSpacingMeters,
-      });
-
-      await this.drawCaptureRoute(finalPaths, run.current);
-      run.check();
-
-      /*
-       * 7. CAPTURE SUMMARY
-       *
-       * IMPORTANT:
-       *
-       * Use activeOpportunities, not the original selection,
-       * because some opportunities may have been removed during
-       * the budget-pruning loop.
-       */
-
-      const { finalSelectedNovelMeters, finalSelectedBaselineOverlapMeters, finalSelectedAnchorCount } = reportCaptureRouteCoverage({
-        activeOpportunities, routeCoverage, incrementalCoverage,
-        log: message => this.log(message),
-      });
-
-      /*
-       * 9. STORE FINAL ROUTE RESULT
-       *
-       * IMPORTANT:
-       *
-       * Everything stored here describes the FINAL ArcGIS route
-       * after budget correction / pruning.
-       *
-       * Do not use the original selection.opportunities here.
-       */
-
-      this.setState({
-        routeData: buildCaptureRouteData({
-          finalDistanceMeters, finalMinutes, combinedCoordinates, baselineMinutes, actualExtraMinutes,
-          spareMinutes, activeRouteCoverageTargets, routeCoverage, incrementalCoverage,
-          finalSelectedNovelMeters, finalSelectedBaselineOverlapMeters,
-          selectedOpportunityCount: activeOpportunities.length,
-          finalSelectedAnchorCount, selectedCorridorWidth, selectionStopReason: selection.stopReason,
-        }),
-      });
-
-      /*
-       * 10. USER FEEDBACK
-       */
-
-      this.showToast(
-        <OwnedMessage source="🚗 Capture Route Ready · {minutes} min detour · {distance} km useful coverage" values={{ minutes: this._presentation.number(actualExtraMinutes, { maximumFractionDigits: 0 }), distance: this._presentation.number(incrementalCoverage.incrementalCoveredMeters / 1000, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }} />,
-        5000,
-      );
-    } catch (err) {
-      if (!run.current() || (err as any)?.name === 'AbortError') return;
-      console.error("[CaptureRoute] Error:", err);
-
-      const message = err instanceof Error ? err.message : String(err);
-
-      if (message.startsWith("Routing is not configured") || message.startsWith("No routing service is configured")) {
-        this.showToast(message, 6000);
-      } else if (this.isRoutingAuthenticationError(err)) {
-        this.showToast(<OwnedMessage source="Routing authorization failed. Sign in to ArcGIS or ask the Experience author to configure a routing API key." />, 6500);
-      } else {
-        this.showToast(this._t('appCouldNotGenerateCaptureRoute'), 4000);
-      }
-    } finally {
+  private generateEsriDetourRoute = (startPt: [
+      number,
+      number
+  ], endPt: [
+      number,
+      number
+  ], spareMinutes: number): Promise<void> => {
       try {
-        if (run.current()) await this.restoreRoutingLoginView(routeView, run.current);
-        if (run.current()) {
-          // Keep the existing short post-login restoration window only for this run.
-          const snapshot = this._routingLoginView;
-          if (snapshot) this._routingLoginExpiry = setTimeout(() => {
-            if (this._routingLoginView === snapshot) this._routingLoginView = null;
-            this._routingLoginExpiry = null;
-          }, 15000);
-        }
-      } finally {
-        const stillCurrent = run.current();
-        if (this._routeGeneration.finish(run)) {
-          if (!stillCurrent) this.releaseCaptureRouteLoginView();
-          this._captureRouteLoginView = null;
-          if (!this._startupDisposed) this.setState({ isGeneratingRoute: false, routeGenerationProgress: null });
-        }
+          const { jimuMapView } = this.state;
+          if (!jimuMapView?.view?.map || jimuMapView.view.destroyed) {
+              this.showToast(this._t('appMapViewIsReconnectingWaitForTheMapThen'), 4500);
+              return Promise.resolve();
+          }
+          if (!this._coverageSegments || this._coverageSegments.length === 0) {
+              this.showToast(this._t('appRunStreetCoverageAnalysisFirst'), 3000);
+              return Promise.resolve();
+          }
+          if (!this.ArcGISModules || this.state.isGeneratingRoute)
+              return Promise.resolve();
+          const routeView = jimuMapView.view, routeMap = routeView.map;
+          const segments = this._coverageSegments, tiers = this._coverageSegmentTiers, bbox = this._coverageAnalysisBbox;
+          const config = this.props.config, start = this.state.routeStartPoint, end = this.state.routeEndPoint;
+          const travelMode = this.state.routeTravelMode, engine = this.state.routingEngineOverride, budget = this.state.routeSpareMinutes;
+          const run = this._routeGeneration.begin(() => !this._startupDisposed && this.props.state !== 'CLOSED' && this.props.visible !== false &&
+              this.state.jimuMapView?.view === routeView && routeView.map === routeMap && !routeView.destroyed &&
+              this._coverageSegments === segments && this._coverageSegmentTiers === tiers && this._coverageAnalysisBbox === bbox && !this.state.coverageAnalysisLoading &&
+              this.props.config === config && this.state.routeStartPoint === start && this.state.routeEndPoint === end &&
+              this.state.routeTravelMode === travelMode && this.state.routingEngineOverride === engine && this.state.routeSpareMinutes === budget);
+          if (this.getEffectiveRoutingEngine() !== "osrm")
+              this.rememberRoutingLoginView();
+          this._captureRouteLoginView = this.getEffectiveRoutingEngine() !== "osrm" ? this._routingLoginView : null;
+          this.setState({
+              isGeneratingRoute: true,
+              routeData: null,
+              routeGenerationProgress: null,
+          });
+          return executeCaptureRoute({ startPt, endPt, spareMinutes, run }, this.captureRouteExecutionHost(routeView));
       }
-    }
+      catch (error) {
+          return Promise.reject(error);
+      }
   };
 
   /** Draws Point A (Green) or Point B (Red) marker. Uses vertical offset and callout in 3D to avoid occlusion by buildings. */
@@ -9361,40 +7914,22 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private ensureSolarMapOverlay(): SolarMapOverlay<__esri.GraphicsLayer, __esri.MapView | __esri.SceneView> {
     return this._solarMapOverlay ??= new SolarMapOverlay();
   }
-  /** Enable or disable solar presentation and coordinate map/viewer owners for the current capture. */
-  private toggleSolarMode = async () => {
-    if (this.props.config.enableSolar !== true) return;
-    this.setState(
-      (prev) => {
-        const nextMode = !prev.isSolarMode;
-
-        // Auto-disable conflicting tools
-        if (nextMode) {
-          if (prev.isMeasureMode) {
-            this.clearMeasurement();
-          }
-          if (prev.isSightMode) {
-            this.clearSight();
-          }
-          if (prev.isViewshedMode) {
-            this.clearViewshed();
-          }
-          if (prev.isLassoMode) {
-            this.clearLasso();
-          }
-        }
-        return { isSolarMode: nextMode };
-      },
-      () => {
-        if (this.state.isSolarMode) {
-          this.showToast(this._t('appSolarModelingEnabledSunPositionComputedFromPhotoMetadata'), 3000);
-          this.updateSolarGraphics();
-        } else {
-          this.clearSolarGraphics();
-        }
-      },
-    );
+  /** Bind solar-mode transitions to React scheduling and existing tool/resource owners. */
+  private readonly _solarModeHost: SolarModeHost = {
+    enabled: () => this.props.config.enableSolar === true,
+    setState: (updater, callback) => this.setState(updater, callback),
+    active: () => this.state.isSolarMode,
+    clearMeasurement: () => this.clearMeasurement(),
+    clearSight: () => this.clearSight(),
+    clearViewshed: () => this.clearViewshed(),
+    clearLasso: () => this.clearLasso(),
+    notifyEnabled: () => this.showToast(this._t('appSolarModelingEnabledSunPositionComputedFromPhotoMetadata'), 3000),
+    update: () => this.updateSolarGraphics(),
+    clear: () => this.clearSolarGraphics(),
   };
+
+  /** Toggle solar presentation through the feature while retaining React updater/callback timing. */
+  private toggleSolarMode = () => toggleSolarMode(this._solarModeHost);
 
   /** Removes both the ArcGIS shadow lines and the WebGL Sun */
   private clearSolarGraphics = () => {
@@ -9404,54 +7939,23 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._solarSceneLighting?.restore(solarView);
   };
 
-  /** Computes exact solar position and triggers renderer updates */
-  private updateSolarGraphics = async () => {
-    if (this.props.config.enableSolar !== true || !this.state.isSolarMode || !this.state.imageId || !this.state.jimuMapView) return;
-    const overlay = this.ensureSolarMapOverlay();
-    const request = ++overlay.revision;
-    const solarView = this.state.jimuMapView.view;
-
-    const currentImg = this.state.sequenceImages.find((img) => img.id === this.state.imageId);
-    if (!currentImg || !currentImg.captured_at) {
-      this.showToast(this._t('appCannotModelSolarDataImageIsMissingATimestamp'), 3000);
-      this.clearSolarGraphics();
-      return;
-    }
-
-    // Calculate astronomical position
-    const sun = getSunPosition(currentImg.captured_at, currentImg.lat, currentImg.lon);
-
-    if (sun.altitude <= 0) {
-      this.showToast(this._t('appSunWasBelowTheHorizonWhenThisPhotoWas'), 4000);
-      this.clearSolarGraphics();
-      return;
-    }
-
-    // 1. Draw ArcGIS Sun Beam & Shadow Vectors (Draped on ground so green dot stays on top)
-    const map = solarView.map;
-    if (!overlay.layer) {
-      const [GraphicsLayer] = await loadArcGISJSAPIModules(["esri/layers/GraphicsLayer"]);
-      if (request !== overlay.revision || !this.state.isSolarMode || this.props.config.enableSolar !== true || this.state.jimuMapView?.view !== solarView) return;
-      overlay.create(solarView, properties => new GraphicsLayer(properties));
-    }
-
-    overlay.prepare(map);
-
-    const { Graphic } = this.ArcGISModules;
-
-    overlay.renderVectors(currentImg, sun, properties => new Graphic(properties));
-
-    // 2. Add Glowing WebGL Sun to Mapillary Viewer
-    this.ensureSolarViewerOwner().update(this.mapillaryViewer, sun.azimuth, sun.altitude);
-
-    // 3. Sync Native ArcGIS 3D Lighting & ShadowCast Widget
-    if (this.state.jimuMapView && this.state.jimuMapView.view.type === "3d") {
-      const view = this.state.jimuMapView.view as any;
-      const photoDate = new Date(currentImg.captured_at);
-      this.ensureSolarSceneLighting().update(view, photoDate, () =>
-        request === overlay.revision && !!this.state.isSolarMode && this.props.config.enableSolar === true && this.state.jimuMapView?.view === solarView);
-    }
+  /** Bind solar modeling to live context, localized feedback and existing resource owners. */
+  private readonly _solarModelHost: SolarModelHost<__esri.GraphicsLayer, __esri.MapView | __esri.SceneView> = {
+    enabled: () => this.props.config.enableSolar === true,
+    state: () => this.state,
+    overlay: () => this.ensureSolarMapOverlay(),
+    notify: reason => reason === 'missing-timestamp'
+      ? this.showToast(this._t('appCannotModelSolarDataImageIsMissingATimestamp'), 3000)
+      : this.showToast(this._t('appSunWasBelowTheHorizonWhenThisPhotoWas'), 4000),
+    clear: () => this.clearSolarGraphics(),
+    loadModules: ids => loadArcGISJSAPIModules(ids),
+    graphic: () => this.ArcGISModules.Graphic,
+    viewerSun: sun => this.ensureSolarViewerOwner().update(this.mapillaryViewer, sun.azimuth, sun.altitude),
+    sceneLighting: (view, date, current) => this.ensureSolarSceneLighting().update(view as any, date, current),
   };
+
+  /** Update solar modeling through its feature workflow and existing resource owners. */
+  private updateSolarGraphics = () => updateSolarModel(this._solarModelHost);
 
   /** Bind viewer rendering dependencies once; sun position is supplied by solar modeling. */
   private ensureSolarViewerOwner(): SolarViewerRenderer {
@@ -9468,32 +7972,26 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   // #endregion SOLAR & SHADOW MODELING
 
   // #region ELEVATION PROFILE
-  /** Enable or disable the profile consumer; complete sequence-route demand belongs to the profile workflow. */
-  private toggleElevationProfile = async () => {
-    if (this.props.config.enableElevationProfile !== true) return;
-    const next = !this.state.isElevationProfileActive;
-    this.setState({ isElevationProfileActive: next }, () => {
-      if (next) {
-        this._fullRouteFailure = '';
-        this.updateElevationProfile();
-        this.showToast(this._liveSequenceFrames.complete ? <OwnedMessage source={"Elevation profile enabled."} /> : <OwnedMessage source={"Loading route for elevation profile…"} />, 2500);
-      } else {
-        this.clearElevationProfile();
-      }
-
-      // ADD THIS: Re-draw the cone immediately to match the terrain state
-      const { imageId, sequenceImages } = this.state;
-      if (imageId && sequenceImages.length > 0) {
-        const activeImg = sequenceImages.find((s) => s.id === imageId);
-        if (activeImg) {
-          const length = this.coneLengths[this.zoomStepIndex];
-          const spread = this.coneSpreads[this.zoomStepIndex];
-          this.clearConeGraphics();
-          this.drawCone(activeImg.lon, activeImg.lat, this._lastBearing || 0, length, spread);
-        }
-      }
-    });
+  /** Bind profile mode to React, route readiness, localized feedback and existing cone drawing. */
+  private readonly _profileModeHost: ProfileModeHost = {
+    enabled: () => this.props.config.enableElevationProfile === true,
+    active: () => this.state.isElevationProfileActive,
+    setActive: (active, callback) => this.setState({ isElevationProfileActive: active }, callback),
+    resetRouteFailure: () => { this._fullRouteFailure = ''; },
+    update: () => this.updateElevationProfile(),
+    complete: () => !!this._liveSequenceFrames.complete,
+    notify: complete => this.showToast(complete ? <OwnedMessage source={"Elevation profile enabled."} /> : <OwnedMessage source={"Loading route for elevation profile…"} />, 2500),
+    clear: () => this.clearElevationProfile(),
+    state: () => this.state,
+    coneLength: () => this.coneLengths[this.zoomStepIndex],
+    coneSpread: () => this.coneSpreads[this.zoomStepIndex],
+    bearing: () => this._lastBearing,
+    clearCone: () => this.clearConeGraphics(),
+    drawCone: (lon, lat, bearing, length, spread) => this.drawCone(lon, lat, bearing, length, spread),
   };
+
+  /** Toggle the profile and redraw its current cone through the elevation feature. */
+  private toggleElevationProfile = () => toggleProfileMode(this._profileModeHost);
 
   private clearElevationProfile = () => {
     this._fullRouteTask?.controller.abort(); this._fullRouteTask = null;
@@ -9510,27 +8008,22 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     return this._elevationProfile;
   }
 
-  /** Feeds the active Mapillary sequence polyline into Esri's ElevationProfile widget */
-  private updateElevationProfile = async () => {
-    const { jimuMapView, sequenceId, isElevationProfileActive } = this.state;
-    if (this.props.config.enableElevationProfile !== true || !isElevationProfileActive || !jimuMapView || !sequenceId) return;
-    const view = jimuMapView.view;
-    try {
-      if (!this._liveSequenceFrames.complete) await this.ensureFullSequenceRoute();
-      if (this.state.sequenceId !== sequenceId || this.state.jimuMapView?.view !== view || !this.state.isElevationProfileActive) return;
-      const sequenceImages = this._liveSequenceFrames.complete;
-      if (!sequenceImages) return;
-      if (sequenceImages.length < 2) {
-        this.clearElevationProfile(); this.setState({ isElevationProfileActive: false });
-        this.showToast(this._t('appThisSequenceNeedsAtLeastTwoLocatedImagesFor'), 3000); return;
-      }
-      await this.ensureElevationProfileOwner().update(view, sequenceImages, () =>
-        this.props.config.enableElevationProfile === true && this.state.isElevationProfileActive && this.state.jimuMapView?.view === view);
-      this.updateProfileIndicator();
-    } catch (error) {
-      console.warn("[Mapillary profile] Could not generate the current sequence profile:", error);
-    }
+  /** Bind route preparation to live context and the existing profile resource owner. */
+  private readonly _sequenceProfileHost: SequenceProfileHost<__esri.MapView | __esri.SceneView> = {
+    state: () => this.state,
+    enabled: () => this.props.config.enableElevationProfile === true,
+    complete: () => this._liveSequenceFrames.complete,
+    ensureRoute: () => this.ensureFullSequenceRoute(),
+    clear: () => this.clearElevationProfile(),
+    disable: () => this.setState({ isElevationProfileActive: false }),
+    notifyInsufficientRoute: () => this.showToast(this._t('appThisSequenceNeedsAtLeastTwoLocatedImagesFor'), 3000),
+    update: (view, images, current) => this.ensureElevationProfileOwner().update(view, images, current),
+    indicator: () => this.updateProfileIndicator(),
+    warn: error => console.warn("[Mapillary profile] Could not generate the current sequence profile:", error),
   };
+
+  /** Prepare the current sequence route and delegate profile generation to the elevation feature. */
+  private updateElevationProfile = () => updateSequenceProfile(this._sequenceProfileHost);
 
   /** Forward the current frame to the elevation chart's presentation module. */
   private updateProfileIndicator = () => {
@@ -9577,52 +8070,16 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   };
   //#endregion Playback Management
 
-  private _arcGISModulesReady: Promise<void> | null = null;
+  private readonly _arcGISModuleInitialization = new ArcGISModuleInitialization({
+    ready: () => !!this.ArcGISModules?.VectorTileLayer,
+    load: ids => loadArcGISJSAPIModules(ids),
+    publish: modules => { this.ArcGISModules = modules; },
+    loaded: () => this.log("ArcGIS API modules loaded"),
+  });
 
-  /**
-   * Share one lazy ArcGIS-module initialization promise across callers.
-   * Clear a rejected initialization so a later caller can retry; callers still guard their own lifecycle after awaiting it.
-   */
-  private async ensureArcGISModules(): Promise<void> {
-    if (this.ArcGISModules?.VectorTileLayer) return;
-    if (!this._arcGISModulesReady) {
-      this._arcGISModulesReady = (async () => {
-        const [Graphic, Point, SimpleMarkerSymbol, VectorTileLayer, FeatureLayer, GraphicsLayer, route, networkService, RouteParameters, FeatureSet, Multipoint, PointSymbol3D, Mesh] = await loadArcGISJSAPIModules([
-          "esri/Graphic",
-          "esri/geometry/Point",
-          "esri/symbols/SimpleMarkerSymbol",
-          "esri/layers/VectorTileLayer",
-          "esri/layers/FeatureLayer",
-          "esri/layers/GraphicsLayer",
-          "esri/rest/route",
-          "esri/rest/networkService",
-          "esri/rest/support/RouteParameters",
-          "esri/rest/support/FeatureSet",
-          "esri/geometry/Multipoint",
-          "esri/symbols/PointSymbol3D",
-          "esri/geometry/Mesh",
-        ]);
-        this.ArcGISModules = {
-          Graphic,
-          Point,
-          SimpleMarkerSymbol,
-          VectorTileLayer,
-          FeatureLayer,
-          GraphicsLayer,
-          route,
-          networkService,
-          RouteParameters,
-          FeatureSet,
-          Multipoint,
-          PointSymbol3D,
-          Mesh,
-        };
-        this.log("ArcGIS API modules loaded");
-      })();
-    }
-    const task = this._arcGISModulesReady;
-    try { await task; }
-    catch (error) { if (this._arcGISModulesReady === task) this._arcGISModulesReady = null; throw error; }
+  /** Share lazy SDK initialization; callers retain their existing post-await lifecycle guards. */
+  private ensureArcGISModules(): Promise<void> {
+    return this._arcGISModuleInitialization.ensure();
   }
 
   private dismissIntro = () => this.setState({ showIntro: false });
@@ -9633,120 +8090,59 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
    * Mapillary JS is imported by the bundle; it is not fetched from a CDN here.
    */
   async componentDidMount() {
-    const startupRevision = ++this._startupRevision;
-    if (this._startupDisposed) { this._startupDisposed = false; this._startupAbort = new AbortController(); }
-    const currentStartup = () => !this._startupDisposed && startupRevision === this._startupRevision;
-    this.syncSequenceDiagnostics();
-    document.addEventListener('visibilitychange', this._sequenceVisibilityChange);
-    void this.updateOrganizationName();
-    this.installCoverageAlignmentDiagnostic();
-    this.initializePlacesLifecycle();
-    try {
-      await this.ensureArcGISModules();
-      if (!currentStartup()) return;
+    return mountWidget(this.widgetStartupHost());
+  }
 
-      // 1. Read presets FIRST before creating any layer
-      const presetStartDate = this.props.config.turboDefaultStartDate || undefined;
-      const presetEndDate = this.props.config.turboDefaultEndDate || undefined;
-      const presetIsPano = this.props.config.turboDefaultIsPano ?? undefined;
-      const presetColorByDate = this.props.config.turboDefaultColorByDate ?? false;
-
-      // 2. Resolve Default Creator ID if configured
-      let defaultFilterId: number | undefined = undefined;
-      if (this.props.config.turboCreator) {
-        defaultFilterId = await this.getUserIdFromUsername(this.props.config.turboCreator);
-        if (!currentStartup()) return;
-        if (defaultFilterId) this.log(`Initializing Always-On layer for user ID: ${defaultFilterId}`);
-      }
-
-      // 3. Initialize layer with presets baked in from the start,
-      //    so when onActiveViewChange adds it to the map it's already filtered
-      this.initMapillaryLayer(defaultFilterId, presetStartDate, presetEndDate, presetIsPano, false);
-      this.initMapillaryTrafficSignsLayer();
-      this.initMapillaryObjectsLayer();
-
-      // 4. Apply preset state, no debouncedTurboFilter needed since
-      //    the layer was already created with correct filters above
-      this.setState({
-        turboFilterStartDate: presetStartDate || "",
-        turboFilterEndDate: presetEndDate || "",
-        turboFilterIsPano: presetIsPano,
-        turboColorByDate: presetColorByDate,
-      });
-    } catch (err) {
-      if (!currentStartup()) return;
-      console.error("ArcGIS modules failed to load:", err);
-    }
-
-    if (!currentStartup()) return;
-
-    // Restore any cached sequence from previous session
-    this.restoreSequenceCache();
-    this.loadFieldNotesFromStorage();
-    void this.syncSharedFieldNotes();
-
-    this.resizeObserver = new ResizeObserver(() => {
-      if (this.mapillaryViewer?.resize) {
-        this.mapillaryViewer.resize();
-      }
-    });
-
-    if (this.viewerContainer.current) {
-      this.resizeObserver.observe(this.viewerContainer.current);
-    }
-
-    // Listen for browser fullscreen events
-    document.addEventListener("fullscreenchange", this.handleFullscreenChange);
-    document.addEventListener("webkitfullscreenchange", this.handleFullscreenChange);
-    document.addEventListener("mozfullscreenchange", this.handleFullscreenChange);
-    document.addEventListener("MSFullscreenChange", this.handleFullscreenChange);
-    window.addEventListener("resize", this.handleWindowResize);
-
-    // Add keyboard listener for W, A, S, D Point Cloud Nudging
-    window.addEventListener("keydown", this.handleNudgeKeyDown);
-    window.addEventListener("keyup", this.handleNudgeKeyUp);
-
-    this.tooltipDiv = document.createElement("div");
-    Object.assign(this.tooltipDiv.style, {
-      position: "fixed",
-      pointerEvents: "none",
-      background: "rgba(0,0,0,0.7)",
-      color: "#fff",
-      padding: "4px 8px",
-      borderRadius: "4px",
-      zIndex: 999,
-      fontSize: "11px",
-      display: "none",
-      maxWidth: "250px",
-    });
-    document.body.appendChild(this.tooltipDiv);
-
-    // Defer the heavy processing by 500ms to let the Map widget render first
-    this._spritePreloadTimer = setTimeout(() => {
-      this._spritePreloadTimer = null;
-      if (!currentStartup()) return;
-      this.preloadTrafficSignOptions();
-      this.preloadObjectOptions();
-    }, 500);
-
-    const styleSheet = document.createElement("style");
-    styleSheet.innerText = overrideStyles;
-    this._overrideStyleSheet = styleSheet;
-    document.head.appendChild(styleSheet);
-
-    if (this.props.config.turboCreator) {
-      this.setState({ turboFilterUsername: this.props.config.turboCreator });
-    }
-
-    // Check if Turbo Mode Only is enabled in config
-    {
-      this.setState({ turboModeActive: true });
-    }
-
-    // Check if we need to add the "Always On" layer now
-    // If the MapView loaded BEFORE these modules, onActiveViewChange skipped the add.
-    this.ensureAlwaysOnCoverageLayer();
-    this.syncMapLegendLayer();
+  /** Bind live startup slots and concrete host operations without creating another startup revision or abort owner. */
+  private widgetStartupHost(): WidgetStartupHost {
+    const widget = this;
+    return {
+      get introDismissTimer() { return widget._introDismissTimer; },
+      set introDismissTimer(value) { widget._introDismissTimer = value; },
+      get overrideStyleSheet() { return widget._overrideStyleSheet; },
+      set overrideStyleSheet(value) { widget._overrideStyleSheet = value; },
+      get sequenceVisibilityChange() { return widget._sequenceVisibilityChange; },
+      get spritePreloadTimer() { return widget._spritePreloadTimer; },
+      set spritePreloadTimer(value) { widget._spritePreloadTimer = value; },
+      get startupAbort() { return widget._startupAbort; },
+      set startupAbort(value) { widget._startupAbort = value; },
+      get startupDisposed() { return widget._startupDisposed; },
+      set startupDisposed(value) { widget._startupDisposed = value; },
+      get startupRevision() { return widget._startupRevision; },
+      set startupRevision(value) { widget._startupRevision = value; },
+      ensureAlwaysOnCoverageLayer: (...args) => this.ensureAlwaysOnCoverageLayer(...args),
+      ensureArcGISModules: (...args) => this.ensureArcGISModules(...args),
+      getUserIdFromUsername: (...args) => this.getUserIdFromUsername(...args),
+      get handleFullscreenChange() { return widget.handleFullscreenChange; },
+      get handleNudgeKeyDown() { return widget.handleNudgeKeyDown; },
+      get handleNudgeKeyUp() { return widget.handleNudgeKeyUp; },
+      get handleWindowResize() { return widget.handleWindowResize; },
+      initMapillaryLayer: (...args) => this.initMapillaryLayer(...args),
+      initMapillaryObjectsLayer: (...args) => this.initMapillaryObjectsLayer(...args),
+      initMapillaryTrafficSignsLayer: (...args) => this.initMapillaryTrafficSignsLayer(...args),
+      initializePlacesLifecycle: (...args) => this.initializePlacesLifecycle(...args),
+      installCoverageAlignmentDiagnostic: (...args) => this.installCoverageAlignmentDiagnostic(...args),
+      loadFieldNotesFromStorage: (...args) => this.loadFieldNotesFromStorage(...args),
+      log: (...args) => this.log(...args),
+      get viewer() { return widget.mapillaryViewer; },
+      preloadObjectOptions: (...args) => this.preloadObjectOptions(...args),
+      preloadTrafficSignOptions: (...args) => this.preloadTrafficSignOptions(...args),
+      get resizeObserver() { return widget.resizeObserver; },
+      set resizeObserver(value) { widget.resizeObserver = value; },
+      restoreSequenceCache: (...args) => this.restoreSequenceCache(...args),
+      applyPresets: presets => this.setState(presets),
+      setCreator: username => this.setState({ turboFilterUsername: username }),
+      enableNativeCoverage: () => this.setState({ turboModeActive: true }),
+      syncMapLegendLayer: (...args) => this.syncMapLegendLayer(...args),
+      syncSequenceDiagnostics: (...args) => this.syncSequenceDiagnostics(...args),
+      syncSharedFieldNotes: (...args) => this.syncSharedFieldNotes(...args),
+      get tooltipDiv() { return widget.tooltipDiv; },
+      set tooltipDiv(value) { widget.tooltipDiv = value; },
+      updateOrganizationName: (...args) => this.updateOrganizationName(...args),
+      get config() { return widget.props.config; },
+      container: () => this.viewerContainer.current,
+      overrideStyles,
+    };
   }
 
   /** Selection updates touch tile filters only; frame playback within one sequence does no style work. */
@@ -9761,248 +8157,85 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
    * Handle close/reopen, fullscreen resize observation and background-work priority without owning feature implementation details.
    */
   componentDidUpdate(prevProps: AllWidgetProps<any>, prevState: State) {
-    const nearbyVisible = this.nearbyPanelVisible();
-    const wasNearbyVisible = this._nearbyDemandVisible; this._nearbyDemandVisible = nearbyVisible;
-    if (!nearbyVisible) {
-      if (!this.state.nearbyStripOpen || this.state.imageTrayTab === 'object' || this.props.visible === false || this.props.state === 'CLOSED') this._nearbyPointerInside = false;
-      this._nearbyDiscovery?.cancel();
-    } else if (!wasNearbyVisible || prevState.imageId !== this.state.imageId || prevState.isLoading !== this.state.isLoading)
-      this.refreshNearbyAfterPause(!prevState.nearbyStripOpen || prevState.imageTrayTab === 'object');
+    reconcileWidgetUpdate(prevProps, prevState, this.widgetUpdateHost());
+  }
 
-    if (this._routeGeneration.pending && !this._routeGeneration.current()) this.cancelCaptureRouteGeneration();
-
-    if (this._coverageAnalysisCurrent && !this._coverageAnalysisCurrent()) {
-      this.cancelCoverageAnalysis();
-      this.showToast(this._t('appAnalysisStoppedBecauseItsMapAreaOrFiltersChanged'), 5000);
-    }
-    if (prevProps.config.enablePlaces !== this.props.config.enablePlaces || placesSourceKey(prevProps.config) !== placesSourceKey(this.props.config) || prevProps.state !== this.props.state ||
-      prevState.jimuMapView?.view !== this.state.jimuMapView?.view || prevState.isLoading !== this.state.isLoading || prevState.isFullscreen !== this.state.isFullscreen ||
-      (!!this._placesVectorLayer && prevState.placesPanelOpen !== this.state.placesPanelOpen)) this.syncPlaces();
-    if (prevState.isLoading !== this.state.isLoading) this._backgroundRequests?.setPaused(!!this.state.isLoading || this._imageryOpeningRequest != null);
-    if (prevProps.config.debugMode !== this.props.config.debugMode || prevProps.state !== this.props.state) this.syncSequenceDiagnostics();
-    if (prevState.selectedSequenceId !== this.state.selectedSequenceId || prevState.sequenceId !== this.state.sequenceId ||
-      prevState.turboModeActive !== this.state.turboModeActive || prevState.isLoading !== this.state.isLoading) this.updateNativeSequenceSelection();
-    if (prevState.isLoading !== this.state.isLoading || prevState.coverageFrameResolving !== this.state.coverageFrameResolving ||
-      prevState.sequenceRouteLoading !== this.state.sequenceRouteLoading || prevState.turboLoading !== this.state.turboLoading ||
-      prevState.turboUpdatingVisible !== this.state.turboUpdatingVisible || prevState.coverageHelpOpen !== this.state.coverageHelpOpen)
-      this.announceNearbyFrames();
-    if (this.state.isElevationProfileActive && (prevState.sequenceImages !== this.state.sequenceImages ||
-      prevState.jimuMapView?.view !== this.state.jimuMapView?.view)) void this.updateElevationProfile();
-    if (prevState.imageId !== this.state.imageId) this.updateProfileIndicator();
-    if (prevProps.config.enable3DTerrain !== this.props.config.enable3DTerrain) this.syncSceneTerrain();
-    const previousOrganization = organizationFilterId(prevProps.config.turboOrganization || prevState.turboFilterOrganization);
-    if (previousOrganization !== this.getTurboOrganizationId()) this.scheduleOrganizationName();
-    if (prevState.pointCloudAdaptive !== this.state.pointCloudAdaptive || prevState.isMeasureMode !== this.state.isMeasureMode || prevState.isLassoMode !== this.state.isLassoMode || prevState.isSightMode !== this.state.isSightMode || prevState.isViewshedMode !== this.state.isViewshedMode) this.updatePointCloudDisplay();
-    if (prevProps.config.sharedFieldNotesEnabled !== this.props.config.sharedFieldNotesEnabled || prevProps.config.sharedFieldNotesUrl !== this.props.config.sharedFieldNotesUrl || prevProps.config.sharedFieldNotesReadUrl !== this.props.config.sharedFieldNotesReadUrl) {
-      void this.syncSharedFieldNotes(); void this.drawFieldNoteGraphics();
-    }
-    if (prevProps.config.enableSolar !== this.props.config.enableSolar && this.props.config.enableSolar !== true) {
-      this.clearSolarGraphics(); this.setState({ isSolarMode: false });
-    }
-    if (prevProps.config.enableElevationProfile !== this.props.config.enableElevationProfile && this.props.config.enableElevationProfile !== true) {
-      this.clearElevationProfile(); this.setState({ isElevationProfileActive: false });
-    }
-    if (prevProps.config.hideLegend !== this.props.config.hideLegend) this.syncMapLegendLayer();
-    // 1. Handle fullscreen state change / observer re-attachment
-
-    if (prevState.isFullscreen !== this.state.isFullscreen) {
-      if (this.resizeObserver) this.resizeObserver.disconnect();
-      this.resizeObserver = new ResizeObserver(() => {
-        if (this.mapillaryViewer?.resize) this.mapillaryViewer.resize();
-      });
-      if (this.viewerContainer.current) {
-        this.resizeObserver.observe(this.viewerContainer.current);
-      }
-    }
-
-    // 2. Handle State Transitions (Minimize/Close)
-
-    // Minimized: Keep listeners, but clean up viewer if needed
-    if (prevProps.visible && !this.props.visible) {
-      this.log("Widget minimized - keeping listeners");
-      this.cleanupWidgetEnvironment(true, false);
-    }
-
-    if (prevProps.visible === false && this.props.visible !== false && this.state.jimuMapView?.view)
-      this.claimCurrentImagePresentation(this.state.jimuMapView.view);
-
-    // Closed: Full cleanup
-    if (prevProps.state === "OPENED" && this.props.state === "CLOSED") {
-      this.log("Widget closed - cleaning up completely");
-      this.cleanupWidgetEnvironment(true, true);
-    }
-
-    // 3. Handle Reopening (Seamless Filter Loading)
-    if (prevProps.state === "CLOSED" && this.props.state === "OPENED" && this.state.jimuMapView) {
-      this.claimCurrentImagePresentation(this.state.jimuMapView.view);
-      this.log("Widget reopened - initializing environment...");
-
-      // A. Define the initialization logic that should run ONLY after the layer is ready
-      const proceedWithWidgetInitialization = () => {
-        // Init secondary layers
-        if (!this.mapillaryTrafficSignsLayer && this.props.config.enableTrafficSigns !== false) {
-          this.initMapillaryTrafficSignsLayer();
-        }
-        if (!this.mapillaryObjectsLayer && this.props.config.enableMapillaryObjects !== false) {
-          this.initMapillaryObjectsLayer();
-        }
-
-        // Restore state
-        this.setState(
-          {
-            turboModeActive: true,
-            turboFilterUsername: this.props.config.turboCreator || "",
-            turboFilterOrganization: this.props.config.turboOrganization || "",
-            turboFilterStartDate: this.props.config.turboDefaultStartDate || "",
-            turboFilterEndDate: this.props.config.turboDefaultEndDate || "",
-            turboFilterIsPano: this.props.config.turboDefaultIsPano ?? undefined,
-            turboColorByDate: this.props.config.turboDefaultColorByDate ?? false,
-            turboYearLegend: [],
-            showTurboFilterBox: false,
-          },
-          () => {
-            // Force Turbo Layer if needed
-            if (this.state.turboModeActive) {
-              this.enableTurboCoverageLayer(this.props.config.turboCreator);
-            }
-          },
-        );
-
-        this.disableTurboCoverageLayer();
-
-        // CRITICAL: onActiveViewChange adds the layer to the map if "Always On" is checked.
-        // By calling it here, we ensure we only add the layer AFTER it has been initialized with the correct filter.
-        this.onActiveViewChange(this.state.jimuMapView);
-      };
-
-      // B. Resolve Layer ID before creating the layer
-      const defaultUser = this.props.config.turboCreator || "";
-
-      // If we need to recreate the layer (it was destroyed on close)
-      if (!this.mapillaryVTLayer) {
-        const reopenInit = async () => {
-          let id: number | undefined;
-          if (defaultUser) {
-            try {
-              id = (await this.getUserIdFromUsername(defaultUser)) || undefined;
-            } catch {
-              id = undefined;
-            }
-          }
-          this.initMapillaryLayer(
-            id,
-            this.state.turboFilterStartDate || undefined,
-            this.state.turboFilterEndDate || undefined,
-            this.state.turboFilterIsPano,
-            this.state.qualityViewActive,
-            this.state.selectedQualityBand,
-          );
-          proceedWithWidgetInitialization();
-        };
-        reopenInit();
-      } else {
-        proceedWithWidgetInitialization();
-      }
-    }
-
-    // 4. Handle Config Changes (Standard Logic)
-
-    // Traffic Signs Config
-    if (prevProps.config.enableTrafficSigns !== this.props.config.enableTrafficSigns) {
-      if (this.props.config.enableTrafficSigns === false) {
-        if (this.state.trafficSignsActive) this.toggleMapillaryTrafficSigns();
-        this._detectionLayers.reset('signs');
-      } else {
-        this.initMapillaryTrafficSignsLayer();
-      }
-    }
-
-    // Objects Config
-    if (prevProps.config.enableMapillaryObjects !== this.props.config.enableMapillaryObjects) {
-      if (this.props.config.enableMapillaryObjects === false) {
-        if (this.state.objectsActive) this.toggleMapillaryObjects();
-        this._detectionLayers.reset('objects');
-      } else {
-        this.initMapillaryObjectsLayer();
-      }
-    }
-
-    if (prevProps.config.turboOrganization !== this.props.config.turboOrganization) {
-      this.resetOrganizationSelection();
-      this.setState({ turboFilterOrganization: this.props.config.turboOrganization || "" }, () => {
-        this.debouncedTurboFilter.cancel?.();
-        if (this.state.turboModeActive) void this.enableTurboCoverageLayer();
-      });
-    }
-
-    // Creator Config Change (while widget is open)
-    if (prevProps.config.turboCreator !== this.props.config.turboCreator) {
-      const newCreator = this.props.config.turboCreator || "";
-      this.setState({ turboFilterUsername: newCreator }, () => {
-        if (this.state.turboModeActive) {
-          this.enableTurboCoverageLayer();
-        }
-      });
-    }
-    // Turbo Preset: Start Date
-    if (prevProps.config.turboDefaultStartDate !== this.props.config.turboDefaultStartDate) {
-      this.setState({ turboFilterStartDate: this.props.config.turboDefaultStartDate || "" }, () => {
-        this.debouncedTurboFilter(); // always rebuild green layer; also reloads turbo points if active
-      });
-    }
-
-    // Turbo Preset: End Date
-    if (prevProps.config.turboDefaultEndDate !== this.props.config.turboDefaultEndDate) {
-      this.setState({ turboFilterEndDate: this.props.config.turboDefaultEndDate || "" }, () => {
-        this.debouncedTurboFilter();
-      });
-    }
-
-    // Turbo Preset: Is Pano
-    if (prevProps.config.turboDefaultIsPano !== this.props.config.turboDefaultIsPano) {
-      this.setState({ turboFilterIsPano: this.props.config.turboDefaultIsPano ?? undefined }, () => {
-        this.debouncedTurboFilter();
-      });
-    }
-
-    // Turbo Preset: Color by Date
-    if (prevProps.config.turboDefaultColorByDate !== this.props.config.turboDefaultColorByDate) {
-      this.setState({ turboColorByDate: this.props.config.turboDefaultColorByDate ?? false }, () => {
-        this.debouncedTurboFilter();
-      });
-    }
-
-    // 5. Handle Dynamic Component Toggling (Bearing/Zoom)
-    if (this.mapillaryViewer) {
-      // Handle Bearing Toggle
-      if (prevProps.config.hideBearing !== this.props.config.hideBearing) {
-        if (this.props.config.hideBearing) {
-          this.mapillaryViewer.deactivateComponent("bearing");
-        } else {
-          this.mapillaryViewer.activateComponent("bearing");
-        }
-      }
-      // Handle Zoom Toggle
-      if (prevProps.config.hideZoom !== this.props.config.hideZoom) {
-        if (this.props.config.hideZoom) {
-          this.mapillaryViewer.deactivateComponent("zoom");
-        } else {
-          this.mapillaryViewer.activateComponent("zoom");
-        }
-      }
-    }
+  /** Bind live update inputs, UI commits and feature operations while retaining concrete resource ownership. */
+  private widgetUpdateHost(): WidgetUpdateHost<__esri.MapView | __esri.SceneView, JimuMapView> {
+    const widget = this;
+    return {
+      get backgroundRequests() { return widget._backgroundRequests; },
+      get coverageAnalysisCurrent() { return widget._coverageAnalysisCurrent; },
+      get detectionLayers() { return widget._detectionLayers; },
+      get imageryOpeningRequest() { return widget._imageryOpeningRequest; },
+      get nearbyDemandVisible() { return widget._nearbyDemandVisible; },
+      set nearbyDemandVisible(value) { widget._nearbyDemandVisible = value; },
+      get nearbyDiscovery() { return widget._nearbyDiscovery; },
+      get nearbyPointerInside() { return widget._nearbyPointerInside; },
+      set nearbyPointerInside(value) { widget._nearbyPointerInside = value; },
+      get placesVectorLayer() { return widget._placesVectorLayer; },
+      get routeGeneration() { return widget._routeGeneration; },
+      translate: (...args) => this._t(...args),
+      announceNearbyFrames: (...args) => this.announceNearbyFrames(...args),
+      cancelCaptureRouteGeneration: (...args) => this.cancelCaptureRouteGeneration(...args),
+      cancelCoverageAnalysis: (...args) => this.cancelCoverageAnalysis(...args),
+      claimCurrentImagePresentation: (...args) => this.claimCurrentImagePresentation(...args),
+      cleanupWidgetEnvironment: (...args) => this.cleanupWidgetEnvironment(...args),
+      clearElevationProfile: (...args) => this.clearElevationProfile(...args),
+      clearSolarGraphics: (...args) => this.clearSolarGraphics(...args),
+      get debouncedTurboFilter() { return widget.debouncedTurboFilter; },
+      disableTurboCoverageLayer: (...args) => this.disableTurboCoverageLayer(...args),
+      drawFieldNoteGraphics: (...args) => this.drawFieldNoteGraphics(...args),
+      enableTurboCoverageLayer: (...args) => this.enableTurboCoverageLayer(...args),
+      getTurboOrganizationId: (...args) => this.getTurboOrganizationId(...args),
+      getUserIdFromUsername: (...args) => this.getUserIdFromUsername(...args),
+      initMapillaryLayer: (...args) => this.initMapillaryLayer(...args),
+      initMapillaryObjectsLayer: (...args) => this.initMapillaryObjectsLayer(...args),
+      initMapillaryTrafficSignsLayer: (...args) => this.initMapillaryTrafficSignsLayer(...args),
+      log: (...args) => this.log(...args),
+      get mapillaryObjectsLayer() { return widget.mapillaryObjectsLayer; },
+      get mapillaryTrafficSignsLayer() { return widget.mapillaryTrafficSignsLayer; },
+      get mapillaryVTLayer() { return widget.mapillaryVTLayer; },
+      get viewer() { return widget.mapillaryViewer; },
+      nearbyPanelVisible: (...args) => this.nearbyPanelVisible(...args),
+      onActiveViewChange: (...args) => this.onActiveViewChange(...args),
+      get props() { return widget.props; },
+      refreshNearbyAfterPause: (...args) => this.refreshNearbyAfterPause(...args),
+      resetOrganizationSelection: (...args) => this.resetOrganizationSelection(...args),
+      get resizeObserver() { return widget.resizeObserver; },
+      set resizeObserver(value) { widget.resizeObserver = value; },
+      scheduleOrganizationName: (...args) => this.scheduleOrganizationName(...args),
+      restoreReopenState: (patch, after) => this.setState(patch, after),
+      setSolarInactive: () => this.setState({ isSolarMode: false }),
+      setElevationInactive: () => this.setState({ isElevationProfileActive: false }),
+      setOrganization: (value, after) => this.setState({ turboFilterOrganization: value }, after),
+      setCreator: (value, after) => this.setState({ turboFilterUsername: value }, after),
+      setStartDate: (value, after) => this.setState({ turboFilterStartDate: value }, after),
+      setEndDate: (value, after) => this.setState({ turboFilterEndDate: value }, after),
+      setPanorama: (value, after) => this.setState({ turboFilterIsPano: value }, after),
+      setColorByDate: (value, after) => this.setState({ turboColorByDate: value }, after),
+      showToast: (...args) => this.showToast(...args),
+      get state() { return widget.state; },
+      syncMapLegendLayer: (...args) => this.syncMapLegendLayer(...args),
+      syncPlaces: (...args) => this.syncPlaces(...args),
+      syncSceneTerrain: (...args) => this.syncSceneTerrain(...args),
+      syncSequenceDiagnostics: (...args) => this.syncSequenceDiagnostics(...args),
+      syncSharedFieldNotes: (...args) => this.syncSharedFieldNotes(...args),
+      toggleMapillaryObjects: (...args) => this.toggleMapillaryObjects(...args),
+      toggleMapillaryTrafficSigns: (...args) => this.toggleMapillaryTrafficSigns(...args),
+      updateElevationProfile: (...args) => this.updateElevationProfile(...args),
+      updateNativeSequenceSelection: (...args) => this.updateNativeSequenceSelection(...args),
+      updatePointCloudDisplay: (...args) => this.updatePointCloudDisplay(...args),
+      updateProfileIndicator: (...args) => this.updateProfileIndicator(...args),
+      container: () => this.viewerContainer.current,
+      placesSourceKey,
+      organizationFilterId,
+    };
   }
 
   /** Invalidate startup before teardown, abort its work and release its deferred timers and injected stylesheet. */
   private disposeStartupResources() {
-    // Invalidate startup before teardown so late awaits cannot recreate resources.
-    this._startupDisposed = true;
-    ++this._startupRevision;
-    this._startupAbort.abort();
-    if (this._spritePreloadTimer !== null) clearTimeout(this._spritePreloadTimer);
-    if (this._introDismissTimer !== null) clearTimeout(this._introDismissTimer);
-    this._spritePreloadTimer = this._introDismissTimer = null;
-    this._overrideStyleSheet?.remove(); this._overrideStyleSheet = null;
+    disposeWidgetStartup(this.widgetStartupHost());
   }
 
   /**
@@ -10011,58 +8244,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
    */
   componentWillUnmount() {
     this.disposeStartupResources();
-    this._hoverPreviewStatus?.dispose();
-    ++this._placesTilesStartRevision; this._placesConfiguredRequest = null; this._placesConfiguredUrl = null;
-    this._placesVectorLayer?.stop(); this._placesVectorLayer = null;
-    this._placeNoteDisposed = true; this._placeNoteReview?.cancel();
-    const pendingPlaceCrop = this.state.pendingFieldNote?.placeId && this.state.pendingFieldNote.attachmentId;
-    if (pendingPlaceCrop) void deleteDetectionCrop(pendingPlaceCrop).catch(() => { });
-    if (this._placeWorkspaceCrop) { void deleteDetectionCrop(this._placeWorkspaceCrop).catch(() => { }); this._placeWorkspaceCrop = null; }
-    this._pendingCoverageHover?.clear();
-    this._coverageHoverResume?.dispose(); this._coverageHoverResume = null; this._coverageHoverHandler = null;
-    this._presentationHandle?.remove(); this._presentationHandle = null;
-    this._placesImageryCache?.clear(); this._placesImageryCache = null;
-    this._placesExploreAbort?.abort(); this._places?.dispose(); this._places = null;
-    document.removeEventListener('visibilitychange', this._sequenceVisibilityChange);
-    this._hoverTimingAbort?.abort();
-    this.clearSequenceDiagnostics();
-    this._sequencePerformance.dispose();
-    if (this._nearbyFramesHintTimer !== null) clearTimeout(this._nearbyFramesHintTimer);
-    this._nearbyFramesHintTimer = null;
-    this._sceneTerrain?.dispose(); this._sceneTerrain = null;
-    this._organizationNameDisposed = true; ++this._organizationNameRevision;
-    if (this._organizationNameTimer !== null) clearTimeout(this._organizationNameTimer);
-    this._organizationNameTimer = null;
-    this._organizationNames?.dispose(); this._organizationNames = null;
-    this._coverageAlignmentDiagnostic?.dispose();
-    this._coverageAlignmentDiagnostic = null;
-    this._coverageSelectionTargets.clear();
-    this._sharedNotesDisposed = true;
-    this.clearFieldNotesGroup();
-    this.cleanupWidgetEnvironment(true, true);
-
-    if (this.resizeObserver) {
-      if (this.viewerContainer.current) this.resizeObserver.unobserve(this.viewerContainer.current);
-      this.resizeObserver.disconnect();
-      this.resizeObserver = null;
-    }
-
-    if (this.tooltipDiv && this.tooltipDiv.parentNode) {
-      this.tooltipDiv.parentNode.removeChild(this.tooltipDiv);
-      this.tooltipDiv = null;
-    }
-
-    document.removeEventListener("fullscreenchange", this.handleFullscreenChange);
-    document.removeEventListener("webkitfullscreenchange", this.handleFullscreenChange);
-    document.removeEventListener("mozfullscreenchange", this.handleFullscreenChange);
-    document.removeEventListener("MSFullscreenChange", this.handleFullscreenChange);
-    window.removeEventListener("resize", this.handleWindowResize);
-
-    window.removeEventListener("keydown", this.handleNudgeKeyDown);
-    window.removeEventListener("keyup", this.handleNudgeKeyUp);
-
-    // Clear warning timeout
-    this._zoomWarningTimer.cancel();
+    unmountWidget(this.widgetTeardownHost());
   }
 
   /** Reattach enabled detection coverage and legend presentation to the newly active ArcGIS view. */
@@ -10076,776 +8258,325 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   }
 
+  /** Bind restoration operations for this committed view without starting work while binding. */
+  private activeViewStartupHost(view: __esri.MapView | __esri.SceneView, jmv: JimuMapView): ActiveViewStartupHost<__esri.MapView | __esri.SceneView> {
+    return {
+      restored: () => this._sharedStateRestoreComplete,
+      flying: () => this._isFlyInActive,
+      currentView: () => this.state.jimuMapView?.view,
+      goTo: (target, options) => view.goTo(target as any, options),
+      modules: () => this.ensureArcGISModules(),
+      camera: () => this.restoreRoutingLoginView(view),
+      attachCoverage: () => this.ensureAlwaysOnCoverageLayer(),
+      coverage: () => this.enableTurboCoverageLayer(),
+      graphics: () => this.restoreMapGraphics(),
+      places: () => this.syncPlaces(),
+      optionalTools: () => {
+        if (this._pointCloudAcquisition.result && this.state.pointCloudVisible) {
+          if (view.type === "3d") this.renderPointCloudMapLayer(true);
+          else this.clearPointCloud(true);
+        }
+        if (this.state.isSightMode && view.type === "3d") void this.ensureSightOwner().activate();
+        if (this.state.isMeasureMode && this.state.measurePoints.length) void this.updateMeasurementGraphics();
+        void this.syncSharedFieldNotes();
+      },
+      featureLayers: () => this.restoreMapillaryFeatureLayersForView(jmv),
+      finishPresentation: () => {
+        const image = this._liveSequenceFrames.current || this._liveSequenceFrames.find(this.state.imageId);
+        if (view.type === "3d" && image && String(image.id) === String(this.state.imageId))
+          this.drawCone(image.lon, image.lat, this._lastBearing || 0, this.coneLengths[this.zoomStepIndex], this.coneSpreads[this.zoomStepIndex]);
+        this.updateUrlWithCurrentImage(this.state.imageId ?? undefined);
+      },
+      stationary: () => this._stationaryUrlBindings.bind(view),
+      warn: (message, error) => console.warn(message, error),
+    };
+  }
+
+  /** Bind existing feature owners to transfer phases; binding itself performs no cleanup. */
+  private activeViewTransferHost(): ActiveViewTransferHost<__esri.MapView | __esri.SceneView> {
+    return {
+      beforeTransfer: view => {
+        if (this._routeGeneration.pending && (view !== this.state.jimuMapView?.view || !this._routeGeneration.current())) this.cancelCaptureRouteGeneration();
+        this._hoverPreviewStatus?.clear();
+        this._coverageAlignmentDiagnostic?.clearHover();
+      },
+      terrain: view => this.syncSceneTerrain(view),
+      resetStartup: () => {
+        this._sharedStartupImageId = null; this._sharedStartupBearing = null;
+        this._startupUrlParameters ??= readSharedLinkParameters();
+        this._isFlyInActive = false;
+      },
+      tools: view => {
+        this._pointCloudAdaptiveDisplay?.dispose();
+        this._lasso?.clear();
+        this._viewshed?.onViewChange(view);
+        this._sight?.onViewChange(view);
+        this._measurement?.onViewChange(view);
+        this._pointCloudAcquisition.cancel('view-transfer');
+        this._pointCloudMapLayer?.invalidate();
+        this._rings?.onViewChange(view);
+      },
+      detachInteractions: () => {
+        this._pendingCoverageHover?.clear();
+        this._coverageHoverResume?.dispose(); this._coverageHoverResume = null; this._coverageHoverHandler = null;
+        ++this._mapClickRevision;
+        if (this.mapClickHandle) {
+          try {
+            this.mapClickHandle.remove();
+          } catch (e) { }
+          this.mapClickHandle = null;
+        }
+        if (this.pointerMoveHandle) {
+          try {
+            this.pointerMoveHandle.remove();
+          } catch (e) { }
+          this.pointerMoveHandle = null;
+        }
+        this._stationaryUrlBindings.clear();
+      },
+      currentView: () => this.state.jimuMapView?.view,
+      turboActive: () => this.state.turboModeActive,
+      disableCoverage: () => this.disableTurboCoverageLayer(false),
+      log: message => this.log(message),
+      clearAnalysis: () => this.clearViewDependentAnalysis(),
+      presentation: (view, previousView) => {
+        this.clearSharedNotesView();
+        if (previousView?.map !== view.map) this.clearMapLegendLayer();
+        this.clearSolarGraphics();
+        this.clearActiveSequenceLayer();
+        this.clearGreenPulse();
+        this.clearClickRipples();
+        this.clearTurboHover();
+        this._elevationProfile?.clear(view, true);
+        this._nativeCurrentImageMarker?.clear();
+        this._screenDirectionCone?.clear();
+        this._cameraCone?.dispose(view);
+      },
+      requests: () => {
+        this._nativeSequenceSelection.detach();
+        this._sharedTileRequests.clear(); this._sequenceTileIndex.clear();
+        this._hoverSequenceTiming?.cancel(); this._hoverTimingAbort?.abort();
+        this._hoverTimingTarget = null;
+        this._reverseAddressEnrichment.cancel(); this._backgroundRequests.clear();
+        this._timeTravelAvailability?.clear(); this._cachedSequencePreview?.clear();
+        this.clearFieldNotesGroup();
+      },
+      claim: view => this.claimCurrentImagePresentation(view),
+    };
+  }
+
+  /** Bind committed-view startup and existing view attachments without starting them while binding. */
+  private activeViewAttachmentHost(view: __esri.MapView | __esri.SceneView, jmv: JimuMapView): ActiveViewAttachmentHost<__esri.MapView | __esri.SceneView> {
+    return {
+      commit: ready => this.setState({ jimuMapView: jmv, pointCloudLoading: false }, ready),
+      whenReady: ready => view.when(ready),
+      restore: context => restoreActiveView(context, this.activeViewStartupHost(view, jmv)),
+      shared: current => this.restoreSharedStateWhenReady(view, current),
+      zoom: () => this._viewZoomBindings.bind(view),
+      turbo: () => {
+        this.setState({ turboModeActive: true });
+        this._loadedTurboFiltersKey = "";
+        this._turboViewBindings.bind(view);
+      },
+      layerOrder: () => this.enforceMapillaryLayerOrder(view),
+      warn: (message, error) => console.warn(message, error),
+    };
+  }
+
+  /** Capture click identity and preview before any hit test or pointer movement. */
+  private prepareMapClick(view: __esri.MapView | __esri.SceneView, evt: __esri.ViewClickEvent): PreparedMapClick | undefined {
+
+    this._pendingCoverageHover?.clear();
+    if (this.props.state === "CLOSED" || this.props.visible === false) return;
+    if (this._isFlyInActive) (view as any).animation?.stop();
+    this._sharedStartupImageId = null; this._sharedStartupBearing = null; this._isFlyInActive = false; this._sharedStateRestoreComplete = true;
+    this.claimCurrentImagePresentation?.(view);
+    if (this._workspaceNoteLocation?.active) {
+      evt.stopPropagation(); const point = view.toMap(evt);
+      this._workspaceNoteLocation.consume(view, point ? { lon: point.longitude, lat: point.latitude } : null);
+      return;
+    }
+    this._fieldNoteMap.clearHighlight();
+    this._coverageHoverResume?.leave();
+    // Claim the click before any await. SDK hit tests cannot be aborted, so
+    // late results must lose ownership before they can open imagery or tools.
+    const clickRevision = this._mapClickRevision = (this._mapClickRevision ?? 0) + 1;
+    const clickCurrent = () => this._mapClickRevision === clickRevision &&
+      this.state.jimuMapView?.view === view && !view.destroyed && this.props.state !== "CLOSED" &&
+      (!this._currentImagePresentation || this._currentImagePresentation.owns(view.map));
+    this._turboClickPickAbort?.abort();
+    this._placesVectorLayer?.cancelPick();
+    this._mapFeatureClickAbort?.abort();
+    if (this.state.coverageFrameResolving) this.setState({ coverageFrameResolving: false });
+    this._placesExploreAbort?.abort(); this._placesExploreAbort = null;
+    const clickStartedAt = performance.now();
+    // Freeze the individual preview identity before hit tests or pointer movement.
+    const coverageRevisionAtClick = this._turboRequestCount;
+    const coverageClickCurrent = () => clickCurrent() &&
+      this.state.turboModeActive && !!this.turboCoverageLayer &&
+      this._turboRequestCount === coverageRevisionAtClick;
+    const hoveredPoint = this._coverageSelectionTargets.snapshot(this.coverageSelectionContext(), evt,
+      TURBO_LIMITS.pickRadiusPx, geometry => view.toScreen(geometry));
+    const pointPreviewAtClick = hoveredPoint ? new this.ArcGISModules.Graphic({
+      geometry: hoveredPoint.geometry, attributes: {
+        image_id: hoveredPoint.imageId,
+        sequence_id: hoveredPoint.sequenceId || this._turboMetadataCache.get(hoveredPoint.imageId)?.sequence
+      }
+    }) : null;
+    // Regional line previews keep their existing nearest-frame resolution.
+    const hoverPixel = this._turboHoverGraphic?.geometry ? view.toScreen(this._turboHoverGraphic.geometry as __esri.Point) : null;
+    const previewImageId = this._currentHoveredFeatureId;
+    const coveragePreviewAtClick = pointPreviewAtClick || (this.state.turboModeActive && view.zoom < 14 && this.state.jimuMapView?.view === view &&
+      this._turboHoveredScreen && hoverPixel && previewImageId && this._turboHoverGraphic?.geometry &&
+      (evt.x - hoverPixel.x) ** 2 + (evt.y - hoverPixel.y) ** 2 <= TURBO_LIMITS.pickRadiusPx ** 2
+      ? new this.ArcGISModules.Graphic({
+        geometry: this._turboHoverGraphic.geometry.clone?.() || this._turboHoverGraphic.geometry,
+        attributes: { image_id: String(previewImageId), sequence_id: this._coverageFrameHoverTarget?.sequenceId || this._turboMetadataCache.get(String(previewImageId))?.sequence, turbo_representative: true }
+      })
+      : null);
+
+    const point = (view.toMap(evt) || coveragePreviewAtClick?.geometry) as PreparedMapClick['point'];
+    if (!point) return;
+
+    return { point, pointPreviewAtClick, coveragePreviewAtClick, clickCurrent, coverageClickCurrent, clickStartedAt };
+  }
+
+  /** Bind only click-policy capabilities; live getters retain ownership checks after awaits. */
+  private mapClickDispatchHost(view: __esri.MapView | __esri.SceneView): MapClickHost {
+    const widget = this;
+    return {
+      view,
+      prepare: evt => this.prepareMapClick(view, evt),
+      get currentView() { return widget.state.jimuMapView?.view; },
+      get routePickMode() { return widget.state.routePickMode; },
+      get isAnnotationMode() { return widget.state.isAnnotationMode; },
+      get placesActive() { return widget.state.placesActive; },
+      get trafficSignsActive() { return widget.state.trafficSignsActive; },
+      get objectsActive() { return widget.state.objectsActive; },
+      get turboModeActive() { return widget.state.turboModeActive; },
+      get sequenceId() { return widget.state.sequenceId; },
+      get sequenceImages() { return widget.state.sequenceImages; },
+      get annotationPicker() { return widget._annotationCloudPick; },
+      get places() { return widget._places; },
+      get tilePlaces() { return widget._placesVectorLayer; },
+      get sharedNotesLayer() { return widget._sharedNotesLayer; },
+      get fieldNotes() { return widget._fieldNoteMap; },
+      get pointCloudMapLayer() { return widget._pointCloudMapLayer; },
+      get objectLayer() { return widget.mapillaryObjectsFeatureLayer; },
+      get signLayer() { return widget.mapillaryTrafficSignsFeatureLayer; },
+      get sharedNotesPopup() { return widget._sharedNotesPopupHandle; },
+      set sharedNotesPopup(value) { widget._sharedNotesPopupHandle = value; },
+      get cloudHits() { return widget._pointCloudHits; },
+      get tilePlacesOwner() { return widget._placesTilesOwner; },
+      get sequenceCache() { return widget.sequenceCoordsCache; },
+      get selectionRevision() { return widget._selectionRequestId; },
+      get selectionAbort() { return widget._selectionAbort; },
+      get featureAbort() { return widget._mapFeatureClickAbort; },
+      set featureAbort(value) { widget._mapFeatureClickAbort = value; },
+      get hoverAbort() { return widget._turboHoverPickAbort; },
+      get coverageAbort() { return widget._turboClickPickAbort; },
+      set coverageAbort(value) { widget._turboClickPickAbort = value; },
+      get coverageLayer() { return widget.turboCoverageLayer; },
+      get coverageLayerView() { return widget.turboCoverageLayerView; },
+      get highlight() { return widget.highlightHandle; },
+      set highlight(value) { widget.highlightHandle = value; },
+      get accessToken() { return widget.accessToken; },
+      get frames() { return widget._liveSequenceFrames; },
+      get selectionTargets() { return widget._coverageSelectionTargets; },
+      setRoutePoint: (...args) => this.setRoutePoint(...args),
+      setState: (...args) => this.setState(...args),
+      openFieldNoteAttachments: (...args) => this.openFieldNoteAttachments(...args),
+      openSharedFieldNoteEditor: (...args) => this.openSharedFieldNoteEditor(...args),
+      offerNoteObjectChoice: (...args) => this.offerNoteObjectChoice(...args),
+      showPlacesHit: (...args) => this.showPlacesHit(...args),
+      placesBusy: (...args) => this.placesBusy(...args),
+      showToast: (...args) => this.showToast(...args),
+      text: (...args) => this._t(...args),
+      nearestCoverageImage: (...args) => this.nearestCoverageImage(...args),
+      loadSequenceById: (...args) => this.loadSequenceById(...args),
+      pickMapFeature: (...args) => this.pickMapFeature(...args),
+      openPickedMapDetection: (...args) => this.openPickedMapDetection(...args),
+      pickTurboGraphic: (...args) => this.pickTurboGraphic(...args),
+      pickTurboRepresentative: (...args) => this.pickTurboRepresentative(...args),
+      getTurboOrganizationId: (...args) => this.getTurboOrganizationId(...args),
+      drawClickRipple: (...args) => this.drawClickRipple(...args),
+      updateTurboPickWarning: (...args) => this.updateTurboPickWarning(...args),
+      ensureCoverageFrameLookup: (...args) => this.ensureCoverageFrameLookup(...args),
+      ownedText: (...args) => this._owned(...args),
+      coverageSelectionContext: (...args) => this.coverageSelectionContext(...args),
+      getCoverageDisplayPosition: (...args) => this.getCoverageDisplayPosition(...args),
+      toGeographic: geometry => webMercatorUtils.webMercatorToGeographic(geometry) as PreparedMapClick['point'],
+    };
+  }
+
+  /** Bind live hover capabilities; timer/container lifetime remains inside the interaction factory. */
+  private mapHoverHost(): MapHoverHost {
+    const widget = this;
+    return {
+      get currentView() { return widget.state.jimuMapView?.view; },
+      get closed() { return widget.props.state === "CLOSED"; },
+      get turboModeActive() { return widget.state.turboModeActive; },
+      get touchHover() { return widget._coverageTouchHover; },
+      set touchHover(value) { widget._coverageTouchHover = value; },
+      get workspaceLocation() { return widget._workspaceNoteLocation; },
+      get hoverResume() { return widget._coverageHoverResume; },
+      set hoverResume(value) { widget._coverageHoverResume = value; },
+      get hoverHandler() { return widget._coverageHoverHandler; },
+      set hoverHandler(value) { widget._coverageHoverHandler = value; },
+      get alignment() { return widget._coverageAlignmentDiagnostic; },
+      get hoverAbort() { return widget._turboHoverPickAbort; },
+      set hoverAbort(value) { widget._turboHoverPickAbort = value; },
+      get hoveredScreen() { return widget._turboHoveredScreen; },
+      get leaveCleanup() { return widget._turboMapLeaveCleanup; },
+      set leaveCleanup(value) { widget._turboMapLeaveCleanup = value; },
+      get places() { return widget._places; },
+      get tilePlaces() { return widget._placesVectorLayer; },
+      get tooltip() { return widget.tooltipDiv; },
+      get detailsTimer() { return widget._hoverTimeout; },
+      set detailsTimer(value) { widget._hoverTimeout = value; },
+      get hoveredId() { return widget._currentHoveredFeatureId; },
+      set hoveredId(value) { widget._currentHoveredFeatureId = value; },
+      get coverageRevision() { return widget._turboRequestCount; },
+      get coverageLayer() { return widget.turboCoverageLayer; },
+      get previewStatus() { return widget._hoverPreviewStatus; },
+      get pendingHover() { return widget._pendingCoverageHover; },
+      get cloudMap() { return widget._pointCloudMapLayer; },
+      get cloudRenderer() { return widget._pointCloudViewerRenderer; },
+      get viewer() { return widget.mapillaryViewer; },
+      get tilePlacesOwner() { return widget._placesTilesOwner; },
+      clearTurboHoverDetails: (...args) => this.clearTurboHoverDetails(...args),
+      clearTurboHover: (...args) => this.clearTurboHover(...args),
+      highlightSequenceOnVTL: (...args) => this.highlightSequenceOnVTL(...args),
+      pickTurboRepresentative: (...args) => this.pickTurboRepresentative(...args),
+      pickTurboGraphic: (...args) => this.pickTurboGraphic(...args),
+      updateTurboHover: (...args) => this.updateTurboHover(...args),
+      hitTestHoverLayers: (...args) => this.hitTestHoverLayers(...args),
+      pickMapFeature: (...args) => this.pickMapFeature(...args),
+      log: (...args) => this.log(...args),
+      placesBusy: (...args) => this.placesBusy(...args),
+      updateTurboPickWarning: (...args) => this.updateTurboPickWarning(...args),
+      text: (...args) => this._t(...args),
+    };
+  }
+
   /**
    * Transfer widget interactions and feature resources to the incoming Experience Builder map view.
    * Retire old handlers and view-bound work before registering replacements.
    * View/startup revisions guard delayed shared-link restoration and SDK hit-test results after a view transfer.
    */
   private onActiveViewChange = (jmv: JimuMapView) => {
-    if (this._routeGeneration.pending && (jmv?.view !== this.state.jimuMapView?.view || !this._routeGeneration.current())) this.cancelCaptureRouteGeneration();
-    this._hoverPreviewStatus?.clear();
-    this._coverageAlignmentDiagnostic?.clearHover();
-    const view = jmv?.view;
-    if (!view?.map || view.destroyed) return;
-    this.syncSceneTerrain(view);
-    const startupRevision = ++this._viewStartupRevision;
-    this._sharedStartupImageId = null; this._sharedStartupBearing = null;
-    this._startupUrlParameters ??= readSharedLinkParameters();
-    this._isFlyInActive = false;
-    const startupMap = view.map;
-    const viewStartupCurrent = () => startupRevision === this._viewStartupRevision &&
-      this.state.jimuMapView?.view === view && view.map === startupMap && !view.destroyed;
-    this._pointCloudAdaptiveDisplay?.dispose();
-    this._lasso?.clear();
-    this._viewshed?.onViewChange(view);
-    this._sight?.onViewChange(view);
-    this._measurement?.onViewChange(view);
-    this._pointCloudAcquisition.cancel('view-transfer');
-    this._pointCloudMapLayer?.invalidate();
-    this._rings?.onViewChange(view);
+    const transfer = this._activeViewTransfer.begin(jmv?.view);
+    if (!transfer) return;
+    const { view } = transfer;
+    this._activeViewTransfer.attach(transfer, this.activeViewAttachmentHost(view, jmv));
 
-    this._pendingCoverageHover?.clear();
-    this._coverageHoverResume?.dispose(); this._coverageHoverResume = null; this._coverageHoverHandler = null;
-    // Remove click / hover handlers from the previous active view
-    ++this._mapClickRevision;
-    if (this.mapClickHandle) {
-      try {
-        this.mapClickHandle.remove();
-      } catch (e) { }
-
-      this.mapClickHandle = null;
-    }
-
-    if (this.pointerMoveHandle) {
-      try {
-        this.pointerMoveHandle.remove();
-      } catch (e) { }
-
-      this.pointerMoveHandle = null;
-    }
-
-    /*
-     * Remove URL-sync watcher belonging to the
-     * PREVIOUS 2D / 3D MapView.
-     *
-     * Important: do this before attaching anything
-     * to the new jmv.
-     */
-    this._stationaryUrlBindings.clear();
-
-    this.log("Active MapView set - Attaching Handlers");
-
-    // DETECT 2D / 3D DIMENSION SWITCH
-    const previousView = this.state.jimuMapView?.view;
-    if (previousView && previousView !== view && this.state.turboModeActive) this.disableTurboCoverageLayer(false);
-
-    const previousViewType = previousView?.type;
-
-    const previousScale = previousView?.scale;
-
-    const previousCenter = previousView?.center?.clone();
-
-    const nextViewType = view.type;
-
-    const dimensionChanged = previousViewType != null && previousViewType !== nextViewType;
-
-    if (dimensionChanged) {
-      this.log(`[MapView] ${previousViewType} → ${nextViewType}: ` + `clearing view-dependent analysis.`);
-
-      this.clearViewDependentAnalysis();
-    }
-
-    this.log("Active MapView set - Attaching Handlers");
-
-    this.clearSharedNotesView();
-    if (previousView?.map !== view.map) this.clearMapLegendLayer();
-    this.clearSolarGraphics();
-    this.clearActiveSequenceLayer();
-    this.clearGreenPulse();
-    this.clearClickRipples();
-    this.clearTurboHover();
-
-    // clearSolarGraphics above already releases the solar map layer through its owner.
-    this._elevationProfile?.clear(view, true);
-
-    this._nativeCurrentImageMarker?.clear();
-    this._screenDirectionCone?.clear();
-    this._cameraCone?.dispose(view);
-
-    this._nativeSequenceSelection.detach();
-    this._sharedTileRequests.clear(); this._sequenceTileIndex.clear();
-    this._hoverSequenceTiming?.cancel(); this._hoverTimingAbort?.abort();
-    this._hoverTimingTarget = null;
-    this._reverseGeocodeAbort?.abort(); this._backgroundRequests.clear();
-    this._timeTravelAvailability?.clear(); this._cachedSequencePreview?.clear();
-    this.clearFieldNotesGroup();
-    this.claimCurrentImagePresentation(view);
-    // Commit the NEW MapView first.
-    // Only then restore graphics and sign/object watchers.
-    this.setState(
-      {
-        jimuMapView: jmv, pointCloudLoading: false,
-      },
-      () => {
-        view.when(async () => {
-          if (!viewStartupCurrent()) {
-            return;
-          }
-
-          /*
-           * Preserve the apparent map scale when the user
-           * switches between 2D and 3D.
-           *
-           * We intentionally preserve SCALE rather than the
-           * raw zoom number because MapView and SceneView
-           * do not use zoom levels identically.
-           */
-          if (dimensionChanged && this._sharedStateRestoreComplete && !this._isFlyInActive && Number.isFinite(previousScale) && previousScale! > 0) {
-            try {
-              const target: any = {
-                scale: previousScale,
-              };
-
-              if (previousCenter) {
-                target.target = previousCenter;
-              }
-
-              await view.goTo(target, {
-                animate: false,
-              });
-            } catch (err) {
-              console.warn("[MapView] Could not preserve scale during 2D/3D switch:", err);
-            }
-
-            /*
-             * Abort if another map switch happened
-             * while goTo was running.
-             */
-            if (this.state.jimuMapView?.view !== view || !view.map || view.destroyed) {
-              return;
-            }
-          }
-
-          await this.ensureArcGISModules();
-          if (!viewStartupCurrent()) return;
-          await this.restoreRoutingLoginView(view);
-          if (!viewStartupCurrent()) return;
-          // Start visible coverage before restoring optional tools. Keep the existing
-          // ready-view/camera gates and request owner; do not wait for imagery or
-          // prefetch pointer tiles. Observe errors immediately if restoration throws.
-          this.ensureAlwaysOnCoverageLayer();
-          const coverageReady = this.enableTurboCoverageLayer().catch(error => {
-            if (viewStartupCurrent() && (error as any)?.name !== "AbortError") console.warn("[MapView] Coverage initialization failed:", error);
-          });
-          this.restoreMapGraphics();
-          this.syncPlaces();
-          if (this._pointCloudAcquisition.result && this.state.pointCloudVisible) {
-            if (view.type === "3d") this.renderPointCloudMapLayer(true);
-            else this.clearPointCloud(true);
-          }
-          if (this.state.isSightMode && view.type === "3d") void this.ensureSightOwner().activate();
-          if (this.state.isMeasureMode && this.state.measurePoints.length) void this.updateMeasurementGraphics();
-          void this.syncSharedFieldNotes();
-
-          this.restoreMapillaryFeatureLayersForView(jmv);
-
-          // Optional restoration proceeds while the same coverage task loads.
-          await coverageReady;
-          if (!viewStartupCurrent()) return;
-
-          /*
-           * If startup/shared-link restoration has already
-           * finished, this is a normal user-driven 2D/3D
-           * switch. Immediately write the NEW map type,
-           * center and zoom into the URL.
-           */
-          if (this._sharedStateRestoreComplete && !this._isFlyInActive) {
-            /*
-             * Write immediately when ExB switches
-             * between MapView and SceneView.
-             *
-             * Do not wait for stationary=true because
-             * the new view may already be stationary.
-             *
-             * imageId is optional; map type / center /
-             * zoom must still sync without an image.
-             */
-            // Recheck projected cone size after a tilt/orbit, even when zoom is unchanged.
-            const image = this._liveSequenceFrames.current || this._liveSequenceFrames.find(this.state.imageId);
-            if (view.type === "3d" && image && String(image.id) === String(this.state.imageId))
-              this.drawCone(image.lon, image.lat, this._lastBearing || 0, this.coneLengths[this.zoomStepIndex], this.coneSpreads[this.zoomStepIndex]);
-            this.updateUrlWithCurrentImage(this.state.imageId ?? undefined);
-          }
-
-          /*
-           * Then attach the persistent URL
-           * stationary watcher.
-           */
-          this._stationaryUrlBindings.bind(view);
-        }).catch(error => {
-          if (viewStartupCurrent() && (error as any)?.name !== "AbortError") console.warn("[MapView] Resource restoration failed:", error);
-        });
-        // Run independently of coverage/sequence loading, after this view is committed.
-        void this.restoreSharedStateWhenReady(view, viewStartupCurrent);
-      },
-    );
-
-    this._viewZoomBindings.bind(view);
-
-    // Restore manual Turbo Mode or Auto-Initialize if Config is ON
-    {
-      this.setState({ turboModeActive: true });
-
-      // Apply the Turbo vector tile style to the newly bound 2D/3D view.
-      this._loadedTurboFiltersKey = "";
-
-      this._turboViewBindings.bind(view);
-
-      // Wait for view to be completely ready before checking zoom and fetching!
-
-    }
-
-    // Push the interactive FeatureLayers (dots/icons) back to the absolute top once the view is ready
-    view.when(() => {
-      if (this.state.jimuMapView?.view === view && view.map && !view.destroyed) this.enforceMapillaryLayerOrder(view);
-    }).catch(() => { });
-
-    // If the user swipes the mouse quickly across the map, this prevents lagging and too many hover fetchs
-    let hoverHitTestTimeout: any = null;
-
-    // Hide turbo hover tooltip when mouse leaves the map container
-    this._turboMapLeaveCleanup?.();
-    this._turboMapLeaveCleanup = null;
-    const mapContainer = view.container as HTMLElement;
-    const hoverResume = new CoverageHoverResume(view, (revision, pointer) => {
-      if (this.state.jimuMapView?.view !== view || view.destroyed || view.stationary === false || view.interacting || !mapContainer || mapContainer.isConnected === false ||
-        this.props.state === 'CLOSED' || !this.state.turboModeActive || revision !== this._turboRequestCount ||
-        !this.turboCoverageLayer || view.map?.findLayerById(LAYER_IDS.COVERAGE_VT) !== this.turboCoverageLayer ||
-        mapContainer?.ownerDocument?.visibilityState === 'hidden' || pointer.x < 0 || pointer.y < 0 ||
-        pointer.x > view.width || pointer.y > view.height) return false;
-      // Do not revive map hover under an overlaid form, popup or a different container.
-      const x = pointer.native?.clientX, y = pointer.native?.clientY;
-      if (Number.isFinite(x) && Number.isFinite(y) && typeof mapContainer.ownerDocument?.elementFromPoint === 'function') {
-        const bounds = mapContainer.getBoundingClientRect();
-        if (Math.abs(x! - bounds.left - pointer.x) > 1 || Math.abs(y! - bounds.top - pointer.y) > 1) return false;
-        const element = mapContainer.ownerDocument.elementFromPoint(x!, y!);
-        return !!element && mapContainer.contains(element) && !element.closest('button,input,select,textarea,[role="dialog"],.esri-popup');
-      }
-      return true;
-    }, pointer => this._coverageHoverHandler?.(pointer));
-    this._coverageHoverResume = hoverResume;
-    if (mapContainer) {
-      const onMapLeave = () => {
-        hoverResume.leave();
-        this._places?.setHover(null);
-        this._placesVectorLayer?.cancelHover();
-        this._turboHoverPickAbort?.abort();
-        this.clearTurboHoverDetails();
-        if (hoverHitTestTimeout) {
-          clearTimeout(hoverHitTestTimeout);
-          hoverHitTestTimeout = null;
-        }
-        // Clear tooltip
-        if (this.tooltipDiv) {
-          this.tooltipDiv.style.display = "none";
-        }
-        // Clear hover animation
-        this.clearTurboHover();
-
-        this.highlightSequenceOnVTL(null);
-        // Clear pending tooltip fetch
-        if (this._hoverTimeout) {
-          clearTimeout(this._hoverTimeout);
-          this._hoverTimeout = null;
-        }
-        this._currentHoveredFeatureId = null;
-      };
-      const touchHover = new CoverageTouchHover(mapContainer, onMapLeave);
-      this._coverageTouchHover = touchHover;
-      mapContainer.addEventListener("mouseleave", onMapLeave);
-      this._turboMapLeaveCleanup = () => {
-        touchHover.dispose();
-        if (this._coverageTouchHover === touchHover) this._coverageTouchHover = null;
-        hoverResume.dispose();
-        if (this._coverageHoverResume === hoverResume) { this._coverageHoverResume = null; this._coverageHoverHandler = null; }
-        mapContainer.removeEventListener("mouseleave", onMapLeave);
-        if (hoverHitTestTimeout) clearTimeout(hoverHitTestTimeout);
-      };
-    }
+    const hoverHandler = createMapHoverHandler(view, this.mapHoverHost());
 
     // CLICK HANDLER
-    this.mapClickHandle = view.on("click", async (evt) => {
-      this._pendingCoverageHover?.clear();
-      if (this.props.state === "CLOSED" || this.props.visible === false) return;
-      if (this._isFlyInActive) (view as any).animation?.stop();
-      this._sharedStartupImageId = null; this._sharedStartupBearing = null; this._isFlyInActive = false; this._sharedStateRestoreComplete = true;
-      this.claimCurrentImagePresentation?.(view);
-      if (this._workspaceNoteLocation?.active) {
-        evt.stopPropagation(); const point = view.toMap(evt);
-        this._workspaceNoteLocation.consume(view, point ? { lon: point.longitude, lat: point.latitude } : null);
-        return;
-      }
-      this._fieldNoteMap.clearHighlight();
-      this._coverageHoverResume?.leave();
-      // Claim the click before any await. SDK hit tests cannot be aborted, so
-      // late results must lose ownership before they can open imagery or tools.
-      const clickRevision = this._mapClickRevision = (this._mapClickRevision ?? 0) + 1;
-      const clickCurrent = () => this._mapClickRevision === clickRevision &&
-        this.state.jimuMapView?.view === view && !view.destroyed && this.props.state !== "CLOSED" &&
-        (!this._currentImagePresentation || this._currentImagePresentation.owns(view.map));
-      this._turboClickPickAbort?.abort();
-      this._placesVectorLayer?.cancelPick();
-      this._mapFeatureClickAbort?.abort();
-      if (this.state.coverageFrameResolving) this.setState({ coverageFrameResolving: false });
-      this._placesExploreAbort?.abort(); this._placesExploreAbort = null;
-      const clickStartedAt = performance.now();
-      // Freeze the individual preview identity before hit tests or pointer movement.
-      const coverageRevisionAtClick = this._turboRequestCount;
-      const coverageClickCurrent = () => clickCurrent() &&
-        this.state.turboModeActive && !!this.turboCoverageLayer &&
-        this._turboRequestCount === coverageRevisionAtClick;
-      const hoveredPoint = this._coverageSelectionTargets.snapshot(this.coverageSelectionContext(), evt,
-        TURBO_LIMITS.pickRadiusPx, geometry => view.toScreen(geometry));
-      const pointPreviewAtClick = hoveredPoint ? new this.ArcGISModules.Graphic({
-        geometry: hoveredPoint.geometry, attributes: {
-          image_id: hoveredPoint.imageId,
-          sequence_id: hoveredPoint.sequenceId || this._turboMetadataCache.get(hoveredPoint.imageId)?.sequence
-        }
-      }) : null;
-      // Regional line previews keep their existing nearest-frame resolution.
-      const hoverPixel = this._turboHoverGraphic?.geometry ? view.toScreen(this._turboHoverGraphic.geometry as __esri.Point) : null;
-      const previewImageId = this._currentHoveredFeatureId;
-      const coveragePreviewAtClick = pointPreviewAtClick || (this.state.turboModeActive && view.zoom < 14 && this.state.jimuMapView?.view === view &&
-        this._turboHoveredScreen && hoverPixel && previewImageId && this._turboHoverGraphic?.geometry &&
-        (evt.x - hoverPixel.x) ** 2 + (evt.y - hoverPixel.y) ** 2 <= TURBO_LIMITS.pickRadiusPx ** 2
-        ? new this.ArcGISModules.Graphic({
-          geometry: this._turboHoverGraphic.geometry.clone?.() || this._turboHoverGraphic.geometry,
-          attributes: { image_id: String(previewImageId), sequence_id: this._coverageFrameHoverTarget?.sequenceId || this._turboMetadataCache.get(String(previewImageId))?.sequence, turbo_representative: true }
-        })
-        : null);
-
-      const point = (view.toMap(evt) || coveragePreviewAtClick?.geometry) as __esri.Point;
-      if (!point) return;
-
-      if (this.state.routePickMode) {
-        this.setRoutePoint(this.state.routePickMode, [point.longitude, point.latitude]);
-        return;
-      }
-
-      // FIELD NOTES: annotation mode intercepts the click before anything else
-      if (this.state.isAnnotationMode) {
-        await this._annotationCloudPick.pick(() => view.hitTest(evt), point as AnnotationMapPoint);
-        return;
-      }
-
-      // Stop the automatic popup click synchronously, before the first hit-test await.
-      // The captured ID survives an unrestricted SDK hit test omitting this small marker.
-      const placesOwnerAtClick = this.state.placesActive ? this._places : null;
-      const tilePlacesAtClick = this._placesVectorLayer;
-      const placeTargetAtClick = placesOwnerAtClick?.screenTarget(evt) || null;
-      if (placeTargetAtClick) evt.stopPropagation();
-      this.setState({ clickLon: point.longitude, clickLat: point.latitude });
-
-      try {
-        const responsePromise = coverageClickHitTest(!!pointPreviewAtClick, {
-          sharedNotes: !!this._sharedNotesLayer || this._fieldNoteMap.hasPickTargets,
-          pointCloud: !!this._pointCloudMapLayer?.layer,
-          places: !!this.state.placesActive,
-          detectionFeatures: !!this.mapillaryObjectsFeatureLayer || !!this.mapillaryTrafficSignsFeatureLayer,
-        }, () => view.hitTest(evt));
-        if (typeof (evt as any).defer === 'function' && (this.state.trafficSignsActive || this.state.objectsActive) && (this._sharedNotesLayer || this._fieldNoteMap.hasPickTargets)) {
-          deferNoteObjectPopup(evt as any, responsePromise, hit => hit.results.some((result: any) =>
-            (!!this._sharedNotesLayer && (result.layer || result.graphic?.layer) === this._sharedNotesLayer) ||
-            (result.graphic && !!this._fieldNoteMap.noteForGraphic(result.graphic))), clickCurrent);
-        }
-        const response = await responsePromise;
-        if (!clickCurrent()) return;
-        const enterpriseNoteHit = response.results.find((result: any) => (result.layer || result.graphic?.layer) === this._sharedNotesLayer);
-        if (enterpriseNoteHit && (enterpriseNoteHit as any).graphic) {
-          const openEnterpriseNote = () => {
-            view.openPopup({ features: [(enterpriseNoteHit as any).graphic], location: (enterpriseNoteHit as any).graphic.geometry });
-            this._sharedNotesPopupHandle?.remove();
-            this._sharedNotesPopupHandle = view.popup?.on("trigger-action", event => {
-              if (event.action.id === "enterprise-note-attachments" && view.popup?.selectedFeature?.layer === this._sharedNotesLayer) void this.openFieldNoteAttachments(view.popup.selectedFeature);
-              if (event.action.id === "edit-enterprise-note" && view.popup?.selectedFeature?.layer === this._sharedNotesLayer) {
-                void this.openSharedFieldNoteEditor(view.popup.selectedFeature);
-              }
-            }) || null;
-          };
-          if ((this.state.trafficSignsActive || this.state.objectsActive) && this.offerNoteObjectChoice(view, (enterpriseNoteHit as any).graphic, openEnterpriseNote, clickCurrent)) return;
-          openEnterpriseNote(); return;
-        }
-
-        // Note clicks select the same highlight as Show on map without moving the camera.
-        const noteHit = response.results.find((result: any) => result.graphic && this._fieldNoteMap.noteForGraphic(result.graphic));
-        if (noteHit && (noteHit as any).graphic) {
-          const graphic = (noteHit as any).graphic;
-          const note = this._fieldNoteMap.noteForGraphic(graphic);
-          const openNote = () => { if (note) void this._fieldNoteMap.focusNote(note).catch(() => { }); };
-          if (note && (this.state.trafficSignsActive || this.state.objectsActive) && this.offerNoteObjectChoice(view, graphic, () => { openNote(); const popupGraphic = graphic.clone(); popupGraphic.attributes = { ...popupGraphic.attributes, note: attachmentMetadata(note.note).text }; view.openPopup({ features: [popupGraphic], location: graphic.geometry }); }, clickCurrent)) return;
-          openNote(); return;
-        }
-
-        if (this._pointCloudHits.route(response.results)) return;
-
-        // A direct Places marker hit opens local details before coverage's wider pick radius.
-        // Route/annotation modes, shared notes and point-cloud tools retain priority.
-        if (this.state.jimuMapView?.view !== view || view.destroyed) return;
-        if (this.state.placesActive && this._places === placesOwnerAtClick && this.showPlacesHit(response.results, placeTargetAtClick)) return;
-
-        if (tilePlacesAtClick && this._places === this._placesTilesOwner && !pointPreviewAtClick && !coveragePreviewAtClick && !this.placesBusy()) {
-          let tileHit: any = null;
-          try { tileHit = await tilePlacesAtClick.resolve(evt); }
-          catch (error) { if ((error as any)?.name !== 'AbortError') console.warn('[Overture tile pick]', error); }
-          if (!clickCurrent()) return;
-          if (this._placesVectorLayer === tilePlacesAtClick && this._places === placesOwnerAtClick && tileHit) {
-            if (tileHit.attributes?.cluster_count >= 1) {
-              evt.stopPropagation();
-              if (view.zoom >= 19) this.showToast(this._t('uiPoiClusterDense'), 3500);
-              else void view.goTo({ target: tileHit.geometry, zoom: Math.min(19, Math.max(15, Math.floor(view.zoom) + 2)) }).catch(() => { });
-              return;
-            }
-            const candidates: Place[] = (tileHit.candidates || [tileHit]).map((candidate: any) => tilePlace(candidate.attributes, candidate.geometry)).filter((place: Place | null): place is Place => !!place);
-            if (candidates.length && this._places?.openChoices(candidates)) { evt.stopPropagation(); return; }
-          }
-        }
-
-        // A valid individual image preview owns this click. Otherwise blue route
-        // navigation keeps its existing exact-point/nearest-loaded-frame behavior.
-        if (pointPreviewAtClick && !coverageClickCurrent()) return;
-        const sequenceHits = response.results.filter((r: any) => r.graphic &&
-          ((r.graphic as any).__isSequenceOverlay || (r.graphic as any).__isActiveSequencePoint) &&
-          r.graphic.attributes?.sequenceId &&
-          (r.graphic.geometry?.type === "point" || r.graphic.geometry?.type === "polyline"));
-        const seqHit = sequenceHits.find((r: any) => r.graphic.geometry.type === "point" && r.graphic.attributes?.image_id) || sequenceHits[0];
-        if (seqHit && !pointPreviewAtClick) {
-          const attrs = (seqHit as any).graphic.attributes;
-          const seqId = String(attrs.sequenceId);
-          let imageId = attrs.image_id ? String(attrs.image_id) : undefined;
-          if (!imageId) {
-            const images = this.sequenceCoordsCache[seqId];
-            if (images?.length) {
-              const routeCurrent = () => clickCurrent() && this.sequenceCoordsCache[seqId] === images;
-              imageId = await nearestLoadedFrame(images, { lon: point.longitude, lat: point.latitude }, distanceMeters, routeCurrent);
-              if (!routeCurrent()) return;
-            }
-          }
-          if (!imageId) {
-            const request = this._selectionRequestId;
-            try { imageId = await this.nearestCoverageImage(seqId, { lon: point.longitude, lat: point.latitude }, this._selectionAbort?.signal || new AbortController().signal); }
-            catch { return; }
-            if (!clickCurrent() || request !== this._selectionRequestId || !coverageClickCurrent()) return;
-          }
-          if (imageId) {
-            if (!clickCurrent()) return;
-            await this.loadSequenceById(seqId, imageId, { lon: point.longitude, lat: point.latitude }, false, false, clickStartedAt);
-            return;
-          }
-        }
-
-        // 2. Objects/Signs
-        const featureHit = response.results.find((r: any) => {
-          const layer = r.layer || (r.graphic && r.graphic.layer);
-          return layer && (layer.id === LAYER_IDS.OBJECTS_FL || layer.id === LAYER_IDS.TRAFFIC_SIGNS_FL);
-        });
-
-        this._mapFeatureClickAbort?.abort();
-        const featureController = new AbortController(); this._mapFeatureClickAbort = featureController;
-        // Native detection tiles need a local pick only while a detection mode is active.
-        const selectedFeature = featureHit || (this.state.objectsActive || this.state.trafficSignsActive
-          ? await this.pickMapFeature({ x: evt.x, y: evt.y }, view, featureController.signal) : null);
-        if (!clickCurrent() || featureController.signal.aborted) return;
-        if (selectedFeature && (selectedFeature as any).graphic) {
-          this.openPickedMapDetection(selectedFeature);
-
-          // Stop here so we don't trigger the "nearest sequence" search
-          return;
-        }
-
-        // 3. Turbo Coverage (Get ALL overlapping hits instead of just one)
-        let turboHits = response.results.filter((r: any) => {
-          const layer = r.layer || (r.graphic && r.graphic.layer);
-          return layer && layer.id === LAYER_IDS.TURBO_COVERAGE;
-        });
-
-        // TURBO COVERAGE MODE BRANCH
-        if (this.state.turboModeActive) {
-          if (!coverageClickCurrent()) return;
-          this._turboHoverPickAbort?.abort();
-          this._turboClickPickAbort?.abort();
-          const pickController = new AbortController();
-          this._turboClickPickAbort = pickController;
-          const picked = coveragePreviewAtClick || await this.pickTurboGraphic({ x: evt.x, y: evt.y }, view, pickController.signal) || await this.pickTurboRepresentative({ x: evt.x, y: evt.y }, view, pickController.signal);
-          if (!coverageClickCurrent() || pickController.signal.aborted) return;
-          turboHits = picked ? [{ graphic: picked, layer: this.turboCoverageLayer } as any] : [];
-          if (turboHits.length > 0) {
-            // 1. Mathematically find the ABSOLUTE closest overlapping point
-            let closestGraphic: __esri.Graphic | null = null;
-            let minDistance = Infinity;
-
-            turboHits.forEach((hit: any) => {
-              const graphic = hit.graphic;
-              // Convert the hit graphic to WGS84 to calculate distance
-              const geom = webMercatorUtils.webMercatorToGeographic(graphic.geometry) as __esri.Point;
-              if (geom) {
-                // Compare mouse click (point.latitude/longitude) to dot location (geom)
-                const dist = distanceMeters(point.latitude, point.longitude, geom.latitude, geom.longitude);
-                if (dist < minDistance) {
-                  minDistance = dist;
-                  closestGraphic = graphic;
-                }
-              }
-            });
-
-            // 2. Load exactly the point they clicked
-            if (closestGraphic) {
-              // TypeScript safety check
-              const safeGraphic = closestGraphic as __esri.Graphic;
-              const attrs = safeGraphic.attributes;
-
-              // Safely highlight the point
-              if (this.turboCoverageLayerView && safeGraphic.layer === this.turboCoverageLayer) {
-                if (this.highlightHandle) this.highlightHandle.remove();
-                this.highlightHandle = (this.turboCoverageLayerView as any).highlight(safeGraphic);
-              }
-
-              if (attrs) {
-                let imageId = attrs.image_id;
-                if (!imageId) return;
-
-                let seqId = attrs.sequence_id;
-
-                if (!seqId || seqId === "" || seqId === "undefined") {
-                  try {
-                    const resp = await fetch(`${GRAPH_API.BASE}/${imageId}?fields=sequence`, {
-                      headers: { Authorization: `OAuth ${this.accessToken}` },
-                      signal: pickController.signal,
-                    });
-                    if (resp.ok) {
-                      const data = await resp.json();
-                      if (!coverageClickCurrent() || pickController.signal.aborted) return;
-                      seqId = data.sequence;
-                      safeGraphic.attributes.sequence_id = seqId;
-                    }
-                  } catch (err) {
-                    return;
-                  }
-                }
-                if (!coverageClickCurrent() || pickController.signal.aborted) return;
-                if (seqId) {
-                  // Coverage hit tests can miss the thin active route at regional zooms.
-                  // For that same loaded sequence, resolve the click entirely in memory.
-                  if (attrs.turbo_representative && this.getTurboOrganizationId() === undefined && this.state.sequenceId === seqId && !!this._liveSequenceFrames.complete) {
-                    const images = this.state.sequenceImages;
-                    const routeCurrent = () => coverageClickCurrent() && !pickController.signal.aborted &&
-                      this.state.sequenceId === seqId && this.state.sequenceImages === images && !!this._liveSequenceFrames.complete;
-                    const nearest = await nearestLoadedFrame(images, { lon: point.longitude, lat: point.latitude }, distanceMeters, routeCurrent);
-                    if (!routeCurrent()) return;
-                    if (nearest) imageId = nearest;
-                  }
-                  const regionalLine = !!attrs.turbo_representative && view.zoom >= 6 && view.zoom < 14;
-                  // A sequence tile's image_id represents the whole line, not its clicked location.
-                  // Resolve only nearby image tiles; never enumerate the full sequence to open it.
-                  if (regionalLine && !(this.getTurboOrganizationId() === undefined && this.state.sequenceId === seqId && !!this._liveSequenceFrames.complete)) {
-                    const geometry = safeGraphic.geometry as __esri.Point;
-                    const geographic = geometry?.spatialReference?.isWGS84 || geometry?.spatialReference?.wkid === 4326
-                      ? geometry : webMercatorUtils.webMercatorToGeographic(geometry) as __esri.Point;
-                    const location = Number.isFinite(geographic?.longitude) && Number.isFinite(geographic?.latitude)
-                      ? { lon: geographic.longitude, lat: geographic.latitude }
-                      : { lon: point.longitude, lat: point.latitude };
-                    this.drawClickRipple(location.lon, location.lat, [165, 42, 42], 0.6, 2);
-                    this.updateTurboPickWarning();
-                    this.setState({ coverageFrameResolving: true });
-                    try {
-                      const nearby = await this.ensureCoverageFrameLookup().resolve(view, String(seqId), location, pickController.signal);
-                      if (!coverageClickCurrent() || pickController.signal.aborted || this._turboClickPickAbort !== pickController) return;
-                      if (!nearby) {
-                        this.updateTurboPickWarning(this._t('appNoNearbyFrameWasFoundHereZoomCloserTo'), "zoom");
-                        return;
-                      }
-                      imageId = nearby;
-                    } catch (error) {
-                      if (!coverageClickCurrent() || pickController.signal.aborted || this._turboClickPickAbort !== pickController) return;
-                      this.updateTurboPickWarning((error as any)?.name === "TimeoutError"
-                        ? this._owned("Nearby imagery is taking longer to respond. Try again; downloaded tiles will be reused.")
-                        : this._owned("Nearby imagery could not load. Check your connection and try again."), "zoom");
-                      return;
-                    } finally {
-                      if (this._turboClickPickAbort === pickController) this.setState({ coverageFrameResolving: false });
-                    }
-                  }
-                  // Exact image targets keep their picked display position through
-                  // metadata loading. Regional lines retain their geographic search point.
-                  if (!attrs.turbo_representative && safeGraphic.geometry?.type === "point") {
-                    this._coverageSelectionTargets.retain(this.coverageSelectionContext(), String(imageId),
-                      safeGraphic.geometry as __esri.Point, String(seqId));
-                  }
-                  const anchor = this.getCoverageDisplayPosition(String(imageId), point.longitude, point.latitude);
-                  this.drawClickRipple(anchor.lon, anchor.lat);
-                  await this.loadSequenceById(seqId, imageId, { lon: anchor.lon, lat: anchor.lat }, !!attrs.turbo_representative && !regionalLine, false, clickStartedAt);
-                  return;
-                }
-              }
-            }
-          }
-
-          // Clicked empty space
-          this.drawClickRipple(point.longitude, point.latitude, [255, 140, 0], 0.6, 2);
-          this.updateTurboPickWarning(view.zoom < 14
-            ? this._owned("No selectable representative image was found here. Choose a coverage line or overview point, or zoom closer for individual image selection.")
-            : this._owned("No image point was found at this position. Choose a visible dot, zoom closer if dots overlap, or adjust the active filters."), "zoom");
-          return;
-        }
-
-        // Imagery exploration uses Turbo; unrelated map tools remain available.
-        this.showToast(this._t('appEnableTurboCoverageToSelectStreetImagery'), 3000);
-      } catch (error) {
-        if (!clickCurrent()) return;
-        console.error("Click error", error);
-        if (this.state.turboModeActive && (error as any)?.name !== "AbortError") this.updateTurboPickWarning(this._t('appImageLookupCouldNotLoadCheckYourConnectionAnd'), "retry");
-
-      }
-    });
+    this.mapClickHandle = view.on("click", evt => dispatchMapClick(evt, this.mapClickDispatchHost(view)));
 
     // HOVER HANDLER
-    this.pointerMoveHandle = view.on("pointer-move", this._coverageHoverHandler = (evt) => {
-      if (this._coverageTouchHover?.shouldIgnore(evt)) return;
-      if (this._workspaceNoteLocation?.active) return;
-      this._coverageHoverResume?.move(evt);
-      this._coverageAlignmentDiagnostic?.pointer(view, { x: evt.x, y: evt.y });
-      this._turboHoverPickAbort?.abort();
-      if (this._turboHoveredScreen && (evt.x - this._turboHoveredScreen.x) ** 2 + (evt.y - this._turboHoveredScreen.y) ** 2 > (view.zoom < 14 ? TURBO_LIMITS.pickRadiusPx : TURBO_LIMITS.hoverRadiusPx) ** 2) {
-        this.clearTurboHoverDetails();
-      }
-      const hoverController = new AbortController();
-      this._turboHoverPickAbort = hoverController;
-      // Immediately clear the previous pending hitTest
-      if (hoverHitTestTimeout) {
-        clearTimeout(hoverHitTestTimeout);
-      }
-
-      // Capture exact screen coordinates for the deferred hitTest
-      const rect = (view.container as HTMLElement)?.getBoundingClientRect();
-      const globalX = evt.native?.clientX ?? ((rect?.left || 0) + evt.x);
-      const globalY = evt.native?.clientY ?? ((rect?.top || 0) + evt.y);
-      const screenPoint = { x: evt.x, y: evt.y };
-
-      // Coalesce queued pointer events without waiting for the pointer to stop.
-      // Coverage picking runs independently of SDK/object hit-test latency.
-      hoverHitTestTimeout = setTimeout(async () => {
-        try {
-          if (hoverController.signal.aborted || this.state.jimuMapView?.view !== view) return;
-          const finishCoveragePreview = this.state.turboModeActive && this.turboCoverageLayer
-            ? this._hoverPreviewStatus?.begin(hoverController.signal) : undefined;
-          const finishPending = this.state.turboModeActive && this.turboCoverageLayer && view.zoom < 14
-            ? this._pendingCoverageHover?.begin(view, screenPoint, hoverController.signal) : undefined;
-          const coverage = this.state.turboModeActive && this.turboCoverageLayer
-            ? (view.zoom < 14
-              ? this.pickTurboRepresentative(screenPoint, view, hoverController.signal, true)
-              : this.pickTurboGraphic(screenPoint, view, hoverController.signal, TURBO_LIMITS.hoverRadiusPx))
-            : Promise.resolve(null);
-          let featureOwnsHover = false;
-          const coverageFeedback = coverage.then(picked => {
-            finishPending?.();
-            if (hoverController.signal.aborted || featureOwnsHover || this.state.jimuMapView?.view !== view) return;
-            if (picked) this.updateTurboHover(picked, globalX, globalY);
-            else this.clearTurboHoverDetails();
-          }).catch(() => { if (!hoverController.signal.aborted && !featureOwnsHover) this.clearTurboHoverDetails(); }).finally(() => { finishPending?.(); finishCoveragePreview?.(); });
-          const hit = await this.hitTestHoverLayers(view, screenPoint);
-          if (hoverController.signal.aborted || this.state.jimuMapView?.view !== view) return;
-
-          // 1. POINT CLOUD HOVER SYNC (Dual-Hover Feature)
-          const pcHit = hit.results.find((r: any) => {
-            const l = r.layer || (r.graphic && r.graphic.layer);
-            return l && l.id === "point-cloud-layer";
-          });
-
-          if (pcHit && (pcHit as any).graphic && !this._pointCloudMapLayer?.updating) {
-            const attrs = (pcHit as any).graphic.attributes || {};
-            const rawPointIdx = attrs.pointIndex ?? attrs.pointindex;
-            const rawObjectId = attrs.ObjectID ?? attrs.objectid;
-            const idx = rawPointIdx !== undefined ? rawPointIdx : (rawObjectId || 1) - 1;
-
-            if (this._pointCloudViewerRenderer && this._pointCloudViewerRenderer.selectedIndex !== idx) {
-              this._pointCloudViewerRenderer.setHighlight(idx);
-
-              if (this.mapillaryViewer) {
-                this.mapillaryViewer.resize();
-              }
-            }
-          } else {
-            // Clear point cloud highlight if mouse moves off the cloud
-            if (this._pointCloudViewerRenderer && this._pointCloudViewerRenderer.selectedIndex !== -1) {
-              this._pointCloudViewerRenderer.setHighlight(-1);
-              if (this.mapillaryViewer) this.mapillaryViewer.resize();
-            }
-          }
-
-          // 2. STANDARD OBJECT / TRAFFIC SIGN HOVER LOGIC
-          const obj = hit.results.find((r: any) => {
-            const l = r.layer || (r.graphic && r.graphic.layer);
-            return l && (l.id === LAYER_IDS.OBJECTS_FL || l.id === LAYER_IDS.TRAFFIC_SIGNS_FL);
-          });
-
-          // Optional detection failures must not dismiss independently successful
-          // imagery hover. A successful feature still owns the tooltip below.
-          const mapFeature = obj || await this.pickMapFeature(screenPoint, view, hoverController.signal).catch(() => {
-            if (!hoverController.signal.aborted && this.state.jimuMapView?.view === view)
-              this.log("[Hover] Optional feature lookup failed; imagery hover remains available.");
-            return null;
-          });
-          if (hoverController.signal.aborted || this.state.jimuMapView?.view !== view) return;
-          if (mapFeature && (mapFeature as any).graphic) {
-            this._places?.setHover(null);
-            featureOwnsHover = true;
-            this.clearTurboHoverDetails();
-            const attrs = (mapFeature as any).graphic.attributes || {};
-            if (this.tooltipDiv) {
-              const bounds = view.container?.getBoundingClientRect() || { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight };
-              renderMapFeatureHoverLabel(this.tooltipDiv, attrs.name || attrs.value || "Map feature", bounds, globalX, globalY);
-            }
-            return; // Stop here, don't trigger Turbo hover
-          }
-
-          let place = this._places?.hit(hit.results);
-          let nativeNearbyCount = 0;
-          const nativeHoverSource = this._placesVectorLayer, nativeHoverOwner = this._places;
-          const nativeHoverVersion = nativeHoverSource?.version;
-          const nativeHoverCurrent = () => !hoverController.signal.aborted && this.state.jimuMapView?.view === view &&
-            this._placesVectorLayer === nativeHoverSource && this._places === nativeHoverOwner && nativeHoverSource?.version === nativeHoverVersion;
-          if (!place && nativeHoverSource && nativeHoverOwner === this._placesTilesOwner && !this.placesBusy()) {
-            // Keep existing image-dot hover responsive and authoritative.
-            const coverageHit = await coverage.catch(() => null);
-            if (!nativeHoverCurrent()) return;
-            if (!coverageHit) {
-              const nativeHit = await nativeHoverSource.resolveHover(screenPoint, hoverController.signal);
-              if (!nativeHoverCurrent()) return;
-              place = nativeHit ? tilePlace(nativeHit.attributes, nativeHit.geometry) : null;
-              nativeNearbyCount = nativeHit?.candidates?.length || 0;
-              nativeHoverOwner?.setMapHover(place);
-            }
-          }
-          if (place && !hoverController.signal.aborted) {
-            featureOwnsHover = true;
-            this.clearTurboHoverDetails();
-            this._places?.setHover(place.id);
-            if (this.tooltipDiv) {
-              const bounds = view.container?.getBoundingClientRect() || { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight };
-              renderMapFeatureHoverLabel(this.tooltipDiv, this._places?.hoverLabel(place, nativeNearbyCount) || place.name, bounds, globalX, globalY);
-            }
-            return;
-          }
-          this._places?.setHover(null);
-          await coverageFeedback;
-        } catch (err) {
-          if (!hoverController.signal.aborted) {
-            this._places?.setHover(null);
-            this.clearTurboHoverDetails();
-            if (this.state.turboModeActive && this.state.jimuMapView?.view === view) this.updateTurboPickWarning(this._t('appImageLookupCouldNotLoadCheckYourConnectionAnd'), "retry");
-          }
-        }
-      }, 0); // Process the latest queued pointer position.
-    });
+    this.pointerMoveHandle = view.on("pointer-move", this._coverageHoverHandler = hoverHandler);
   };
 
   // #region MAP GRAPHICS
@@ -10914,35 +8645,16 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._activeSequenceOverlay?.dispose();
   }
 
+  /** Draw a legacy sequence point; retain batching and deduplication, and skip Turbo coverage. */
   private drawPointWithoutRemoving(lon: number, lat: number, color: any = [0, 0, 255, 1], sequenceId?: string, imageId?: string, deferred?: __esri.Graphic[]) {
     const { jimuMapView } = this.state;
     if (!jimuMapView || !this.ArcGISModules || this.state.turboModeActive) return;
 
     const { Graphic } = this.ArcGISModules;
 
-    const graphic = new Graphic({
-      geometry: {
-        type: "point",
-        longitude: lon,
-        latitude: lat,
-        spatialReference: { wkid: 4326 },
-      },
-      symbol: jimuMapView.view.type === "3d" ? {
-        type: "point-3d", disableDepthTestDistance: Number.POSITIVE_INFINITY,
-        verticalOffset: { screenLength: 1, minWorldLength: 0.05, maxWorldLength: 0.05 },
-        symbolLayers: [{ type: "icon", resource: { primitive: "circle" }, material: { color }, size: 7, outline: { color: "#e3da30", size: 1 } }],
-      } : {
-        type: "simple-marker",
-        style: "circle",
-        color: color,
-        size: 7,
-        outline: { color: "#e3da30", width: 1 },
-      },
-      attributes: sequenceId ? { sequenceId: sequenceId, image_id: imageId } : undefined,
-    });
+    const graphic = new Graphic(legacySequencePointProperties(lon, lat, color, jimuMapView.view.type === "3d", sequenceId, imageId));
 
     (graphic as any).__isActiveSequencePoint = true;
-    // Tag removed so this is treated as a temporary graphic
     if (sequenceId && color[0] === 0 && color[1] === 0 && color[2] === 255) {
       const layer = this.ensureActiveSequenceLayer(jimuMapView.view);
       const key = imageId ? `${sequenceId}:${imageId}` : `${sequenceId}:${lon}:${lat}`;
@@ -10952,9 +8664,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     } else this._ownedMapResources.addGraphic(jimuMapView.view, graphic);
   }
 
-  /**
-   * Draws a black point at the given coordinates to point clicked area on map
-   */
+  /** Replace the clicked-location marker through the existing owned map-resource path. */
   private drawPoint(lon: number, lat: number) {
     const { jimuMapView } = this.state;
     if (!jimuMapView || !this.ArcGISModules) return;
@@ -10967,22 +8677,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       this.clickedLocationGraphic = null;
     }
 
-    const graphic = new Graphic({
-      geometry: {
-        type: "point",
-        longitude: lon,
-        latitude: lat,
-        spatialReference: { wkid: 4326 },
-      },
-      symbol: {
-        type: "simple-marker",
-        style: "circle",
-        color: "black",
-        size: 5,
-        outline: { color: "white", width: 2 },
-      },
-      attributes: { isClickedLocation: true },
-    });
+    const graphic = new Graphic(clickedLocationPointProperties(lon, lat));
 
     (graphic as any).__isSequenceOverlay = true;
 
@@ -11282,17 +8977,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
    * @param lat Image latitude in WGS84 degrees.
    * @param lon Image longitude in WGS84 degrees.
    */
-  private fetchReverseGeocode = async (lat: number, lon: number) => {
-    this._reverseGeocodeAbort?.abort();
-    const controller = new AbortController(); this._reverseGeocodeAbort = controller;
-    const imageId = this.state.imageId, view = this.state.jimuMapView?.view;
-    try {
-      await this.runSequenceBackground(signal => fetchReverseAddress(lat, lon, address => {
-        if (!signal.aborted && this.state.imageId === imageId && this.state.jimuMapView?.view === view) this.setState({ address });
-      }, signal), controller.signal);
-    } catch (error) { if (!controller.signal.aborted) console.warn('[Mapillary] Address enrichment unavailable:', error); }
-    finally { if (this._reverseGeocodeAbort === controller) this._reverseGeocodeAbort = null; }
-  };
+  private fetchReverseGeocode = (lat: number, lon: number) => this._reverseAddressEnrichment.run(lat, lon);
 
   /*
    * Displays a zoom warning.
@@ -11365,24 +9050,9 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
    * @param duration - Time in milliseconds before the toast disappears (default: 2500ms)
    */
   private showToast(message: React.ReactNode, duration: number = 2500, owner?: "point-cloud-progress") {
-    if (this._toastTimer) clearTimeout(this._toastTimer);
-    this._toastOwner = owner;
-    this.setState({ toastMessage: typeof message === "string" ? <OwnedMessage source={message} /> : message });
-    this._toastTimer = setTimeout(() => {
-      this.setState({ toastMessage: undefined });
-      this._toastOwner = undefined;
-      this._toastTimer = null;
-    }, duration);
+    this._toastNotifications.show(message, duration, owner);
   }
-
-  /**
-   * Centers the map view on the currently displayed frame.
-   * Retrieves the current image from the active sequence and uses its
-   * geographic coordinates to reposition the map. The map smoothly
-   * animates to the frame location and ensures a minimum zoom level
-   * for better visibility. After centering, a toast notification is
-   * displayed to inform the user.
-   */
+  /** Center on the matching sequence frame, retaining minimum zoom, animation and feedback. */
   private handleCenterMap = () => {
     const { imageId, sequenceImages, jimuMapView } = this.state;
     if (!imageId || !jimuMapView) return;
@@ -11398,33 +9068,17 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       );
 
       this.showToast(
-        <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <Icons.Crosshair size={14} />  {this._t('appMapCenteredOnCurrentFrame')} </span>,
+        mapCenteredFeedback(() => this._t('appMapCenteredOnCurrentFrame')),
       );
     }
   };
-  /**
-   * Toggles synchronization between the map rotation and the camera heading.
-   * When enabled, the map rotates to match the current camera orientation
-   * of the viewer. When disabled, the map remains fixed (north-up) regardless
-   * of camera direction.
-   * After toggling the state, a toast notification is displayed to inform
-   * the user whether map rotation is now synced or unlocked.
-   */
+  /** Toggle camera/map heading synchronization and publish its existing feedback. */
   private handleToggleSyncHeading = () => {
     const newSyncHeading = !this.state.syncHeading;
     this.setState({ syncHeading: newSyncHeading });
 
     this.showToast(
-      <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-        {newSyncHeading ? (
-          <>
-            <Icons.CompassLocked size={14} />  {this._t('appMapRotationSyncedToCamera')} </>
-        ) : (
-          <>
-            <Icons.CompassUnlocked size={14} />  {this._t('appMapRotationUnlocked')} </>
-        )}
-      </span>,
+      headingSyncFeedback(newSyncHeading, key => this._t(key)),
     );
   };
 
@@ -11475,24 +9129,19 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._nearbyDiscovery.schedule(anchor.lat, anchor.lon, imageId, immediate, expanded);
   }
 
-  private _nearbySelectionRevision = 0;
-  /** Open a tray capture and restore its heading only while this selection still owns the viewer. */
-  private async selectNearbyImage(img: NearbyImage): Promise<void> {
-    const viewer = this.mapillaryViewer; if (!viewer) return;
-    this._nearbyDiscovery?.cancel();
-    const request = ++this._nearbySelectionRevision;
-    const selection = this._selectionRequestId, view = this.state.jimuMapView?.view;
-    const current = () => request === this._nearbySelectionRevision && this.mapillaryViewer === viewer && this._selectionRequestId === selection && this.state.jimuMapView?.view === view;
-    this.highlightNearbyPin(null); this._nearbySelectedId = img.id; this.forceUpdate();
-    try {
-      await viewer.moveTo(img.id); if (!current()) return;
-      const image = await viewer.getImage(); if (!current() || String(image.id) !== String(img.id)) return;
-      const pose = nearbyImagePose(img);
-      if (pose?.heading !== null && pose?.heading !== undefined) {
-        const x = (((.5 + (pose.heading - (image.compassAngle ?? 0)) / 360) % 1) + 1) % 1;
-        viewer.setCenter([x, .5]); this._lastBearing = pose.heading; if (view) this.requestConeRedraw(view);
-      }
-    } catch (error) { if (current()) this.log('[Mapillary nearby] Image selection failed:', error); }
+  private readonly _nearbyImageSelection = new NearbyImageSelection<__esri.MapView | __esri.SceneView>({
+    viewer: () => this.mapillaryViewer,
+    selection: () => this._selectionRequestId,
+    view: () => this.state.jimuMapView?.view,
+    cancelDiscovery: () => this._nearbyDiscovery?.cancel(),
+    select: id => { this.highlightNearbyPin(null); this._nearbySelectedId = id; this.forceUpdate(); },
+    heading: (heading, view) => { this._lastBearing = heading; if (view) this.requestConeRedraw(view); },
+    warn: error => this.log('[Mapillary nearby] Image selection failed:', error),
+  });
+
+  /** Open a tray capture; the owner restores heading only for the current selection. */
+  private selectNearbyImage(img: NearbyImage): Promise<void> {
+    return this._nearbyImageSelection.open(img);
   }
 
   /**

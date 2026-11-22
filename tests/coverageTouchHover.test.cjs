@@ -7,4 +7,15 @@ test('touch start/end dismiss previews without consuming tap and suppress compat
 test('touchcancel, outside-map release and window blur clear pending hover',()=>{for(const kind of ['pointercancel','blur']){const s=setup();s.fire(s.container,'pointerdown',{pointerType:'touch'});s.fire(kind==='blur'?s.window:s.document,kind,{pointerType:'touch'});assert.equal(s.dismissed,2);s.advance(801);assert.equal(s.guard.shouldIgnore({}),false)}});
 test('touch-only engines and multitouch remain suppressed until release',()=>{const s=setup();s.fire(s.container,'touchstart');s.fire(s.document,'touchend',{touches:[{}]});s.advance(1000);assert.equal(s.guard.shouldIgnore({}),true);s.fire(s.document,'touchend',{touches:[]});s.advance(801);assert.equal(s.guard.shouldIgnore({}),false)});
 test('mouse and pen keep existing hover; cleanup removes listeners',()=>{const s=setup();for(const pointerType of ['mouse','pen']){s.fire(s.container,'pointerdown',{pointerType});assert.equal(s.guard.shouldIgnore({native:{pointerType}}),false)}assert.equal(s.dismissed,0);s.guard.dispose();s.guard.dispose();s.fire(s.container,'touchstart');s.fire(s.container,'pointerdown',{pointerType:'touch'});assert.equal(s.dismissed,0)});
-test('runtime wires guard before hover scheduling and uses complete dismissal on touch',()=>{const source=fs.readFileSync(path.join(__dirname,'../src/runtime/widget.tsx'),'utf8');assert.match(source,/new CoverageTouchHover\(mapContainer, onMapLeave\)/);const begin=source.indexOf('this.pointerMoveHandle = view.on("pointer-move"');const body=source.slice(begin,source.indexOf('// Capture exact screen coordinates',begin));assert(body.indexOf('shouldIgnore(evt)')<body.indexOf('_coverageHoverResume?.move(evt)'));const leave=source.slice(source.indexOf('const onMapLeave = () => {'),source.indexOf('const touchHover = new CoverageTouchHover'));for(const cleanup of ['hoverResume.leave()','_turboHoverPickAbort?.abort()','clearTurboHoverDetails()','clearTimeout(hoverHitTestTimeout)'])assert(leave.includes(cleanup));assert.match(source,/touchHover.dispose\(\)/)});
+test('runtime wires guard before hover scheduling and uses complete dismissal on touch',()=>{
+ const source=fs.readFileSync(path.join(__dirname,'../src/features/navigation/mapHoverDispatch.ts'),'utf8');
+ const widget=fs.readFileSync(path.join(__dirname,'../src/runtime/widget.tsx'),'utf8');
+ assert(widget.includes('createMapHoverHandler(view, this.mapHoverHost())'));
+ assert.match(source,/new CoverageTouchHover\(mapContainer, onMapLeave\)/);
+ const begin=source.indexOf('return (evt) =>');
+ const body=source.slice(begin,source.indexOf('// Capture exact screen coordinates',begin));
+ assert(body.indexOf('shouldIgnore(evt)')>=0);assert(body.indexOf('shouldIgnore(evt)')<body.indexOf('host.hoverResume?.move(evt)'));
+ const leave=source.slice(source.indexOf('const onMapLeave = () => {'),source.indexOf('const touchHover = new CoverageTouchHover'));
+ for(const cleanup of ['hoverResume.leave()','host.hoverAbort?.abort()','host.clearTurboHoverDetails()','clearTimeout(hoverHitTestTimeout)'])assert(leave.includes(cleanup));
+ assert.match(source,/touchHover.dispose\(\)/);
+});

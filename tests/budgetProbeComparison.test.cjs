@@ -3,7 +3,7 @@ const ts=require(process.env.MAPILLARY_TYPESCRIPT||'typescript'),root=path.resol
 const compile=source=>{const r=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS},reportDiagnostics:true});assert.equal(r.diagnostics.filter(d=>d.category===1).length,0);return r.outputText;};
 const m={exports:{}};new Function('module','exports',compile(fs.readFileSync(root+'/src/features/routing/budgetProbeComparison.ts','utf8')))(m,m.exports);const helpers=m.exports;
 const fixture=JSON.parse(fs.readFileSync(__dirname+'/fixtures/budgetProbeComparison.baseline.json'));
-const source=fs.readFileSync(root+'/src/runtime/widget.tsx','utf8');
+const source=require('./helpers/captureExecutionSource.cjs').captureExecutionSource();
 const names={network:['bestProbe','chooseNetworkBudgetProbe'],progress:['bestProgressProbe','chooseProgressBudgetProbe'],fitting:['bestFittingProbe','chooseFittingBudgetProbe']},versions={};
 for(const [kind,[variable,helper]] of Object.entries(names)){
  const start=source.indexOf(variable+' = '+helper+'('),end=source.indexOf(');',start)+2;assert(start>0);
