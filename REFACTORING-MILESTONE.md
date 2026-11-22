@@ -1,3 +1,66 @@
+<!-- native-coverage-stage111 -->
+## Stage 111 — P09 native coverage style and layer ordering
+
+The native coverage filter/style builder, replacement sequencing and layer stack ordering now live under `src/features/coverage`. The widget still constructs and registers the ArcGIS layer and supplies the active-view and Turbo bindings. Replacement attaches before removal, and active sequence markers retain their position above the coverage stack.
+
+This is the second planned P09 extraction pass. P10 cross-feature policies are next. Live ArcGIS rendering and layer replacement remain to be verified in Experience Builder.
+
+<!-- coverage-analysis-stage110 -->
+## Stage 110 — P09 coverage analysis coordination
+
+`src/features/coverage/CoverageAnalysisRun.ts` owns the active run, cooldown, cancellation and the road/imagery/classification sequence. The widget supplies ArcGIS view access, localized feedback, imagery traversal and result drawing. The existing extent, filter, view and revision checks still gate progress and publication.
+
+P09 remains in progress. Coverage layer setup and rebuild ordering are the next planned pass. Live Experience Builder and road-server verification remain pending.
+
+<!-- feedback-styles-stage109 -->
+## Stage 109 — P08 feedback and overlay styles
+
+Runtime toast rows now reuse the existing navigation feedback style, including a warning-colored recovery variant. The Coverage Guide uses named styles for the status, selection alert, help and legend details. The layout values, toast allocation behavior and turbo/non-turbo legend colors are preserved.
+
+This concludes the two planned P08 extraction passes. P09 coverage setup and analysis coordination is next. Live Experience Builder visual acceptance remains pending.
+
+<!-- widget-layout-stage108 -->
+## Stage 108 — P08 embedded widget layout styles
+
+`src/styles/widgetLayout.ts` now supplies the embedded widget container, hidden map host, profile dock, viewer workspace and toast layout. The widget still selects the upper toast during image loading and the lower toast otherwise. DOM structure, classes, SDK refs, style values and fullscreen markup are preserved.
+
+P08 is in progress. Remaining feedback and overlay styles can be reviewed in a second pass. Live Experience Builder visual checks are pending.
+
+<!-- field-notes-overlay-stage107 -->
+## Stage 107 — P07 field notes and detection prompt
+
+`src/features/field-notes/FieldNotesOverlay.tsx` composes the keyed detection-note prompt and the field-notes panel. It owns the presentation bindings for shared read and write availability and the current image. The widget retains action and SDK bindings, including the workspace draft cleanup command.
+
+This is the third planned P07 presentation pass, following the coverage guide and Places overlay. P08 styling is the next structural pass. Broader filter and cross-feature commands are still in the widget. Live Experience Builder verification is pending.
+
+<!-- places-overlay-stage106 -->
+## Stage 106 — P07 Places overlay composition
+
+`src/features/places/PlacesOverlay.tsx` selects the full Places panel or compact card and applies the existing source-specific search, origin and filter bindings. Both views share one selected-place binding in the widget. Card actions still read the current selection and controller when invoked.
+
+P07 remains in progress. Live Experience Builder checks for the panel/card transition and source-specific controls are pending.
+
+<!-- coverage-guide-stage105 -->
+## Stage 105 — P07 coverage guide presentation
+
+`src/features/coverage/CoverageGuide.tsx` owns the embedded coverage status bar, Explorer Guide dialog and image-selection alert. The widget supplies localized status, visible settings, focus bindings and existing actions. Status announcements, mouse and touch hints, Escape and dismiss actions, and independent selection-error visibility keep their existing behavior.
+
+P07 is in progress. Other viewer tool groups and inline action policies remain in the widget. Live Experience Builder visual and keyboard checks remain pending.
+
+<!-- viewer-resize-stage104 -->
+## Stage 104 — P06 resize observer and browser events
+
+`src/features/lifecycle/viewerResize.ts` owns container observation, portal reattachment and browser listener registration/removal. Startup, React update and final teardown delegate at their existing lifecycle points. The observer continues to resize the current viewer, fullscreen browser events retain their warning, and window resize reapplies the camera angle only after a successful resize.
+
+The P06 extraction passes are complete. Fullscreen still recreates the viewer as before. Viewer retention, absence of loading flashes and live Experience Builder acceptance remain open. The next planned structural package is P07 presentation composition.
+
+<!-- fullscreen-transition-stage103 -->
+## Stage 103 — P06 fullscreen transition sequencing
+
+`src/features/lifecycle/fullscreenTransition.ts` coordinates the embedded-to-portal transition and its reverse. The widget supplies SDK, React and feature bindings. Entry and exit retain the current viewer recreation, bearing and image restoration, event binding before map feedback, camera/tool restoration, minimap timing and exit-map centering before deferred note picking.
+
+P06 remains in progress. Window/fullscreen resize handling and observer ownership remain in the widget. A retained viewer through layout changes and live Experience Builder acceptance still need separate validation.
+
 <!-- widget-teardown-stage102 -->
 ## Stage 102 — P05 teardown completion
 

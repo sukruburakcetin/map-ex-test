@@ -1,3 +1,5 @@
+import { resizeForBrowserFullscreen, resizeForWindow } from '../features/lifecycle/viewerResize';
+import { transitionFullscreen } from '../features/lifecycle/fullscreenTransition';
 import { cleanupWidgetEnvironment, unmountWidget, type WidgetTeardownHost } from '../features/lifecycle/widgetTeardown';
 import { reconcileWidgetUpdate, type WidgetUpdateHost } from '../features/lifecycle/widgetUpdate';
 import { mountWidget, disposeWidgetStartup, type WidgetStartupHost } from '../features/lifecycle/widgetStartup';
@@ -86,13 +88,13 @@ import { tilePlace, normalizeTilePlaces } from "../features/places/tilePlace";
 import { tilePlacePreferenceKey, readTilePlacePreferences, saveTilePlacePreferences } from '../features/places/placePreferences';
 import { paddedPlacesExtent } from '../features/places/publishedPlacesExtent';
 import { placeCameraDistanceLabel } from '../features/places/placeListUtils';
-import { SelectedPlaceCard } from '../components/SelectedPlaceCard';
+import type { SelectedPlaceProps } from '../components/SelectedPlaceCard';
 import { PlaceNoteReview } from '../features/places/PlaceNoteReview';
 import type { PlaceNoteDestination, PlaceNoteOptions, PlaceNoteImageContext, PlaceContributionSeed } from '../features/places/placeNote';
 import type { PlaceListOrigin } from '../features/places/placeListUtils';
-import { PlacesPanel } from "../components/PlacesPanel";
+import { PlacesOverlay } from "../features/places/PlacesOverlay";
 import { Place } from "../features/places/placesModel";
-import { fetchCoverageRoads } from "../features/coverage/fetchCoverageRoads";
+import { CoverageAnalysisRun } from "../features/coverage/CoverageAnalysisRun";
 import { widgetSpriteUrls } from '../utils/widgetSpriteUrls';
 import { React, AllWidgetProps, jsx, getAppStore } from "jimu-core";
 import { JimuMapViewComponent, JimuMapView, loadArcGISJSAPIModules, MapViewManager } from "jimu-arcgis";
@@ -102,11 +104,10 @@ import { PbfReader as Pbf } from "pbf";
 import { VectorTile } from "@mapbox/vector-tile";
 import { objectNameMap } from "../utils/mapillaryObjectNameMap";
 import * as Icons from "../components/Icons";
-import { coverageNoticeStyles, glassStyles, overrideStyles } from "../utils/styles";
+import { glassStyles, overrideStyles } from "../utils/styles";
+import * as widgetLayout from "../styles/widgetLayout";
 import {
   LAYER_IDS,
-  STYLE_LAYER_IDS,
-  STYLE_SOURCE_IDS,
   TILE_URLS,
   GRAPH_API,
   ZOOM,
@@ -115,10 +116,7 @@ import {
   SHARE_PARAMS,
   TIMING,
   DEFAULT_FILTER_LABELS,
-  OVERPASS_ROAD_QUERY,
-  STREET_COVERAGE_CONFIG,
   POINT_CLOUD_CONFIG,
-  QUALITY_SCORE,
   FIELD_NOTE_CONFIG,
   CAPTURE_ROUTE_CONFIG,
 } from "../utils/constants";
@@ -128,15 +126,11 @@ import {
   createConeGeometry,
   debounce as debounceUtil,
   formatTrafficSignName,
-  parseOverpassRoads,
-  classifyCoverageAsync,
-  coverageAnalysisDelay,
   buildCoverageDisplayPaths,
-  insetBbox,
-  segmentMidpointInBbox,
   lonLatToWebMercator,
 } from "../utils/geoUtils";
-import { buildAllFilters } from "../utils/filterBuilder";
+import { nativeCoverageStyle, type CoverageQualityBand } from "../features/coverage/nativeCoverageStyle";
+import { orderCoverageLayers, replaceNativeCoverage } from "../features/coverage/nativeCoverageLayers";
 import { organizationFilterId } from "../utils/organizationFilter";
 import { OrganizationNameLookup } from "../features/coverage/organizationNameLookup";
 import { loadPointCloud, PointCloudClusterCache, diffPointCloudFeatures, summarizePointCloud, pointCloudDisplayExpression, buildPointCloudPly, buildPointCloudLas } from "../utils/pointCloudUtils";
@@ -215,7 +209,6 @@ import { YEAR_COLOR_PALETTE } from "../utils/mapillaryRenderers";
 import { loadImage, loadSpriteMetadata, cropSpriteImage, processInChunks } from "../utils/spriteUtils";
 import { Viewer, OutlineTag, PolygonGeometry, geodeticToEnu, RenderPass } from "mapillary-js";
 import { PanoramaDetectionLabels } from '../features/detections/PanoramaDetectionLabels';
-import { DetectionNoteAction } from '../features/detections/DetectionNoteAction';
 import { MapSpriteLoading } from '../features/detections/MapSpriteLoading';
 import { createNoteObjectChoice } from '../features/detections/NoteObjectChoice';
 import { attachmentMetadata, captureDetectionCrop, storeDetectionCrop, readDetectionCrop, deleteDetectionCrop } from '../features/detections/detectionImageAttachment';
@@ -235,13 +228,13 @@ import { ControlBar } from "../components/ControlBar";
 import { ImageUtilityGroup } from "../components/ImageUtilityGroup";
 import type { FilterOption, NearbyImage, AssociatedImage } from "../components/types";
 import { FieldNote, FieldNoteAttachments } from "../components/types";
-import { FieldNotesPanel } from "../components/FieldNotesPanel";
+import { FieldNotesOverlay } from "../features/field-notes/FieldNotesOverlay";
 
 import type { RouteTargetSegment } from "../utils/routeOptimizer";
 import type { RoutingProvider, CaptureTravelMode } from "../utils/routingTypes";
 import type { RoutingEngine } from "../config";
 import { TURBO_LIMITS, TurboSpatialIndex, TurboIndexCache, TurboTileCache, turboTiles, visitTurboImageLayer, turboPointMatches, turboTileStyle, turboFootprintBboxes, TurboMetadataCache, detectionThumbnailBounds } from "../utils/turboCoverageUtils";
-import { MAPILLARY_IMAGE } from "../utils/mapillary-image-base64";
+import { CoverageGuide, type CoverageGuideStatus } from "../features/coverage/CoverageGuide";
 import type { TurboBbox, TurboFilters, TurboPoint } from "../utils/turboCoverageUtils";
 import { findNearbySequenceFrame } from "../features/coverage/nearbySequenceFrame";
 import { CoverageFrameLookup, coverageFrameKey } from "../features/coverage/CoverageFrameLookup";
@@ -272,6 +265,7 @@ import { copyCoordinates } from '../services/browser/coordinateClipboard';
 import { clickedLocationPointProperties, legacySequencePointProperties } from '../features/map-graphics/pointMarkerProperties';
 import { updateSequenceProfile, type SequenceProfileHost } from '../features/elevation/updateSequenceProfile';
 import { mapCenteredFeedback, headingSyncFeedback } from '../features/navigation/NavigationFeedback';
+import { navigationFeedbackStyle, recoveryFeedbackStyle } from '../styles/navigationFeedback';
 import { updateSolarModel, type SolarModelHost } from '../features/solar/updateSolarModel';
 import { toggleSolarMode, type SolarModeHost } from '../features/solar/solarMode';
 import { toggleProfileMode, type ProfileModeHost } from '../features/elevation/profileMode';
@@ -529,6 +523,26 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const center = this.state.jimuMapView?.view?.center;
     return center && Number.isFinite(center.longitude) && Number.isFinite(center.latitude) ? { lon: center.longitude, lat: center.latitude, kind: 'map' } : null;
   }
+  private getPlacesOverlaySelection(): SelectedPlaceProps | undefined {
+    const place = this.state.selectedPlace;
+    if (!place) return undefined;
+    return {
+      place, link: this.state.placesShowLink, cameraDistance: this.state.placesCameraDistance,
+      enterpriseEnabled: !!(this.props.config.sharedFieldNotesEnabled && this.props.config.sharedFieldNotesUrl),
+      onNote: this.createPlaceFieldNote, currentImageId: this.state.imageId,
+      onGetNoteImage: this.getPlaceNoteImage, onLoadNotePreview: this.loadDetectionPreview,
+      notePhase: this.state.placeNotePhase, onCancelNote: this.cancelPlaceNotePreparation,
+      onLink: value => {
+        this.setState({ placesShowLink: value });
+        this._places?.selection.setLink(value);
+      },
+      onImagery: () => this._places?.open([], this.state.selectedPlace?.id, true, 'card'),
+      onDetails: () => this._places?.open([], this.state.selectedPlace?.id, false, 'card'),
+      onBack: this.goToSelectedPlace,
+      onClear: () => this._places?.clearSelection(),
+    };
+  }
+
   private _placeNoteDisposed = false;
   private _placeNoteReview = new PlaceNoteReview({
     context: () => ({ place: this.state.selectedPlace, view: this.state.jimuMapView?.view || null, imageId: this.state.imageId ? String(this.state.imageId) : null, enabled: !!this.state.placesActive && this.props.state !== 'CLOSED' && !this._placeNoteDisposed && !!this.state.jimuMapView?.view?.ready }),
@@ -712,6 +726,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _placeWorkspaceCrop: string | null = null;
   private _detectionNoteAfterFullscreen: (() => void) | null = null;
   private _detectionWorkspaceMarkerOwner: string | null = null;
+  private clearDetectionWorkspaceDraft = (applied?: boolean) => {
+    const draft = this.state.detectionWorkspaceDraft;
+    if (!applied && draft) this.finishDetectionWorkspaceMarker(draft.requestId);
+    this.setState({ detectionWorkspaceDraft: null });
+  };
   private moveDetectionWorkspaceMarker = (requestId: string, point: { lon: number; lat: number }) => { if (this._detectionWorkspaceMarkerOwner === requestId && validDetectionNoteLocation(point)) this.drawPendingNoteGraphic(point.lon, point.lat); };
   private finishDetectionWorkspaceMarker = (requestId: string) => { if (this._detectionWorkspaceMarkerOwner === requestId) { this._detectionWorkspaceMarkerOwner = null; this.clearPendingNoteGraphic(); this._detectionWorkspaceImage = null; const crop = this._placeWorkspaceCrop; this._placeWorkspaceCrop = null; if (crop) void deleteDetectionCrop(crop).catch(() => { }); } };
   private _detectionNotePickCancel: (() => void) | null = null;
@@ -1004,19 +1023,38 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _coverageRenderView: __esri.MapView | __esri.SceneView | null = null;
   private _coverageRenderWatch: { remove(): void } | null = null;
   private _coverageRenderAbort: AbortController | null = null;
-  private _coverageRoadRetryAt = 0;
-  private _coverageAnalysisAbort: AbortController | null = null;
-  /** Separates coverage-analysis runs so cancellation can invalidate pending calculations and drawing. */
-  private _coverageAnalysisRevision = 0;
-  private _coverageAnalysisCurrent: (() => boolean) | null = null;
-  /** Abort the active analysis, advance its revision and clear analysis-loading feedback before another run may start. */
-  private cancelCoverageAnalysis = () => {
-    ++this._coverageAnalysisRevision;
-    this._coverageAnalysisCurrent = null;
-    this._coverageAnalysisAbort?.abort();
-    this._coverageAnalysisAbort = null;
-    this.setState({ coverageAnalysisLoading: false, coverageAnalysisProgress: undefined });
-  };
+  private readonly _coverageAnalysis = new CoverageAnalysisRun<__esri.MapView | __esri.SceneView>({
+    map: () => this.state.jimuMapView,
+    loading: () => !!this.state.coverageAnalysisLoading,
+    coverageReady: () => !!this.turboCoverageLayer && !this.state.turboLoading,
+    filters: () => this.getTurboFilters(),
+    username: () => this.state.turboFilterUsername,
+    configuredUsername: () => this.props.config.turboCreator,
+    token: () => this.accessToken,
+    turboActive: () => !!this.state.turboModeActive,
+    watchExtent: (view, callback) => view.watch("extent", callback),
+    geographic: view => webMercatorUtils.webMercatorToGeographic(view.extent) as __esri.Extent,
+    visitCoverage: (...args) => this.visitTurboCoverage(...args),
+    translate: (...args) => this._t(...args),
+    owned: message => this._owned(message),
+    formatNumber: value => this._presentation.number(value),
+    showToast: (message, ...args) => this.showToast(message, ...args),
+    showCooldown: seconds => this.showToast(
+      <OwnedMessage source={"Road server is rate-limited. Try again in {value0} seconds."} values={{ value0: String(seconds) }} />, 5000),
+    update: patch => this.setState(patch),
+    publish: (bbox, innerBbox, segments, coverage) => {
+      this.stopCoverageRendering();
+      this._coverageAnalysisBbox = bbox;
+      this.drawCoverageZone(innerBbox);
+      this._coverageSegments = segments;
+      this._coverageCoveredFlags = coverage.segmentTiers.map(tier => tier !== "none");
+      this._coverageSegmentTiers = coverage.segmentTiers;
+      this.setState({ coverageResult: coverage, coverageSegmentsVisible: false });
+    },
+    log: message => this.log(message),
+  });
+
+  private cancelCoverageAnalysis = () => this._coverageAnalysis.cancel();
 
   private _coverageRenderRevision = 0;
   private _coverageRenderLimited = false;
@@ -1639,7 +1677,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     announceRecovery: () => {
       this.log("[Mapillary Recovery] Playback halted on dead frame. Auto-skipping...");
       this.showToast(
-        <span style={{ display: "flex", alignItems: "center", gap: "6px", color: "#ffc107" }}>
+        <span style={recoveryFeedbackStyle()}>
           <Icons.Warning size={14} />
           {this._t('app403SkippingUnavailableFrame')} </span>,
         2000,
@@ -3333,183 +3371,83 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   // #endregion MINIMAP
 
   // #region FULLSCREEN & RESIZE
-  /**
-   * Switch between embedded and body-portal layouts by removing and recreating the Mapillary viewer.
-   * Preserve the selected image and bearing, then restore viewer integrations and fullscreen minimap.
-   * Recreation can briefly expose SDK loading/cover UI; this is not a resize-only transition.
-   * The async setState callback completes restoration separately from the returned promise.
-   */
-  private toggleFullscreen = async () => {
-    const goingFullscreen = !this.state.isFullscreen;
-    if (goingFullscreen) {
-      this._pointCloudAcquisition.cancel('fullscreen');
-      this.setState({ pointCloudLoading: false, minimapExpanded: false });
-    }
-
-    let currentBearing = this._lastBearing || 0;
-    let currentImageId = this.state.imageId;
-    let currentImageCoords: { lon: number; lat: number } | null = null;
-
-    if (currentImageId) {
-      const img = this.state.sequenceImages.find((s) => s.id === currentImageId);
-      if (img) {
-        currentImageCoords = { lon: img.lon, lat: img.lat };
-      }
-    }
-
-    this.clearGreenPulse();
-    this.clearConeGraphics();
-
-    // Destroy minimap when exiting fullscreen
-    if (!goingFullscreen && this.minimapView) {
-      this.destroyMinimap();
-      await new Promise((resolve) => setTimeout(resolve, 200));
-    }
-
-    if (this.mapillaryViewer) {
-      try {
-        await this.mapillaryViewer
-          .getBearing()
-          .then((b: number) => {
-            if (typeof b === "number") {
-              currentBearing = b;
-              this._lastBearing = b;
-            }
-          })
-          .catch(() => { });
-
+  private toggleFullscreen = () => {
+    const widget = this;
+    return transitionFullscreen({
+      get fullscreen() { return widget.state.isFullscreen; },
+      get imageId() { return widget.state.imageId; },
+      imageLocation: imageId => {
+        const image = this.state.sequenceImages.find(frame => frame.id === imageId);
+        return image && { lon: image.lon, lat: image.lat };
+      },
+      get container() { return widget.viewerContainer.current; },
+      get minimapOpen() { return !!widget.minimapView; },
+      get mapView() { return widget.state.jimuMapView?.view; },
+      get bearing() { return widget._lastBearing; },
+      set bearing(value) { widget._lastBearing = value; },
+      get viewer() { return widget.mapillaryViewer; },
+      set viewer(value) { widget.mapillaryViewer = value; },
+      prepareEntry: () => {
+        this._pointCloudAcquisition.cancel('fullscreen');
+        this.setState({ pointCloudLoading: false, minimapExpanded: false });
+      },
+      clearMapFeedback: () => {
+        this.clearGreenPulse();
+        this.clearConeGraphics();
+      },
+      destroyMinimap: () => this.destroyMinimap(),
+      detachViewerTools: () => {
         this._playbackBindings?.clear();
         this._lasso?.cancelGesture();
         this._measurement?.detachViewer();
-        this.mapillaryViewer.remove();
-        // Wait for WebGL context to be released
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      } catch (err) {
-        // Ignore "Request aborted" errors which are expected during cleanup
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        const errorName = (err as any).name;
-
-        if (errorName !== "CancelMapillaryError" && !errorMsg.includes("aborted")) {
-          console.warn("Error removing viewer:", err);
-        }
-      }
-      this.mapillaryViewer = null;
-    }
-
-    this.setState({ isFullscreen: goingFullscreen }, async () => {
-      // Small delay to ensure state is settled
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      if (this.viewerContainer.current && currentImageId) {
+      },
+      commitLayout: (isFullscreen, restore) => this.setState({ isFullscreen }, restore),
+      createViewer: (container, imageId) => {
         this._isInitialImageLoad = true;
         this._viewerImageTiling = this.props.config.imageTiling === true;
         this.mapillaryViewer = new Viewer({
           imageTiling: this._viewerImageTiling,
-          container: this.viewerContainer.current,
+          container,
           accessToken: this.accessToken,
-          imageId: currentImageId,
-          renderMode: this.props.config.renderMode ?? 1, // Default to Fill
-          transitionMode: this.props.config.transitionMode ?? 0, // Default to Smooth
-          component: {
-            zoom: true,
-            direction: true,
-            cover: false,
-            marker: true,
-          },
+          imageId,
+          renderMode: this.props.config.renderMode ?? 1,
+          transitionMode: this.props.config.transitionMode ?? 0,
+          component: { zoom: true, direction: true, cover: false, marker: true },
         });
-
-        // Restore bearing
-        this._lastBearing = currentBearing;
-
-        // Binding clears old map feedback; restore the current image only afterward.
-        this.bindMapillaryEvents();
-
-        // Redraw graphics
-        if (currentImageCoords) {
-          this.currentGreenGraphic = this.drawPulsingPoint(currentImageCoords.lon, currentImageCoords.lat, [0, 255, 0, 1]);
-
-          const length = this.coneLengths[this.zoomStepIndex];
-          const spread = this.coneSpreads[this.zoomStepIndex];
-          this.drawCone(currentImageCoords.lon, currentImageCoords.lat, currentBearing, length, spread);
-        }
-
+      },
+      bindViewer: () => this.bindMapillaryEvents(),
+      restoreMapFeedback: ({ lon, lat }, bearing) => {
+        this.currentGreenGraphic = this.drawPulsingPoint(lon, lat, [0, 255, 0, 1]);
+        this.drawCone(lon, lat, bearing, this.coneLengths[this.zoomStepIndex], this.coneSpreads[this.zoomStepIndex]);
+      },
+      restoreViewerTools: imageId => {
         this.applyCustomCameraAngle();
         if (this.state.pointCloudVisible && this._pointCloudAcquisition.result) {
-          this.addViewerPointCloudRenderer({ ...this._pointCloudAcquisition.result, points: this._filteredPointCloudPoints }, currentImageId);
+          this.addViewerPointCloudRenderer({ ...this._pointCloudAcquisition.result, points: this._filteredPointCloudPoints }, imageId);
         }
-        if (this.state.isMeasureMode) {
-          this.updateViewerMeasurementRenderer();
-        }
-
-        // Re-attach the Sun renderer for the fullscreen viewer
+        if (this.state.isMeasureMode) this.updateViewerMeasurementRenderer();
         if (this.state.isSolarMode) {
-          this._solarViewer?.resetRegistration(); // Reset the flag
+          this._solarViewer?.resetRegistration();
           this.updateSolarGraphics();
         }
-
-        // Create minimap only in fullscreen
-        if (this.state.isFullscreen) {
-          setTimeout(() => {
-            if (this.state.isFullscreen) void this.createMinimap();
-          }, 300);
-        }
-
-        // Center map on current frame when exiting fullscreen
-        if (!this.state.isFullscreen && this.state.jimuMapView?.view && currentImageCoords) {
-          const view = this.state.jimuMapView.view;
-
-          // Wait a bit for the view to stabilize
-          await new Promise((resolve) => setTimeout(resolve, 200));
-
-          // Center the map on the current active frame location
-          await view.goTo(
-            {
-              center: [currentImageCoords.lon, currentImageCoords.lat],
-              zoom: view.zoom, // Keep the current zoom level
-            },
-            {
-              animate: true,
-              duration: 1000, // Smooth 1-second animation
-            },
-          );
-
-          this.log("Centered map on active frame:", currentImageCoords);
-        }
-      }
-      // Begin the user-picked note location only after fullscreen camera restoration.
-      if (!this.state.isFullscreen) { const next = this._detectionNoteAfterFullscreen; this._detectionNoteAfterFullscreen = null; next?.(); }
+      },
+      createMinimap: () => { void this.createMinimap(); },
+      centerMap: (view, location) => view.goTo(
+        { center: [location.lon, location.lat], zoom: view.zoom },
+        { animate: true, duration: 1000 },
+      ),
+      reportMapCentered: location => this.log("Centered map on active frame:", location),
+      finishExit: () => {
+        const next = this._detectionNoteAfterFullscreen;
+        this._detectionNoteAfterFullscreen = null;
+        next?.();
+      },
     });
   };
 
-  /**
-   * Handles fullscreen mode changes by resizing the Mapillary viewer.
-   * Ensures viewer adapts to fullscreen dimensions.
-   */
-  private handleFullscreenChange = () => {
-    // When fullscreen mode changes, resize the Mapillary viewer
-    if (this.mapillaryViewer?.resize) {
-      try {
-        this.mapillaryViewer.resize();
-      } catch (e) {
-        console.warn("Viewer resize suppressed during fullscreen toggle");
-      }
-    }
-  };
+  private handleFullscreenChange = () => resizeForBrowserFullscreen(this.mapillaryViewer);
 
-  /**
-   * Handles window resize events by resizing the Mapillary viewer.
-   * Ensures viewer adapts to window dimension changes.
-   */
-  private handleWindowResize = () => {
-    if (this.mapillaryViewer?.resize) {
-      try {
-        this.mapillaryViewer.resize();
-        this.applyCustomCameraAngle();
-      } catch (e) {
-        // Ignore resize errors if widget is hidden/destroyed
-      }
-    }
-  };
+  private handleWindowResize = () => resizeForWindow(this.mapillaryViewer, () => this.applyCustomCameraAngle());
   // #endregion FULLSCREEN & RESIZE
 
   // #region AI DETECTIONS
@@ -4061,222 +3999,23 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   // #region COVERAGE LAYERS
 
-  /** Create the native coverage layer with creator/date/panorama presets applied before it is attached to a view. */
+  /** Create and register the native layer for later attachment to the active view. */
   private initMapillaryLayer(
     filterCreatorId?: number,
     filterStartDate?: string,
     filterEndDate?: string,
     filterIsPano?: boolean | null,
     qualityViewActive?: boolean,
-    qualityBandFilter?: "good" | "fair" | "poor" | "unscored" | null,
+    qualityBandFilter?: CoverageQualityBand | null,
   ) {
     const { VectorTileLayer } = this.ArcGISModules;
-    const vectorTileSourceUrl = `${TILE_URLS.COVERAGE}?access_token=${this.accessToken}`;
-
-    const { overviewFilter, sequenceFilter, imageFilter, hasPanoFilter } = buildAllFilters({
-      creatorId: filterCreatorId,
-      organizationId: this.getTurboOrganizationId(),
-      startDate: filterStartDate,
-      endDate: filterEndDate,
-      isPano: filterIsPano,
-    });
-
-    const layers: any[] = [];
-
-    // Pano condition (classic filter syntax for ArcGIS VTL compatibility)
-    let panoCondition: any = null;
-    if (filterIsPano === true) {
-      panoCondition = ["any", ["==", "is_pano", true], ["==", "is_pano", 1], ["==", "is_pano", "true"]];
-    } else if (filterIsPano === false) {
-      panoCondition = ["all", ["!=", "is_pano", true], ["!=", "is_pano", 1], ["!=", "is_pano", "true"]];
-    }
-
-    const applyPano = (baseFilter: any) => {
-      if (baseFilter === "hide") return ["all", ["has", "id"], ["!has", "id"]];
-      if (!panoCondition) return baseFilter;
-      if (!baseFilter) return panoCondition;
-      return ["all", baseFilter, panoCondition];
-    };
-
-    const finalOverviewFilter = applyPano(overviewFilter);
-    const finalSequenceFilter = applyPano(sequenceFilter);
-    const finalImageFilter = applyPano(imageFilter);
-
-    // OVERVIEW LAYER
-    if (!hasPanoFilter && overviewFilter !== "hide") {
-      layers.push({
-        id: STYLE_LAYER_IDS.OVERVIEW,
-        source: STYLE_SOURCE_IDS.MAPILLARY,
-        "source-layer": "overview",
-        type: "circle",
-        ...(finalOverviewFilter ? { filter: finalOverviewFilter } : {}),
-        paint: {
-          "circle-radius": 1,
-          "circle-color": "#35AF6D",
-          "circle-stroke-color": "#35AF6D",
-          "circle-stroke-width": 1,
-        },
-      });
-    }
-
-    // SEQUENCE + IMAGE LAYERS
-    if (qualityViewActive) {
-      // QUALITY VIEW: 4 colour-banded sequence layers
-      // Uses pure CLASSIC syntax to prevent crashes when combined with is_pano
-      const seqBand = (id: string, qualityConditions: any[], color: string, opacity = 0.85) => {
-        const filter = finalSequenceFilter ? ["all", finalSequenceFilter, ...qualityConditions] : ["all", ...qualityConditions];
-
-        return {
-          id: id,
-          source: STYLE_SOURCE_IDS.MAPILLARY,
-          "source-layer": "sequence",
-          type: "line",
-          filter: filter,
-          paint: {
-            "line-opacity": opacity,
-            "line-color": color,
-            "line-width": 2.5,
-          },
-        };
-      };
-
-      const showBand = (band: "good" | "fair" | "poor" | "unscored") => !qualityBandFilter || qualityBandFilter === band;
-
-      if (showBand("good")) {
-        layers.push(seqBand(STYLE_LAYER_IDS.SEQUENCE_GOOD, [[">=", "quality_score", QUALITY_SCORE.GOOD]], "#35AF6D"));
-      }
-      if (showBand("fair")) {
-        layers.push(
-          seqBand(
-            STYLE_LAYER_IDS.SEQUENCE_FAIR,
-            [
-              [">=", "quality_score", QUALITY_SCORE.FAIR],
-              ["<", "quality_score", QUALITY_SCORE.GOOD],
-            ],
-            "#F5A623",
-          ),
-        );
-      }
-      if (showBand("poor")) {
-        layers.push(
-          seqBand(
-            STYLE_LAYER_IDS.SEQUENCE_POOR,
-            [
-              [">", "quality_score", QUALITY_SCORE.FLOOR],
-              ["<", "quality_score", QUALITY_SCORE.FAIR],
-            ],
-            "#D0021B",
-          ),
-        );
-      }
-      if (showBand("unscored")) {
-        layers.push(seqBand(STYLE_LAYER_IDS.SEQUENCE_UNSCORED, [["any", ["!has", "quality_score"], ["==", "quality_score", 0]]], "#A855F7", 0.85));
-      }
-
-      {
-        const imgBand = (id: string, qualityConditions: any[], color: string, opacity = 0.85) => {
-          const filter = finalImageFilter ? ["all", finalImageFilter, ...qualityConditions] : ["all", ...qualityConditions];
-
-          return {
-            id: id,
-            source: STYLE_SOURCE_IDS.MAPILLARY,
-            "source-layer": "image",
-            type: "circle",
-            filter: filter,
-            paint: {
-              "circle-radius": 2,
-              "circle-color": color,
-              "circle-stroke-color": "#ffffff",
-              "circle-stroke-width": 1,
-              "circle-opacity": opacity,
-              "circle-stroke-opacity": opacity,
-            },
-          };
-        };
-
-        if (showBand("good")) {
-          layers.push(imgBand(STYLE_LAYER_IDS.IMAGE_GOOD, [[">=", "quality_score", QUALITY_SCORE.GOOD]], "#35AF6D"));
-        }
-        if (showBand("fair")) {
-          layers.push(
-            imgBand(
-              STYLE_LAYER_IDS.IMAGE_FAIR,
-              [
-                [">=", "quality_score", QUALITY_SCORE.FAIR],
-                ["<", "quality_score", QUALITY_SCORE.GOOD],
-              ],
-              "#F5A623",
-            ),
-          );
-        }
-        if (showBand("poor")) {
-          layers.push(
-            imgBand(
-              STYLE_LAYER_IDS.IMAGE_POOR,
-              [
-                [">", "quality_score", QUALITY_SCORE.FLOOR],
-                ["<", "quality_score", QUALITY_SCORE.FAIR],
-              ],
-              "#D0021B",
-            ),
-          );
-        }
-        if (showBand("unscored")) {
-          layers.push(imgBand(STYLE_LAYER_IDS.IMAGE_UNSCORED, [["any", ["!has", "quality_score"], ["==", "quality_score", 0]]], "#A855F7", 0.85));
-        }
-      }
-    } else {
-      // NORMAL VIEW: single green sequence + image layer
-      layers.push({
-        id: STYLE_LAYER_IDS.SEQUENCE,
-        source: STYLE_SOURCE_IDS.MAPILLARY,
-        "source-layer": "sequence",
-        type: "line",
-        ...(finalSequenceFilter ? { filter: finalSequenceFilter } : {}),
-        paint: {
-          "line-opacity": 0.8,
-          "line-color": "#35AF6D",
-          "line-width": 2,
-        },
-      });
-
-      {
-        layers.push({
-          id: STYLE_LAYER_IDS.IMAGE,
-          source: STYLE_SOURCE_IDS.MAPILLARY,
-          "source-layer": "image",
-          type: "circle",
-          ...(finalImageFilter ? { filter: finalImageFilter } : {}),
-          paint: {
-            "circle-radius": 2,
-            "circle-color": "#35AF6D",
-            "circle-stroke-color": "#ffffff",
-            "circle-stroke-width": 1,
-            "circle-opacity": 1,
-            "circle-stroke-opacity": 1,
-          },
-        });
-      }
-    }
-
-    const minimalStyle = {
-      version: 8,
-      sources: {
-        [STYLE_SOURCE_IDS.MAPILLARY]: {
-          type: "vector",
-          tiles: [vectorTileSourceUrl],
-          minzoom: 0,
-          maxzoom: 14,
-        },
-      },
-      layers: layers,
-    };
-
-    this._mapillaryCoverageStyle = minimalStyle;
+    const style = nativeCoverageStyle(this.accessToken, this.getTurboOrganizationId(),
+      filterCreatorId, filterStartDate, filterEndDate, filterIsPano, qualityViewActive, qualityBandFilter);
+    this._mapillaryCoverageStyle = style;
     this.mapillaryVTLayer = new VectorTileLayer({
       id: LAYER_IDS.COVERAGE_VT,
       title: "Mapillary Coverage",
-      style: minimalStyle,
+      style,
     });
     this._ownedMapResources.ownLayer(this.mapillaryVTLayer);
   }
@@ -4315,89 +4054,28 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     if (!this.state.tilesActive) this.setState({ tilesActive: true });
   };
 
-  /**
-   * Rebuilds the Mapillary coverage vector tile layer on the map.
-   * This method reinitializes the layer with new filters (creator, date, pano),
-   * removes any existing coverage layer from the map, and adds the updated one.
-   * @param creatorId Optional Mapillary creator/user ID to filter images by.
-   * @param startDate Optional start date for filtering images.
-   * @param endDate Optional end date for filtering images.
-   * @param isPano Optional flag to filter panorama images (true = pano, false = non-pano, null/undefined = all).
-   */
   private rebuildCoverageLayer(
     creatorId?: number,
     startDate?: string,
     endDate?: string,
     isPano?: boolean | null,
     qualityViewActive?: boolean,
-    qualityBandFilter?: "good" | "fair" | "poor" | "unscored" | null,
+    qualityBandFilter?: CoverageQualityBand | null,
   ) {
-    if (!this.state.jimuMapView) {
-      return;
-    }
-
-    const view = this.state.jimuMapView.view;
-
-    /*
-     * IMPORTANT:
-     * Capture the OLD layer before
-     * initMapillaryLayer() overwrites
-     * this.mapillaryVTLayer.
-     */
-    const oldLayer = view.map.findLayerById(LAYER_IDS.COVERAGE_VT) as __esri.VectorTileLayer | null;
-
-    this.log("[rebuildCoverageLayer] called with isPano:", isPano);
-
-    /*
-     * Creates the replacement layer and assigns
-     * it to this.mapillaryVTLayer.
-     */
-    this.initMapillaryLayer(creatorId, startDate, endDate, isPano, qualityViewActive, qualityBandFilter);
-
-    const newLayer = this.mapillaryVTLayer;
-
-    this.log("[rebuildCoverageLayer] tilesActive:", this.state.tilesActive);
-
-    this.log("[rebuildCoverageLayer] image layer filter:", JSON.stringify(newLayer?.style?.layers?.find((l: any) => l.id === "image")?.filter));
-
-    /*
-     * Only replace it if coverage is meant
-     * to be on the map.
-     */
-    if (this.state.tilesActive || oldLayer) {
-      /*
-       * Add replacement first so the coverage
-       * doesn't visibly blink.
-       */
-      if (newLayer && !view.map.layers.includes(newLayer)) {
-        view.map.add(newLayer);
-      }
-
-      /*
-       * Then release the OLD VTL completely.
-       *
-       * map.remove() alone does NOT guarantee
-       * its WebGL/tile resources are released.
-       */
-      if (oldLayer && oldLayer !== newLayer) {
-        try {
-          view.map.remove(oldLayer);
-        } catch (err) {
-          console.warn("[Coverage] Could not remove old VTL", err);
-        }
-
-        try {
-          oldLayer.destroy();
-        } catch (err) {
-          console.warn("[Coverage] Could not destroy old VTL", err);
-        }
-      }
-
-      this.enforceMapillaryLayerOrder(view);
-      if (this.state.turboModeActive) void this.enableTurboCoverageLayer();
-    }
+    const mapView = this.state.jimuMapView;
+    if (!mapView) return;
+    const view = mapView.view;
+    replaceNativeCoverage(view, isPano, {
+      createReplacement: () => {
+        this.initMapillaryLayer(creatorId, startDate, endDate, isPano, qualityViewActive, qualityBandFilter);
+        return this.mapillaryVTLayer;
+      },
+      tilesActive: () => this.state.tilesActive,
+      restoreOrder: () => this.enforceMapillaryLayerOrder(view),
+      refreshTurbo: () => { if (this.state.turboModeActive) void this.enableTurboCoverageLayer(); },
+      log: (...args) => this.log(...args),
+    });
   }
-
 
   /** Native tiles own all sprites; no per-viewport FeatureLayer is constructed. */
   private _mapSpriteLoading = new MapSpriteLoading((kind, status) => { if (!this._sharedNotesDisposed) this.setState(kind === 'signs' ? { signSpritesStatus: status } : { objectSpritesStatus: status }); });
@@ -4619,76 +4297,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   /** Restore the widget layer ordering without replacing unrelated layers on the shared map. */
   private enforceMapillaryLayerOrder(view?: __esri.MapView | __esri.SceneView) {
     const targetView = view ?? this.state.jimuMapView?.view;
-
-    if (!targetView?.map) {
-      return;
-    }
-
-    const map = targetView.map;
-    if (this._activeSequenceOverlay?.layer && this._activeSequenceOverlay?.view === targetView && map.layers.includes(this._activeSequenceOverlay?.layer)) map.reorder(this._activeSequenceOverlay?.layer, map.layers.length - 1);
-
-    /*
-     * Desired Mapillary stack, bottom -> top:
-     *
-     * 1. General coverage VTL
-     * 2. Turbo coverage ALWAYS highest Mapillary layer
-     * 3. Traffic Sign / Object VTLsTraffic Sign / Object clickable FeatureLayers
-     * 4. Traffic Sign / Object clickable FeatureLayers
-     */
-    const desiredIds = [
-      // Bottom
-      LAYER_IDS.COVERAGE_VT,
-      ...map.layers.toArray().filter(layer => layer.id.startsWith('mapillary-cached-hover-')).map(layer => layer.id),
-      ...map.layers.toArray().filter(layer => layer.id.startsWith('mapillary-cached-selected-')).map(layer => layer.id),
-      'mapillary-tile-hover',
-      'mapillary-tile-selected',
-
-      // Lightweight vector-tile coverage
-      LAYER_IDS.TRAFFIC_SIGNS_VT,
-      LAYER_IDS.OBJECTS_VT,
-
-      // Turbo points
-      LAYER_IDS.TURBO_COVERAGE,
-      TURBO_LIMITS.closeLayerId,
-
-      // Interactive features above Turbo
-      LAYER_IDS.OBJECTS_FL,
-
-      // Absolute top of the Mapillary stack
-      LAYER_IDS.TRAFFIC_SIGNS_FL,
-    ];
-
-    const desiredLayers = desiredIds.map((id) => map.findLayerById(id)).filter((layer): layer is __esri.Layer => !!layer && map.layers.includes(layer));
-
-    if (desiredLayers.length < 2) {
-      return;
-    }
-
-    /*
-     * Keep this Mapillary stack around its existing
-     * location in the operational-layer collection.
-     *
-     * This avoids unnecessarily pushing Mapillary
-     * above things such as field notes / route layers.
-     */
-    const currentLayers = map.layers.toArray();
-
-    const currentIndices = desiredLayers.map((layer) => currentLayers.indexOf(layer)).filter((index) => index >= 0);
-
-    if (currentIndices.length === 0) {
-      return;
-    }
-
-    const baseIndex = Math.min(...currentIndices);
-
-    /*
-     * Reorder strictly bottom -> top.
-     */
-    desiredLayers.forEach((layer, offset) => {
-      map.reorder(layer, baseIndex + offset);
+    if (!targetView?.map) return;
+    orderCoverageLayers(targetView.map, () => {
+      const overlay = this._activeSequenceOverlay;
+      return overlay?.view === targetView ? overlay.layer : undefined;
     });
-    // Final invariant: coverage refreshes must never cover active sequence markers.
-    if (this._activeSequenceOverlay?.layer && this._activeSequenceOverlay?.view === targetView && map.layers.includes(this._activeSequenceOverlay?.layer)) map.reorder(this._activeSequenceOverlay?.layer, map.layers.length - 1);
   }
 
   // #endregion COVERAGE LAYERS
@@ -4712,7 +4325,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     onCopied: method => {
       if (method === "clipboard") {
         this.showToast(
-          <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span style={navigationFeedbackStyle()}>
             <Icons.Check size={14} />  {this._t('appLinkCopiedToClipboard')} </span>,
         );
       } else this.showToast(this._t('appLinkCopiedToClipboard2'));
@@ -4927,20 +4540,20 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       const downloaded = await downloadImageFile(imageId, sequenceImages, this.accessToken, GRAPH_API.BASE);
       if (!downloaded) {
         this.showToast(
-          <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span style={navigationFeedbackStyle()}>
             <Icons.Warning size={14} />  {this._t('appHighResolutionImageNotAvailable')} </span>,
         );
         return;
       }
 
       this.showToast(
-        <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <span style={navigationFeedbackStyle()}>
           <Icons.Download size={14} />  {this._t('appImageDownloaded')} </span>,
       );
     } catch (err) {
       console.error("Failed to download image:", err);
       this.showToast(
-        <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <span style={navigationFeedbackStyle()}>
           <Icons.Warning size={14} />  {this._t('appDownloadFailed')} </span>,
       );
     } finally {
@@ -5478,7 +5091,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   }
 
   /** Derive status text and busy state from current coverage/selection conditions without initiating requests. */
-  private getCoverageBarPresentation(): { text: string; action?: "show" | "data" | "tilt" | "zoom" | "retry"; label?: string; busy?: boolean } {
+  private getCoverageBarPresentation(): CoverageGuideStatus {
     const view = this.state.jimuMapView?.view;
     const zoom = view?.zoom ?? 0;
     if (this.state.coverageFrameResolving) return { text: this._t('appFindingNearbyImage'), busy: true };
@@ -6182,146 +5795,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   // #region STREET COVERAGE ANALYSIS
 
-  /**
-   * Fetch OSM roads and classify coverage against the current native-coverage/filter snapshot.
-   * Use an abort controller, revision and input/view checks to prevent stale results or drawing from replacing newer analysis.
-   */
-  private runCoverageAnalysis = async () => {
-    const { jimuMapView } = this.state;
-    if (this.state.coverageAnalysisLoading || this._coverageAnalysisAbort) return;
-    if (!jimuMapView || !this.turboCoverageLayer || this.state.turboLoading) {
-      this.showToast(this._t('appCoverageIsStillLoadingTryAgainWhenItIs'), 4000);
-      return;
-    }
-    if (Date.now() < this._coverageRoadRetryAt) {
-      this.showToast(<OwnedMessage source={"Road server is rate-limited. Try again in {value0} seconds."} values={{ value0: String(Math.ceil((this._coverageRoadRetryAt - Date.now()) / 1000)) }} />, 5000);
-      return;
-    }
-
-    this.cancelCoverageAnalysis();
-    const revision = this._coverageAnalysisRevision;
-    const controller = new AbortController();
-    this._coverageAnalysisAbort = controller;
-    const signal = controller.signal;
-    const view = jimuMapView.view;
-    const filters = this.getTurboFilters();
-    const inputKey = () => JSON.stringify({
-      filters: this.getTurboFilters(), username: this.state.turboFilterUsername,
-      configuredUsername: this.props.config.turboCreator, token: this.accessToken
-    });
-    const key = inputKey();
-    const extentKey = () => view.extent ? [view.extent.xmin, view.extent.ymin, view.extent.xmax, view.extent.ymax].join('/') : '';
-    const area = extentKey();
-    const current = () => !signal.aborted && revision === this._coverageAnalysisRevision && !view.destroyed &&
-      this.state.jimuMapView?.view === view && this.state.turboModeActive && key === inputKey() && area === extentKey();
-    this._coverageAnalysisCurrent = current;
-    const areaWatch = view.watch("extent", () => {
-      if (!signal.aborted && !current()) {
-        this.cancelCoverageAnalysis();
-        this.showToast(this._t('appAnalysisStoppedBecauseTheMapAreaChangedRunIt'), 5000);
-      }
-    });
-    const progress = (message: string) => { if (current()) this.setState({ coverageAnalysisProgress: message }); };
-    this.setState({ coverageAnalysisLoading: true, coverageAnalysisProgress: this._owned("Fetching streets…") });
-    let stage: "roads" | "imagery" | "classification" = "roads";
-
-    try {
-      // 1. Current View Bounding Box
-      const extent = jimuMapView.view.extent;
-      const geo = webMercatorUtils.webMercatorToGeographic(extent) as __esri.Extent;
-      const { xmin: west, ymin: south, xmax: east, ymax: north } = geo;
-
-      // 2. Fetch OSM Road Network (with Overpass retry mechanism)
-      const query = OVERPASS_ROAD_QUERY(south, west, north, east);
-      const osmData = await fetchCoverageRoads(query, signal, {
-        fetch: (url, options) => fetch(url, options), delay: coverageAnalysisDelay,
-        onRetry: () => progress("Road server busy; trying again"),
-        onRateLimit: retryAt => { this._coverageRoadRetryAt = retryAt; },
-      });
-      if (!current()) return;
-      if (!osmData || osmData.remark || !Array.isArray(osmData.elements)) throw new Error("Road server returned incomplete data. Please retry later; previous results are preserved.");
-      const segments = parseOverpassRoads(osmData);
-      if (!segments.length) {
-        this.showToast(this._t('appNoRoadNetworkFoundInThisArea'));
-        return;
-      }
-
-      // 3. Inset Inner Bounding Box (Edge Truncation Filter)
-      const innerBbox = insetBbox([west, south, east, north], STREET_COVERAGE_CONFIG.ANALYSIS_INSET_METERS);
-      const innerSegments = segments.filter((seg) => segmentMidpointInBbox(seg, innerBbox));
-      if (!innerSegments.length) {
-        this.showToast(this._t('appAnalysisAreaTooSmallAfterEdgeFilteringZoomOut'));
-        return;
-      }
-
-      this.log(`Coverage analysis: ${segments.length} total segments → ${innerSegments.length} inner segments (${segments.length - innerSegments.length} edge segments excluded)`);
-
-      stage = "imagery";
-      progress("Loading imagery coverage…");
-
-      // 5. Visit the original filtered tile points, not a sampled display layer.
-      let points: [number, number][] = [];
-      let pointTimestamps: (number | null)[] = [];
-      await this.visitTurboCoverage([west, south, east, north], filters, signal, (point: TurboPoint) => {
-        points.push([point.lon, point.lat]);
-        pointTimestamps.push(point.capturedAt);
-        if (points.length % 25000 === 0) progress(`Loading imagery: ${this._presentation.number(points.length)} points…`);
-      });
-      if (!current()) return;
-      if (!points.length) {
-        this.showToast(this._t('appNoCoveragePointsFoundForThisAreaAndThe'));
-        return;
-      }
-
-      // 6. Snap Points to Road Segments & Classify Tiers
-      stage = "classification";
-      progress("Classifying roads…");
-      const coverage = await classifyCoverageAsync(
-        points,
-        innerSegments,
-        STREET_COVERAGE_CONFIG.SNAP_THRESHOLD_METERS,
-        STREET_COVERAGE_CONFIG.MIN_POINTS_PER_SEGMENT,
-        STREET_COVERAGE_CONFIG.HIGHWAY_THRESHOLDS,
-        pointTimestamps,
-        {
-          signal, onProgress: (completed: number, total: number) => progress(completed === 0 ? "Indexing imagery…" : `Classifying roads: ${this._presentation.number(completed)} / ${this._presentation.number(total)}`),
-          onTransferred: () => { points = []; pointTimestamps = []; }
-        },
-      );
-      if (!current()) return;
-
-      // 7. Store Results in State
-      this.stopCoverageRendering();
-      this._coverageAnalysisBbox = [west, south, east, north];
-      this.drawCoverageZone(innerBbox);
-      this._coverageSegments = innerSegments;
-      this._coverageCoveredFlags = coverage.segmentTiers.map((t) => t !== "none");
-      this._coverageSegmentTiers = coverage.segmentTiers;
-
-      this.setState({ coverageResult: coverage, coverageSegmentsVisible: false });
-      this.log(`Coverage: ${coverage.percentCovered}% covered; fresh:${coverage.freshCount} aging:${coverage.agingCount} stale:${coverage.staleCount} none:${coverage.noneCount}`);
-    } catch (err) {
-      if (!current()) return;
-      console.error("Coverage analysis failed:", err);
-
-      const isTimeout = err instanceof DOMException && err.name === "AbortError";
-
-      const message = isTimeout ? "Road network request timed out. Please try again later."
-        : err instanceof TypeError && /fetch|network/i.test(err.message)
-          ? stage === "roads" ? "Could not reach the road server. Check your connection or try again later."
-            : stage === "imagery" ? "Mapillary imagery coverage could not load. Check your connection or try again later."
-              : "Background analysis could not finish. Please retry."
-          : err instanceof Error ? err.message : "Coverage analysis failed. Please retry.";
-      this.showToast(message, 5000);
-    } finally {
-      areaWatch.remove();
-      if (revision === this._coverageAnalysisRevision) {
-        this._coverageAnalysisAbort = null;
-        this._coverageAnalysisCurrent = null;
-        this.setState({ coverageAnalysisLoading: false, coverageAnalysisProgress: undefined });
-      }
-    }
-  };
+  private runCoverageAnalysis = () => this._coverageAnalysis.run();
 
   /** Draws road segments on the map using four distinct coverage tiers (fresh, aging, stale, none). */
   private async drawCoverageSegments() {
@@ -6962,7 +6436,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         }
 
         this.showToast(
-          <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span style={navigationFeedbackStyle()}>
             <Icons.GroundGrid size={14} />
             <b> {this._t('appGroundMode')} </b> {this._groundMode ? <OwnedMessage source={"ON (Buildings > {value0}m Hidden)"} values={{ value0: String(POINT_CLOUD_CONFIG.GROUND_MODE_HEIGHT_M) }} /> : this._t('appOffFullCloud')}
           </span>,
@@ -6978,7 +6452,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
           }),
           () => {
             this.showToast(
-              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={navigationFeedbackStyle()}>
                 <b> {this._t('appColorMode')} </b> {this.state.pointCloudColorMode === "elevation" ? this._t('appElevationHeatmap') : this._t('appTrueRgb')}
               </span>,
               3000,
@@ -7001,7 +6475,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     if (handled) {
       e.preventDefault();
       this.showToast(
-        <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <span style={navigationFeedbackStyle()}>
           <Icons.Crosshair size={14} />
           <b> {this._t('appTotalOffset')} </b>
           {Math.abs(this._nudgeX).toFixed(1)} {this._t('appM')} {this._nudgeX > 0 ? this._t('appE') : this._t('appW')},{Math.abs(this._nudgeY).toFixed(1)} {this._t('appM')} {this._nudgeY > 0 ? this._t('appN') : this._t('appS')}
@@ -7039,7 +6513,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._pointCloudCalibration.joystick(axis, direction, () => {
       // Show instant feedback toast
       this.showToast(
-        <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <span style={navigationFeedbackStyle()}>
           <Icons.Crosshair size={14} />
           <b> {this._t('appOffset')} </b>  {this._t('appX')} {this._nudgeX.toFixed(1)} {this._t('appMY')} {this._nudgeY.toFixed(1)} {this._t('appMZ')} {this._nudgeZ.toFixed(1)} {this._t('appM')} </span>,
         1000,
@@ -8165,7 +7639,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const widget = this;
     return {
       get backgroundRequests() { return widget._backgroundRequests; },
-      get coverageAnalysisCurrent() { return widget._coverageAnalysisCurrent; },
+      get coverageAnalysisCurrent() { return widget._coverageAnalysis.currentCheck; },
       get detectionLayers() { return widget._detectionLayers; },
       get imageryOpeningRequest() { return widget._imageryOpeningRequest; },
       get nearbyDemandVisible() { return widget._nearbyDemandVisible; },
@@ -9354,28 +8828,15 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const coveragePresentation = this.getCoverageBarPresentation();
     const coverageBarHint = this.getCoverageBarHint();
     const guideContext = this.getExplorerGuideContext();
-    const guideContextText = guideContext.join(" · ");
     const coverageHelpId = `${this.props.id || "mapillary"}-coverage-help`;
 
     const normalMode = (
       <div
         dir={this._runtimeLocale?.direction || "ltr"} lang={this._runtimeLocale?.formatLocale || "en-US"} className={`widget-mapillary jimu-widget ${this.state.showAiTags ? "" : "hide-mly-tags"}`}
-        style={{
-          width: "100%",
-          height: "100%",
-          position: "relative",
-          display: "flex",
-          flexDirection: "column",
-          border: "none",
-          boxSizing: "border-box",
-          overflow: "hidden",
-          margin: "0",
-          padding: "0",
-          containerType: "size",
-        }}
+        style={widgetLayout.widgetContainer}
       >
         {/* wraping this logic component in display:none so it doesn't break the Flex layout */}
-        <div style={{ display: "none" }}>{mapWidgetId ? <JimuMapViewComponent useMapWidgetId={mapWidgetId} onActiveViewChange={this.onActiveViewChange} /> : null}</div>
+        <div style={widgetLayout.mapConnectionHost}>{mapWidgetId ? <JimuMapViewComponent useMapWidgetId={mapWidgetId} onActiveViewChange={this.onActiveViewChange} /> : null}</div>
 
         {/* showing error only if strictly needed,
                     separate from the logic component
@@ -9409,62 +8870,50 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         )}
 
         {/* Empty React-owned host: the SDK profile reserves its own space above imagery on mobile. */}
-        <div ref={this.setProfileFlowHost} className="mly-profile-flow-dock" style={{ display: "none", flex: "0 0 auto", width: "100%", minHeight: 0, minWidth: 0, overflow: "hidden", boxSizing: "border-box", borderBottom: "1px solid rgba(127,127,127,0.25)" }} />
-        <div className="mly-viewer-workspace" style={{ flex: "1 1 0", minHeight: 0, minWidth: 0, position: "relative", isolation: "isolate", zIndex: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div ref={this.setProfileFlowHost} className="mly-profile-flow-dock" style={widgetLayout.profileFlowDock} />
+        <div className="mly-viewer-workspace" style={widgetLayout.viewerWorkspace}>
           {viewerArea}
 
-          {(this.state.toastMessage || this.state.pointCloudLoading) && <div style={{ ...glassStyles.toastContainer, top: this.state.isLoading ? 12 : undefined, bottom: this.state.isLoading ? "auto" : glassStyles.toastContainer.bottom, display: "flex", alignItems: "center", gap: 10, maxWidth: "calc(100% - 24px)", width: "max-content", whiteSpace: "normal", boxSizing: "border-box" }}>
-            <div style={{ flex: "1 1 auto", minWidth: 0, maxWidth: "100%", whiteSpace: "normal", overflowWrap: "anywhere" }}>{this.state.toastMessage || <OwnedMessage source={"Loading point cloud…"} />}</div>
+          {(this.state.toastMessage || this.state.pointCloudLoading) && <div style={this.state.isLoading ? widgetLayout.loadingToastContainer : widgetLayout.toastContainer}>
+            <div style={widgetLayout.toastMessage}>{this.state.toastMessage || <OwnedMessage source={"Loading point cloud…"} />}</div>
 
           </div>}
 
-          {this.state.detectionsActive && this.state.viewerDetectionNote && <DetectionNoteAction key={this.state.viewerDetectionNote.imageId + ':' + this.state.viewerDetectionNote.detectionId}
-            onLoadPreview={this.loadDetectionPreview} selection={this.state.viewerDetectionNote} enterpriseEnabled={!!(this.props.config.sharedFieldNotesEnabled && this.props.config.sharedFieldNotesUrl)}
-            hasTray={this.state.nearbyStripOpen} busy={this.state.detectionNoteCapturing} picking={this.state.detectionNotePicking} onChoose={this.chooseDetectionNoteLocation} onCancel={this.cancelDetectionNoteLocation} onClose={this.dismissViewerDetection} />}
-          <FieldNotesPanel
-            onLoadDetectionPreview={this.loadDetectionPreview}
-            onLoadDetectionAttachment={this.loadDetectionNoteAttachment}
-            onDetectionDraftFinished={this.finishDetectionWorkspaceMarker}
-            onDetectionDraftLocation={this.moveDetectionWorkspaceMarker}
-            detectionWorkspaceDraft={this.state.detectionWorkspaceDraft}
-            onClearDetectionWorkspaceDraft={applied => { if (!applied && this.state.detectionWorkspaceDraft) this.finishDetectionWorkspaceMarker(this.state.detectionWorkspaceDraft.requestId); this.setState({ detectionWorkspaceDraft: null }); }}
-            isAnnotationMode={this.state.isAnnotationMode}
-            pendingNote={this.state.pendingFieldNote}
-            notes={this.state.fieldNotes}
-            enterpriseEnabled={!!this.props.config.sharedFieldNotesEnabled}
-            onLoadEnterpriseNotes={this.loadEnterpriseNotesPage}
-            enterpriseContext={this.state.jimuMapView?.view}
-            enterpriseLayerUrl={String(this.props.config.sharedFieldNotesReadUrl || this.props.config.sharedFieldNotesUrl || "")}
-            enterpriseWriteUrl={String(this.props.config.sharedFieldNotesUrl || "")}
-            loadEnterpriseIdentityManager={this.loadEnterpriseIdentityManager}
-            sharingEnabled={!!(this.props.config.sharedFieldNotesEnabled && this.props.config.sharedFieldNotesUrl)}
-            sharedMessage={this.props.config.sharedFieldNotesEnabled ? this.state.sharedNotesMessage : undefined}
-            attachments={this.state.fieldNoteAttachments}
-            currentImageAvailable={!!this.state.imageId}
-            onAttachments={note => void this.openFieldNoteAttachments(note)}
-            onUploadAttachment={this.uploadFieldNoteAttachment}
-            onDownloadAttachment={this.downloadFieldNoteAttachment}
-            onCloseAttachments={this.closeFieldNoteAttachments}
-            editor={this.state.fieldNoteEditor}
-            onEditNote={this.editLocalFieldNote}
-            onEditSharedNote={note => void this.openSharedFieldNoteEditor(note)}
-            onSaveEdit={this.saveFieldNoteEdit}
-            onCancelEdit={this.cancelFieldNoteEdit}
-            onShareNote={this.publishFieldNote}
-            onRetrySharedDisplay={() => void this.syncSharedFieldNotes(true)}
-            listOpen={this.state.fieldNotesListOpen}
-            categories={this.props.config.fieldNoteCategories ? Array.from(this.props.config.fieldNoteCategories) : undefined}
-            onSubmitNote={this.submitFieldNote}
-            onCancelPending={this.cancelPendingFieldNote}
-            onDeleteNote={this.deleteFieldNote}
-            onClearAll={this.clearAllFieldNotes}
-            onExport={this.exportFieldNotes}
-            onImportFile={this.importFieldNotesFile}
-            onFocusNote={this.focusFieldNote}
-            onWorkspaceMapChange={this.updateWorkspaceMapNotes}
-            onWorkspacePickLocation={this.requestWorkspaceNoteLocation}
-            currentImageId={this.state.imageId}
-            onCloseList={() => this.setState({ fieldNotesListOpen: false })}
+          <FieldNotesOverlay state={this.state} settings={this.props.config}
+            detectionActions={{
+              onChoose: this.chooseDetectionNoteLocation,
+              onCancel: this.cancelDetectionNoteLocation,
+              onClose: this.dismissViewerDetection,
+            }}
+            panelActions={{
+              onLoadDetectionPreview: this.loadDetectionPreview,
+              onLoadDetectionAttachment: this.loadDetectionNoteAttachment,
+              onDetectionDraftFinished: this.finishDetectionWorkspaceMarker,
+              onDetectionDraftLocation: this.moveDetectionWorkspaceMarker,
+              onClearDetectionWorkspaceDraft: this.clearDetectionWorkspaceDraft,
+              onLoadEnterpriseNotes: this.loadEnterpriseNotesPage,
+              loadEnterpriseIdentityManager: this.loadEnterpriseIdentityManager,
+              onAttachments: note => void this.openFieldNoteAttachments(note),
+              onUploadAttachment: this.uploadFieldNoteAttachment,
+              onDownloadAttachment: this.downloadFieldNoteAttachment,
+              onCloseAttachments: this.closeFieldNoteAttachments,
+              onEditNote: this.editLocalFieldNote,
+              onEditSharedNote: note => void this.openSharedFieldNoteEditor(note),
+              onSaveEdit: this.saveFieldNoteEdit,
+              onCancelEdit: this.cancelFieldNoteEdit,
+              onShareNote: this.publishFieldNote,
+              onRetrySharedDisplay: () => void this.syncSharedFieldNotes(true),
+              onSubmitNote: this.submitFieldNote,
+              onCancelPending: this.cancelPendingFieldNote,
+              onDeleteNote: this.deleteFieldNote,
+              onClearAll: this.clearAllFieldNotes,
+              onExport: this.exportFieldNotes,
+              onImportFile: this.importFieldNotesFile,
+              onFocusNote: this.focusFieldNote,
+              onWorkspaceMapChange: this.updateWorkspaceMapNotes,
+              onWorkspacePickLocation: this.requestWorkspaceNoteLocation,
+              onCloseList: () => this.setState({ fieldNotesListOpen: false }),
+            }}
           />
 
           {/* INFO BOX */}
@@ -9720,19 +9169,27 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
             }}
           />
 
-          {this.state.placesActive && this.state.placesPanelOpen && <PlacesPanel onShowOnMap={this.showListedPlaceOnMap} onAreaSearch={this._placesVectorLayer ? text => this._places?.controller.setSearchText(text) : undefined} onLoadMore={() => this._places?.controller.loadMore()} onPreviousResults={() => this._places?.controller.previousPage()} tileLoading={this.state.placesSourceLoading} tileQuality={this._placesVectorLayer?.quality} onTileQuality={this._placesVectorLayer?.supportsFamilyFilter ? this.setPlacesTileQuality : undefined} tileFamily={this._placesVectorLayer?.supportsFamilyFilter ? this.state.placesTileCategory : 'all'} onTileFamily={this._placesVectorLayer?.supportsFamilyFilter ? this.setPlacesTileCategory : undefined} autoUpdate={this.state.placesAutoUpdate} onAutoUpdate={this.setPlacesAutoUpdate} onSearch={() => this._places?.controller.searchArea()} origin={this._placesVectorLayer ? this.state.placesStatus.resultOrigin || null : this.placesListOrigin()} hoveredId={this.state.placesHoveredId} revealRequest={this.state.placesRevealRequest} onHover={id => this._places?.setHover(id)} onGoToArea={this.goToPlacesArea} status={this.state.placesStatus} places={this.state.placesList} onSelect={id => this._places?.open([], id, false, 'list')}
-            selection={this.state.selectedPlace ? {
-              place: this.state.selectedPlace, link: this.state.placesShowLink, cameraDistance: this.state.placesCameraDistance,
-              onLink: value => { this.setState({ placesShowLink: value }); this._places?.selection.setLink(value); },
-              enterpriseEnabled: !!(this.props.config.sharedFieldNotesEnabled && this.props.config.sharedFieldNotesUrl), onNote: this.createPlaceFieldNote, currentImageId: this.state.imageId, onGetNoteImage: this.getPlaceNoteImage, onLoadNotePreview: this.loadDetectionPreview, notePhase: this.state.placeNotePhase, onCancelNote: this.cancelPlaceNotePreparation, onImagery: () => this._places?.open([], this.state.selectedPlace?.id, true, 'card'),
-              onBack: this.goToSelectedPlace, onDetails: () => this._places?.open([], this.state.selectedPlace?.id, false, 'card'), onClear: () => this._places?.clearSelection()
-            } : undefined}
-            onRetry={() => this._places?.controller.retry()} onClose={() => this.setState({ placesPanelOpen: false })} />}
-
-          {this.state.placesActive && !this.state.placesPanelOpen && this.state.selectedPlace && <SelectedPlaceCard place={this.state.selectedPlace} link={this.state.placesShowLink} cameraDistance={this.state.placesCameraDistance}
-            onLink={value => { this.setState({ placesShowLink: value }); this._places?.selection.setLink(value); }}
-            enterpriseEnabled={!!(this.props.config.sharedFieldNotesEnabled && this.props.config.sharedFieldNotesUrl)} onNote={this.createPlaceFieldNote} currentImageId={this.state.imageId} onGetNoteImage={this.getPlaceNoteImage} onLoadNotePreview={this.loadDetectionPreview} notePhase={this.state.placeNotePhase} onCancelNote={this.cancelPlaceNotePreparation} onImagery={() => this._places?.open([], this.state.selectedPlace?.id, true, 'card')}
-            onBack={this.goToSelectedPlace} onDetails={() => this._places?.open([], this.state.selectedPlace?.id, false, 'card')} onClear={() => this._places?.clearSelection()} />}
+          {this.state.placesActive && <PlacesOverlay
+            panelOpen={this.state.placesPanelOpen} selection={this.getPlacesOverlaySelection()}
+            tileLayer={this._placesVectorLayer} tileFamily={this.state.placesTileCategory}
+            getLocalOrigin={() => this.placesListOrigin()}
+            panel={{
+              status: this.state.placesStatus, places: this.state.placesList,
+              hoveredId: this.state.placesHoveredId, revealRequest: this.state.placesRevealRequest,
+              autoUpdate: this.state.placesAutoUpdate, tileLoading: this.state.placesSourceLoading,
+              onShowOnMap: this.showListedPlaceOnMap, onGoToArea: this.goToPlacesArea,
+              onTileQuality: this.setPlacesTileQuality, onTileFamily: this.setPlacesTileCategory,
+              onAutoUpdate: this.setPlacesAutoUpdate,
+              onAreaSearch: text => this._places?.controller.setSearchText(text),
+              onLoadMore: () => this._places?.controller.loadMore(),
+              onPreviousResults: () => this._places?.controller.previousPage(),
+              onSearch: () => this._places?.controller.searchArea(),
+              onHover: id => this._places?.setHover(id),
+              onSelect: id => this._places?.open([], id, false, 'list'),
+              onRetry: () => this._places?.controller.retry(),
+              onClose: () => this.setState({ placesPanelOpen: false }),
+            }}
+          />}
 
           {/* Splash Screen */}
           <SplashScreen showIntro={this.state.showIntro} filtersLoaded={this.state.filtersLoaded} onDismiss={this.dismissIntro} />
@@ -9773,62 +9230,22 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
             }}
           />
         </div>
-        {coverageBarVisible && (
-          <div className="mly-coverage-notice" style={coverageNoticeStyles.container}>
-            <img src={MAPILLARY_IMAGE} alt="" aria-hidden="true" style={coverageNoticeStyles.statusIcon} />
-            <div role="status" aria-live="polite" aria-atomic="true" style={coverageNoticeStyles.status}>
-              {coveragePresentation.busy && <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0, display: "block" }}>
-                <circle cx="8" cy="8" r="6" fill="none" stroke="#436052" strokeWidth="2" />
-                <path d="M8 2 A6 6 0 0 1 14 8" fill="none" stroke="#91d9b5" strokeWidth="2" strokeLinecap="round">
-                  <animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="0.9s" repeatCount="indefinite" />
-                </path>
-              </svg>}
-              <span style={coverageNoticeStyles.title} title={coveragePresentation.text}>{coveragePresentation.text}</span>
-            </div>
-            {!!guideContext.length && <span className="mly-coverage-filter-hint" title={guideContextText} style={{ ...coverageNoticeStyles.secondary, minWidth: 0, maxWidth: "38%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{guideContextText}</span>}
-            <span className="mly-coverage-context-hint" style={coverageNoticeStyles.secondary}>
-              <span className="mly-coverage-mouse-hint">{coverageBarHint}</span>
-              <span className="mly-coverage-touch-hint">{this.getCoverageBarHint(true)}</span>
-            </span>
-            {coveragePresentation.action && (
-              <button className="mly-text-action" type="button" onClick={() => void this.handleTurboWarningAction(coveragePresentation.action)} style={coverageNoticeStyles.action}>
-                {coveragePresentation.label}
-              </button>
-            )}
-            <button ref={this._coverageHelpButton} className="mly-coverage-help-button" type="button" aria-controls={coverageHelpId} aria-expanded={!!this.state.coverageHelpOpen} onClick={() => this.state.coverageHelpOpen ? this.closeCoverageHelp() : this.setState({ coverageHelpOpen: true })} aria-label={this._t('appExplorerGuideAndActiveFilters')} title={this._t('appExplorerGuideAndActiveFilters')} style={coverageNoticeStyles.helpButton}><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ display: "block", flexShrink: 0, pointerEvents: "none" }}><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3" /><circle cx="8" cy="4.75" r="0.75" fill="currentColor" /><path d="M8 7.25v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg></button>
-
-          </div>
-        )}
-        {this.state.selectionError && (
-          <div role="alert" style={{ ...coverageNoticeStyles.helpPanel, zIndex: 1100 }}>
-            <div style={coverageNoticeStyles.message}>{<OwnedMessage source={String(this.state.selectionError ?? "")} />}</div>
-            <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-              {this.state.selectionCanRetry && <button className="mly-text-action" type="button" onClick={() => void this.retrySelectedImage()} style={coverageNoticeStyles.action}> {this._t('appRetryImage')} </button>}
-              <button className="mly-text-action" type="button" aria-label={this._t('appDismissImageError')} onClick={() => this.setState({ selectionError: undefined })} style={coverageNoticeStyles.action}> {this._t('appDismiss')} </button>
-            </div>
-          </div>
-        )}
-        {coverageBarVisible && this.state.coverageHelpOpen && (
-          <div id={coverageHelpId} className="mly-coverage-help" role="dialog" aria-label={this._t('appCoverageHelp')} aria-modal="false" tabIndex={-1} ref={this._focusCoverageHelp} onKeyDown={event => { if (event.key === "Escape") this.closeCoverageHelp(); }} style={coverageNoticeStyles.helpPanel}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><img src={MAPILLARY_IMAGE} alt="" aria-hidden="true" style={coverageNoticeStyles.logo} /><div style={coverageNoticeStyles.brand}> {this._t('appMapillaryExplorerGuide')} </div></div>
-              <button type="button" aria-label={this._t('appCloseCoverageHelp')} onClick={() => this.closeCoverageHelp()} style={coverageNoticeStyles.close}>×</button>
-            </div>
-            <div style={{ ...coverageNoticeStyles.message, marginBottom: 6 }}><strong>{coveragePresentation.text}</strong></div>
-            <div style={coverageNoticeStyles.message}>{this.state.turboFilterOnFoot !== undefined ? this._t('appTravelMethodCoverageStartsAtRegionalZoomZoomCloser') : this._t('appAtTheFarthestZoomsHoverAnOverviewDotTo')} {this._t('appAtRegionalZoomsClickACoverageLineToOpen')} </div>
-            <div aria-label={this._t('appSelectedSequenceSymbols')} style={{ ...coverageNoticeStyles.message, marginTop: 8 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 7 }}><span aria-hidden="true" style={{ width: 18, borderTop: "2px solid #739dff", flexShrink: 0 }} /><span> {this._t('appBlueLineSelectedSequence')} </span></div>
-              <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 3 }}><span aria-hidden="true" style={{ width: 6, height: 6, margin: "0 6px", borderRadius: "50%", background: "blue", border: this.state.turboModeActive ? "1px solid white" : "1px solid #e3da30", flexShrink: 0 }} /><span>{this.state.turboModeActive ? this._t('appBlueCirclesSelectedSequence') : this._t('appBlueDotsNearbyFrames2')}</span></div>
-              <p style={{ margin: "5px 0 0" }}>{this.state.turboModeActive ? this._t('appBlueCirclesBelongToTheActiveSequenceItsFaint') : this._t('appMoreImageryMayContinueBeyondTheDotsSelectCoverage')}</p>
-            </div>
-            {!!guideContext.length && <div style={{ ...coverageNoticeStyles.message, marginTop: 8 }}><strong> {this._t('appActiveSettings')} </strong><ul style={{ margin: "4px 0", paddingLeft: 18 }}>{guideContext.map(item => <li key={item}>{item}</li>)}</ul></div>}
-            {coverageNoticeVisible && !this.state.turboWarningIsHelp && <p style={coverageNoticeStyles.message}>{<OwnedMessage source={String(this.state.zoomWarningMessage ?? "")} />}</p>}
-            <label style={coverageNoticeStyles.optOut}>
-              <input type="checkbox" checked={!this.shouldShowCoverageNotice()} onChange={event => { if (event.currentTarget.checked) this.hideCoverageNotices(); }} style={{ margin: 0, width: 16, height: 16, accentColor: "#91d9b5" }} />
-              <span> {this._t('appHideTheGuideBarUntilThePageIsRefreshed')} </span>
-            </label>
-          </div>
-        )}
+        <CoverageGuide
+          t={this._t} visible={coverageBarVisible} status={coveragePresentation}
+          settings={guideContext} mouseHint={coverageBarHint}
+          touchHint={coverageBarVisible ? this.getCoverageBarHint(true) : ""}
+          helpOpen={!!this.state.coverageHelpOpen} helpId={coverageHelpId}
+          helpButtonRef={this._coverageHelpButton} helpPanelRef={this._focusCoverageHelp}
+          travelMethodFiltered={this.state.turboFilterOnFoot !== undefined} turboActive={!!this.state.turboModeActive}
+          noticesHidden={coverageBarVisible && !!this.state.coverageHelpOpen && !this.shouldShowCoverageNotice()}
+          warningVisible={coverageNoticeVisible && !this.state.turboWarningIsHelp} warningMessage={this.state.zoomWarningMessage}
+          selectionError={this.state.selectionError} canRetry={this.state.selectionCanRetry}
+          onAction={action => void this.handleTurboWarningAction(action)}
+          onToggleHelp={() => this.state.coverageHelpOpen ? this.closeCoverageHelp() : this.setState({ coverageHelpOpen: true })}
+          onCloseHelp={() => this.closeCoverageHelp()} onHideNotices={() => this.hideCoverageNotices()}
+          onRetryImage={() => void this.retrySelectedImage()}
+          onDismissImageError={() => this.setState({ selectionError: undefined })}
+        />
       </div>
     );
 

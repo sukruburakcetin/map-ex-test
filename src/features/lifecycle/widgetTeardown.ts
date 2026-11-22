@@ -1,3 +1,4 @@
+import { releaseViewerObservation, unlistenForViewerResize } from './viewerResize';
 /** Minimal view identity used only to gate owned-map cleanup. SDK operations stay at the concrete boundary. */
 export interface TeardownView { map?: unknown; graphics?: unknown; }
 interface Removable { remove(): void; }
@@ -304,22 +305,14 @@ export function unmountWidget<View extends TeardownView, Viewer extends { remove
     host.clearFieldNotesGroup();
     host.cleanupEnvironment(true, true);
 
-    if (host.resizeObserver) {
-      if (host.container()) host.resizeObserver.unobserve(host.container()!);
-      host.resizeObserver.disconnect();
-      host.resizeObserver = null;
-    }
+    releaseViewerObservation(host);
 
     if (host.tooltipDiv && host.tooltipDiv.parentNode) {
       host.tooltipDiv.parentNode.removeChild(host.tooltipDiv);
       host.tooltipDiv = null;
     }
 
-    document.removeEventListener("fullscreenchange", host.handleFullscreenChange);
-    document.removeEventListener("webkitfullscreenchange", host.handleFullscreenChange);
-    document.removeEventListener("mozfullscreenchange", host.handleFullscreenChange);
-    document.removeEventListener("MSFullscreenChange", host.handleFullscreenChange);
-    window.removeEventListener("resize", host.handleWindowResize);
+    unlistenForViewerResize(host);
 
     window.removeEventListener("keydown", host.handleNudgeKeyDown);
     window.removeEventListener("keyup", host.handleNudgeKeyUp);

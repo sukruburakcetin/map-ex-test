@@ -6,7 +6,12 @@ exports.source=fs.readFileSync(root+'/src/features/lifecycle/widgetTeardown.ts',
 exports.phase=name=>exports.ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text===name);
 exports.action=name=>member('widgetTeardownHost').body.statements.find(ts.isReturnStatement).expression.properties.find(n=>n.name?.getText(sf)===name).initializer.getText(sf);
 exports.install=(w,platform={},legacy=false)=>{
- const active={exports:{}};new Function('exports',...Object.keys(platform),compile(exports.source))(active.exports,...Object.values(platform));
+ const resize=require('./viewerResizeSource.cjs')(platform);
+ const active={exports:{}};
+ new Function('exports','require',...Object.keys(platform),compile(exports.source))(active.exports,id=>{
+  if(id==='./viewerResize')return resize;
+  throw Error('Unexpected runtime dependency '+id);
+ },...Object.values(platform));
  const members=legacy?Object.values(require('../fixtures/widgetTeardown.baseline.json')).join('\n'):['cleanupWidgetEnvironment','componentWillUnmount','widgetTeardownHost'].map(name=>member(name).getText(sf)).join('\n');
  const globals={clearImageryHoverCardCache:()=>{},deleteDetectionCrop:async()=>{},...platform,...active.exports};
  const Binding=new Function(...Object.keys(globals),compile('return class Binding {'+members+'};'))(...Object.values(globals));

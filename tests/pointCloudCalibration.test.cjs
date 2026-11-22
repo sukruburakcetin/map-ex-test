@@ -4,6 +4,8 @@ const { englishFunction, bindEnglish, feedbackTrace } = require('./helpers/engli
  */
 const fs=require('fs'),path=require('path'),test=require('node:test'),assert=require('node:assert/strict'),ts=require(process.env.MAPILLARY_TYPESCRIPT||'typescript'),root=path.resolve(__dirname,'..');
 const compile=s=>ts.transpileModule(s,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText;
+const feedbackStyles = {};
+new Function('exports', compile(fs.readFileSync(root+'/src/styles/navigationFeedback.ts','utf8')))(feedbackStyles);
 const fixture=JSON.parse(fs.readFileSync(__dirname+'/fixtures/pointCloudCalibration.baseline.json','utf8'));
 const m={exports:{}};englishFunction('module','exports',compile(fs.readFileSync(root+'/src/features/point-cloud/PointCloudCalibration.ts','utf8')))(m,m.exports);
 const sf=ts.createSourceFile('widget.tsx',fs.readFileSync(root+'/src/runtime/widget.tsx','utf8'),ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX),cl=sf.statements.find(n=>ts.isClassDeclaration(n)&&n.name.text==='Widget');
@@ -13,7 +15,7 @@ class Input{}class Textarea{}
 function setup(kind){
  const trace=[],timers=[];const debounce=(fn,delay)=>{const f=()=>{trace.push(['schedule',delay]);f.pending=true};f.cancel=()=>{trace.push(['cancel']);f.pending=false};f.flush=()=>{if(f.pending){f.pending=false;fn()}};timers.push(f);return f};
  const React={createElement:(type,props,...children)=>({type:typeof type==='string'?type:'icon',props,children})};const Icons={Crosshair:()=>{},GroundGrid:()=>{}};
- const Harness=englishFunction('PointCloudCalibration','debounceUtil','React','Icons','HTMLInputElement','HTMLTextAreaElement','POINT_CLOUD_CONFIG',compile('class Widget{'+(kind==='baseline'?fixture.handlers+fixture.debounce:current)+'};return Widget;'))(m.exports.PointCloudCalibration,debounce,React,Icons,Input,Textarea,{GROUND_MODE_HEIGHT_M:1.5});
+ const Harness=englishFunction('PointCloudCalibration','debounceUtil','React','Icons','HTMLInputElement','HTMLTextAreaElement','POINT_CLOUD_CONFIG','navigationFeedbackStyle',compile('class Widget{'+(kind==='baseline'?fixture.handlers+fixture.debounce:current)+'};return Widget;'))(m.exports.PointCloudCalibration,debounce,React,Icons,Input,Textarea,{GROUND_MODE_HEIGHT_M:1.5},feedbackStyles.navigationFeedbackStyle);
  const w=bindEnglish(new Harness());w.state={pointCloudVisible:true,nudgeStep:.5,pointCloudLength:50,pointCloudActualLength:75,pointCloudColorMode:'rgb',showCalibrationPanel:false};w._pointCloudAcquisition={result:{id:'A'}};w._nudgeX=1.25;w._nudgeY=-2.75;w._nudgeZ=.3;w._lastBearing=30;w._groundMode=false;w._pointCloudMapLayer={layer:{}};w.showToast=(...args)=>trace.push(['toast',...args]);w.renderPointCloudMapLayer=()=>trace.push(['map',w._nudgeX,w._nudgeY,w._nudgeZ]);w.drawConcentricRings=n=>trace.push(['rings',n]);w.updatePointCloudDisplay=()=>trace.push(['display']);w._pointCloudViewerRenderer={updateColors:()=>trace.push(['colors'])};w.mapillaryViewer={resize:()=>trace.push(['resize']),getCenter:()=>Promise.resolve([.5,.5]),setCenter:c=>trace.push(['center',c])};w.setState=(updater,cb)=>{Object.assign(w.state,typeof updater==='function'?updater(w.state):updater);trace.push(['state',structuredClone(w.state)]);cb?.()};
  return {w,trace,timers,event:(key,extra={})=>({key,shiftKey:false,target:null,preventDefault:()=>trace.push(['prevent']),...extra}),flush:()=>timers[0].flush(),offset:()=>[w._nudgeX,w._nudgeY,w._nudgeZ]};
 }

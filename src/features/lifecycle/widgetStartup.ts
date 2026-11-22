@@ -1,3 +1,4 @@
+import { listenForViewerResize, observeViewerContainer } from './viewerResize';
 import { imageryTooltipStyle } from '../../styles/imageryHoverCard';
 
 /** Startup-only configuration; layer/request implementations stay with their existing features. */
@@ -110,22 +111,8 @@ export async function mountWidget(host: WidgetStartupHost): Promise<void> {
     host.loadFieldNotesFromStorage();
     void host.syncSharedFieldNotes();
 
-    host.resizeObserver = new ResizeObserver(() => {
-      if (host.viewer?.resize) {
-        host.viewer.resize();
-      }
-    });
-
-    if (host.container()) {
-      host.resizeObserver.observe(host.container()!);
-    }
-
-    // Listen for browser fullscreen events
-    document.addEventListener("fullscreenchange", host.handleFullscreenChange);
-    document.addEventListener("webkitfullscreenchange", host.handleFullscreenChange);
-    document.addEventListener("mozfullscreenchange", host.handleFullscreenChange);
-    document.addEventListener("MSFullscreenChange", host.handleFullscreenChange);
-    window.addEventListener("resize", host.handleWindowResize);
+    observeViewerContainer(host);
+    listenForViewerResize(host);
 
     // Add keyboard listener for W, A, S, D Point Cloud Nudging
     window.addEventListener("keydown", host.handleNudgeKeyDown);

@@ -11,14 +11,20 @@ const member = name => widget.members.find(node => node.name?.getText(sf) === na
 const moduleFor = file => { const m = { exports: {} }; new Function('module', 'exports', compile(fs.readFileSync(file, 'utf8')))(m, m.exports); return m.exports; };
 const { LiveSequenceFrames } = moduleFor(path.join(root, 'src/features/imagery/LiveSequenceFrames.ts'));
 const immediateTimer = callback => { queueMicrotask(callback); return 1; };
+const { transitionFullscreen } = (() => {
+  const m = { exports: {} };
+  const file = path.join(root, 'src/features/lifecycle/fullscreenTransition.ts');
+  new Function('exports', 'setTimeout', compile(fs.readFileSync(file, 'utf8')))(m.exports, immediateTimer);
+  return m.exports;
+})();
 const newViewerEvents = [];
 class Viewer {
   constructor(options) { this.options = options; this.events = new Map(); newViewerEvents.push(this); }
   on(name, callback) { this.events.set(name, callback); }
 }
-const Runtime = new Function('Viewer', 'readCachedSequenceCoordinates', 'debounceUtil', 'setTimeout', 'trackViewerImage',
+const Runtime = new Function('Viewer', 'readCachedSequenceCoordinates', 'debounceUtil', 'setTimeout', 'trackViewerImage', 'transitionFullscreen',
   compile('class Runtime {' + members.map(member).join('\n') + '}') + '; return Runtime;')(
-  Viewer, async (cache, id) => cache[id] || null, callback => callback, immediateTimer, require('./helpers/viewerImageTrackingSource.cjs').trackViewerImage);
+  Viewer, async (cache, id) => cache[id] || null, callback => callback, immediateTimer, require('./helpers/viewerImageTrackingSource.cjs').trackViewerImage, transitionFullscreen);
 const flush = () => new Promise(resolve => setImmediate(resolve));
 function deferred() { let resolve; return { promise: new Promise(done => { resolve = done; }), resolve: value => resolve(value) }; }
 function setup(type = '2d') {
@@ -92,7 +98,18 @@ test('explicit active-sequence cleanup still removes its pulse and cone', () => 
 });
 
 for (const entering of [true, false]) test('fullscreen ' + (entering ? 'entry' : 'exit') + ' restores the pulse after actual event binding clears stale graphics', async () => {
-  const { w } = setup('3d'); w.state.isFullscreen = !entering;
+  const { w, events, view } = setup('3d'); w.state.isFullscreen = !entering;
+  w.applyCustomCameraAngle = () => events.push('camera-angle');
+  w.createMinimap = () => events.push('minimap-create');
+  w.destroyMinimap = () => events.push('minimap-destroy');
+  w.minimapView = entering ? null : {};
+  w._detectionNoteAfterFullscreen = () => events.push('deferred-note');
+  view.zoom = 17;
+  view.goTo = async (target, options) => {
+    assert.deepEqual(target, { center: [29, 41], zoom: 17 });
+    assert.deepEqual(options, { animate: true, duration: 1000 });
+    events.push('map-center');
+  };
   const currentImageId = w.state.imageId;
   await w.toggleFullscreen(); await Promise.all(w.stateCallbacks); await flush();
   assert.equal(w.state.isFullscreen, entering); assert(w.mapillaryViewer instanceof Viewer);
@@ -100,4 +117,9 @@ for (const entering of [true, false]) test('fullscreen ' + (entering ? 'entry' :
   assert(w.currentGreenGraphic, 'binding the recreated viewer must not erase its restored active pulse');
   assert.equal(w.currentGreenGraphic.attributes.image_id, currentImageId); assert.equal(w.currentGreenGraphic.removed, false);
   assert(w.currentCone, 'binding the recreated viewer must not erase its restored cone');
+  assert.equal(w._lastBearing, 37);
+  const transitionEvents = new Set(['camera-angle', 'viewer-remove', 'minimap-create', 'minimap-destroy', 'map-center', 'deferred-note']);
+  assert.deepEqual(events.filter(event => transitionEvents.has(event)), entering
+    ? ['viewer-remove', 'camera-angle', 'minimap-create']
+    : ['minimap-destroy', 'viewer-remove', 'camera-angle', 'map-center', 'deferred-note']);
 });

@@ -4,3 +4,7 @@ import type { CSSProperties } from 'react';
 export function navigationFeedbackStyle(): CSSProperties {
   return { display: 'flex', alignItems: 'center', gap: '6px' };
 }
+
+export function recoveryFeedbackStyle(): CSSProperties {
+  return { ...navigationFeedbackStyle(), color: '#ffc107' };
+}

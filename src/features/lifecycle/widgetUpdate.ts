@@ -1,3 +1,4 @@
+import { observeViewerContainer } from './viewerResize';
 import type { PlacesSourceConfig } from '../places/placesSource';
 
 /** Configuration consumed by update reconciliation, including the existing Places source identity. */
@@ -196,15 +197,8 @@ function reconcileFeatureDemand<View extends object, Map extends { view: View }>
 function reconcileWidgetVisibility<View extends object, Map extends { view: View }>(prevProps: WidgetUpdateProps,
   prevState: WidgetUpdateState<Map>, host: WidgetUpdateHost<View, Map>): void {
     if (prevState.isFullscreen !== host.state.isFullscreen) {
-      if (host.resizeObserver) host.resizeObserver.disconnect();
-      host.resizeObserver = new ResizeObserver(() => {
-        if (host.viewer?.resize) host.viewer.resize();
-      });
-      if (host.container()) {
-        host.resizeObserver.observe(host.container()!);
-      }
+      observeViewerContainer(host, true);
     }
-
 
     // Minimized: Keep listeners, but clean up viewer if needed
     if (prevProps.visible && !host.props.visible) {
