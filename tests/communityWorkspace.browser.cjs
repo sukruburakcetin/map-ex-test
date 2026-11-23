@@ -1,4 +1,5 @@
 /** Actual notes-panel and workspace React UI; service responses are controlled fixtures. */
+const { loadReact } = require('./helpers/browserReact.cjs');
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),ts=require(process.env.MAPILLARY_TYPESCRIPT||'typescript'),{chromium}=require(process.env.MAPILLARY_PLAYWRIGHT||'playwright');
 const root=path.resolve(__dirname,'..'),modules={};
 function add(file){const key=path.relative(root,file).replace(/\\/g,'/');if(modules[key])return key;const code=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React,jsxFactory:'jsx'}}).outputText;modules[key]={code,deps:{}};for(const match of code.matchAll(/require\(["']([^"']+)["']\)/g)){const id=match[1];if(id==='jimu-core'||id.endsWith('WidgetLocale'))continue;let resolved=path.resolve(path.dirname(file),id);if(!path.extname(resolved)){const names=fs.readdirSync(path.dirname(resolved));let name;for(const extension of ['.ts','.tsx']){name=names.find(name=>name.toLowerCase()===(path.basename(resolved)+extension).toLowerCase());if(name)break;}if(!name)throw Error('Unresolved '+resolved);resolved=path.join(path.dirname(resolved),name);}modules[key].deps[id]=add(resolved);}return key;}
@@ -36,11 +37,17 @@ const owner='10000000-0000-4000-8000-000000000001',member='10000000-0000-4000-80
  });
  let checks=0;
  try{
-  await page.goto('https://demo.test/');await page.addScriptTag({path:process.env.REACT_UMD_PATH||'/tmp/note-search-react/package/umd/react.development.js'});await page.addScriptTag({path:process.env.REACT_DOM_UMD_PATH||'/tmp/note-search-react-dom/package/umd/react-dom.development.js'});await page.addScriptTag({content:bootstrap});
+  await page.goto('https://demo.test/');await loadReact(page);await page.addScriptTag({content:bootstrap});
   await page.getByRole('tab',{name:'Local (1)',exact:true}).waitFor();assert.equal(requests.length,0);checks++;
   const expand=page.getByRole('button',{name:'Expand notes panel',exact:true});
   const collapsed=await expand.evaluate(node=>node.closest('.mly-notes-sheet').getBoundingClientRect().height);
   await expand.click();const collapse=page.getByRole('button',{name:'Collapse notes panel',exact:true});assert.equal(await collapse.getAttribute('aria-expanded'),'true');
+  // Wait for the height transition to reach the expanded size before measuring it.
+  await page.waitForFunction(() => {
+   const host = document.getElementById('root');
+   const sheet = host.querySelector('.mly-notes-sheet');
+   return sheet && Math.abs(sheet.getBoundingClientRect().height - host.clientHeight * 0.92) < 1;
+  });
   assert(await collapse.evaluate(node=>node.closest('.mly-notes-sheet').getBoundingClientRect().height)>collapsed);assert.equal(requests.length,0);checks++;
   await collapse.focus();await page.keyboard.press('Space');await page.getByRole('button',{name:'Expand notes panel',exact:true}).waitFor();checks++;
 
@@ -155,7 +162,7 @@ const owner='10000000-0000-4000-8000-000000000001',member='10000000-0000-4000-80
   // Real mobile context: CSS-pixel typography, coarse-pointer targets, no horizontal overflow.
   const phone=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true});
   await phone.setContent('<meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:0}</style><body></body>');
-  await phone.addScriptTag({path:process.env.REACT_UMD_PATH||'/tmp/note-search-react/package/umd/react.development.js'});await phone.addScriptTag({path:process.env.REACT_DOM_UMD_PATH||'/tmp/note-search-react-dom/package/umd/react-dom.development.js'});await phone.addScriptTag({content:bootstrap});
+  await loadReact(phone);await phone.addScriptTag({content:bootstrap});
   await phone.addStyleTag({content:'body {font-family: Arial,sans-serif;} label {font-size: 18px; margin-bottom: 18px;} input, select, textarea {font-size: 18px; line-height: 2; padding: 14px;} p {margin: 20px 0;}'});
   await phone.evaluate(()=>Object.assign(document.getElementById('root').style,{width:'100%',height:'844px'}));
   await phone.getByRole('tab',{name:'Workspaces',exact:true}).click();await phone.getByText('Collaboration workspace',{exact:true}).waitFor();

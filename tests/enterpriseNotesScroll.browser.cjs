@@ -1,4 +1,5 @@
 /** Compact Enterprise sheet: real React/Chromium geometry and scrolling; service calls are fixtures. */
+const { loadReact } = require('./helpers/browserReact.cjs');
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),ts=require(process.env.MAPILLARY_TYPESCRIPT||'typescript'),{chromium}=require(process.env.MAPILLARY_PLAYWRIGHT||'playwright');
 const root=path.resolve(__dirname,'..'),modules={};
 function add(file){const key=path.relative(root,file).replace(/\\/g,'/');if(modules[key])return key;const code=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React,jsxFactory:'jsx'}}).outputText;modules[key]={code,deps:{}};for(const match of code.matchAll(/require\(["']([^"']+)["']\)/g)){const id=match[1];if(id==='jimu-core'||id.endsWith('WidgetLocale'))continue;let resolved=path.resolve(path.dirname(file),id);if(!path.extname(resolved)){const names=fs.readdirSync(path.dirname(resolved));let name;for(const extension of ['.ts','.tsx']){name=names.find(name=>name.toLowerCase()===(path.basename(resolved)+extension).toLowerCase());if(name)break;}if(!name)throw Error('Unresolved '+resolved);resolved=path.join(path.dirname(resolved),name);}modules[key].deps[id]=add(resolved);}return key;}
@@ -15,8 +16,7 @@ window.root=ReactDOM.createRoot(host);window.panelProps={notes:notes.slice(0,4).
 (async()=>{const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1700,height:900}}),errors=[];page.on('pageerror',error=>errors.push(error.message));let checks=0;
 try{
  await page.setContent('<html><head><style>label, input, summary, p, button { font-size:19px; line-height:2; }</style></head><body style="margin:0"></body></html>');
- await page.addScriptTag({path:process.env.REACT_UMD_PATH||path.join(path.dirname(require.resolve('react/package.json')),'umd/react.development.js')});
- await page.addScriptTag({path:process.env.REACT_DOM_UMD_PATH||path.join(path.dirname(require.resolve('react-dom/package.json')),'umd/react-dom.development.js')});
+ await loadReact(page);
  await page.addScriptTag({content:bootstrap});
  for(const [width,height] of [[1566,650],[393,480],[240,480],[393,300]]){
   await page.evaluate(([w,h])=>mount(w,h),[width,height]);await page.getByRole('tab',{name:'Enterprise',exact:true}).click();

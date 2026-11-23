@@ -1,4 +1,5 @@
 /** Mount actual note lists with real React/Chromium; only host SDK and locale context are fixtures. */
+const { loadReact } = require('./helpers/browserReact.cjs');
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const ts=require(process.env.MAPILLARY_TYPESCRIPT||'typescript'),{chromium}=require(process.env.MAPILLARY_PLAYWRIGHT||'playwright');
 const root=path.resolve(__dirname,'..'),modules={};
@@ -12,8 +13,7 @@ let currentRoot;window.mount=(kind='local',width=320)=>{currentRoot?.unmount();d
 (async()=>{const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});const page=await browser.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));let checks=0;
 try{
  await page.setContent('<html><body></body></html>');
- await page.addScriptTag({path:process.env.REACT_UMD_PATH||'/tmp/note-search-react/package/umd/react.development.js'});
- await page.addScriptTag({path:process.env.REACT_DOM_UMD_PATH||'/tmp/note-search-react-dom/package/umd/react-dom.development.js'});
+ await loadReact(page);
  await page.addScriptTag({content:bootstrap});
  await page.evaluate(()=>mount());const search=page.getByRole('searchbox',{name:'Search notes'});await search.waitFor();
  assert.equal(await page.getByRole('status').textContent(),'3 of 3 notes');checks++;

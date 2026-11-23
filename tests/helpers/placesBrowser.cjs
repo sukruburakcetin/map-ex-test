@@ -1,6 +1,7 @@
 /** Browser fixtures compile current feature modules; only host/locale boundaries are controlled. */
 const fs = require('node:fs');
 const path = require('node:path');
+const { loadReact } = require('./browserReact.cjs');
 const ts = require(process.env.MAPILLARY_TYPESCRIPT || 'typescript');
 const { chromium } = require(process.env.MAPILLARY_PLAYWRIGHT || 'playwright');
 const sourceRoot = path.resolve(__dirname, '../../src');
@@ -26,16 +27,7 @@ function bundle(entries) {
   entries.forEach(add);
   return modules;
 }
-function reactScript(name, environment) {
-  const file = process.env[environment] || path.join(path.dirname(require.resolve(name + '/package.json')), 'umd', name + '.development.js');
-  if (!fs.existsSync(file)) throw new Error(`Set ${environment} to the React 18 UMD development script`);
-  return file;
-}
 async function launch() {
   return chromium.launch({ ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ['--no-sandbox'] });
 }
-async function addReact(page) {
-  await page.addScriptTag({ path: reactScript('react', 'REACT_UMD_PATH') });
-  await page.addScriptTag({ path: reactScript('react-dom', 'REACT_DOM_UMD_PATH') });
-}
-module.exports = { bundle, launch, addReact };
+module.exports = { bundle, launch, addReact: loadReact };

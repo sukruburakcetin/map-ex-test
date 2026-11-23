@@ -5509,7 +5509,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const view = this.state.jimuMapView?.view;
     const imageId = String(attrs?.image_id || "");
     if (!imageId) { this.clearTurboHoverDetails(); return; }
-    const individualPoint = !!view && view.zoom >= 14 && !attrs.turbo_representative;
+    const individualPoint = !!view && view.zoom >= ZOOM.TILE_FETCH && !attrs.turbo_representative;
     const changed = this._currentHoveredFeatureId !== imageId || this._hoveredCoveragePoint !== individualPoint;
     this._hoveredCoveragePoint = individualPoint;
     // The next point updates membership below; do not clear/rebuild the same
@@ -5560,10 +5560,17 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       if (!isCurrent()) return;
       const panorama = data.is_pano === true;
       if (String(data.id) === previewId && this._turboHoverAnchor &&
-          (!panorama || (individualPoint && previewId === imageId))) {
+          (!panorama || (individualPoint && view && view.zoom >= ZOOM.TILE_FETCH && previewId === imageId))) {
         this._turboHoverBearing ??= new HoverBearingSector(
           properties => new this.ArcGISModules.Point(properties), () => document.createElement('div'));
-        this._turboHoverBearing.show(this._turboHoverAnchor, hoverPreviewBearing(data), false, panorama ? 14 : undefined);
+        const readPanoramaBearing = panorama ? () => {
+          const viewer = this.mapillaryViewer;
+          if (!viewer || String(this.state.imageId) !== previewId) return undefined;
+          const confirmed = this._currentImageBearing.read(viewer, previewId);
+          return confirmed === undefined ? undefined : this._sharedStartupBearing ?? confirmed;
+        } : undefined;
+        this._turboHoverBearing.show(this._turboHoverAnchor, hoverPreviewBearing(data),
+          panorama ? ZOOM.TILE_FETCH : undefined, readPanoramaBearing);
       }
       this._renderedCoveragePreviewOwner = controller;
       renderImageryHoverCard(this.tooltipDiv, data, fallbackDate, undefined, this._presentation, finishPreview);

@@ -16,16 +16,20 @@ function visibleLabel(n){
  if(ts.isTemplateExpression(n))return words(n.head.text)||n.templateSpans.some(s=>words(s.literal.text)||visibleLabel(s.expression));return false;
 }
 test('owned translated actions use the shared policy; icon controls retain their own sizing',()=>{
- const missing=[];let labels=0,icons=0;
+ const missing=[];let labels=0,icons=0,compactCoverageActions=0;
  for(const file of files(root+'/src')){const source=fs.readFileSync(file,'utf8'),sf=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);function visit(n){
   if(ts.isJsxElement(n)&&['button','Button'].includes(n.openingElement.tagName.getText(sf))){const cl=n.openingElement.attributes.properties.find(a=>ts.isJsxAttribute(a)&&a.name.getText(sf)==='className'),name=cl?.initializer?.getText(sf)||'';
    // Location title and symbol-only rails deliberately retain their navigation geometry.
    const excluded=/mly-rail-button|mly-info-toggle|mly-info-width-toggle|mly-utility-button|mly-dock-button/.test(name);
-   if(!excluded&&n.children.some(visibleLabel)){labels++;if(!name.includes('mly-text-action'))missing.push(path.relative(root,file)+':'+(sf.getLineAndCharacterOfPosition(n.getStart(sf)).line+1));}
+   // The coverage bar has a fixed startup height and its own tested short-label/ellipsis policy.
+   const compactCoverageAction=path.relative(root,file).split(path.sep).join('/')==='src/features/coverage/CoverageGuide.tsx' &&
+    name.includes('"mly-coverage-bar-action mly-coverage-action-has-short"') && name.includes('"mly-coverage-bar-action"');
+   if(compactCoverageAction){compactCoverageActions++;assert(!name.includes('mly-text-action'));}
+   if(!excluded&&!compactCoverageAction&&n.children.some(visibleLabel)){labels++;if(!name.includes('mly-text-action'))missing.push(path.relative(root,file)+':'+(sf.getLineAndCharacterOfPosition(n.getStart(sf)).line+1));}
    if(excluded){icons++;assert(!name.includes('mly-text-action'));}
   }ts.forEachChild(n,visit);}visit(sf);
  }
- assert.deepEqual(missing,[],'Mark new text actions with mly-text-action, including callbacks with dynamic labels.');assert(labels>0);assert(icons>0);
+ assert.deepEqual(missing,[],'Mark new text actions with mly-text-action, including callbacks with dynamic labels.');assert(labels>0);assert(icons>0);assert.equal(compactCoverageActions,1);
 });
 test('both runtime and settings locale roots install the shared stylesheet for all languages',()=>{
  for(const file of ['WidgetLocale.tsx','SettingsLocale.tsx']){const source=fs.readFileSync(root+'/src/i18n/'+file,'utf8');assert.match(source,/import \{ textButtonCss \} from '\.\.\/styles\/textButtons'/);assert.match(source,/<style>\{textButtonCss\}<\/style>/);}
