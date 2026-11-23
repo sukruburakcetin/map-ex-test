@@ -166,6 +166,30 @@ export const infoDetailsCss = `
   .mly-info-panel .info-box button { min-height: 24px; }
 }
 
+/* Medium-height split panes need a proportional cap even above the phone width. */
+@container mly-viewer-pane (width > 480px) and (height > 200px) {
+  .mly-info-panel.is-open {
+    max-height: max(calc(100% - 170px), min(68%, 220px, calc(100% - 64px))) !important;
+  }
+  .mly-info-panel .mly-info-scroll { overscroll-behavior-y: contain; }
+}
+/* Leave room below the panel for image navigation and let the tools scroll. */
+@container mly-viewer-pane (max-height: 200px) {
+  .mly-info-panel { max-height: max(34px, min(68%, calc(100% - 50px))) !important; }
+  .mly-info-panel .mly-info-toggle,
+  .mly-info-panel .mly-info-width-toggle { min-height: 34px; }
+  .mly-info-panel .mly-info-width-toggle { flex-basis: 28px; }
+  .mly-info-panel .mly-info-scroll { overscroll-behavior-y: contain; }
+}
+
+/* Compact expanded tools on the smallest panes. Explicit wide mode keeps its width. */
+@container mly-viewer-pane (max-width: 280px) {
+  .mly-info-panel.is-open:not(.is-wide) { width: clamp(84px, 36cqw, 96px); }
+}
+@container mly-viewer-pane (max-width: 280px) and (max-height: 200px) {
+  .mly-info-panel.is-open { max-height: max(34px, min(62%, calc(100% - 64px))) !important; }
+}
+
 /* Analysis/routing cards fit their actual parent in every host and input mode.
  * Named queries measure the infobox itself, including a compact Widget Controller. */
 .mly-info-panel :is(.mly-coverage-results,.mly-route-controls,.mly-route-points) { width: 100% !important; max-width: 100%; min-width: 0; box-sizing: border-box; flex-shrink: 0; }

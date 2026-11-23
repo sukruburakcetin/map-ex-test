@@ -86,7 +86,7 @@ export const CategoryMultiSelect = React.memo(function CategoryMultiSelect({ lab
 .mly-category-menu .mly-category-icon{display:flex;align-items:center;justify-content:center;width:24px;height:20px}
 .mly-category-menu .mly-category-icon img{object-fit:contain}
 @media(max-width:600px){
-.mly-category-menu{font:13px/1.3 "Segoe UI",sans-serif!important;-webkit-text-size-adjust:100%;text-size-adjust:100%;padding:8px!important;border-radius:12px!important;overflow-y:hidden!important;gap:4px!important}
+.mly-category-menu{font:13px/1.3 "Segoe UI",sans-serif!important;-webkit-text-size-adjust:100%;text-size-adjust:100%;padding:8px!important;border-radius:12px!important;overflow-y:auto!important;gap:4px!important}
 .mly-category-menu button{font:13px/1.25 "Segoe UI",sans-serif!important;min-height:44px!important;padding:4px 6px!important}
 .mly-category-menu input[type=search]{min-height:44px!important;height:44px!important;line-height:1.25!important;padding:6px!important}
 .mly-category-menu .mly-category-selection-bar{margin-top:6px; margin-bottom:2px}
@@ -95,7 +95,7 @@ export const CategoryMultiSelect = React.memo(function CategoryMultiSelect({ lab
 .mly-category-menu .mly-category-actions{padding-top:4px!important}
 .mly-category-menu input[type=search]{font-size:16px!important;box-sizing:border-box}
 .mly-category-menu .mly-category-option{min-height:44px;padding:4px 0;box-sizing:border-box}
-.mly-category-menu .mly-category-options{min-height:0!important;max-height:none!important}
+.mly-category-menu .mly-category-options{min-height:44px!important;max-height:none!important}
 }
 @media(max-width:600px){
 .mly-category-menu--short{font-size:12px!important;padding:6px!important;gap:3px!important;overflow-y:auto!important}

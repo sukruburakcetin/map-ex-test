@@ -4,21 +4,23 @@ export class HoverBearingSector {
  private element: HTMLDivElement | null = null;
  private bearing: number | null = null;
  private panorama = false;
+ private minimumZoom?: number;
  private last = -Infinity;
  private cache: { view: any; geometry: any; camera: any; zoom: number; rotation: number; bearing: number; transform: string } | null = null;
  constructor(private readonly point: (properties: any) => any, private readonly create: () => HTMLDivElement) {}
- show(parent: HTMLElement, bearing: unknown, pano: boolean): void {
+ show(parent: HTMLElement, bearing: unknown, pano: boolean, minimumZoom?: number): void {
   const valid=typeof bearing === 'number' && Number.isFinite(bearing);
-  if(!pano && !valid){this.clear();return;}
+  if(!valid){this.clear();return;}
   const normalized=valid ? (((bearing as number)%360)+360)%360 : null;
   if(this.element?.parentElement!==parent || this.panorama!==pano)this.clear();
   this.panorama=pano;
+  this.minimumZoom=minimumZoom;
   if(!this.element){
    const el=this.create();el.setAttribute('aria-hidden','true');
    Object.assign(el.style,{position:'absolute',pointerEvents:'none',width:'60px',height:'60px',left:'50%',top:'50%',transform:'translate(-50%,-50%)',display:'none'});
    // The seven-pixel opening keeps the existing 6–11px brown pulse unobstructed.
    const a=25*Math.PI/180,r=24,inner=7,x=Math.sin(a),y=Math.cos(a);
-   el.innerHTML=pano ? `<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="30" r="18" fill="none" stroke="#22d3ee" stroke-opacity="0.75" stroke-width="3"/><g data-panorama-pointer="true" style="display:none"><path d="M30 3 L35 11 L25 11 Z" fill="#22d3ee" fill-opacity="0.9" stroke="#0f8f9d" stroke-width="1"/></g></svg>` : `<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><g><path d="M${30-inner*x} ${30-inner*y} L${30-r*x} ${30-r*y} A${r} ${r} 0 0 1 ${30+r*x} ${30-r*y} L${30+inner*x} ${30-inner*y} A${inner} ${inner} 0 0 0 ${30-inner*x} ${30-inner*y} Z" fill="#22d3ee" fill-opacity="0.45" stroke="#0f8f9d" stroke-width="1"/></g></svg>`;
+   el.innerHTML=pano ? `<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><g data-panorama-pointer="true" style="display:none"><path d="M30 3 L35 11 L25 11 Z" fill="#22d3ee" fill-opacity="0.9" stroke="#0f8f9d" stroke-width="1"/></g></svg>` : `<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><g><path d="M${30-inner*x} ${30-inner*y} L${30-r*x} ${30-r*y} A${r} ${r} 0 0 1 ${30+r*x} ${30-r*y} L${30+inner*x} ${30-inner*y} A${inner} ${inner} 0 0 0 ${30-inner*x} ${30-inner*y} Z" fill="#22d3ee" fill-opacity="0.45" stroke="#0f8f9d" stroke-width="1"/></g></svg>`;
    parent.appendChild(el);this.element=el;
   }
   if(this.bearing!==normalized){this.cache=null;this.last=-Infinity;if(pano)this.element?.querySelector<SVGGElement>('g')?.style.setProperty('display','none');}
@@ -26,7 +28,8 @@ export class HoverBearingSector {
  }
  update(view: any, geometry: any, pixel: {x:number;y:number} | null | undefined, now: number): void {
   const el=this.element,bearing=this.bearing;if(!el)return;
-  if(!pixel || !Number.isFinite(pixel.x)||!Number.isFinite(pixel.y)){el.style.display='none';return;}
+  if(!pixel || !Number.isFinite(pixel.x)||!Number.isFinite(pixel.y) ||
+     (this.minimumZoom !== undefined && view.zoom < this.minimumZoom)){el.style.display='none';return;}
   const pointer=this.panorama ? el.querySelector<SVGGElement>('g') : null;
   if(this.panorama && el.style.display!=='block')el.style.display='block';
   if(bearing===null){if(pointer)pointer.style.display='none';return;}
@@ -34,6 +37,13 @@ export class HoverBearingSector {
   try {
    const cached=this.cache;let orientation:string;
    if(cached&&cached.view===view&&cached.geometry===geometry&&cached.camera===view.camera&&cached.zoom===view.zoom&&cached.rotation===view.rotation&&cached.bearing===bearing&&view.stationary===true&&view.updating===false)orientation=cached.transform;
+   else if (this.panorama && view.type === '2d' && view.zoom < 4 &&
+            view.spatialReference?.isWebMercator && Number.isFinite(view.rotation)) {
+    // Web Mercator preserves local angles. At world scale the projected
+    // baseline can be under a pixel, so use the map's heading directly.
+    orientation = `rotate(${bearing + view.rotation})`;
+    this.cache={view,geometry,camera:view.camera,zoom:view.zoom,rotation:view.rotation,bearing,transform:orientation};
+   }
    else {
     const lon=geometry.longitude,lat=geometry.latitude;
     if(!Number.isFinite(lon)||!Number.isFinite(lat)){if(pointer)pointer.style.display='none';else el.style.display='none';return;}

@@ -1,3 +1,121 @@
+<!-- open-panorama-bearing-stage126 -->
+## Stage 126 — hover bearing for the open panorama
+
+When presenting a hover preview of the same confirmed open panorama, the widget reads the existing image-scoped viewer heading. Other previews use stored capture metadata. The world-zoom Web Mercator branch adds map rotation, matching the sign seen in the user's projected arrow sample. The update adds no requests or timers.
+
+Apply `apply-open-panorama-bearing-fix.cjs` from stage 125. The 48 focused bearing tests passed. Live Experience Builder verification remains pending.
+
+
+<!-- world-panorama-bearing-stage125 -->
+## Stage 125 — world-zoom panorama hover arrow
+
+At zoom below 4 in a 2D Web Mercator map, the panorama arrow uses capture compass bearing relative to map rotation. This bypasses the tiny projected baseline and saves one screen projection on that path. Other projections, 3D and perspective previews retain their existing path. No additional requests, animation ticks or cache work were added.
+
+Apply `apply-world-panorama-bearing-fix.cjs` from stage 124. Live Experience Builder verification remains pending.
+
+
+<!-- split-height-info-box-stage124 -->
+## Stage 124 — height budget for split-view info box
+
+An expanded info box on a pane just beyond the 480 px mobile breakpoint now gets a proportional height allowance. The 502 px wide by 250 px tall viewer regression models the reported 502 × 615 split experience. Existing narrow and very short pane rules continue to apply.
+
+Apply `apply-split-height-info-box.cjs` from stage 123. Live Experience Builder verification remains pending.
+
+
+<!-- single-line-coverage-label-stage123 -->
+## Stage 123 — single-line coverage analysis labels
+
+The Analyze Coverage button keeps its localized label on one line. Long labels use an ellipsis within the compact panel and keep the full accessible name. Chromium passed 42 focused cases across 13 shipped locales plus long-label stress at an 84 px button container.
+
+Apply `apply-single-line-coverage-label.cjs` from stage 122. Live Experience Builder verification remains pending.
+
+
+<!-- compact-expanded-info-box-stage122 -->
+## Stage 122 — compact expanded info box
+
+At pane widths up to 280 px, the default expanded panel takes less horizontal space. Its height cap leaves 64 px below in short panes. The title and tap targets retain their sizing, details scroll inside the box, and the existing widen control still selects the wide layout.
+
+Chromium verified clearance above the collapsed utility dock, keyboard scrolling and explicit wide mode. Apply `apply-compact-expanded-info-box.cjs` from stage 121. Live Experience Builder verification remains pending.
+
+
+<!-- short-info-box-stage121 -->
+## Stage 121 — info box layout for short viewer panes
+
+At pane heights of 200 px or less, the image title keeps a larger tap target and the expanded tools scroll inside the panel. The panel reserves room below for image navigation. Playback clears the taller collapsed title in the narrowest panes.
+
+Chromium verified the panel bounds and keyboard scrolling at a 160 px pane height. Apply `apply-short-info-box.cjs` from stage 120. Live Experience Builder verification remains pending.
+
+
+<!-- responsive-splash-stage120 -->
+## Stage 120 — splash layout for short viewer panes
+
+Below 240 px of pane height, the splash uses a compact brand strip and brings the start action and loading status into view. The normal splash artwork remains on taller panes. Chromium checked the Spanish splash at five sizes down to 216 × 150 px.
+
+Apply `apply-responsive-splash.cjs` from stage 119. Live Experience Builder verification remains pending.
+
+
+<!-- compact-viewer-controls-stage119 -->
+## Stage 119 — responsive controls for narrow and short viewer panes
+
+The embedded viewer exposes its own size to container queries. Its control rail and utility dock adapt when the pane is 280 px wide or 200 px tall or smaller. The dock's expanded minimize strip is wider, and the collapsed toggle has a compact 24 px footprint. On the narrowest panes playback has a separate row below the collapsed image title. Experience Builder map controls belong to the host map widget.
+
+Chromium layout checks passed for normal, short and narrow panes. The 30 viewer presentation cases passed. Apply `apply-compact-viewer-controls.cjs` from stage 118. Live Experience Builder layout verification remains pending for stage 119.
+
+
+<!-- coverage-bar-startup-stage118 -->
+## Stage 118 — coverage bar on first render
+
+The Coverage Guide renders its responsive layout styles before ArcGIS startup. Its status action uses a content-driven, single-line button. At widths up to 280 px, zoom-to-coverage actions use the existing shorter localized label and keep the full accessible name. Chromium verified the initial Spanish layout at 240 and 393 px with the shared text-action stylesheet present and the startup stylesheet absent.
+
+Apply `apply-coverage-bar-startup-fix.cjs` from stage 117. Live Experience Builder cold-reload verification remains pending.
+
+
+<!-- mobile-detection-display-stage117 -->
+## Stage 117 — mobile detection Display sizing
+
+The Display panel uses the category picker's 8 px side insets through the 600 px mobile breakpoint. Percentage labels stay on one line, while the grid moves buttons to another row as space tightens. Translated action labels can wrap and coarse-pointer buttons retain their 44 px minimum height.
+
+Apply `apply-mobile-display-sizing.cjs` from stage 116. The recorded Experience Builder 1.21.0 build and narrow Spanish picker confirmation apply to stage 116. Verify the updated Display panel in the host separately.
+
+
+<!-- browser-validation-stage116 -->
+## Stage 116 — P12 browser validation fixes
+
+The info-box layout fixture now renders with React and exercises all 432 layout cases. On narrow mobile screens the category picker lets the dialog scroll and reserves space for a checkbox row when translated controls wrap. Its browser fixture also waits for Escape to close the dialog before opening it again.
+
+Validation passed for 80 picker cases across 13 locales and 22 focused portable tests. The ExB build and live acceptance matrix remain pending. See `docs/development/stage-115-validation.md` for the earlier portable checkpoint.
+
+
+<!-- architecture-stage115 -->
+## Stage 115 — P11 architecture review
+
+The architecture and continuation guides now describe the stage 115 source and the remaining widget responsibilities. Removed the unused `LiveSequenceFrame` type import. P12 is next. It covers full portable validation and exact-source Experience Builder build and browser evidence.
+
+
+<!-- image-follow-stage114 -->
+## Stage 114 — 2D image follow navigation
+
+P10 moves the 2D follow target and projection fallback into the existing image follow policy. The widget supplies the ArcGIS bindings and retains the active-view navigation guard, animation selection and 3D camera dispatch. The policy preserves the current scale and the quarter-extent offsets. The existing cone owner remains responsible for cone rendering.
+
+P11 architecture and documentation review is the next planned pass. Live Experience Builder camera and cone checks remain pending.
+
+
+<!-- enterprise-attachment-stage113 -->
+## Stage 113 — Enterprise note attachment upload
+
+P10 continues with the explicit attachment upload command. The field-note feature owns capability checks, file validation, the GlobalID and object ID lookup, the single upload and the attachment list reload. The widget binds the selected image, destination, panel revision and writer lifetime.
+
+Four focused tests cover the successful write, unsupported layers, changed note identity and lost responses without retry. Live Experience Builder upload verification remains pending. The next P10 candidate is map-to-image synchronization and cone policy.
+
+
+<!-- point-cloud-keyboard-stage112 -->
+## Stage 112 — point-cloud keyboard routing
+
+P10 began by moving point-cloud keyboard routing to `PointCloudKeyboard.ts`. It uses the existing calibration owner for movement keys and delegates ground mode, color mode and offset feedback to the widget. Visibility and typing guards, shortcut ordering and render timing follow the established behavior.
+
+The next P10 candidate is a bounded pass over shared-note commands. Experience Builder keyboard smoke testing remains pending. See `docs/development/point-cloud-keyboard.md`.
+
+
 <!-- native-coverage-stage111 -->
 ## Stage 111 — P09 native coverage style and layer ordering
 

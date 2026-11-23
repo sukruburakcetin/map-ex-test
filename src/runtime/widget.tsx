@@ -193,6 +193,7 @@ import { PointCloudCrop } from '../features/point-cloud/PointCloudCrop';
 import { PointCloudExport } from '../features/point-cloud/PointCloudExport';
 import { showPointCloudExportFeedback } from '../features/point-cloud/PointCloudExportFeedback';
 import { PointCloudCalibration } from '../features/point-cloud/PointCloudCalibration';
+import { PointCloudKeyboard } from "../features/point-cloud/PointCloudKeyboard";
 import { PointCloudRings } from '../features/point-cloud/PointCloudRings';
 import { PointCloudViewshed } from '../features/point-cloud/PointCloudViewshed';
 import { PointCloudSight } from '../features/point-cloud/PointCloudSight';
@@ -220,7 +221,7 @@ import type { DetectionExplorerOptions, DetectionSummary } from '../features/det
 import "mapillary-js/dist/mapillary.css";
 import { IMAGE_INFORMATION_FIELDS, normalizeImageInformation, viewerImageInformation, type ImageInformationHost } from '../features/image-information/ImageInformation';
 import { InfoBox } from "../components/InfoBox";
-import { shouldRecenterImage } from "../features/imagery/imageFollowPolicy";
+import { followMapImage2D, shouldRecenterImage } from "../features/imagery/imageFollowPolicy";
 import { sceneFollowCamera } from '../features/imagery/sceneFollowCamera';
 import { FilterBar } from "../components/FilterBar";
 import { SplashScreen } from "../components/SplashScreen";
@@ -240,13 +241,14 @@ import { findNearbySequenceFrame } from "../features/coverage/nearbySequenceFram
 import { CoverageFrameLookup, coverageFrameKey } from "../features/coverage/CoverageFrameLookup";
 import { RepresentativePickCache } from "../features/coverage/RepresentativePickCache";
 import { DelayedHoverStatus } from "../features/imagery/DelayedHoverStatus";
-import { clearImageryHoverCardCache, renderImageryHoverCard, positionImageryHoverCard } from "../features/imagery/hoverCard";
+import { clearImageryHoverCardCache, renderImageryHoverCard, positionImageryHoverCard, visibleImageryHoverId } from "../features/imagery/hoverCard";
 import { fetchGraphJson } from '../services/mapillary/graphJson';
 import { queryEnterpriseNotesPage } from '../features/field-notes/enterpriseList';
 import { matchesEnterpriseLayerUrl, resolveEnterpriseNotesEndpoint } from '../features/field-notes/enterpriseEndpoint';
 import { buildEnterpriseNoteAttributes } from '../features/field-notes/enterpriseAttributes';
 import { assertEnterpriseNoteUnchanged, buildEnterpriseNoteEditAttributes } from '../features/field-notes/enterpriseEdit';
-import { prepareCurrentImageAttachment, validateNoteAttachmentFile } from '../features/field-notes/attachmentFiles';
+import { prepareCurrentImageAttachment } from '../features/field-notes/attachmentFiles';
+import { uploadEnterpriseNoteAttachment } from '../features/field-notes/enterpriseAttachmentUpload';
 import { WorkspaceLocationPicker } from '../features/community-notes/WorkspaceLocationPicker';
 import type { WorkspaceLocationRequest } from '../features/community-notes/WorkspaceLocationPicker';
 import { FieldNoteMap } from '../features/field-notes/FieldNoteMap';
@@ -281,7 +283,6 @@ import { findSequenceCandidates } from '../features/imagery/sequenceCandidates';
 import { SequenceDemandData } from '../features/imagery/SequenceDemandData';
 import { fetchSequenceCoordinates, readCachedSequenceCoordinates } from '../features/imagery/sequenceCoordinates';
 import { LiveSequenceFrames, LatestFrameDetails, LIVE_SEQUENCE_LIMITS, yieldSequenceWork } from '../features/imagery/LiveSequenceFrames';
-import type { LiveSequenceFrame } from '../features/imagery/LiveSequenceFrames';
 import { SharedSequenceRequests } from '../features/imagery/sharedSequenceRequests';
 import { sequenceCacheStore } from '../features/imagery/sequenceCacheStore';
 import { NearbyImageDiscovery } from '../features/imagery/nearbyDiscovery';
@@ -1523,7 +1524,9 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     hide: () => this.setState({ zoomWarningMessage: undefined }),
     clear: () => this.setState({ zoomWarningMessage: undefined, turboWarningAction: undefined, turboWarningIsHelp: false }),
   });
+  private _renderedCoveragePreviewOwner?: AbortController;
   private _currentHoveredFeatureId: string | null = null;
+  private _hoveredCoveragePoint = false;
   private _coverageSelectionTargets = new CoverageSelectionTargets<__esri.Point>();
   private _directionBindings: DirectionHoverBindings | null = null;
   private detectionTagMap: Map<string, string> = new Map();
@@ -5490,6 +5493,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._coverageFrameLookup?.clearHover();
     this._turboHoverInfoAbort?.abort();
     this._turboHoverInfoAbort = null;
+    this._renderedCoveragePreviewOwner = undefined;
     if (this._hoverTimeout) clearTimeout(this._hoverTimeout);
     this._hoverTimeout = null;
     this._currentHoveredFeatureId = null;
@@ -5505,7 +5509,9 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const view = this.state.jimuMapView?.view;
     const imageId = String(attrs?.image_id || "");
     if (!imageId) { this.clearTurboHoverDetails(); return; }
-    const changed = this._currentHoveredFeatureId !== imageId;
+    const individualPoint = !!view && view.zoom >= 14 && !attrs.turbo_representative;
+    const changed = this._currentHoveredFeatureId !== imageId || this._hoveredCoveragePoint !== individualPoint;
+    this._hoveredCoveragePoint = individualPoint;
     // The next point updates membership below; do not clear/rebuild the same
     // sequence's styles while moving between its images.
     if (changed) this.clearTurboHoverDetails(true);
@@ -5552,12 +5558,14 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         : !regionalHover && !localRoute ? imageId : undefined;
     const present = (previewId: string, data: any, fallbackDate: any) => {
       if (!isCurrent()) return;
-      if (String(data.id) === previewId && this._turboHoverAnchor) {
+      const panorama = data.is_pano === true;
+      if (String(data.id) === previewId && this._turboHoverAnchor &&
+          (!panorama || (individualPoint && previewId === imageId))) {
         this._turboHoverBearing ??= new HoverBearingSector(
           properties => new this.ArcGISModules.Point(properties), () => document.createElement('div'));
-        this._turboHoverBearing.show(this._turboHoverAnchor,
-          hoverPreviewBearing(data), !!data.is_pano);
+        this._turboHoverBearing.show(this._turboHoverAnchor, hoverPreviewBearing(data), false, panorama ? 14 : undefined);
       }
+      this._renderedCoveragePreviewOwner = controller;
       renderImageryHoverCard(this.tooltipDiv, data, fallbackDate, undefined, this._presentation, finishPreview);
       this.highlightSequenceOnVTL(data.sequence || attrs.sequence_id || null);
     };
@@ -5599,6 +5607,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         const cached = entry && String(entry.id) === previewId ? entry : undefined;
         if (cached && !needsHoverBearingMetadata(cached)) { present(previewId, cached, fallbackDate); return; }
         // Cached thumbnails/text are useful immediately; only missing network enrichment waits.
+        this._renderedCoveragePreviewOwner = controller;
         renderImageryHoverCard(this.tooltipDiv, cached, fallbackDate, !cached, this._presentation, cached?.thumb_256_url ? finishPreview : undefined);
         const remaining = dwell - (performance.now() - started);
         if (remaining > 0) this._hoverTimeout = setTimeout(async () => {
@@ -6403,98 +6412,87 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
    * 1. KEY DOWN: Accumulates the distance and updates the UI toast,
    * but DOES NOT render the heavy map layer yet.
    */
-  private handleNudgeKeyDown = (e: KeyboardEvent) => {
-    // Only allow nudging if the point cloud is currently visible
-    if (!this.state.pointCloudVisible || !this._pointCloudAcquisition.result) return;
+  private handleNudgeKeyDown = (event: KeyboardEvent) => this.pointCloudKeyboard().keyDown(event);
+  private handleNudgeKeyUp = (event: KeyboardEvent) => this.pointCloudKeyboard().keyUp(event);
 
-    // Ignore keystrokes if the user is typing in a text box
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+  private _pointCloudKeyboard?: PointCloudKeyboard;
 
-    const handled = this._pointCloudCalibration.keyDown(e.key, e.shiftKey);
+  private pointCloudKeyboard(): PointCloudKeyboard {
+    return this._pointCloudKeyboard ??= new PointCloudKeyboard({
+      ready: () => this.state.pointCloudVisible && !!this._pointCloudAcquisition.result,
+      calibration: this._pointCloudCalibration,
+      toggleGround: () => this.toggleKeyboardGroundMode(),
+      toggleColor: () => this.toggleKeyboardCloudColor(),
+      showOffset: () => this.showKeyboardCalibrationOffset(),
+    });
+  }
 
-    switch (e.key.toLowerCase()) {
-      // THE Z-SLICER (GROUND MODE)
-      case "x":
-        this._groundMode = !this._groundMode;
-        if (this._pointCloudMapLayer?.layer) {
-          // Instantly hide any point taller than 1.5 meters
-          this.updatePointCloudDisplay();
-        }
+  private toggleKeyboardGroundMode() {
+    this._groundMode = !this._groundMode;
+    if (this._pointCloudMapLayer?.layer) {
+      // Instantly hide any point taller than 1.5 meters
+      this.updatePointCloudDisplay();
+    }
 
-        if (this._pointCloudViewerRenderer) {
-          this._pointCloudViewerRenderer.updateColors();
+    if (this._pointCloudViewerRenderer) {
+      this._pointCloudViewerRenderer.updateColors();
 
-          // FORCE REDRAW: The microscopic camera hack instantly applies the visual change
-          if (this.mapillaryViewer) {
-            this.mapillaryViewer
-              .getCenter()
-              .then((c: number[]) => {
-                this.mapillaryViewer.setCenter([c[0] + 0.000001, c[1]]);
-              })
-              .catch(() => { });
-          }
-        }
+      // FORCE REDRAW: The microscopic camera hack instantly applies the visual change
+      if (this.mapillaryViewer) {
+        this.mapillaryViewer
+          .getCenter()
+          .then((c: number[]) => {
+            this.mapillaryViewer.setCenter([c[0] + 0.000001, c[1]]);
+          })
+          .catch(() => { });
+      }
+    }
 
+    this.showToast(
+      <span style={navigationFeedbackStyle()}>
+        <Icons.GroundGrid size={14} />
+        <b> {this._t('appGroundMode')} </b> {this._groundMode ? <OwnedMessage source={"ON (Buildings > {value0}m Hidden)"} values={{ value0: String(POINT_CLOUD_CONFIG.GROUND_MODE_HEIGHT_M) }} /> : this._t('appOffFullCloud')}
+      </span>,
+      3000,
+    );
+  }
+
+  private toggleKeyboardCloudColor() {
+    this.setState(
+      (prev) => ({
+        pointCloudColorMode: prev.pointCloudColorMode === "rgb" ? "elevation" : "rgb",
+      }),
+      () => {
         this.showToast(
           <span style={navigationFeedbackStyle()}>
-            <Icons.GroundGrid size={14} />
-            <b> {this._t('appGroundMode')} </b> {this._groundMode ? <OwnedMessage source={"ON (Buildings > {value0}m Hidden)"} values={{ value0: String(POINT_CLOUD_CONFIG.GROUND_MODE_HEIGHT_M) }} /> : this._t('appOffFullCloud')}
+            <b> {this._t('appColorMode')} </b> {this.state.pointCloudColorMode === "elevation" ? this._t('appElevationHeatmap') : this._t('appTrueRgb')}
           </span>,
           3000,
         );
-        e.preventDefault();
-        return;
 
-      case "c":
-        this.setState(
-          (prev) => ({
-            pointCloudColorMode: prev.pointCloudColorMode === "rgb" ? "elevation" : "rgb",
-          }),
-          () => {
-            this.showToast(
-              <span style={navigationFeedbackStyle()}>
-                <b> {this._t('appColorMode')} </b> {this.state.pointCloudColorMode === "elevation" ? this._t('appElevationHeatmap') : this._t('appTrueRgb')}
-              </span>,
-              3000,
-            );
+        // 1. Redraw Esri Map
+        this.renderPointCloudMapLayer();
 
-            // 1. Redraw Esri Map
-            this.renderPointCloudMapLayer();
+        // 2. Redraw Mapillary Viewer
+        if (this._pointCloudViewerRenderer) {
+          this._pointCloudViewerRenderer.updateColors();
+          if (this.mapillaryViewer) this.mapillaryViewer.resize();
+        }
+      },
+    );
+  }
 
-            // 2. Redraw Mapillary Viewer
-            if (this._pointCloudViewerRenderer) {
-              this._pointCloudViewerRenderer.updateColors();
-              if (this.mapillaryViewer) this.mapillaryViewer.resize();
-            }
-          },
-        );
-        e.preventDefault();
-        return;
-    }
-
-    if (handled) {
-      e.preventDefault();
-      this.showToast(
-        <span style={navigationFeedbackStyle()}>
-          <Icons.Crosshair size={14} />
-          <b> {this._t('appTotalOffset')} </b>
-          {Math.abs(this._nudgeX).toFixed(1)} {this._t('appM')} {this._nudgeX > 0 ? this._t('appE') : this._t('appW')},{Math.abs(this._nudgeY).toFixed(1)} {this._t('appM')} {this._nudgeY > 0 ? this._t('appN') : this._t('appS')}
-          {Math.abs(this._nudgeZ).toFixed(1)} {this._t('appM')} {this._nudgeZ > 0 ? this._t('appUp') : this._t('appDn')}
-        </span>,
-        1000,
-      );
-    }
-  };
-
-  /**
-   * Schedule movement-key commits on release through the shared trailing debounce.
-   */
-  private handleNudgeKeyUp = (e: KeyboardEvent) => {
-    if (!this.state.pointCloudVisible || !this._pointCloudAcquisition.result) return;
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-
-    this._pointCloudCalibration.keyUp(e.key);
-  };
+  private showKeyboardCalibrationOffset() {
+    this.showToast(
+      <span style={navigationFeedbackStyle()}>
+        <Icons.Crosshair size={14} />
+        <b> {this._t('appTotalOffset')} </b>
+        {Math.abs(this._nudgeX).toFixed(1)} {this._t('appM')} {this._nudgeX > 0 ? this._t('appE') : this._t('appW')},{Math.abs(this._nudgeY).toFixed(1)} {this._t('appM')} {this._nudgeY > 0 ? this._t('appN') : this._t('appS')}
+        {Math.abs(this._nudgeZ).toFixed(1)} {this._t('appM')} {this._nudgeZ > 0 ? this._t('appUp') : this._t('appDn')}
+      </span>,
+      1000,
+    );
+  }
 
   /**
    * Toggles the Calibration UI Panel
@@ -7122,22 +7120,12 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     try {
       if (this.sharedNotesUrl() !== panel.url) throw new Error("The enterprise layer changed. Reopen attachments before uploading.");
       if (!this.state.isGeneratingRoute) { this.rememberRoutingLoginView(); loginSnapshot = this._routingLoginView; }
-      const layer: __esri.FeatureLayer = new this.ArcGISModules.FeatureLayer({ url: panel.url }); writer = layer; await layer.load();
-      if (!layer.capabilities?.data?.supportsAttachment) throw new Error("Attachments are not enabled on this layer.");
-      if (currentImage) {
-        file = await prepareCurrentImageAttachment(imageId, selectedId => this.fetchMapillaryJson(`${GRAPH_API.BASE}/${encodeURIComponent(selectedId)}?fields=thumb_2048_url`, this.accessToken), fetch);
-      }
-      validateNoteAttachmentFile(file);
-      const field = layer.fields.find(item => item.type === "global-id")?.name;
-      if (!field) throw new Error("The layer is missing its GlobalID field.");
-      const found = await layer.queryFeatures({ where: `${field} = '${panel.globalId}'`, outFields: [layer.objectIdField], returnGeometry: false, num: 1 });
-      if (!found.features.length || found.features[0].attributes[layer.objectIdField] !== panel.objectId) throw new Error("The note changed or is no longer accessible. Reopen attachments.");
-      const form = new FormData(); form.append("attachment", file, file.name);
-      // No automatic retries: a lost response may have already committed the file.
-      const result = await layer.addAttachment(found.features[0], form);
-      if (!result || result.error) throw new Error(result?.error?.message || "The layer did not confirm the attachment.");
-      const attachments = await layer.queryAttachments({ objectIds: [panel.objectId] });
-      if (revision === this._noteAttachmentRevision && !this._sharedNotesDisposed) this.setState({ fieldNoteAttachments: { ...panel, items: attachments[panel.objectId] || [], busy: false, message: "Attachment added." } });
+      const layer: __esri.FeatureLayer = new this.ArcGISModules.FeatureLayer({ url: panel.url });
+      writer = layer;
+      const items = await uploadEnterpriseNoteAttachment(layer, panel, () => currentImage
+        ? prepareCurrentImageAttachment(imageId, selectedId => this.fetchMapillaryJson(`${GRAPH_API.BASE}/${encodeURIComponent(selectedId)}?fields=thumb_2048_url`, this.accessToken), fetch)
+        : file);
+      if (revision === this._noteAttachmentRevision && !this._sharedNotesDisposed) this.setState({ fieldNoteAttachments: { ...panel, items, busy: false, message: "Attachment added." } });
       this._sharedNotesLayer?.refresh();
     } catch (error) {
       if (revision === this._noteAttachmentRevision && !this._sharedNotesDisposed) this.setState({ fieldNoteAttachments: { ...panel, busy: false, error: `${(error as Error).message} Reopen attachments to check whether the file arrived before uploading again.` } });
@@ -7897,15 +7885,24 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         sequence_id: hoveredPoint.sequenceId || this._turboMetadataCache.get(hoveredPoint.imageId)?.sequence
       }
     }) : null;
-    // Regional line previews keep their existing nearest-frame resolution.
+    // Coverage representatives may display a different frame from the picked tile.
     const hoverPixel = this._turboHoverGraphic?.geometry ? view.toScreen(this._turboHoverGraphic.geometry as __esri.Point) : null;
     const previewImageId = this._currentHoveredFeatureId;
+    const displayedImageId = this._turboHoverInfoAbort && !this._turboHoverInfoAbort.signal.aborted &&
+      this._renderedCoveragePreviewOwner === this._turboHoverInfoAbort
+      ? visibleImageryHoverId(this.tooltipDiv) : undefined;
     const coveragePreviewAtClick = pointPreviewAtClick || (this.state.turboModeActive && view.zoom < 14 && this.state.jimuMapView?.view === view &&
       this._turboHoveredScreen && hoverPixel && previewImageId && this._turboHoverGraphic?.geometry &&
       (evt.x - hoverPixel.x) ** 2 + (evt.y - hoverPixel.y) ** 2 <= TURBO_LIMITS.pickRadiusPx ** 2
       ? new this.ArcGISModules.Graphic({
         geometry: this._turboHoverGraphic.geometry.clone?.() || this._turboHoverGraphic.geometry,
-        attributes: { image_id: String(previewImageId), sequence_id: this._coverageFrameHoverTarget?.sequenceId || this._turboMetadataCache.get(String(previewImageId))?.sequence, turbo_representative: true }
+        attributes: {
+          image_id: displayedImageId || previewImageId,
+          sequence_id: (displayedImageId && this._turboMetadataCache.get(displayedImageId)?.sequence) ||
+            this._coverageFrameHoverTarget?.sequenceId || this._turboMetadataCache.get(previewImageId)?.sequence,
+          turbo_representative: true,
+          turbo_displayed_preview: !!displayedImageId
+        }
       })
       : null);
 
@@ -8232,54 +8229,16 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         const camera = sceneFollowCamera(view, activeImg.lon, activeImg.lat);
         if (camera) this.navigateMapView(view, camera, followOptions);
       }
-      // 2D MAP MODE
       else {
-        // Standard Center
-        if (position === "center") {
-          this.navigateMapView(view, { center: targetPoint, scale: followScale }, followOptions);
-        }
-        // Offset Logic
-        else {
-          try {
-            const wmPoint = webMercatorUtils.geographicToWebMercator(targetPoint) as __esri.Point;
-            const extent = view.extent;
-
-            if (wmPoint && extent) {
-              const width = extent.width;
-              const height = extent.height;
-              const offsetFactor = 0.25; // 25% shift
-
-              let newCenterX = wmPoint.x;
-              let newCenterY = wmPoint.y;
-
-              if (position === "east") {
-                // Widget Left -> Show point on Right -> Move Camera Left (West)
-                newCenterX = wmPoint.x - width * offsetFactor;
-              } else if (position === "west") {
-                // Widget Right -> Show point on Left -> Move Camera Right (East)
-                newCenterX = wmPoint.x + width * offsetFactor;
-              } else if (position === "north") {
-                // Widget Bottom -> Show point on Top -> Move Camera Down (South)
-                newCenterY = wmPoint.y - height * offsetFactor;
-              } else if (position === "south") {
-                // Widget Top -> Show point on Bottom -> Move Camera Up (North)
-                newCenterY = wmPoint.y + height * offsetFactor;
-              }
-
-              const newCenter = new this.ArcGISModules.Point({
-                x: newCenterX,
-                y: newCenterY,
-                spatialReference: { wkid: 3857 },
-              });
-
-              this.navigateMapView(view, { center: newCenter, scale: followScale }, followOptions);
-            } else {
-              this.navigateMapView(view, { center: targetPoint, scale: followScale }, followOptions);
-            }
-          } catch (e) {
-            this.navigateMapView(view, { center: targetPoint, scale: followScale }, followOptions);
-          }
-        }
+        followMapImage2D<__esri.Point>(
+          targetPoint,
+          position,
+          followScale,
+          () => view.extent,
+          point => webMercatorUtils.geographicToWebMercator(point) as __esri.Point | null,
+          properties => new this.ArcGISModules.Point(properties) as __esri.Point,
+          target => this.navigateMapView(view, target, followOptions),
+        );
       }
     }
   }

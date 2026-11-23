@@ -9,7 +9,7 @@ export type CoverageAnalysisTriggerProps = Pick<InfoBoxProps, 'currentZoom' | 'j
 
 /** Preserve zoom/point/loading gates, tooltip priority and hover reset; no state or effects are owned here. */
 export const CoverageAnalysisTrigger: React.FC<CoverageAnalysisTriggerProps> = props => {
- const { t, locale } = useWidgetLocale();
+ const { t } = useWidgetLocale();
 
   const { currentZoom, jimuMapViewZoom, turboPointsAvailable, coverageAnalysisLoading, coverageResult, onRunCoverageAnalysis, turboMinZoom } = props;
   const zoom = currentZoom ?? jimuMapViewZoom ?? 0;
@@ -25,6 +25,11 @@ export const CoverageAnalysisTrigger: React.FC<CoverageAnalysisTriggerProps> = p
         ? t('uiNoCoveragePointsLoadedInThisArea')
         : t('uiRunStreetCoverageAnalysis');
 
+  const label = coverageAnalysisLoading ? t('uiAnalysing')
+    : belowZoom ? t('uiZoomInToAnalyse')
+    : noPoints ? t('uiWaitingForCoverage')
+    : coverageResult ? t('uiRunNewAnalysis') : t('uiAnalyseCoverage');
+
   const btnBg = getCoverageAnalysisTriggerBackground(canRun, !!coverageResult);
 
   return (
@@ -34,10 +39,11 @@ export const CoverageAnalysisTrigger: React.FC<CoverageAnalysisTriggerProps> = p
       <div
         className="mly-coverage-analysis-trigger" style={coverageAnalysisTriggerRowStyle}
       >
-        <button className={`mly-text-action${canRun && !coverageResult && (locale === 'en' || locale === 'en-GB') ? ' mly-coverage-single-line' : ''}`}
+        <button className="mly-text-action mly-coverage-single-line"
           type="button" disabled={!canRun} aria-disabled={!canRun}
           onClick={onRunCoverageAnalysis}
-          title={tooltip}
+          aria-label={label}
+          title={canRun ? label : tooltip}
           style={getCoverageAnalysisTriggerButtonStyle(canRun, btnBg)}
           onMouseEnter={(e) => {
             if (canRun) e.currentTarget.style.background = coverageAnalysisTriggerHoverBackground;
@@ -46,15 +52,8 @@ export const CoverageAnalysisTrigger: React.FC<CoverageAnalysisTriggerProps> = p
             e.currentTarget.style.background = btnBg;
           }}
         >
-          {coverageAnalysisLoading ? (
-            <React.Fragment>
-              <div
-                style={coverageAnalysisTriggerSpinnerStyle}
-              />
-               {t('uiAnalysing')} </React.Fragment>
-          ) : (
-            <span>{belowZoom ? t('uiZoomInToAnalyse') : noPoints ? t('uiWaitingForCoverage') : coverageResult ? t('uiRunNewAnalysis') : t('uiAnalyseCoverage')}</span>
-          )}
+          {coverageAnalysisLoading && <div aria-hidden="true" style={coverageAnalysisTriggerSpinnerStyle} />}
+          <span className="mly-coverage-analysis-label">{label}</span>
         </button>
       </div>
       {!canRun && !coverageAnalysisLoading && <div role="status" style={{ fontSize: 8, lineHeight: 1.35, color: "#b5ccbf", padding: "3px 4px", boxSizing: "border-box" }}>

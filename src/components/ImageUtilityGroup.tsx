@@ -36,8 +36,10 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
         const host = dock.current?.parentElement;
         if (!host) return;
         const update = () => {
-            const width = host.getBoundingClientRect().width;
-            setMobile(window.matchMedia('(max-width: 480px)').matches || (width > 0 && width <= 480));
+            const { width, height } = host.getBoundingClientRect();
+            setMobile(window.matchMedia('(max-width: 480px)').matches ||
+                (width > 0 && width <= 480) ||
+                (!!host.closest('.mly-viewer-workspace') && height > 0 && height <= 200));
         };
         update();
         const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(update) : null;

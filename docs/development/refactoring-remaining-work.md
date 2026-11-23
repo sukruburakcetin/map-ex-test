@@ -1,3 +1,8 @@
+<!-- architecture-stage115 -->
+## Current checkpoint
+
+Stages 103–111 delivered P06–P09. Stages 112–114 covered the P10 keyboard, Enterprise attachment and image follow boundaries. Stage 115 documents the retained responsibilities and completes the P11 review. P12 is next. Use the browser matrix below and record the exact tested source for each result. The estimates and progress entries below reflect the stages where they were written.
+
 # Remaining refactoring work — stage 87 audit
 
 Audited 21 November 2026 at stage 87; historical measurements below remain the baseline. **Current implementation progress: P01 completed in stages 88–90; P02 implementation completed in stages 91–93; P03 implementation complete in stages 94–96; P04 implementation complete in stages 97–99; P05 implementation complete in stages 100–102.** Live-host acceptance remains pending under P12. This plan supersedes open-ended tiny-helper continuation.
@@ -91,7 +96,7 @@ This checkpoint is not public-release approval. National-scale Places delivery, 
 
 Portable tests and isolated webpack checks are prerequisites, not substitutes for these observations. Record source hash/commit, ExB/dependency versions, date, scenario and result.
 
-| Scenario | Required observation | Current stage-87 status |
+| Scenario | Required observation | Recorded host evidence |
 | --- | --- | --- |
 | Cold/warm startup, close/reopen, active-map replacement during loading | No late listeners/layers/DOM on retired views; normal reopening | Pending current-source acceptance |
 | Low-zoom hover, rapid pan/zoom, cold/warm tile lookup, touch | Responsive picking, truthful loading feedback, no stale thumbnail | Pending |

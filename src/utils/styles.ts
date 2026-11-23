@@ -973,18 +973,6 @@ export const glassStyles = {
 // SECTION: GLOBAL CSS STRING
 // Contains CSS animations, responsive container queries, and specific fixes for ArcGIS Experience Builder panels.
 export const overrideStyles = `
-    .mly-coverage-touch-hint { display:none; }
-    @media (pointer:coarse) { .mly-coverage-mouse-hint { display:none; } .mly-coverage-touch-hint { display:inline; } }
-    @container (max-width:900px) { .mly-coverage-context-hint { display:none; } }
-    @container (max-width:400px) { .mly-coverage-filter-hint { max-width:28% !important; font-size:9px !important; } }
-    .mly-coverage-notice button:focus-visible, .mly-coverage-help button:focus-visible { outline:2px solid #91d9b5; outline-offset:-2px; }
-    @container (max-width:600px) {
-        .mly-coverage-logo { display:none; }
-        .mly-coverage-notice { height:24px !important; min-height:24px !important; max-height:24px !important; flex-basis:24px !important; gap:4px !important; padding:0 4px !important; }
-        .mly-coverage-notice [role="status"] > span:last-child { font-size:10.5px !important; }
-        .mly-coverage-notice button { height:24px !important; min-width:24px; font-size:10px !important; }
-        .mly-coverage-notice button[aria-label="Dismiss coverage message"] { width:30px !important; font-size:18px !important; }
-    }
 
     .mobile-panel-content-header { height: 30px !important; }
     .expand-mobile-panel-touch-container { height: 30px !important; }

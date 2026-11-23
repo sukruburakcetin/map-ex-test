@@ -64,6 +64,17 @@ export const controlBarCompactCss = `
   .mly-control-rail .mly-rail-filter svg { width: 12px !important; height: 12px !important; }
   .mly-control-rail .mly-rail-divider { margin: 1px 0; }
 }
+@container mly-viewer-pane (max-width: 280px) or (max-height: 200px) {
+  .glass-control-panel.mly-control-rail {
+    --mly-rail-target: 24px;
+    --mly-rail-height: 24px;
+    width: calc(var(--mly-rail-target) + 4px);
+    padding: 1px;
+  }
+  .mly-control-rail .mly-rail-button svg { width: 14px !important; height: 14px !important; }
+  .mly-control-rail .mly-rail-filter svg { width: 12px !important; height: 12px !important; }
+  .mly-control-rail .mly-rail-button img { max-width: 16px; max-height: 16px; }
+}
 @media (prefers-reduced-motion: reduce) {
   .mly-control-rail button[class] { transition: none !important; }
 }
@@ -186,6 +197,34 @@ export const utilityDockCss = `
 .glass-image-utility-panel.mly-utility-dock.is-collapsed .mly-dock-mode-trigger { display: none !important; }
 .glass-image-utility-panel.mly-utility-dock[data-mobile="true"].is-collapsed .mly-dock-collapse { position: relative; top: auto; left: auto; width: 26px !important; height: 26px !important; border-color: transparent; background: transparent; }
 .glass-image-utility-panel.mly-utility-dock.is-collapsed .utility-button::after, .glass-image-utility-panel.mly-utility-dock.is-collapsed .mly-dock-cloud-group::after { display: none; }
+@container mly-viewer-pane (max-width: 280px) or (max-height: 200px) {
+  .glass-image-utility-panel.mly-utility-dock {
+    gap: 1px !important;
+    padding: 1px !important;
+  }
+  .glass-image-utility-panel.mly-utility-dock .utility-button {
+    width: 22px !important;
+    height: 22px !important;
+  }
+  .glass-image-utility-panel.mly-utility-dock .utility-button svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
+  .glass-image-utility-panel.mly-utility-dock[data-mobile="true"]:not(.is-collapsed) { padding-left: 23px !important; }
+  .glass-image-utility-panel.mly-utility-dock[data-mobile="true"]:not(.is-collapsed) .mly-dock-collapse {
+    width: 20px !important;
+    height: calc(100% - 4px) !important;
+  }
+  .glass-image-utility-panel.mly-utility-dock[data-mobile="true"].is-collapsed .mly-dock-collapse {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  .glass-image-utility-panel.mly-utility-dock .mly-dock-mode-trigger { width: 18px !important; }
+  .glass-image-utility-panel.mly-utility-dock .mly-dock-cloud.is-loading {
+    width: auto !important;
+    height: auto !important;
+  }
+}
 .mly-dock-collapsed-active { position: absolute; right: 1px; bottom: 1px; width: 4px; height: 4px; border-radius: 50%; background: #8ae7ab; }
 .mly-fullscreen-viewer.mly-minimap-expanded .glass-image-utility-panel.mly-utility-dock { display: none !important; }
 @media (prefers-reduced-motion: reduce) { .mly-dock-spinner { animation: none; } .glass-image-utility-panel.mly-utility-dock .utility-button { transition: none !important; } }
@@ -195,4 +234,19 @@ export const mapSpriteLoadingCss=`
 .mly-rail-loading {position:absolute;right:2px;top:2px;width:9px;height:9px;box-sizing:border-box;border:2px solid #93b4a388;border-top-color:#e1fff0;border-radius:50%;animation:mlySpriteSpin .8s linear infinite;}
 @keyframes mlySpriteSpin {to {transform:rotate(360deg);}}
 @media(prefers-reduced-motion:reduce){.mly-rail-loading{animation:none;border-top-color:#a9edc4;}}
+`;
+
+
+/** Keep the collapsed title and SDK sequence controls in separate rows on tiny panes. */
+export const viewerCompactPlaybackCss = `
+@container mly-viewer-pane (max-width: 280px) {
+  .mly-viewer-workspace:has(> .mly-info-panel:not(.is-open)) .mapillary-sequence-container {
+    top: 30px;
+  }
+}
+@container mly-viewer-pane (max-width: 280px) and (max-height: 200px) {
+  .mly-viewer-workspace:has(> .mly-info-panel:not(.is-open)) .mapillary-sequence-container {
+    top: 38px;
+  }
+}
 `;

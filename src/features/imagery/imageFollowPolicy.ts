@@ -76,3 +76,46 @@ function outsideGroundFootprint(view: ImageFollowView, point: any): boolean | nu
  }
  return !inside;
 }
+
+interface FollowPointXY {
+  x: number;
+  y: number;
+}
+
+/** Follow in 2D at the original scale, offsetting the image by a quarter of the extent. */
+export function followMapImage2D<Point extends FollowPointXY>(
+  point: Point,
+  position: string,
+  scale: number,
+  readExtent: () => { width: number; height: number } | null | undefined,
+  project: (point: Point) => FollowPointXY | null,
+  createPoint: (properties: FollowPointXY & { spatialReference: { wkid: number } }) => Point,
+  navigate: (target: { center: Point; scale: number }) => void,
+): void {
+  if (position === "center") {
+    navigate({ center: point, scale });
+    return;
+  }
+
+  try {
+    const projected = project(point);
+    const extent = readExtent();
+    if (projected && extent) {
+      const { width, height } = extent;
+      let { x, y } = projected;
+      switch (position) {
+        case "east": x -= width * 0.25; break;
+        case "west": x += width * 0.25; break;
+        case "north": y -= height * 0.25; break;
+        case "south": y += height * 0.25; break;
+      }
+
+      const center = createPoint({ x, y, spatialReference: { wkid: 3857 } });
+      navigate({ center, scale });
+    } else {
+      navigate({ center: point, scale });
+    }
+  } catch {
+    navigate({ center: point, scale });
+  }
+}

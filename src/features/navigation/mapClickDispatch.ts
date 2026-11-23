@@ -185,13 +185,14 @@ export async function dispatchMapClick(evt: __esri.ViewClickEvent, host: MapClic
 
     // A valid individual image preview owns this click. Otherwise blue route
     // navigation keeps its existing exact-point/nearest-loaded-frame behavior.
-    if (pointPreviewAtClick && !coverageClickCurrent()) return;
+    const displayedPreview = !!coveragePreviewAtClick?.attributes?.turbo_displayed_preview;
+    if ((pointPreviewAtClick || displayedPreview) && !coverageClickCurrent()) return;
     const sequenceHits = response.results.filter((r: any) => r.graphic &&
       ((r.graphic as any).__isSequenceOverlay || (r.graphic as any).__isActiveSequencePoint) &&
       r.graphic.attributes?.sequenceId &&
       (r.graphic.geometry?.type === "point" || r.graphic.geometry?.type === "polyline"));
     const seqHit = sequenceHits.find((r: any) => r.graphic.geometry.type === "point" && r.graphic.attributes?.image_id) || sequenceHits[0];
-    if (seqHit && !pointPreviewAtClick) {
+    if (seqHit && !pointPreviewAtClick && !displayedPreview) {
       const attrs = (seqHit as any).graphic.attributes;
       const seqId = String(attrs.sequenceId);
       let imageId = attrs.image_id ? String(attrs.image_id) : undefined;
@@ -307,7 +308,7 @@ export async function dispatchMapClick(evt: __esri.ViewClickEvent, host: MapClic
             if (seqId) {
               // Coverage hit tests can miss the thin active route at regional zooms.
               // For that same loaded sequence, resolve the click entirely in memory.
-              if (attrs.turbo_representative && host.getTurboOrganizationId() === undefined && host.sequenceId === seqId && !!host.frames.complete) {
+              if (!displayedPreview && attrs.turbo_representative && host.getTurboOrganizationId() === undefined && host.sequenceId === seqId && !!host.frames.complete) {
                 const images = host.sequenceImages;
                 const routeCurrent = () => coverageClickCurrent() && !pickController.signal.aborted &&
                   host.sequenceId === seqId && host.sequenceImages === images && !!host.frames.complete;
@@ -315,7 +316,7 @@ export async function dispatchMapClick(evt: __esri.ViewClickEvent, host: MapClic
                 if (!routeCurrent()) return;
                 if (nearest) imageId = nearest;
               }
-              const regionalLine = !!attrs.turbo_representative && view.zoom >= 6 && view.zoom < 14;
+              const regionalLine = !displayedPreview && !!attrs.turbo_representative && view.zoom >= 6 && view.zoom < 14;
               // A sequence tile's image_id represents the whole line, not its clicked location.
               // Resolve only nearby image tiles; never enumerate the full sequence to open it.
               if (regionalLine && !(host.getTurboOrganizationId() === undefined && host.sequenceId === seqId && !!host.frames.complete)) {
@@ -354,7 +355,7 @@ export async function dispatchMapClick(evt: __esri.ViewClickEvent, host: MapClic
               }
               const anchor = host.getCoverageDisplayPosition(String(imageId), point.longitude, point.latitude);
               host.drawClickRipple(anchor.lon, anchor.lat);
-              await host.loadSequenceById(seqId, imageId, { lon: anchor.lon, lat: anchor.lat }, !!attrs.turbo_representative && !regionalLine, false, clickStartedAt);
+              await host.loadSequenceById(seqId, imageId, { lon: anchor.lon, lat: anchor.lat }, !!attrs.turbo_representative && !regionalLine && !displayedPreview, false, clickStartedAt);
               return;
             }
           }

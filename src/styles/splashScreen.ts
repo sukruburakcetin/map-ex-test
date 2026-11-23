@@ -52,6 +52,25 @@ export const splashAnimationCss = `
   .mly-intro-bottom button { padding: 7px 9px; font-size: 10px; }
   .mly-intro-status { font-size: 8px; }
 }
+@container (max-width: 280px) {
+  .mly-intro-copy { padding: 12px; gap: 10px; }
+  .mly-intro-copy h2 { font-size: 21px; overflow-wrap: anywhere; }
+  .mly-intro-bottom { flex-wrap: wrap; }
+  .mly-intro-status { min-width: 0; overflow-wrap: anywhere; }
+  .mly-intro-loading { flex-shrink: 0; }
+}
+@container (max-height: 240px) {
+  .mly-intro-scene { height: auto; }
+  .mly-intro-scene > svg, .mly-viewfinder-frame, .mly-intro-caption { display: none; }
+  .mly-intro-brand { position: static; padding: 6px 10px; }
+  .mly-intro-copy { padding: 8px 10px; gap: 8px; }
+  .mly-intro-copy h2 { font-size: 18px; }
+  .mly-intro-bottom { flex-wrap: wrap; }
+  .mly-intro-bottom button { gap: 6px; }
+}
+@container (max-height: 165px) {
+  .mly-intro-copy p { display: none; }
+}
 @media (prefers-reduced-motion: reduce) {
   .mly-intro-layout, .mly-intro-loading { animation: none; }
   .mly-intro { transition: none !important; }

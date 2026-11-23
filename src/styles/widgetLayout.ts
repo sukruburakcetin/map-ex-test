@@ -33,6 +33,8 @@ export const viewerWorkspace: CSSProperties = {
   minHeight: 0,
   minWidth: 0,
   position: "relative",
+  containerType: "size",
+  containerName: "mly-viewer-pane",
   isolation: "isolate",
   zIndex: 0,
   display: "flex",

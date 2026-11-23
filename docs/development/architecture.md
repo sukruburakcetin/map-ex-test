@@ -1,3 +1,23 @@
+<!-- architecture-stage115 -->
+# Runtime architecture at stage 115
+
+`src/runtime/widget.tsx` binds React state, ArcGIS and Mapillary instances to feature owners. Start with these boundaries when changing behavior.
+
+| Area | Feature boundary |
+| --- | --- |
+| Startup, settings changes and teardown | [Startup](widget-startup.md), [update](widget-update.md) and [teardown](widget-teardown.md) describe the ordering and the widget's live bindings. |
+| Map interaction | `mapClickDispatch.ts` and `mapHoverDispatch.ts` route input. The widget captures the active view and selection context for that input. |
+| Imagery and camera | [Sequence opening](sequence-opening.md) owns foreground selection. [Viewer event binding](viewer-event-binding.md) publishes viewer events. `imageFollowPolicy.ts` owns viewport and 2D offset rules. `sceneFollowCamera.ts` builds 3D follow targets. |
+| Coverage | `nativeCoverageStyle.ts` builds styles, `nativeCoverageLayers.ts` owns replacement and ordering, and `CoverageAnalysisRun.ts` owns analysis cancellation and publication. |
+| Point cloud and notes | `PointCloudKeyboard.ts` routes shortcuts through calibration and widget callbacks. `enterpriseAttachmentUpload.ts` validates the target and performs the explicit upload. |
+
+The widget still coordinates cone presentation with the current image and ArcGIS view. Geometry, screen presentation and resource cleanup have dedicated helpers. Shared-note synchronization, publication and editing still bind panel state, authentication and Enterprise writers in the widget. These are retained coordination boundaries for the checkpoint. Future changes should start with the existing owners and preserve view identity, image identity and explicit write actions.
+
+P12 records validation for the exact installed source using the [browser acceptance matrix](refactoring-remaining-work.md#browser-acceptance-matrix). Earlier build and test counts in the history apply to their respective stages.
+
+# Architecture history
+
+
 <!-- widget-teardown-stage102 -->
 ## Stage 102 — P05 teardown completion
 

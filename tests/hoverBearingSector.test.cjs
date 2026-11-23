@@ -14,3 +14,27 @@ test('switching between panorama and perspective replaces only the decoration',(
 
 for(const type of ['2d','3d'])test(`${type} panorama adds a small direction pointer and caches its single projection`,()=>{const x=setup(type);x.owner.show(x.parent,90,true);assert(x.element.innerHTML.includes('<circle'));assert(x.element.innerHTML.includes('M30 3 L35 11 L25 11 Z'));x.owner.update(x.view,x.geometry,{x:100,y:100},0);assert(x.group.value.includes('rotate(90)'));assert.equal(x.group.style.display,'block');assert.equal(x.stats().projections,1);x.owner.update(x.view,x.geometry,{x:100,y:100},40);assert.equal(x.stats().projections,1);x.owner.show(x.parent,0,true);x.owner.update(x.view,x.geometry,{x:100,y:100},80);assert(x.group.value.includes('rotate(0)'));assert.equal(x.stats().created,1);});
 test('panorama loses only its pointer when metadata or projection is unavailable',()=>{const x=setup();x.owner.show(x.parent,90,true);x.owner.update(x.view,x.geometry,{x:100,y:100},0);x.owner.show(x.parent,undefined,true);x.owner.update(x.view,x.geometry,{x:100,y:100},40);assert.equal(x.element.style.display,'block');assert.equal(x.group.style.display,'none');assert.equal(x.stats().created,1);x.owner.show(x.parent,30,true);const project=x.view.toScreen;x.view.toScreen=()=>null;x.owner.update(x.view,x.geometry,{x:100,y:100},80);assert.equal(x.element.style.display,'block');assert.equal(x.group.style.display,'none');x.view.toScreen=()=>({x:100,y:100});x.owner.update(x.view,x.geometry,{x:100,y:100},120);assert.equal(x.group.style.display,'none');x.view.toScreen=project;x.owner.update(x.view,x.geometry,{x:100,y:100},160);assert.equal(x.group.style.display,'block');});
+
+test('world-scale Web Mercator panorama uses capture bearing without a subpixel projection', () => {
+ const x = setup('2d');
+ Object.assign(x.view, { zoom: 1, rotation: 20, spatialReference: { isWebMercator: true } });
+ x.view.toScreen = () => assert.fail('world-scale bearing must not project a tiny baseline');
+ x.owner.show(x.parent, 35, true);
+ for (const [now, pixel] of [[0, {x:100,y:100}], [40, {x:101,y:100}]]){
+  x.owner.update(x.view, x.geometry, pixel, now);
+  assert.match(x.group.value, /rotate\(55\)/);
+ }
+ x.view.rotation = 350;
+ x.owner.update(x.view, x.geometry, { x: 100, y: 100 }, 80);
+ assert.match(x.group.value, /rotate\(385\)/);
+ assert.equal(x.group.style.display, 'block');
+});
+
+test('world-scale panorama on another map projection retains the projected direction', () => {
+ const x = setup('2d');
+ Object.assign(x.view, { zoom: 1, spatialReference: { isWebMercator: false } });
+ x.owner.show(x.parent, 90, true);
+ x.owner.update(x.view, x.geometry, { x: 100, y: 100 }, 0);
+ assert.equal(x.stats().projections, 1);
+ assert.match(x.group.value, /rotate\(90\)/);
+});

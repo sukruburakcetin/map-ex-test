@@ -1,7 +1,7 @@
 /** @jsx jsx */
 import { useWidgetLocale } from '../i18n/WidgetLocale';
 import { React, jsx } from "jimu-core";
-import { controlBarInteractionCss, controlBarCompactCss, mapSpriteLoadingCss } from "../styles/controlPanels";
+import { controlBarInteractionCss, controlBarCompactCss, mapSpriteLoadingCss, viewerCompactPlaybackCss } from "../styles/controlPanels";
 import * as Icons from "./Icons";
 import { ControlBarProps } from "./types";
 
@@ -28,7 +28,7 @@ export const ControlBar: React.FC<ControlBarProps> = (props) => {
         </div>;
     };
     return <div className="glass-control-panel mly-control-rail" role="group" aria-label={t('uiMapControls')}>
-        <style>{controlBarInteractionCss}{controlBarCompactCss}{mapSpriteLoadingCss}</style>
+        <style>{controlBarInteractionCss}{controlBarCompactCss}{mapSpriteLoadingCss}{viewerCompactPlaybackCss}</style>
         <button type="button" className="mly-rail-button" title={props.isFullscreen ? t('uiExitFullscreen') : t('uiFullscreen')}
             aria-label={props.isFullscreen ? t('uiExitFullscreen') : t('uiFullscreen')}
             aria-pressed={props.isFullscreen} onClick={props.onToggleFullscreen}><Icons.Maximize size={20}/></button>

@@ -70,3 +70,17 @@ test('cold panorama metadata uses capture bearing after the existing single dwel
 test('cold regional lookup shows an honest placeholder before awaiting frame identity',async()=>{const x=setup();regional(x);let release;x.w.ensureCoverageFrameLookup=()=>({resolve:()=>new Promise(r=>release=r)});x.response(async()=>({id:'B',compass_angle:170}));x.w.updateTurboHover(x.graphic,0,0);const work=x.run();while(!release)await new Promise(r=>setImmediate(r));assert.equal(x.cards[0][1],null);assert.equal(x.cards[0][3],true);assert.equal(x.calls(),0);assert.equal(x.shows.length,0);release('B');await work;assert.equal(x.calls(),1);assert.equal(x.shows[0][1],170);});
 test('failed regional identity resolution settles the placeholder as unavailable',async()=>{const x=setup();regional(x);x.w.ensureCoverageFrameLookup=()=>({resolve:async()=>undefined});x.w.updateTurboHover(x.graphic,0,0);await x.run();assert.equal(x.cards[0][3],true);assert.equal(x.cards.at(-1)[3],false);assert.equal(x.calls(),0);assert.equal(x.shows.length,0);});
 test('hover enrichment explicitly uses interactive queue priority',async()=>{const x=setup();let priority;x.w.runSequenceBackground=(work,signal,p)=>{priority=p;return work(signal);};x.w.updateTurboHover(x.graphic,0,0);await x.run();assert.equal(priority,'hover');assert.equal(x.calls(),1);});
+
+test('cached viewer heading applies only to a matching open panorama',async()=>{
+ for(const [pano,open,expected] of [[true,'A',262.4],[true,'B',87.38],[false,'A',87.38]]){
+  const x=setup({id:'A',is_pano:pano,computed_compass_angle:87.38});
+  const viewer=x.w.mapillaryViewer={};
+  let reads=0;
+  x.w._currentImageBearing={read(v,id){reads++;return v===viewer&&id===open?262.4:undefined;}};
+  x.w.updateTurboHover(x.graphic,0,0);
+  await x.run();
+  assert.equal(x.shows[0][1],expected);
+  assert.equal(reads,pano?1:0);
+  assert.equal(x.calls(),0);
+ }
+});

@@ -1,39 +1,51 @@
-# Continue Mapillary Explorer at stage 111
+# Continue Mapillary Explorer at stage 126
 
-## Prompt for the next AI session
+Apply `apply-open-panorama-bearing-fix.cjs` from the stage 125 widget root. Run `--dry-run` first and use `--uninstall` for rollback. Verify hovering the open panorama and a different panorama on north-up and rotated maps.
 
-> Read this handoff and inspect my actual Mapillary Explorer widget folder before editing. The latest delivered checkpoint is stage 111. Verify which installers I have applied and preserve my local changes. If stage 111 is present, begin P10 with one bounded, behavior-preserving extraction. Inspect the existing point-cloud calibration owner and `handleNudgeKeyDown` first, then choose a coherent boundary that reuses existing code. Deliver the change as a reversible, standalone `.cjs` installer that runs from the widget root beside `manifest.json`. Include dry-run, exact rollback, focused validation and updated Markdown handoffs.
+## Stage 125 checkpoint history
 
-## What to bring
+Apply `apply-world-panorama-bearing-fix.cjs` from the stage 124 widget root. Run `--dry-run` first and use `--uninstall` for rollback. Verify the cyan panorama arrow at world zoom with a north-up and rotated 2D Web Mercator map.
 
-- This file and your **actual widget source folder**, preferably the one where you ran the latest installer. The folder should contain `manifest.json`, `src/`, `tests/` and `docs/`. Preserve local source changes and retain `.refactor-backups/` if you want to roll back.
-- If you are taking a fresh checkout instead, bring the needed installers separately. The reference checkout here is `sukruburakcetin/map-ex-test` at commit `e02562bfd792556935ebfeb4f3b0539b9f28d57c`; it contains stage 102 source. Stages 103–111 were delivered as separate installer files outside the tracked source at that commit. This README does not contain those changes.
-- In the receiving workspace, verify whether the source is already at stage 111 before applying any installer. The stage 111 `src/runtime/widget.tsx` SHA-256 is `d0c47e13816696fca7db62d54945c878b59e411204e93539dd5d160547f31270` when encoded as UTF-8 with LF and no BOM. Also check for `src/features/coverage/nativeCoverageStyle.ts`, `nativeCoverageLayers.ts` in the same folder and the stage 111 entries in both handoff files. A different hash can indicate local changes or a different checkpoint. Inspect the differences before proceeding.
+## Stage 124 checkpoint history
 
-### Installer order from stage 102
+Apply `apply-split-height-info-box.cjs` from the stage 123 widget root. Run `--dry-run` first and use `--uninstall` for rollback. Verify the expanded info box at the reported 502 × 615 split layout.
 
-Run only the stages your destination still needs, in order. For each file, run `node <installer>.cjs --dry-run` before applying with `node <installer>.cjs`. Run these commands from the widget root.
+## Stage 123 checkpoint history
 
-| Stage | Installer |
-| --- | --- |
-| 103 | `apply-widget-fullscreen-refactor.cjs` |
-| 104 | `apply-widget-viewer-resize-refactor.cjs` |
-| 105 | `apply-coverage-guide-refactor.cjs` |
-| 106 | `apply-places-overlay-refactor.cjs` |
-| 107 | `apply-field-notes-overlay-refactor.cjs` |
-| 108 | `apply-widget-layout-styles-refactor.cjs` |
-| 109 | `apply-widget-feedback-styles-refactor.cjs` |
-| 110 | `apply-coverage-analysis-refactor.cjs` |
-| 111 | `apply-native-coverage-layer-refactor.cjs` |
+Apply `apply-single-line-coverage-label.cjs` from the stage 122 widget root. Run `--dry-run` first and use `--uninstall` for rollback. Verify Analyze Coverage in the compact Spanish info box.
 
-## Where to resume
+## Stage 122 checkpoint history
 
-- **P10 is next.** Its scope is point-cloud keyboard policy, shared-note synchronization and write/edit/attachment commands, map-to-image synchronization, and residual cone policy. Start with one bounded extraction. For the suggested keyboard pass, inspect `src/features/point-cloud/PointCloudCalibration.ts` and use `tests/pointCloudCalibration.test.cjs` to compare offsets, feedback, debounce behavior and side-effect order. Keep explicit shared-note write authorization and live map/image identity guards when moving later commands.
-- **P11 and P12 follow.** P11 covers architecture and documentation cleanup. P12 is exact-source integration, browser and handoff validation. The package scope and acceptance matrix are in the [refactoring plan](docs/development/refactoring-remaining-work.md). Its original progress header predates stages 103–111, so use the latest entries in [ACCOUNT-HANDOFF.md](ACCOUNT-HANDOFF.md) and [REFACTORING-MILESTONE.md](REFACTORING-MILESTONE.md) for checkpoint status when available.
-- **Open validation.** Stage 111 passed 3,369 portable Node tests with zero failures or skips. The coverage extraction matched stage 110 across 120 controlled style, replacement and layer-ordering traces. The installer passed repeat application and byte-for-byte rollback. Full Experience Builder build, live browser acceptance and road-server verification remain open. Fullscreen still recreates the viewer, and viewer retention and loading-flash behavior remain open.
+Apply `apply-compact-expanded-info-box.cjs` from the stage 121 widget root. Run `--dry-run` first and use `--uninstall` for rollback. Verify the collapsed title, expanded tools and keyboard scrolling in a short viewer pane.
 
-## Delivery and verification
+## Stage 121 checkpoint history
 
-Keep refactors behavior-preserving, preserve local edits, and use the existing feature owners. Keep requests, timers, cancellation, action ordering and side effects stable. Continue delivering one standalone `.cjs` per step with checkpoint checks, `--dry-run`, backups and `--uninstall`. Test the installer on a copy of the actual prior checkpoint and verify the installed source, repeat application and rollback before delivery.
+Apply `apply-short-info-box.cjs` from the stage 120 widget root. Run `--dry-run` first and use `--uninstall` for rollback. Verify the collapsed title, expanded tools and keyboard scrolling in a short viewer pane.
 
-Use the [portable test setup](docs/development/portable-tests.md) and [Experience Builder installation guide](docs/installation.md). The prior cloud test environment used Node 24 and isolated dependencies outside the widget source. A new workspace may need to recreate those dependencies. Run focused tests first, then the complete portable suite against an installer-produced copy. Record build or browser results only for the source and host you actually verified.
+## Stage 120 checkpoint history
+
+Apply `apply-responsive-splash.cjs` from the stage 119 widget root. Run `--dry-run` first and use `--uninstall` for rollback. Verify the Start exploring action on a cold reload in a narrow, short viewer pane.
+
+## Stage 119 checkpoint history
+
+Apply `apply-compact-viewer-controls.cjs` from the stage 118 widget root. Run `--dry-run` first and use `--uninstall` for rollback. Verify the short and narrow image panes in Experience Builder with the utility dock expanded and collapsed and the image title visible.
+
+## Stage 118 checkpoint history
+
+Apply `apply-coverage-bar-startup-fix.cjs` from the stage 117 widget root. Run `--dry-run` first and use `--uninstall` for rollback. Verify the initial Spanish coverage bar in Experience Builder at 240 and 393 px during a cold reload.
+
+## Stage 117 checkpoint history
+
+Apply `apply-mobile-display-sizing.cjs` from the stage 116 widget root. Run with `--dry-run` first. Use `--uninstall` for rollback. In Experience Builder, compare the category picker and Display panel widths on mobile and check the percentage buttons at 240 and 393 px.
+
+## Stage 116 checkpoint history
+
+Stage 116 repairs the info-box browser fixture and narrow mobile category picker. Apply `apply-browser-validation-fixes.cjs` to stage 115. P12 still needs the [Experience Builder acceptance matrix](docs/development/refactoring-remaining-work.md#browser-acceptance-matrix). Keep recorded test evidence tied to its source checkpoint.
+
+## Stage 115 source and installer history
+
+Stage 115 completes the P11 architecture review. Continue with P12 validation using [the browser acceptance matrix](docs/development/refactoring-remaining-work.md#browser-acceptance-matrix), [portable test setup](docs/development/portable-tests.md) and [current runtime architecture](docs/development/architecture.md). Record the tested commit or source hash, SDK version and observed results. Experience Builder build and live browser evidence for this checkpoint are pending.
+
+GitHub commit `7e25205` contains stage 111. On that source, the installer order is stage 112 `apply-point-cloud-keyboard-refactor.cjs`, stage 113 `apply-enterprise-attachment-refactor.cjs`, stage 114 `apply-image-follow-refactor.cjs` and stage 115 `apply-architecture-review.cjs`. Apply only the stages missing from the actual widget. From its root, run each installer with `--dry-run` before applying. Keep its backup directory and use `--uninstall` in reverse order for rollback.
+
+Stage 115 widget SHA-256 with LF and no BOM is `c44c8bd75d7d2d9c3e0b73c9e413296e6aa3175891ae9268ee1e8d7c5e91d95d`. Bring your source folder and retain local changes. See [account history](ACCOUNT-HANDOFF.md) and [milestone history](REFACTORING-MILESTONE.md) for earlier checkpoints.

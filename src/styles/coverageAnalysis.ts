@@ -1,6 +1,8 @@
 /** Coverage-analysis trigger presentation; analysis scheduling and result state remain runtime-owned. */
 import type { React } from 'jimu-core';
 export const coverageAnalysisTriggerRowStyle: React.CSSProperties = {
+    width: "100%",
+    minWidth: 0,
     marginTop: "4px",
     marginBottom: "6px",
     borderTop: "1px solid rgba(255,255,255,0.08)",
@@ -112,8 +114,8 @@ export function getCoverageResultsMapToggleStyle(coverageSegmentsVisible: boolea
     };
 }
 
-/** English launch label fits the compact 96px rail without forcing long translations onto one line. */
+/** Keep localized labels on one line and clip only the text when space is limited. */
 export const coverageAnalysisTriggerCss = `
-.mly-info-panel .mly-coverage-analysis-trigger button.mly-coverage-single-line.mly-text-action { padding-inline:2px !important; white-space:nowrap !important; overflow-wrap:normal !important; }
-.mly-info-panel .mly-coverage-analysis-trigger button.mly-coverage-single-line.mly-text-action > span { white-space:nowrap !important; overflow-wrap:normal !important; }
+.mly-coverage-analysis-trigger button.mly-coverage-single-line.mly-text-action { padding-inline:2px !important; white-space:nowrap !important; overflow-wrap:normal !important; }
+.mly-coverage-analysis-trigger button.mly-coverage-single-line.mly-text-action > .mly-coverage-analysis-label { display:block; min-width:0; white-space:nowrap !important; overflow-wrap:normal !important; overflow:hidden; text-overflow:ellipsis; }
 `;

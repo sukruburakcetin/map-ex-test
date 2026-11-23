@@ -66,7 +66,19 @@ export function renderImageryHoverCard(host: HTMLElement, data: any, fallbackDat
   const user = doc.createElement('div'); Object.assign(user.style, styles.creator);
   const userIcon = cardIcon(doc, 'creator'); userIcon.setAttribute('aria-hidden', 'true'); userIcon.style.color = '#83c9a5';
   const name = doc.createElement('b'); Object.assign(name.style, styles.name); l10n.bind(name,"textContent",()=>loading ? l10n.text("Loading image details…") : data?.creator?.username || l10n.text("Creator unavailable"));
-  user.appendChild(userIcon); user.appendChild(name); host.appendChild(user);
+  user.appendChild(userIcon);
+  user.appendChild(name);
+  if (data?.is_pano === true) {
+    const badge = doc.createElement('span');
+    badge.textContent = '360°';
+    Object.assign(badge.style, {
+      marginInlineStart: 'auto', flexShrink: '0',
+      padding: '2px 6px', borderRadius: '5px', background: '#27463b',
+      color: '#fff', fontSize: '12px', fontWeight: '600', lineHeight: '1.25',
+    });
+    user.appendChild(badge);
+  }
+  host.appendChild(user);
   const date = doc.createElement('div'); Object.assign(date.style, styles.date);
   const icon = cardIcon(doc, 'calendar'); icon.setAttribute('aria-hidden', 'true');
   const label = doc.createElement('span'); const raw = data?.captured_at ?? fallbackDate;
@@ -79,13 +91,26 @@ export function renderImageryHoverCard(host: HTMLElement, data: any, fallbackDat
     Object.assign(image.style, styles.image); l10n.bind(image,"alt",()=>l10n.text("Street imagery preview")); image.decoding = 'async';
     const retained = { id, url, image, preview }; retainedHoverImages.set(host, retained);
     const current = () => retainedHoverImages.get(host) === retained && preview.parentNode === host;
-    const show = () => { if (current()) { preview.textContent = ''; preview.appendChild(image); rememberDecoded(host, id, url, image); onSettled?.(); } };
+    const show = () => {
+      if (!current()) return;
+      preview.textContent = '';
+      preview.appendChild(image);
+      rememberDecoded(host, id, url, image);
+      onSettled?.();
+    };
     image.onload = show;
     image.onerror = () => { if (current()) { l10n.bind(preview,"textContent",()=>l10n.text("Preview unavailable")); onSettled?.(); } };
     if (reuse || recalled) { if (image.complete && image.naturalWidth > 0) show(); }
     else image.src = data.thumb_256_url;
   } else if (!loading) onSettled?.();
 }
+/** Return the capture whose thumbnail is currently shown in the hover card. */
+export function visibleImageryHoverId(host: HTMLElement | null | undefined): string | undefined {
+  if (!host || host.style.display === 'none') return;
+  const retained = retainedHoverImages.get(host);
+  if (retained?.preview.parentNode === host && retained.image.parentNode === retained.preview) return retained.id;
+}
+
 /** Anchor once beside the hover target, clamped to the widget/viewport and its available width. */
 export function positionImageryHoverCard(host: HTMLElement, bounds: { left: number; right: number; top: number; bottom: number }, x: number, y: number): void {
   const viewport = host.ownerDocument.defaultView || { innerWidth: bounds.right, innerHeight: bounds.bottom };

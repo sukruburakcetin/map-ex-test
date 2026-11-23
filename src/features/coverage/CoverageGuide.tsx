@@ -48,8 +48,10 @@ export function CoverageGuide({
 }: CoverageGuideProps) {
   const settingsSummary = settings.join(" · ");
   const action = status.action;
+  const shortLabel = action === "show" ? t("appZoomCloser") : undefined;
   return (
     <React.Fragment>
+      <style>{guideStyles.coverageBarCss}</style>
       {visible && (
         <div className="mly-coverage-notice" style={coverageNoticeStyles.container}>
           <img src={MAPILLARY_IMAGE} alt="" aria-hidden="true" style={coverageNoticeStyles.statusIcon} />
@@ -68,8 +70,13 @@ export function CoverageGuide({
             <span className="mly-coverage-touch-hint">{touchHint}</span>
           </span>
           {action && (
-            <button className="mly-text-action" type="button" onClick={() => onAction(action)} style={coverageNoticeStyles.action}>
-              {status.label}
+            <button className={shortLabel ? "mly-coverage-bar-action mly-coverage-action-has-short" : "mly-coverage-bar-action"}
+              type="button" aria-label={status.label} title={status.label} onClick={() => onAction(action)}
+              style={{ ...coverageNoticeStyles.action, height: "auto", flexShrink: 1, paddingBlock: 4 }}>
+              {shortLabel ? <>
+                <span className="mly-coverage-action-full">{status.label}</span>
+                <span className="mly-coverage-action-short">{shortLabel}</span>
+              </> : status.label}
             </button>
           )}
           <button ref={helpButtonRef} className="mly-coverage-help-button" type="button" aria-controls={helpId} aria-expanded={helpOpen} onClick={onToggleHelp} aria-label={t('appExplorerGuideAndActiveFilters')} title={t('appExplorerGuideAndActiveFilters')} style={coverageNoticeStyles.helpButton}><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" style={guideStyles.helpIcon}><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3" /><circle cx="8" cy="4.75" r="0.75" fill="currentColor" /><path d="M8 7.25v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg></button>
