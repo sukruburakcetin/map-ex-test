@@ -3,7 +3,7 @@ import type { SequenceCoordinate } from './sequenceCoordinates';
 import type { SequencePerformance } from './SequencePerformance';
 
 /** Only the SDK image fields consumed while opening a capture. */
-export interface OpeningImage extends ViewerFrameImage { capturedAt?: number; }
+export interface OpeningImage extends ViewerFrameImage { capturedAt?: number; cameraType?: string; }
 export interface SequenceOpeningViewer {
   getImage(): Promise<OpeningImage | null>;
   moveTo(id: string): Promise<OpeningImage | null>;
@@ -35,6 +35,7 @@ type Cancellable = { cancel(): void };
 
 /** Live capabilities for one foreground selection. Existing owners retain data, cancellation and presentation lifetimes. */
 export interface SequenceOpeningHost<Viewer extends SequenceOpeningViewer, View extends object, Graphic extends { attributes?: { image_id?: unknown } }> {
+  alignOpeningPanorama?(viewer: Viewer, image: OpeningImage, bearing: number): void;
   readonly state: Readonly<Pick<OpeningState, 'sequenceImages' | 'imageId' | 'sequenceId'> & {
     sequenceRouteLoading?: boolean;
     turboModeActive?: boolean;
@@ -116,7 +117,7 @@ export interface SequenceOpeningHost<Viewer extends SequenceOpeningViewer, View 
 export async function openSequence<Viewer extends SequenceOpeningViewer, View extends object, Graphic extends { attributes?: { image_id?: unknown } }>(
   sequenceId: string, startImageId: string, clickPoint: { lon: number; lat: number } | undefined,
   representative: boolean, nearestToClick: boolean, clickStartedAt: number | undefined,
-  host: SequenceOpeningHost<Viewer, View, Graphic>): Promise<void> {
+  host: SequenceOpeningHost<Viewer, View, Graphic>, panoramaBearing?: number): Promise<void> {
     host.nearbyDiscovery?.cancel();
     host.highlightNearbyPin?.(null);
     host.stopRoutePreview?.();
@@ -215,6 +216,10 @@ export async function openSequence<Viewer extends SequenceOpeningViewer, View ex
       if (!current() || host.viewer !== viewer) return;
       viewerTiming?.finish();
       imageOpened = true;
+      if (panoramaBearing !== undefined && openedImage?.cameraType === 'spherical' && String(openedImage.id) === String(startImageId)) {
+        try { host.alignOpeningPanorama?.(viewer, openedImage, panoramaBearing); }
+        catch { /* The successfully opened capture remains usable at its SDK heading. */ }
+      }
       // Give the confirmed image a visible browser frame before optional cache/metadata work.
       host.commit({ isLoading: false, imageryRepresentative: false });
       if (typeof document !== 'undefined' && document.visibilityState === 'visible' && typeof requestAnimationFrame === 'function')

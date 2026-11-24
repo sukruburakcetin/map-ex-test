@@ -84,6 +84,15 @@ export class CommunityWorkspaceClient {
       headers: { apikey: this.connection.publicKey, 'Content-Type': 'application/json', ...(authenticated ? { Authorization: `Bearer ${this.session!.token}` } : {}), ...(method === 'POST' && (path.startsWith('/rest/v1/mly_workspace_notes')||path.startsWith('/rest/v1/mly_workspace_note_images')) ? { Prefer: 'resolution=ignore-duplicates,return=representation' } : (method === 'PATCH' || method === 'DELETE') ? { Prefer: 'return=representation' } : {}) },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
+    if (response.status === 404 && path === '/rest/v1/rpc/mly_delete_workspace')
+      throw new Error('Workspace deletion is unavailable. Ask the operator to apply migration 007.');
+    if (!response.ok && path === '/auth/v1/token?grant_type=password') {
+      const body = await response.json().catch(() => null);
+      const code = body?.error_code ?? body?.code;
+      if (code === 'invalid_credentials') throw new Error('Sign-in failed. Check the email and password for this workspace service.');
+      if (code === 'email_not_confirmed') throw new Error('Confirm your email with the workspace operator before signing in.');
+      throw new Error(`Could not sign in to the workspace service (HTTP ${response.status}).`);
+    }
     if (!response.ok) throw new Error(response.status === 401 ? 'Session expired. Sign in again.' : response.status === 403 ? 'The workspace operator has not granted this action.' : `Workspace request failed (HTTP ${response.status}). Refresh before retrying a submission.`);
     if (response.status === 204) return null;
     const result = await response.json();
@@ -110,6 +119,12 @@ export class CommunityWorkspaceClient {
   async signOut(): Promise<void> { try { if(this.session) await this.request('/auth/v1/logout','POST'); } finally { this.dispose(); } }
   private async list<T>(path: string): Promise<T[]> { const result=await this.request(path); if(!Array.isArray(result)||result.length>100)throw new Error('Invalid workspace response.');return result; }
   workspaces(): Promise<CommunityWorkspace[]> { return this.list('/rest/v1/mly_workspaces?select=id,owner_id,name,operator_contact&order=created_at.desc&limit=50'); }
+  async deleteWorkspace(workspace: string, confirmedName: string): Promise<void> {
+    const id = uuid(workspace);
+    if (!confirmedName || confirmedName.length > 120) throw new Error('Enter the workspace name to confirm deletion.');
+    const deleted = await this.request('/rest/v1/rpc/mly_delete_workspace','POST',{p_workspace:id,p_name:confirmedName});
+    if (deleted !== id) throw new Error('Workspace deletion could not be confirmed. Refresh workspaces before retrying.');
+  }
   async create(name: string, contact: string, displayName?: string): Promise<string> { if(!name.trim()||name.trim().length>120||contact.trim().length<3||contact.trim().length>300)throw new Error('Provide a workspace name and an operator contact of at least three characters.'); return uuid(await this.request(displayName===undefined?'/rest/v1/rpc/mly_create_workspace':'/rest/v1/rpc/mly_create_workspace_named','POST',{p_name:name.trim(),p_contact:contact.trim(),...(displayName===undefined?{}:{p_display_name:validateWorkspaceDisplayName(displayName)})})); }
   async join(invitation: string, displayName?: string): Promise<string> { if(!/^[a-f0-9-]{32,200}$/i.test(invitation))throw new Error('Invalid invitation code.');return uuid(await this.request(displayName===undefined?'/rest/v1/rpc/mly_join_workspace':'/rest/v1/rpc/mly_join_workspace_named','POST',{p_token:invitation,...(displayName===undefined?{}:{p_display_name:validateWorkspaceDisplayName(displayName)})})); }
   async invite(workspace: string, role: 'reader'|'contributor', uses: number): Promise<WorkspaceInvitation> {

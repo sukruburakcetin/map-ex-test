@@ -104,8 +104,9 @@ import { PbfReader as Pbf } from "pbf";
 import { VectorTile } from "@mapbox/vector-tile";
 import { objectNameMap } from "../utils/mapillaryObjectNameMap";
 import * as Icons from "../components/Icons";
-import { glassStyles, overrideStyles } from "../utils/styles";
+import { overrideStyles } from "../styles/widgetOverrides";
 import * as widgetLayout from "../styles/widgetLayout";
+import * as appearance from "../styles/appearance";
 import {
   LAYER_IDS,
   TILE_URLS,
@@ -242,6 +243,7 @@ import { CoverageFrameLookup, coverageFrameKey } from "../features/coverage/Cove
 import { RepresentativePickCache } from "../features/coverage/RepresentativePickCache";
 import { DelayedHoverStatus } from "../features/imagery/DelayedHoverStatus";
 import { clearImageryHoverCardCache, renderImageryHoverCard, positionImageryHoverCard, visibleImageryHoverId } from "../features/imagery/hoverCard";
+import { panoramaPlaceCenter } from "../features/places/panoramaPlaceCenter";
 import { fetchGraphJson } from '../services/mapillary/graphJson';
 import { queryEnterpriseNotesPage } from '../features/field-notes/enterpriseList';
 import { matchesEnterpriseLayerUrl, resolveEnterpriseNotesEndpoint } from '../features/field-notes/enterpriseEndpoint';
@@ -1696,7 +1698,15 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _lastInteractionTime: number = 0;
   private readonly CAPTURE_ROUTE_CONFIG = CAPTURE_ROUTE_CONFIG;
 
+  private setWidgetTheme = (theme: appearance.WidgetTheme) => {
+    if (!appearance.canUseVisitorTheme(this.props.config.allowUserThemeChoice)) return;
+    appearance.saveWidgetTheme(theme);
+    if (this.tooltipDiv) appearance.applyWidgetThemeVariables(this.tooltipDiv, theme);
+    this.setState({ widgetTheme: theme });
+  };
+
   state: State = {
+    widgetTheme: appearance.readWidgetTheme(),
     jimuMapView: null,
     turboModeActive: true,
     imageId: null,
@@ -2225,8 +2235,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
    * @param sequenceId Sequence context supplied by the coverage pick or associated-image navigation.
    * @param startImageId Capture to open before optional sequence hydration.
    */
-  private async loadSequenceById(sequenceId: string, startImageId: string, clickPoint?: { lon: number; lat: number }, representative = false, nearestToClick = false, clickStartedAt?: number) {
-    return openSequence(sequenceId, startImageId, clickPoint, representative, nearestToClick, clickStartedAt, this.sequenceOpeningHost());
+  private async loadSequenceById(sequenceId: string, startImageId: string, clickPoint?: { lon: number; lat: number }, representative = false, nearestToClick = false, clickStartedAt?: number, panoramaBearing?: number) {
+    return openSequence(sequenceId, startImageId, clickPoint, representative, nearestToClick, clickStartedAt, this.sequenceOpeningHost(), panoramaBearing);
   }
 
   /** Bind live selection owners and concrete SDK/GIS presentation without retaining a state snapshot. */
@@ -2256,6 +2266,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       translate: (...args) => this._owned(...args),
       get places() { return widget._places; },
       get placesExploreAbort() { return widget._placesExploreAbort; },
+      alignOpeningPanorama(viewer, image, bearing) {
+        const center = panoramaPlaceCenter(image, bearing);
+        if (center) viewer.setCenter(center);
+      },
       get profileConfirmedImageId() { return widget._profileConfirmedImageId; },
       get profileConfirmedViewer() { return widget._profileConfirmedViewer; },
       get reverseAddressEnrichment() { return widget._reverseAddressEnrichment; },
@@ -3024,7 +3038,14 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       get resizeObserver() { return widget.resizeObserver; }, set resizeObserver(value) { widget.resizeObserver = value; },
       stopCoverageRendering: (...args) => this.stopCoverageRendering(...args),
       stopSafePlayback: (...args) => this.stopSafePlayback(...args),
-      get tooltipDiv() { return widget.tooltipDiv; }, set tooltipDiv(value) { widget.tooltipDiv = value; },
+      get tooltipDiv() { return widget.tooltipDiv; }, set tooltipDiv(value) {
+        widget.tooltipDiv = value;
+        const config = widget.props.config;
+        if (value && (config?.widgetTheme || config?.allowUserThemeChoice === true)) {
+          const theme = appearance.resolveWidgetTheme(config.widgetTheme, appearance.canUseVisitorTheme(config.allowUserThemeChoice), widget.state.widgetTheme);
+          appearance.applyWidgetThemeVariables(value, theme);
+        }
+      },
       get trafficSignsStationaryHandle() { return widget.trafficSignsStationaryHandle; }, set trafficSignsStationaryHandle(value) { widget.trafficSignsStationaryHandle = value; },
       get trafficSignsZoomHandle() { return widget.trafficSignsZoomHandle; }, set trafficSignsZoomHandle(value) { widget.trafficSignsZoomHandle = value; },
       resetSharedStartup: () => { this._sharedStartupImageId = null; this._sharedStartupBearing = null; this._isFlyInActive = false; },
@@ -7626,6 +7647,12 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
    * Handle close/reopen, fullscreen resize observation and background-work priority without owning feature implementation details.
    */
   componentDidUpdate(prevProps: AllWidgetProps<any>, prevState: State) {
+    if (this.tooltipDiv && (prevProps.config.widgetTheme !== this.props.config.widgetTheme ||
+        prevProps.config.allowUserThemeChoice !== this.props.config.allowUserThemeChoice)) {
+      const theme = appearance.resolveWidgetTheme(this.props.config.widgetTheme,
+        appearance.canUseVisitorTheme(this.props.config.allowUserThemeChoice), this.state.widgetTheme);
+      appearance.applyWidgetThemeVariables(this.tooltipDiv, theme);
+    }
     reconcileWidgetUpdate(prevProps, prevState, this.widgetUpdateHost());
   }
 
@@ -7886,6 +7913,13 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       this._turboRequestCount === coverageRevisionAtClick;
     const hoveredPoint = this._coverageSelectionTargets.snapshot(this.coverageSelectionContext(), evt,
       TURBO_LIMITS.pickRadiusPx, geometry => view.toScreen(geometry));
+    const previewMetadata = hoveredPoint && this._turboMetadataCache.get(hoveredPoint.imageId);
+    const sameOpenPanorama = hoveredPoint && this.mapillaryViewer &&
+      String(this.state.imageId) === hoveredPoint.imageId &&
+      this._currentImageBearing?.read(this.mapillaryViewer, hoveredPoint.imageId) !== undefined;
+    const panoramaBearing = hoveredPoint && view.zoom >= ZOOM.TILE_FETCH &&
+      String(previewMetadata?.id) === hoveredPoint.imageId && previewMetadata?.is_pano === true && !sameOpenPanorama
+      ? hoverPreviewBearing(previewMetadata) : undefined;
     const pointPreviewAtClick = hoveredPoint ? new this.ArcGISModules.Graphic({
       geometry: hoveredPoint.geometry, attributes: {
         image_id: hoveredPoint.imageId,
@@ -7916,7 +7950,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const point = (view.toMap(evt) || coveragePreviewAtClick?.geometry) as PreparedMapClick['point'];
     if (!point) return;
 
-    return { point, pointPreviewAtClick, coveragePreviewAtClick, clickCurrent, coverageClickCurrent, clickStartedAt };
+    return { point, pointPreviewAtClick, coveragePreviewAtClick, clickCurrent, coverageClickCurrent, clickStartedAt, panoramaBearing };
   }
 
   /** Bind only click-policy capabilities; live getters retain ownership checks after awaits. */
@@ -8704,6 +8738,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private renderLocalizedContent() {
     const mapWidgetId = this.props.useMapWidgetIds?.[0];
 
+    const allowUserThemeChoice = appearance.canUseVisitorTheme(this.props.config.allowUserThemeChoice);
+    const widgetTheme = appearance.resolveWidgetTheme(this.props.config.widgetTheme, allowUserThemeChoice, this.state.widgetTheme);
+    const appearanceStyle = appearance.widgetThemeStyles[widgetTheme];
+
     // This is the viewer container. It will be placed either in normal widget or fullscreen portal.
     const viewerArea = (
       <ViewerSurface viewerRef={this.viewerContainer} measurementRef={this.measureLabelRef}
@@ -8724,6 +8762,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         {/* IMAGE UTILITY GROUP */}
         {this.state.imageId && (
           <ImageUtilityGroup
+            widgetTheme={widgetTheme} onWidgetThemeChange={allowUserThemeChoice ? this.setWidgetTheme : undefined}
+            appearanceStyle={appearanceStyle}
             hideTimeTravel={this.props.config.hideTimeTravel}
             hideShareButton={this.props.config.hideShareButton}
             hideImageDownload={this.props.config.hideImageDownload}
@@ -8799,7 +8839,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const normalMode = (
       <div
         dir={this._runtimeLocale?.direction || "ltr"} lang={this._runtimeLocale?.formatLocale || "en-US"} className={`widget-mapillary jimu-widget ${this.state.showAiTags ? "" : "hide-mly-tags"}`}
-        style={widgetLayout.widgetContainer}
+        style={{ ...widgetLayout.widgetContainer, ...appearanceStyle }}
       >
         {/* wraping this logic component in display:none so it doesn't break the Flex layout */}
         <div style={widgetLayout.mapConnectionHost}>{mapWidgetId ? <JimuMapViewComponent useMapWidgetId={mapWidgetId} onActiveViewChange={this.onActiveViewChange} /> : null}</div>
@@ -8808,19 +8848,19 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
                     separate from the logic component
                     missing map widget warning overlay*/}
         {!mapWidgetId && (
-          <div style={glassStyles.missingMapContainer}>
-            <div style={glassStyles.missingMapCard}>
-              <div style={glassStyles.missingMapIcon}>
+          <div style={widgetLayout.missingMapContainer}>
+            <div style={widgetLayout.missingMapCard}>
+              <div style={widgetLayout.missingMapIcon}>
                 <Icons.Warning size={36} />
               </div>
 
-              <h3 style={glassStyles.missingMapTitle}> {this._t('appMapConnectionRequired')} </h3>
+              <h3 style={widgetLayout.missingMapTitle}> {this._t('appMapConnectionRequired')} </h3>
 
-              <p style={glassStyles.missingMapText}> {this._t('appTheMapillaryExplorerNeedsToBeLinkedToA')} </p>
+              <p style={widgetLayout.missingMapText}> {this._t('appTheMapillaryExplorerNeedsToBeLinkedToA')} </p>
 
-              <div style={glassStyles.missingMapInstructionsBox}>
-                <div style={glassStyles.missingMapInstructionsTitle}> {this._t('appHowToFix')} </div>
-                <ol style={glassStyles.missingMapInstructionsList}>
+              <div style={widgetLayout.missingMapInstructionsBox}>
+                <div style={widgetLayout.missingMapInstructionsTitle}> {this._t('appHowToFix')} </div>
+                <ol style={widgetLayout.missingMapInstructionsList}>
                   <li>
                     {this._t('appOpenThisWidgetS')} <b> {this._t('appSettings')} </b>  {this._t('appPanel')} </li>
                   <li>
@@ -9037,6 +9077,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
           {/* UNIFIED FILTER BAR */}
           <FilterBar
+            appearanceStyle={appearanceStyle}
             detectionLabelZoom={this.state.currentZoom}
             signSpriteScale={this.state.signSpriteScale || 1}
             objectSpriteScale={this.state.objectSpriteScale || 1}
@@ -9221,7 +9262,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const fullscreenImage = this.state.sequenceImages.find(image => image.id === this.state.imageId)
       || this._lastSuccessfulSelection?.sequenceImages.find(image => image.id === this.state.imageId);
     const fullscreenMode = ReactDOM.createPortal(
-      <FullscreenViewer direction={this._runtimeLocale?.direction || "ltr"}
+      <FullscreenViewer appearanceStyle={appearanceStyle} direction={this._runtimeLocale?.direction || "ltr"}
         formatLocale={this._runtimeLocale?.formatLocale || "en-US"}
         showMinimap={this.state.showMinimap} minimapExpanded={this.state.minimapExpanded}
         hideInfoBox={this.props.config.hideInfoBox} address={this.state.address} image={fullscreenImage}

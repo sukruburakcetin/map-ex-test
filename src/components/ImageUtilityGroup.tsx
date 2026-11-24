@@ -3,13 +3,14 @@ import { React, jsx } from "jimu-core";
 import { useWidgetLocale, LanguageChoice } from '../i18n/WidgetLocale';
 import ReactDOM from "react-dom";
 import { TimeTravelPreview } from "./TimeTravelPreview";
-import { utilityDockCss } from '../styles/controlPanels';
+import { isWidgetTheme } from '../styles/appearance';
+import { utilityDockCss, utilityThemeChoiceCss } from '../styles/controlPanels';
 import * as Icons from "./Icons";
 import { ImageUtilityGroupProps } from "./types";
 
 /** Compact viewer actions. SDK work remains in the supplied runtime callbacks. */
 export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
-    const {t,locale,allowSwitch} = useWidgetLocale();
+    const {t,owned,locale,allowSwitch} = useWidgetLocale();
     const [travelOpen, setTravelOpen] = React.useState(false);
     const travelTrigger = React.useRef<HTMLButtonElement>(null);
     const closeTravel = React.useCallback(() => { setTravelOpen(false); travelTrigger.current?.focus(); }, []);
@@ -27,7 +28,7 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
     const cloudOn = !!(props.pointCloudVisible || props.pointCloudActive);
     const cloudBlocked = props.pointCloudAvailable === false && !props.pointCloudLoading && !cloudOn;
     const cloudMode = props.is3D && !props.hidePointCloud;
-    const hasMore = allowSwitch || !props.hideShareButton || !props.hideImageDownload;
+    const hasMore = allowSwitch || !!props.onWidgetThemeChange || !props.hideShareButton || !props.hideImageDownload;
     const close = (focus = false) => { setOpen(null); if (focus) trigger.current?.focus(); };
     const hasNavigation = (!!props.mapFollowEnabled && !props.hideMapFollowButton) || !props.hideCenterMapButton || (!props.hideTimeTravel && props.hasTimeTravel);
     const hasSceneTools = props.is3D && (!props.hideSyncHeadingButton || !props.hidePointCloud);
@@ -66,7 +67,7 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
         const above = aboveSpace >= height || aboveSpace >= belowSpace;
         setPosition({ width, maxHeight, left: Math.max(left, Math.min(anchor.right - width, right - width)),
             top: Math.max(top, Math.min(above ? dockBounds.top - height - 6 : dockBounds.bottom + 6, bottom - height)) });
-        menu.current.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
+        menu.current.querySelector<HTMLElement>('button:not(:disabled), select:not(:disabled)')?.focus();
     }, [open, props.isDownloading, cloudMode, locale]);
     React.useEffect(() => {
         if (!open) return;
@@ -134,10 +135,23 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
         </button>}
         {travelOpen && props.imageId && props.loadTimeTravelPreview && <TimeTravelPreview key={props.imageId} imageId={props.imageId} load={props.loadTimeTravelPreview} onClose={closeTravel}
             onExternal={() => { if (currentImage && props.imageId) props.onTimeTravel(currentImage.lat, currentImage.lon, props.imageId); }}/>}
-        {open && ((open === "more" && hasMore) || (open === "cloud" && cloudMode)) && ReactDOM.createPortal(<div lang={locale} ref={menu} id={menuId} role="dialog" aria-label={open === "cloud" ? t('cloudMode') : t('moreActions')} className="mly-utility-popover" style={{ ...position, position: 'fixed', zIndex: 2147483000 }}>
+        {open && ((open === "more" && hasMore) || (open === "cloud" && cloudMode)) && ReactDOM.createPortal(<div lang={locale} ref={menu} id={menuId} role="dialog" aria-label={open === "cloud" ? t('cloudMode') : t('moreActions')} className="mly-utility-popover" style={{ ...props.appearanceStyle, ...position, position: 'fixed', zIndex: 2147483000 }}>
             {open === "more" && !props.hideShareButton && <button className="mly-text-action" type="button" onClick={() => { close(true); props.onShare(); }}><Icons.Share size={15}/><span>{t('shareView')} </span></button>}
             {open === "more" && !props.hideImageDownload && <button className="mly-text-action" type="button" disabled={props.isDownloading} onClick={() => { close(true); props.onDownload(); }}><Icons.Download size={15}/><span>{props.isDownloading ? t('downloading') : t('downloadImage')}</span></button>}
             {open === "more" && <LanguageChoice/>}
+            {open === "more" && props.onWidgetThemeChange && <label className="mly-utility-theme-choice">
+                <style>{utilityThemeChoiceCss}</style>
+                {owned("Appearance")}
+                <select aria-label={owned("Appearance")} value={props.widgetTheme || "green"}
+                    onChange={event => { const theme = event.currentTarget.value; if (isWidgetTheme(theme)) props.onWidgetThemeChange?.(theme); }}>
+                    <option value="green">{owned("Mapillary Green")}</option>
+                    <option value="dark">{owned("Dark")}</option>
+                    <option value="light">{owned("Porcelain")}</option>
+                    <option value="high-contrast">{owned("High Contrast")}</option>
+                    <option value="sandstone">{owned("Sandstone")}</option>
+                    <option value="slate">{owned("Slate")}</option>
+                </select>
+            </label>}
             {open === "cloud" && <div role="group" aria-label={t('cloudOptions')}><span className="mly-dock-menu-label">{t('cloudMode')} </span>
                 {[{ label: t('currentImage'), detail: t('currentOnly'), follow: false }, { label: t('followImages'), detail: t('followDetail'), follow: true }].map(mode => <button className="mly-text-action" key={mode.label} type="button" aria-label={mode.label} aria-describedby={`${menuId}-${mode.follow ? "follow" : "current"}`} aria-pressed={!!props.pointCloudFollowImages === mode.follow}
                     onClick={() => { close(true); if (!!props.pointCloudFollowImages !== mode.follow) props.onPointCloudFollowImagesChange?.(mode.follow); }}><span className="mly-dock-choice" aria-hidden="true">{!!props.pointCloudFollowImages === mode.follow ? '✓' : ''}</span><span className="mly-dock-option-copy"><span>{mode.label}</span><small id={`${menuId}-${mode.follow ? "follow" : "current"}`}>{mode.detail}</small></span></button>)}

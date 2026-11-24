@@ -5,7 +5,7 @@ import { DetectionDisplayControls } from '../features/detections/DetectionDispla
 import { CategoryMultiSelect } from '../features/detections/CategoryMultiSelect';
 import { GlassSelect } from "../components/GlassSelect";
 import { GlassDatePicker } from "../components/GlassDatePicker";
-import { glassStyles } from "../utils/styles";
+import { filterInputStyle, filterLabelStyle } from "../styles/filterBar";
 import { FilterScrollRegion } from "./FilterScrollRegion";
 import { FilterBarProps } from "./types";
 import { organizationFilterId } from "../utils/organizationFilter";
@@ -20,6 +20,7 @@ import { organizationFilterId } from "../utils/organizationFilter";
     * Each group is only rendered when its corresponding `show*FilterBox` flag is true.
 */
 export const FilterBar: React.FC<FilterBarProps> = ({
+    appearanceStyle,
     signSpriteScale = 1, objectSpriteScale = 1, onSpriteScaleChange,
     detectionLabelZoom,
     signLabels = false, objectLabels = false, onDetectionLabelsChange,
@@ -90,7 +91,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                                 }
                             }}
                             style={{
-                                ...glassStyles.glassInput,
+                                ...filterInputStyle,
                                 width: "80px",
                                 minWidth: "60px",
                                 height: "18px",
@@ -108,7 +109,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                                     right: "10px",
                                     background: "transparent",
                                     border: "none",
-                                    color: "rgba(255,255,255,0.6)",
+                                    color: "var(--mly-theme-muted, rgba(255,255,255,0.6))",
                                     fontSize: "8px",
                                     cursor: "pointer",
                                     padding: 0,
@@ -129,12 +130,12 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                             className="glass-input-placeholder"
                             onChange={event => onTurboOrganizationChange(event.target.value)}
                             onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); onTurboOrganizationEnter(); } }}
-                            style={{ ...glassStyles.glassInput, width: 112, minWidth: 90, height: 18, paddingRight: 18,
+                            style={{ ...filterInputStyle, width: 112, minWidth: 90, height: 18, paddingRight: 18,
                                 opacity: turboOrganization ? 0.6 : 1, cursor: turboOrganization ? "not-allowed" : "text",
                                 ...(organizationFilterId(turboFilterOrganization) === -1 ? { outline: "1px solid #ff8c8c" } : {}) }} />
                         {!turboOrganization && turboFilterOrganization && <button type="button" aria-label={t('clearOrganization')}
                             title={t('clearOrganization')} onClick={onTurboOrganizationClear}
-                            style={{ position: "absolute", right: 6, background: "transparent", border: "none", color: "rgba(255,255,255,0.6)", fontSize: 10, cursor: "pointer", padding: 0 }}>✕</button>}
+                            style={{ position: "absolute", right: 6, background: "transparent", border: "none", color: "var(--mly-theme-muted, rgba(255,255,255,0.6))", fontSize: 10, cursor: "pointer", padding: 0 }}>✕</button>}
                     </div>
 
                     {/* Date range */}
@@ -158,7 +159,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
                     {/* Is Pano toggle */}
                     <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                        <span style={glassStyles.labelSmall}>{t('pano')} </span>
+                        <span style={filterLabelStyle}>{t('pano')} </span>
                         <div className="mly-filter-pano" style={{ display: "flex", gap: "2px" }}>
                             {([
                                 { label: t('all'), value: undefined },
@@ -174,10 +175,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                                             padding: "1px 4px",
                                             fontSize: "8px",
                                             fontWeight: isActive ? 700 : 400,
-                                            background: isActive ? "#2b8054" : "#183f2c",
+                                            background: isActive ? "var(--mly-theme-selected, #2b8054)" : "var(--mly-theme-control, #183f2c)",
                                             border: isActive ? "1px solid #74c397" : "1px solid #456b58",
                                             borderRadius: "3px",
-                                            color: "white",
+                                            color: "var(--mly-theme-text, white)",
                                             cursor: "pointer",
                                             transition: "all 0.15s ease"
                                         }}
@@ -190,15 +191,15 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                     </div>
 
                     <label className="mly-filter-travel" style={{ display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
-                        <span style={glassStyles.labelSmall}>{t('travel')} </span>
-                        <select aria-label={t('travelMethod')} title={t('travelHelp')} value={turboFilterOnFoot === undefined ? "any" : turboFilterOnFoot ? "foot" : "other"} onChange={event => onTurboTravelMethodChange?.(event.target.value === "foot" ? true : event.target.value === "other" ? false : undefined)} style={{ height: 22, maxWidth: 96, padding: "0 3px", fontSize: 10, borderRadius: 4, border: "1px solid #ffffff35", background: "#214d36", color: "white" }}>
+                        <span style={filterLabelStyle}>{t('travel')} </span>
+                        <select aria-label={t('travelMethod')} title={t('travelHelp')} value={turboFilterOnFoot === undefined ? "any" : turboFilterOnFoot ? "foot" : "other"} onChange={event => onTurboTravelMethodChange?.(event.target.value === "foot" ? true : event.target.value === "other" ? false : undefined)} style={{ height: 22, maxWidth: 96, padding: "0 3px", fontSize: 10, borderRadius: 4, border: "1px solid var(--mly-theme-border, #ffffff35)", background: "var(--mly-theme-control, #214d36)", color: "var(--mly-theme-text, white)" }}>
                             <option value="any">{t('any')} </option><option value="foot">{t('onFoot')}</option><option value="other">{t('otherTravel')}</option>
                         </select>
                     </label>
 
                     {/* Date colour toggle */}
                     <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                        <span style={glassStyles.labelSmall}>{t('dateColor')} </span>
+                        <span style={filterLabelStyle}>{t('dateColor')} </span>
                         <label style={{ position: "relative", display: "inline-block", width: "26px", height: "16px", marginBottom: 0, marginRight: "2px" }}>
                             <input
                                 type="checkbox"
@@ -224,28 +225,28 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             {/* TRAFFIC SIGN FILTERS */}
             {showTrafficSignsFilterBox && (
                 <div className="mly-filter-group mly-filter-group--features" role="group" aria-label={t('signFilters')}>
-                    {onTrafficSignCategoriesChange ? <CategoryMultiSelect label={t('signFilters')} allLabel={t('uiAllSigns')} options={signOptions} selected={trafficSignsSelectedCodes} onChange={onTrafficSignCategoriesChange}/> : <GlassSelect floatingMenu compact
+                    {onTrafficSignCategoriesChange ? <CategoryMultiSelect appearanceStyle={appearanceStyle} label={t('signFilters')} allLabel={t('uiAllSigns')} options={signOptions} selected={trafficSignsSelectedCodes} onChange={onTrafficSignCategoriesChange}/> : <GlassSelect floatingMenu compact
                         value={trafficSignsFilterValue}
                         onChange={onTrafficSignsFilterChange}
                         options={signOptions}
                         accentColor="#63c38e"
                         menuPlacement="top"
                     />}
-                    {onSpriteScaleChange && <DetectionDisplayControls zoom={detectionLabelZoom} label={t('sign')} scale={signSpriteScale} opacity={signOpacity} labels={signLabels} onLabels={enabled=>onDetectionLabelsChange?.('signs',enabled)} reduceOverlap={signReduceOverlap} onOverlap={reduce=>onDetectionOverlapChange?.('signs',reduce)} mode={signDisplayMode} onMode={mode=>changeDisplayMode('signs',mode)} onScale={value=>onSpriteScaleChange('signs',value)} onOpacity={value=>onDetectionOpacityChange?.('signs',value)} onReset={()=>onDetectionDisplayReset?.('signs')} />}
+                    {onSpriteScaleChange && <DetectionDisplayControls appearanceStyle={appearanceStyle} zoom={detectionLabelZoom} label={t('sign')} scale={signSpriteScale} opacity={signOpacity} labels={signLabels} onLabels={enabled=>onDetectionLabelsChange?.('signs',enabled)} reduceOverlap={signReduceOverlap} onOverlap={reduce=>onDetectionOverlapChange?.('signs',reduce)} mode={signDisplayMode} onMode={mode=>changeDisplayMode('signs',mode)} onScale={value=>onSpriteScaleChange('signs',value)} onOpacity={value=>onDetectionOpacityChange?.('signs',value)} onReset={()=>onDetectionDisplayReset?.('signs')} />}
                 </div>
             )}
 
             {/* OBJECT FILTERS */}
             {showObjectsFilterBox && (
                 <div className="mly-filter-group mly-filter-group--features" role="group" aria-label={t('objectFilters')}>
-                    {onObjectCategoriesChange ? <CategoryMultiSelect label={t('objectFilters')} allLabel={t('uiAllPoints')} options={pointOptions} selected={objectsSelectedCodes} onChange={onObjectCategoriesChange}/> : <GlassSelect floatingMenu compact
+                    {onObjectCategoriesChange ? <CategoryMultiSelect appearanceStyle={appearanceStyle} label={t('objectFilters')} allLabel={t('uiAllPoints')} options={pointOptions} selected={objectsSelectedCodes} onChange={onObjectCategoriesChange}/> : <GlassSelect floatingMenu compact
                         value={objectsFilterValue}
                         onChange={onObjectsFilterChange}
                         options={pointOptions}
                         accentColor="#63c38e"
                         menuPlacement="top"
                     />}
-                    {onSpriteScaleChange && <DetectionDisplayControls zoom={detectionLabelZoom} label={t('object')} scale={objectSpriteScale} opacity={objectOpacity} labels={objectLabels} onLabels={enabled=>onDetectionLabelsChange?.('objects',enabled)} reduceOverlap={objectReduceOverlap} onOverlap={reduce=>onDetectionOverlapChange?.('objects',reduce)} mode={objectDisplayMode} onMode={mode=>changeDisplayMode('objects',mode)} onScale={value=>onSpriteScaleChange('objects',value)} onOpacity={value=>onDetectionOpacityChange?.('objects',value)} onReset={()=>onDetectionDisplayReset?.('objects')} />}
+                    {onSpriteScaleChange && <DetectionDisplayControls appearanceStyle={appearanceStyle} zoom={detectionLabelZoom} label={t('object')} scale={objectSpriteScale} opacity={objectOpacity} labels={objectLabels} onLabels={enabled=>onDetectionLabelsChange?.('objects',enabled)} reduceOverlap={objectReduceOverlap} onOverlap={reduce=>onDetectionOverlapChange?.('objects',reduce)} mode={objectDisplayMode} onMode={mode=>changeDisplayMode('objects',mode)} onScale={value=>onSpriteScaleChange('objects',value)} onOpacity={value=>onDetectionOpacityChange?.('objects',value)} onReset={()=>onDetectionDisplayReset?.('objects')} />}
                 </div>
             )}
         </FilterScrollRegion>

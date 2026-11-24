@@ -2,8 +2,8 @@
 import { React, jsx } from "jimu-core";
 import { OwnedMessage, type LocaleValue } from "../../i18n/WidgetLocale";
 import { MAPILLARY_IMAGE } from "../../utils/mapillary-image-base64";
-import { coverageNoticeStyles } from "../../utils/styles";
 import * as guideStyles from "../../styles/coverageGuide";
+const { coverageNoticeStyles } = guideStyles;
 
 type CoverageGuideAction = "show" | "data" | "tilt" | "zoom" | "retry";
 

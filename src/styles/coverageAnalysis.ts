@@ -33,7 +33,7 @@ export function getCoverageAnalysisTriggerButtonStyle(canRun: boolean, btnBg: st
         borderRadius: "5px",
         border: `1px solid ${canRun ? "rgba(30, 144, 255, 0.4)" : "rgba(255,255,255,0.1)"}`,
         background: btnBg,
-        color: canRun ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.65)",
+        color: canRun ? "var(--mly-theme-text, rgba(255,255,255,0.9))" : "var(--mly-theme-muted, rgba(255,255,255,0.65))",
         fontSize: "9px",
         fontWeight: 600,
         cursor: canRun ? "pointer" : "not-allowed",

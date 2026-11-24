@@ -84,7 +84,7 @@ function loadWorkspaceControls() {
 }
 const CommunityWorkspacePanel = React.lazy(loadWorkspaceControls);
 const workspaceFeedbackStyle: React.CSSProperties = {
-    color: '#d3e2d9', background: '#14251d', padding: 12,
+    color: 'var(--mly-theme-text, #d3e2d9)', background: 'var(--mly-theme-input, #14251d)', padding: 12,
     fontSize: 13, lineHeight: 1.5, overflowWrap: 'anywhere'
 };
 
@@ -158,7 +158,7 @@ export const FieldNotesPanel: React.FC<Props> = (props) => {
                 <NoteDraftForm sourceLabel={pendingNote.placeId?owned('Overture place note'):undefined} detectionTitle={pendingNote.title} detectionDestination={pendingNote.destination} categories={categories} translateDefaultCategories={!propCategories?.length} category={category} noteText={noteText} share={share} sharingEnabled={props.sharingEnabled} setCategory={setCategory} setNoteText={setNoteText} setShare={setShare} onSubmitNote={(category,text,share)=>onSubmitNote(category,pendingNote.detectionId?withAttachmentMetadata(text,{...pendingNote,imageId:pendingNote.imageId||'',detectionId:pendingNote.detectionId}):pendingNote.placeId?withPlaceAttachmentMetadata(text,{...pendingNote,placeId:pendingNote.placeId}):text,share)} onCancelPending={onCancelPending} />
             )}
 
-            {workspacePicking&&<div role="status" onPointerDown={event=>event.stopPropagation()} onClick={event=>event.stopPropagation()} style={{position:'absolute',bottom:12,left:12,right:12,zIndex:999999994,padding:12,background:'#13251ef2',color:'#eef6f0',border:'1px solid #7fae94',borderRadius:6,display:'flex',flexWrap:'wrap',alignItems:'center',gap:10}}>
+            {workspacePicking&&<div role="status" onPointerDown={event=>event.stopPropagation()} onClick={event=>event.stopPropagation()} style={{position:'absolute',bottom:12,left:12,right:12,zIndex:999999994,padding:12,background:'var(--mly-theme-chrome, #13251ef2)',color:'var(--mly-theme-text, #eef6f0)',border:'1px solid var(--mly-theme-border, #7fae94)',borderRadius:6,display:'flex',flexWrap:'wrap',alignItems:'center',gap:10}}>
               <span>{owned('Click the map to choose a contribution location. Press Escape to cancel.')}</span>
               <button className="mly-text-action" type="button" style={{...noteMapRefreshStyle,padding:'6px 10px',minHeight:32}} onClick={()=>cancelWorkspacePick.current?.()}>{owned('Cancel location picking')}</button>
             </div>}

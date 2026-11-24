@@ -7,9 +7,9 @@ export const container: CSSProperties = {
   left: 0,
   right: 0,
   zIndex: 999999990,
-  background: "rgba(12,12,12,0.92)",
+  background: "var(--mly-theme-panel, rgba(12,12,12,0.92))",
   backdropFilter: "blur(10px)",
-  borderTop: "1px solid rgba(255,255,255,0.1)",
+  borderTop: "1px solid var(--mly-theme-border, rgba(255,255,255,0.1))",
   padding: "6px 8px",
   display: "flex",
   flexDirection: "column",
@@ -40,7 +40,7 @@ export function tab(selected: boolean): CSSProperties {
   return {
     background: "none",
     border: 0,
-    color: selected ? "#8bdbb7" : "#bbb",
+    color: selected ? "var(--mly-theme-accent, #8bdbb7)" : "var(--mly-theme-muted, #bbb)",
     padding: "6px",
     cursor: "pointer",
   };
@@ -48,10 +48,10 @@ export function tab(selected: boolean): CSSProperties {
 export const searchMore: CSSProperties = {
   fontSize: 9,
   padding: "2px 5px",
-  border: "1px solid #648b73",
+  border: "1px solid var(--mly-theme-border, #648b73)",
   borderRadius: 4,
-  background: "#214233",
-  color: "#e1eee5",
+  background: "var(--mly-theme-control, #214233)",
+  color: "var(--mly-theme-text, #e1eee5)",
   cursor: "pointer",
 };
 export const close: CSSProperties = {
@@ -75,14 +75,14 @@ export function nearbyRow(hidden: boolean): CSSProperties {
     overflowX: "auto",
     scrollSnapType: "x mandatory",
     scrollbarWidth: "thin",
-    scrollbarColor: "rgba(255,255,255,0.2) transparent",
+    scrollbarColor: "var(--mly-theme-border, rgba(255,255,255,0.2)) transparent",
     paddingBottom: "2px",
   };
 }
 export const nearbyLoading: CSSProperties = {
   fontSize: 11,
   padding: 8,
-  color: "#b5ccbf",
+  color: "var(--mly-theme-muted, #b5ccbf)",
 };
 /** Highlight the pending capture while the current viewer image is unchanged. */
 export function nearbyCard(isCurrent: boolean): CSSProperties {
@@ -93,7 +93,7 @@ export function nearbyCard(isCurrent: boolean): CSSProperties {
     cursor: "pointer",
     borderRadius: "5px",
     overflow: "hidden",
-    border: isCurrent ? "2px solid #05a056" : "2px solid transparent",
+    border: isCurrent ? "2px solid var(--mly-theme-accent, #05a056)" : "2px solid transparent",
     position: "relative",
     transition: "transform 0.12s",
   };
@@ -112,7 +112,7 @@ export const caption: CSSProperties = {
   background: "linear-gradient(transparent, rgba(0,0,0,0.78))",
   padding: "10px 4px 3px",
   fontSize: "8px",
-  color: "rgba(255,255,255,0.85)",
+  color: "var(--mly-theme-text, rgba(255,255,255,0.85))",
   lineHeight: 1.3,
 };
 export const creator: CSSProperties = {
@@ -132,7 +132,7 @@ export function associatedRow(visible: boolean): CSSProperties {
     overflowX: "auto",
     overflowY: "hidden",
     alignItems: "flex-start",
-    color: "#ddd",
+    color: "var(--mly-theme-text, #ddd)",
     fontSize: 12,
   };
 }
@@ -144,9 +144,9 @@ export function associatedCard(selected: boolean): CSSProperties {
     width: "var(--tray-card-width)",
     padding: 0,
     transition: "transform 0.12s",
-    background: "#182321",
-    color: "#ddd",
-    border: selected ? "2px solid #05a056" : "2px solid transparent",
+    background: "var(--mly-theme-control, #182321)",
+    color: "var(--mly-theme-text, #ddd)",
+    border: selected ? "2px solid var(--mly-theme-accent, #05a056)" : "2px solid transparent",
     borderRadius: 5,
     overflow: "hidden",
     cursor: "pointer",
@@ -157,7 +157,7 @@ export const associatedPreview: CSSProperties = {
   alignItems: "center",
   justifyContent: "center",
   height: "var(--tray-image-height)",
-  background: "#0f1618",
+  background: "var(--mly-theme-panel, #0f1618)",
 };
 export const associatedImageFrame: CSSProperties = {
   display: "inline-block",

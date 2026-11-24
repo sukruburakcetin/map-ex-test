@@ -4,13 +4,13 @@ import type { React } from 'jimu-core';
 export const noteActionStyle: React.CSSProperties = {
     display: "inline-flex", alignItems: "center", justifyContent: "center",
     minHeight: 26, padding: "3px 8px", borderRadius: 5,
-    border: "1px solid rgba(155,210,181,0.25)", background: "rgba(40,80,58,0.28)",
-    color: "#b9e5cd", fontSize: 10, lineHeight: "16px", cursor: "pointer", whiteSpace: "normal", overflowWrap: "anywhere"
+    border: "1px solid var(--mly-theme-border, rgba(155,210,181,0.25))", background: "rgba(40,80,58,0.28)",
+    color: "var(--mly-theme-text, #b9e5cd)", fontSize: 10, lineHeight: "16px", cursor: "pointer", whiteSpace: "normal", overflowWrap: "anywhere"
 };
 
-export const noteEditorInputStyle: React.CSSProperties = { boxSizing: "border-box", minWidth: 0, maxWidth: "100%", padding: 7, borderRadius: 6, border: "1px solid #555", background: "#1a1a1a", color: "white", fontSize: 12, width: "100%", boxSizing: "border-box" };
+export const noteEditorInputStyle: React.CSSProperties = { boxSizing: "border-box", minWidth: 0, maxWidth: "100%", padding: 7, borderRadius: 6, border: "1px solid var(--mly-theme-border, #555)", background: "var(--mly-theme-input, #1a1a1a)", color: "var(--mly-theme-text, white)", fontSize: 12, width: "100%", boxSizing: "border-box" };
 
-export const noteEditorDialogStyle: React.CSSProperties = { boxSizing: "border-box", position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 999999996, background: "#151515", color: "white", padding: 14, borderRadius: 12, width: "min(320px, 85%)", maxHeight: "85%", overflowY: "auto", boxShadow: "0 8px 24px #0009" };
+export const noteEditorDialogStyle: React.CSSProperties = { boxSizing: "border-box", position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 999999996, background: "var(--mly-theme-panel, #151515)", color: "var(--mly-theme-text, white)", padding: 14, borderRadius: 12, width: "min(320px, 85%)", maxHeight: "85%", overflowY: "auto", boxShadow: "0 8px 24px #0009" };
 
 export const noteEditorTitleStyle: React.CSSProperties = { fontSize: 12 };
 
@@ -20,18 +20,18 @@ export const noteEditorFieldsetStyle: React.CSSProperties = { minWidth: 0, borde
 
 export const noteEditorLabelStyle: React.CSSProperties = { fontSize: 11 };
 
-export const noteErrorStyle: React.CSSProperties = { color: "#ffb8a6", fontSize: 11 };
+export const noteErrorStyle: React.CSSProperties = { color: "var(--mly-theme-danger, #ffb8a6)", fontSize: 11 };
 
 export const noteEditorActionsStyle: React.CSSProperties = { display: "flex", flexWrap: "wrap", minWidth: 0, justifyContent: "flex-end", gap: 8 };
 
-export function getNoteEditorCancelStyle(saving: boolean | undefined): React.CSSProperties { return { ...noteActionStyle, minHeight: 32, padding: "5px 12px", color: "#d2dad5", background: "rgba(255,255,255,0.05)", opacity: saving ? 0.5 : 1 }; }
+export function getNoteEditorCancelStyle(saving: boolean | undefined): React.CSSProperties { return { ...noteActionStyle, minHeight: 32, padding: "5px 12px", color: "var(--mly-theme-text, #d2dad5)", background: "rgba(255,255,255,0.05)", opacity: saving ? 0.5 : 1 }; }
 
-export function getNoteEditorSaveStyle(saving: boolean | undefined): React.CSSProperties { return { ...noteActionStyle, minHeight: 32, padding: "5px 12px", background: "#167348", borderColor: "#368b61", color: "white", fontWeight: 600, opacity: saving ? 0.5 : 1 }; }
+export function getNoteEditorSaveStyle(saving: boolean | undefined): React.CSSProperties { return { ...noteActionStyle, minHeight: 32, padding: "5px 12px", background: "var(--mly-theme-primary, #167348)", borderColor: "#368b61", color: "white", fontWeight: 600, opacity: saving ? 0.5 : 1 }; }
 
 /** Attachment dialog styles share the field-notes presentation family. */
-export const noteAttachmentDialogStyle: React.CSSProperties = { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 999999997, background: "#151515", color: "white", padding: 14, border: "1px solid rgba(155,210,181,0.25)", boxSizing: "border-box", borderRadius: 12, width: "min(360px, 90%)", maxHeight: "80%", overflowY: "auto", boxShadow: "0 8px 24px #0009", fontSize: 12 };
+export const noteAttachmentDialogStyle: React.CSSProperties = { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 999999997, background: "var(--mly-theme-panel, #151515)", color: "var(--mly-theme-text, white)", padding: 14, border: "1px solid var(--mly-theme-border, rgba(155,210,181,0.25))", boxSizing: "border-box", borderRadius: 12, width: "min(360px, 90%)", maxHeight: "80%", overflowY: "auto", boxShadow: "0 8px 24px #0009", fontSize: 12 };
 
-export const noteAttachmentHelpStyle: React.CSSProperties = { fontSize: 10, color: "#a8cfc0" };
+export const noteAttachmentHelpStyle: React.CSSProperties = { fontSize: 10, color: "var(--mly-theme-muted, #a8cfc0)" };
 
 export const noteAttachmentFieldsetStyle: React.CSSProperties = { border: 0, padding: 0, margin: 0, minWidth: 0, display: "flex", flexDirection: "column", gap: 8 };
 
@@ -56,20 +56,20 @@ export const noteListToolbarStyle: React.CSSProperties = {
                         fontSize: "9px", color: "rgba(255,255,255,0.45)", flexShrink: 0 
                     };
 export const noteListToolbarActionsStyle: React.CSSProperties = { display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" };
-export const noteListImportStyle: React.CSSProperties = { fontSize: "10px", padding: "3px 8px", borderRadius: "5px", border: "1px solid rgba(255,255,255,0.2)", background: "transparent", color: "#fff", cursor: "pointer" };
+export const noteListImportStyle: React.CSSProperties = { fontSize: "10px", padding: "3px 8px", borderRadius: "5px", border: "1px solid var(--mly-theme-border, rgba(255,255,255,0.2))", background: "transparent", color: "var(--mly-theme-text, #fff)", cursor: "pointer" };
 export const noteListFileInputStyle: React.CSSProperties = { display: "none" };
-export const noteListExportStyle: React.CSSProperties = { fontSize: "10px", padding: "3px 8px", borderRadius: "5px", border: "none", background: "#05a056", color: "#fff", cursor: "pointer" };
-export const noteListEmptyStyle: React.CSSProperties = { fontSize: "10px", color: "rgba(255,255,255,0.4)", padding: "10px 0", textAlign: "center" };
-export const noteListCategoryStyle: React.CSSProperties = { fontSize: "11px", fontWeight: 600, color: "#fff" };
-export const noteListDeleteStyle: React.CSSProperties = { display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, width: 32, height: 32, padding: 4, background: "transparent", border: 0, borderRadius: 5, color: "#b5c7bc", cursor: "pointer", touchAction: "manipulation" };
-export const noteListShareStyle: React.CSSProperties = { marginLeft: 6, background: "transparent", border: "1px solid #436052", borderRadius: 4, color: "#b5edcf", cursor: "pointer" };
+export const noteListExportStyle: React.CSSProperties = { fontSize: "10px", padding: "3px 8px", borderRadius: "5px", border: "none", background: "var(--mly-theme-primary, #05a056)", color: "#fff", cursor: "pointer" };
+export const noteListEmptyStyle: React.CSSProperties = { fontSize: "10px", color: "var(--mly-theme-muted, #a6b4ad)", padding: "10px 0", textAlign: "center" };
+export const noteListCategoryStyle: React.CSSProperties = { fontSize: "11px", fontWeight: 600, color: "var(--mly-theme-text, #fff)" };
+export const noteListDeleteStyle: React.CSSProperties = { display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, width: 32, height: 32, padding: 4, background: "transparent", border: 0, borderRadius: 5, color: "var(--mly-theme-muted, #b5c7bc)", cursor: "pointer", touchAction: "manipulation" };
+export const noteListShareStyle: React.CSSProperties = { marginLeft: 6, background: "transparent", border: "1px solid var(--mly-theme-border, #436052)", borderRadius: 4, color: "var(--mly-theme-accent, #b5edcf)", cursor: "pointer" };
 /** Compact non-interactive workflow pill; its explicit status label distinguishes it from actions. */
 export const noteListStatusStyle: React.CSSProperties = { maxWidth: "100%", minWidth: 0, minHeight: 18, boxSizing: "border-box",
   display: "inline-flex", alignItems: "center", textAlign: "start", padding: "1px 7px",
   fontSize: 10, lineHeight: "16px", borderRadius: 9, border: "none", whiteSpace: "normal", overflowWrap: "anywhere", cursor: "default" };
 
 // Match the Enterprise layer's workflow legend; cache styles so rows reuse the same objects.
-const noteStatusColors = { open: "#35b7c4", in_progress: "#f5a623", completed: "#05a056", dismissed: "#888888" };
+const noteStatusColors = { open: "#35b7c4", in_progress: "#f5a623", completed: "var(--mly-theme-primary, #05a056)", dismissed: "#888888" };
 const noteStatusBadges = Object.fromEntries(Object.entries(noteStatusColors).map(([status, color]) =>
   [status, { ...noteListStatusStyle, color, borderColor: color, background: `${color}18` }])) as Record<string, React.CSSProperties>;
 
@@ -78,9 +78,9 @@ export function getNoteStatusBadgeStyle(status?: string): React.CSSProperties {
   return Object.prototype.hasOwnProperty.call(noteStatusBadges, status || "open") ? noteStatusBadges[status || "open"] : noteStatusBadges.open;
 }
 export const noteListActionStyle: React.CSSProperties = { ...noteActionStyle, width: "auto", minWidth: 0, maxWidth: "100%", boxSizing: "border-box", flex: "0 1 auto", whiteSpace: "normal", overflowWrap: "anywhere" };
-export const noteListResolutionStyle: React.CSSProperties = { fontSize: 10, color: "#a7c8b8" };
-export const noteListErrorStyle: React.CSSProperties = { fontSize: 10, color: "#ffb8a6", overflowWrap: "anywhere" };
-export const noteListTextStyle: React.CSSProperties = { fontSize: "10px", color: "rgba(255,255,255,0.6)", marginTop: "2px" };
+export const noteListResolutionStyle: React.CSSProperties = { fontSize: 10, color: "var(--mly-theme-muted, #a7c8b8)" };
+export const noteListErrorStyle: React.CSSProperties = { fontSize: 10, color: "var(--mly-theme-danger, #ffb8a6)", overflowWrap: "anywhere" };
+export const noteListTextStyle: React.CSSProperties = { fontSize: "10px", color: "var(--mly-theme-muted, rgba(255,255,255,0.6))", marginTop: "2px" };
 
 /** Controlled new-note draft form styles; values preserve the existing presentation. */
 export const noteDraftDialogStyle: React.CSSProperties = {
@@ -91,12 +91,12 @@ export const noteDraftDialogStyle: React.CSSProperties = {
                     boxShadow: "0 8px 24px rgba(0,0,0,0.6)", display: "flex", flexDirection: "column", gap: "8px"
                 };
 export const noteDraftTitleStyle: React.CSSProperties = { fontSize: "12px", fontWeight: 600, opacity: 0.85 };
-export const noteDraftSelectStyle: React.CSSProperties = { padding: "7px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.2)", background: "#1a1a1a", color: "#fff", fontSize: "12px" };
-export const noteDraftTextStyle: React.CSSProperties = { padding: "7px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.2)", background: "#1a1a1a", color: "#fff", fontSize: "12px", resize: "none" };
+export const noteDraftSelectStyle: React.CSSProperties = { padding: "7px", borderRadius: "6px", border: "1px solid var(--mly-theme-border, rgba(255,255,255,0.2))", background: "var(--mly-theme-input, #1a1a1a)", color: "var(--mly-theme-text, #fff)", fontSize: "12px" };
+export const noteDraftTextStyle: React.CSSProperties = { padding: "7px", borderRadius: "6px", border: "1px solid var(--mly-theme-border, rgba(255,255,255,0.2))", background: "var(--mly-theme-input, #1a1a1a)", color: "var(--mly-theme-text, #fff)", fontSize: "12px", resize: "none" };
 export const noteDraftShareStyle: React.CSSProperties = { display: "flex", alignItems: "center", gap: 6, fontSize: 11 };
 export const noteDraftActionsStyle: React.CSSProperties = { display: "flex", gap: "8px", justifyContent: "flex-end" };
-export const noteDraftCancelStyle: React.CSSProperties = { padding: "6px 12px", borderRadius: "6px", border: "none", background: "rgba(255,255,255,0.1)", color: "#fff", fontSize: "11px", cursor: "pointer" };
-export const noteDraftSaveStyle: React.CSSProperties = { padding: "6px 12px", borderRadius: "6px", border: "none", background: "#05a056", color: "#fff", fontSize: "11px", fontWeight: 600, cursor: "pointer" };
+export const noteDraftCancelStyle: React.CSSProperties = { padding: "6px 12px", borderRadius: "6px", border: "none", background: "rgba(255,255,255,0.1)", color: "var(--mly-theme-text, #fff)", fontSize: "11px", cursor: "pointer" };
+export const noteDraftSaveStyle: React.CSSProperties = { padding: "6px 12px", borderRadius: "6px", border: "none", background: "var(--mly-theme-primary, #05a056)", color: "#fff", fontSize: "11px", fontWeight: 600, cursor: "pointer" };
 
 /** InfoBox field-note controls; preserve existing compact spacing and state colors. */
 export const noteToolsSectionStyle: React.CSSProperties = {

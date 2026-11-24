@@ -1,9 +1,10 @@
 /** @jsx jsx */
+import { WorkspaceFieldHelp } from "./WorkspaceFieldHelp";
 import { React, jsx } from 'jimu-core';
 import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import type { FieldNote } from '../../components/types';
 import { indexLocalNotes, findLocalNotes } from './localNoteChoices';
-import { workspaceCardStyle as card, workspaceRowStyle as row, workspaceFieldStyle as field, workspaceInputStyle as input,
+import { workspaceCardStyle as card, workspaceRowStyle as row, workspaceInputStyle as input,
   workspaceSecondaryButtonStyle as button, workspacePickerResultsStyle as results } from '../../styles/communityWorkspace';
 
 /** Native radios preserve keyboard selection without thousands of option nodes.
@@ -18,7 +19,7 @@ export function LocalNotePicker({notes,value,onSelect,onPreview}:{notes:readonly
   const selected=notes.find(note=>note.id===value);
   function updateQuery(value:string){setQuery(value);setLimit(30);}
   return <div style={{display:'grid',gap:8,minWidth:0}}>
-    <label style={field}>{text('Search local notes')}<input aria-label={text('Search local notes')} type="search" style={input} maxLength={200} value={query} onChange={event=>updateQuery(event.target.value)} onKeyDown={event=>{if(event.key==='Escape')updateQuery('');}} placeholder={text('Category, description, follow-up or image ID')} /></label>
+    <WorkspaceFieldHelp label={text('Search local notes')} help={text("Find the local note you want to share. Selecting it here does not publish it.")}><input aria-label={text('Search local notes')} type="search" style={input} maxLength={200} value={query} onChange={event=>updateQuery(event.target.value)} onKeyDown={event=>{if(event.key==='Escape')updateQuery('');}} placeholder={text('Category, description, follow-up or image ID')} /></WorkspaceFieldHelp>
     <small role="status">{text('Matching local notes')}: {matching.length} / {notes.length}</small>
     <div role="group" aria-label={text('Local notes to publish')} className="mly-notes-scroll" style={results}>
       {matching.slice(0,limit).map(({note})=><label key={note.id} style={{...row,alignItems:'flex-start',padding:8,border:'1px solid '+(value===note.id?'#9fd7b9':'#496052'),borderRadius:4,background:value===note.id?'#294c39':'transparent',cursor:'pointer'}}>

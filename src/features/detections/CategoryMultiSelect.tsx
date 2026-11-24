@@ -6,11 +6,11 @@ import type { FilterOption } from '../../components/types';
 import { categorySearchIndex, rankCategoryMatches } from './categorySearch';
 import { sameCategorySelection, type CategorySelection } from './categorySelection';
 const PAGE_SIZE = 40;
-interface Props { label: string; allLabel: string; options: readonly FilterOption[]; selected: CategorySelection; onChange(value: CategorySelection): void; }
+interface Props { appearanceStyle?: React.CSSProperties; label: string; allLabel: string; options: readonly FilterOption[]; selected: CategorySelection; onChange(value: CategorySelection): void; }
 /** Local draft + explicit Apply: checkbox/search/page changes never touch map layers.
  * Search covers the full catalog; only 40 rows/images are mounted per page.
  */
-export const CategoryMultiSelect = React.memo(function CategoryMultiSelect({ label, allLabel, options, selected, onChange }: Props) {
+export const CategoryMultiSelect = React.memo(function CategoryMultiSelect({ appearanceStyle, label, allLabel, options, selected, onChange }: Props) {
   const { t, formatLocale, direction } = useWidgetLocale();
   const trigger = React.useRef<HTMLButtonElement>(null), menu = React.useRef<HTMLDivElement>(null), search = React.useRef<HTMLInputElement>(null);
   const id = React.useId();
@@ -66,23 +66,23 @@ export const CategoryMultiSelect = React.memo(function CategoryMultiSelect({ lab
     return () => { doc.removeEventListener('pointerdown',outside,true);doc.removeEventListener('focusin',outside);doc.removeEventListener('scroll',scrolled,true);doc.removeEventListener('keydown',key,true);win.removeEventListener('resize',place);win.visualViewport?.removeEventListener('resize',place);win.visualViewport?.removeEventListener('scroll',place); };
   }, [open,close,place]);
   const toggle = (code: string) => setDraft(previous => { const next = new Set(previous ?? rows.map(row=>row.code)); next.has(code) ? next.delete(code) : next.add(code); return next.size===rows.length ? null : next; });
-  const action: React.CSSProperties = {font:'inherit',padding:'4px 7px',border:'1px solid #648b7366',borderRadius:4,background:'#244633',color:'#e0eee5',cursor:'pointer'};
+  const action: React.CSSProperties = {font:'inherit',padding:'4px 7px',border:'1px solid var(--mly-theme-border, #648b7366)',borderRadius:4,background:'var(--mly-theme-control, #244633)',color:'var(--mly-theme-text, #e0eee5)',cursor:'pointer'};
   return <div dir={direction} className="mly-category-select" style={{minWidth:0,flexShrink:0}} onClick={event=>event.stopPropagation()} onPointerDown={event=>event.stopPropagation()} onKeyDown={event=>event.stopPropagation()}>
     <button ref={trigger} className="mly-text-action mly-category-trigger" type="button" aria-label={`${label}: ${summary}`} aria-haspopup="dialog" aria-expanded={open} aria-controls={open?id:undefined} title={`${label}: ${summary}`}
       style={{...action,fontSize:10,minHeight:24,maxWidth:180}} onClick={()=>open?close(true):show()} onKeyDown={event=>{if(!open&&['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();show();}}}>{summary} <span aria-hidden="true">▾</span></button>
-    {open && ReactDOM.createPortal(<div ref={menu} id={id} dir={direction} lang={formatLocale} role="dialog" aria-label={label} className={`mly-category-menu${Number(position.height)<260?' mly-category-menu--short':''}`} style={{...position,zIndex:2147483647,boxSizing:'border-box',background:'#162b22',color:'#e0eee5',border:'1px solid #648b73',borderRadius:7,boxShadow:'0 5px 22px #0008',padding:8,display:'flex',flexDirection:'column',gap:6,overflowY:'auto',font:'11px/1.35 "Segoe UI",sans-serif'}} onClick={event=>event.stopPropagation()} onPointerDown={event=>event.stopPropagation()} onKeyDown={event=>event.stopPropagation()}>
+    {open && ReactDOM.createPortal(<div ref={menu} id={id} dir={direction} lang={formatLocale} role="dialog" aria-label={label} className={`mly-category-menu${Number(position.height)<260?' mly-category-menu--short':''}`} style={{...appearanceStyle,...position,zIndex:2147483647,boxSizing:'border-box',background:'var(--mly-theme-panel, #162b22)',color:'var(--mly-theme-text, #e0eee5)',border:'1px solid var(--mly-theme-border, #648b73)',borderRadius:7,boxShadow:'0 5px 22px #0008',padding:8,display:'flex',flexDirection:'column',gap:6,overflowY:'auto',font:'11px/1.35 "Segoe UI",sans-serif'}} onClick={event=>event.stopPropagation()} onPointerDown={event=>event.stopPropagation()} onKeyDown={event=>event.stopPropagation()}>
       <style>{`
 .mly-category-menu *{box-sizing:border-box}
-.mly-category-menu label{color:#e0eee5!important;font:inherit!important}
-.mly-category-menu input[type=checkbox]{appearance:none!important;-webkit-appearance:none!important;display:inline-grid!important;place-items:center;position:static!important;opacity:1!important;margin:0!important;width:15px!important;height:15px!important;border:1px solid #87b89a88!important;border-radius:3px!important;background:#10241c!important;flex-shrink:0;justify-self:center;cursor:pointer}
-.mly-category-menu input[type=checkbox]::after{content:'';width:8px;height:5px;border-left:2px solid #10271b;border-bottom:2px solid #10271b;transform:translateY(-1px) rotate(-45deg);opacity:0}
-.mly-category-menu input[type=checkbox]:checked{background:#63c38e!important;border-color:#63c38e!important}
+.mly-category-menu label{color:var(--mly-theme-text, #e0eee5)!important;font:inherit!important}
+.mly-category-menu input[type=checkbox]{appearance:none!important;-webkit-appearance:none!important;display:inline-grid!important;place-items:center;position:static!important;opacity:1!important;margin:0!important;width:15px!important;height:15px!important;border:1px solid var(--mly-theme-border, #87b89a88)!important;border-radius:3px!important;background:var(--mly-theme-input, #10241c)!important;flex-shrink:0;justify-self:center;cursor:pointer}
+.mly-category-menu input[type=checkbox]::after{content:'';width:8px;height:5px;border-left:2px solid var(--mly-theme-input, #10271b);border-bottom:2px solid var(--mly-theme-input, #10271b);transform:translateY(-1px) rotate(-45deg);opacity:0}
+.mly-category-menu input[type=checkbox]:checked{background:var(--mly-theme-check, #63c38e)!important;border-color:var(--mly-theme-check, #63c38e)!important}
 .mly-category-menu input[type=checkbox]:checked::after{opacity:1}
 .mly-category-menu button{font:inherit}
 .mly-category-menu button:disabled{opacity:.45;cursor:default}
-.mly-category-menu button:focus-visible,.mly-category-menu input:focus-visible{outline:2px solid #b4f3ca;outline-offset:1px}
+.mly-category-menu button:focus-visible,.mly-category-menu input:focus-visible{outline:2px solid var(--mly-theme-accent, #b4f3ca);outline-offset:1px}
 .mly-category-menu img{flex-shrink:0}
-.mly-category-menu .mly-category-option{display:grid;grid-template-columns:16px 24px minmax(0,1fr);align-items:center;gap:8px;margin:0;padding:5px 0;min-height:32px;border-bottom:1px solid #ffffff12;cursor:pointer;overflow-wrap:anywhere}
+.mly-category-menu .mly-category-option{display:grid;grid-template-columns:16px 24px minmax(0,1fr);align-items:center;gap:8px;margin:0;padding:5px 0;min-height:32px;border-bottom:1px solid var(--mly-theme-border, #ffffff12);cursor:pointer;overflow-wrap:anywhere}
 .mly-category-menu .mly-category-icon{display:flex;align-items:center;justify-content:center;width:24px;height:20px}
 .mly-category-menu .mly-category-icon img{object-fit:contain}
 @media(max-width:600px){
@@ -118,7 +118,7 @@ export const CategoryMultiSelect = React.memo(function CategoryMultiSelect({ lab
 }
 `}</style>
       <strong style={{flexShrink:0}}>{label}</strong>
-      <input ref={search} type="search" maxLength={256} aria-label={t('featureSearchCategories')} placeholder={t('featureSearchCategories')} value={query} onChange={event=>{setQuery(event.target.value);setPage(0);}} style={{flexShrink:0,minWidth:0,width:'100%',padding:6,border:'1px solid #648b73',borderRadius:4,background:'#0e2118',color:'inherit',font:'inherit'}}/>
+      <input ref={search} type="search" maxLength={256} aria-label={t('featureSearchCategories')} placeholder={t('featureSearchCategories')} value={query} onChange={event=>{setQuery(event.target.value);setPage(0);}} style={{flexShrink:0,minWidth:0,width:'100%',padding:6,border:'1px solid var(--mly-theme-border, #648b73)',borderRadius:4,background:'var(--mly-theme-input, #0e2118)',color:'inherit',font:'inherit'}}/>
       <div className="mly-category-selection-bar" style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',alignItems:'stretch',gap:6,flexShrink:0}}>
         <button type="button" className="mly-text-action" style={action} disabled={!rows.length} title={t('featureSelectAllHint')} onClick={()=>setDraft(null)}>{t('featureSelectAll')}</button>
         <button type="button" className="mly-text-action" style={action} disabled={!rows.length} onClick={()=>setDraft(new Set())}>{t('featureClearSelection')}</button>
@@ -135,9 +135,9 @@ export const CategoryMultiSelect = React.memo(function CategoryMultiSelect({ lab
         <small style={{display:'flex',alignItems:'center',justifyContent:'center',textAlign:'center'}}>{t('featureCategoryPage',{start:numbers.format(matches.length?offset+1:0),end:numbers.format(Math.min(offset+PAGE_SIZE,matches.length)),total:numbers.format(matches.length)})}</small>
         <button type="button" className="mly-text-action" style={action} disabled={offset+PAGE_SIZE>=matches.length} onClick={()=>{setPage(currentPage+1);if(menu.current)menu.current.querySelector('.mly-category-options')!.scrollTop=0;}}>{t('featureNextPage')}</button>
       </div>
-      <div className="mly-category-actions" style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:6,paddingTop:6,borderTop:'1px solid #ffffff18',flexShrink:0}}>
+      <div className="mly-category-actions" style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:6,paddingTop:6,borderTop:'1px solid var(--mly-theme-border, #ffffff18)',flexShrink:0}}>
         <button type="button" className="mly-text-action" style={action} onClick={()=>close(true)}>{t('uiCancel')}</button>
-        <button type="button" className="mly-text-action" style={{...action,background:'#286744',opacity:dirty?1:.55}} disabled={!dirty} onClick={()=>{onChange(selection===null?null:Object.freeze([...selection]));close(true);}}>{t('featureApplySelection')}</button>
+        <button type="button" className="mly-text-action" style={{...action,background:'var(--mly-theme-selected, #286744)',opacity:dirty?1:.55}} disabled={!dirty} onClick={()=>{onChange(selection===null?null:Object.freeze([...selection]));close(true);}}>{t('featureApplySelection')}</button>
       </div>
     </div>,trigger.current?.ownerDocument.fullscreenElement || trigger.current?.ownerDocument.body || document.body)}
   </div>;

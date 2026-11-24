@@ -4,9 +4,9 @@ import * as styles from "../styles/fullscreenViewer";
 import { FullscreenControls } from "./FullscreenControls";
 import * as Icons from "./Icons";
 import type { LocaleValue } from "../i18n/WidgetLocale";
-import { getMinimapContainerStyle } from "../utils/styles";
 export interface FullscreenViewerProps {
   children: React.ReactNode;
+  appearanceStyle?: React.CSSProperties;
   direction: "ltr" | "rtl";
   formatLocale: string;
   showMinimap: boolean;
@@ -27,6 +27,7 @@ export interface FullscreenViewerProps {
 /** Fullscreen chrome only; the runtime retains portal, viewer and ArcGIS lifecycle ownership. */
 export function FullscreenViewer({
   children,
+  appearanceStyle,
   direction,
   formatLocale,
   showMinimap,
@@ -41,12 +42,13 @@ export function FullscreenViewer({
   onToggleExpanded,
   onCopyCoordinates,
 }: FullscreenViewerProps) {
+  const overlayStyle = { ...styles.overlay, ...appearanceStyle };
   return (
     <div
       dir={direction}
       lang={formatLocale}
       className={`mly-fullscreen-viewer${minimapExpanded ? " mly-minimap-expanded" : ""}`}
-      style={styles.overlay}
+      style={overlayStyle}
     >
       <style>{styles.responsiveCss}</style>
       {children}
@@ -77,7 +79,7 @@ export function FullscreenViewer({
       {/* Minimap frame keeps React controls separate from ArcGIS-managed content. */}
       <div
         className="minimap-container"
-        style={getMinimapContainerStyle(showMinimap)}
+        style={styles.getMinimapContainerStyle(showMinimap)}
       >
         {minimapExpanded && (
           <div style={styles.minimapHeader}>

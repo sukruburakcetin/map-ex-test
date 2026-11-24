@@ -37,6 +37,22 @@ export function calibrationFineStepStyle(nudgeStep: number | undefined): React.C
 export const calibrationHiddenRadioStyle: React.CSSProperties = { display: "none" };
 export function calibrationCoarseStepStyle(nudgeStep: number | undefined): React.CSSProperties { return { cursor: "pointer", color: nudgeStep === 1.0 ? "#37d582" : "white" }; }
 export const calibrationPadStyle: React.CSSProperties = { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2px", justifyItems: "center", marginTop: "2px" };
-export function calibrationResetStyle(miniJoyStyle: React.CSSProperties): React.CSSProperties { return { ...miniJoyStyle, fontSize: "6px", background: "rgba(255,0,0,0.3)", borderColor: "rgba(255,0,0,0.5)", fontWeight: "bold" }; }
+export const calibrationNudgeButtonStyle: React.CSSProperties = {
+    background: 'rgba(255,255,255,0.1)',
+    border: '1px solid rgba(255,255,255,0.3)',
+    color: 'white',
+    borderRadius: '3px',
+    width: '20px',
+    height: '20px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    fontSize: '9px',
+    padding: 0,
+    transition: 'background 0.1s'
+};
+
+export const calibrationResetStyle: React.CSSProperties = { ...calibrationNudgeButtonStyle, fontSize: "6px", background: "rgba(255,0,0,0.3)", borderColor: "rgba(255,0,0,0.5)", fontWeight: "bold" };
 export const calibrationVerticalRowStyle: React.CSSProperties = { display: "flex", justifyContent: "space-between", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "4px", marginTop: "2px" };
-export function calibrationVerticalButtonStyle(miniJoyStyle: React.CSSProperties): React.CSSProperties { return { ...miniJoyStyle, width: "32px", fontSize: "7.5px" }; }
+export const calibrationVerticalButtonStyle: React.CSSProperties = { ...calibrationNudgeButtonStyle, width: "32px", fontSize: "7.5px" };

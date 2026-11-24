@@ -1,7 +1,7 @@
 /** @jsx jsx */
 import { useWidgetLocale } from '../i18n/WidgetLocale';
 import { React, jsx } from "jimu-core";
-import { legendCircleStyle, legendRowStyle, legendTextStyle, compactButtonStyle } from "../utils/styles";
+import { legendCircleStyle, legendRowStyle, legendTextStyle, compactButtonStyle } from "../styles/legend";
 import { LegendProps } from "./types";
 
 /**

@@ -1,9 +1,10 @@
 /** @jsx jsx */
+import { WorkspaceFieldHelp } from "./WorkspaceFieldHelp";
 import { React, jsx } from 'jimu-core';
 import { WorkspaceCategoryBadge } from './WorkspaceCategoryBadge';
 import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import type { WorkspaceCategory } from './communityWorkspace';
-import { workspaceCardStyle as card, workspaceRowStyle as row, workspaceFieldStyle as field, workspaceInputStyle as input, workspaceButtonStyle as button, workspaceSectionStyle as sectionStyle, workspaceSummaryStyle as summaryStyle, workspaceSecondaryButtonStyle as secondary, workspaceCategoryEditorBodyStyle as body, workspaceCategoryEditorRowStyle as categoryRow, workspaceColorInputStyle as colorInput } from '../../styles/communityWorkspace';
+import { workspaceCardStyle as card, workspaceRowStyle as row, workspaceInputStyle as input, workspaceButtonStyle as button, workspaceSectionStyle as sectionStyle, workspaceSummaryStyle as summaryStyle, workspaceSecondaryButtonStyle as secondary, workspaceCategoryEditorBodyStyle as body, workspaceCategoryEditorRowStyle as categoryRow, workspaceColorInputStyle as colorInput } from '../../styles/communityWorkspace';
 
 /** Owner-only taxonomy editor. Existing names are never renamed/deleted: retiring
  * a category preserves its old assignments/color while preventing new use.
@@ -21,8 +22,8 @@ export function WorkspaceCategoryEditor({categories,busy,onSave,sectionRef}:{sec
     {editing&&<strong style={{minWidth:0,overflowWrap:'anywhere'}}>{text('Editing category')}: {name}</strong>}
     <button className="mly-text-action" type="button" style={secondary} onClick={()=>{setEditing(false);setName('');setColor('#f5a623');}}>{text('Add a new category')}</button>
     </div>
-    <label style={field}>{text('Category name')}<input aria-label={text('Category name')} style={input} readOnly={editing} maxLength={120} value={name} onChange={event=>setName(event.target.value)} /></label>
-    <label style={field}>{text('Category color')}<input aria-label={text('Category color')} type="color" style={colorInput} value={color} onChange={event=>setColor(event.target.value)} /></label>
+    <WorkspaceFieldHelp label={text('Category name')} help={text("Use a name contributors will recognize when classifying observations.")}><input aria-label={text('Category name')} style={input} readOnly={editing} maxLength={120} value={name} onChange={event=>setName(event.target.value)} /></WorkspaceFieldHelp>
+    <WorkspaceFieldHelp label={text('Category color')} help={text("Choose the color used for this category in the workspace and on the map.")}><input aria-label={text('Category color')} type="color" style={colorInput} value={color} onChange={event=>setColor(event.target.value)} /></WorkspaceFieldHelp>
     <button className="mly-text-action" type="button" style={button} disabled={busy||!name.trim()} onClick={()=>onSave(name,color,categories.find(category=>category.name===name.trim())?.archived||false)}>{text('Save category')}</button>
     <div style={{display:'grid',gap:8,minWidth:0}}>
     {categories.map(category=><div key={category.name} className="mly-workspace-category-row" style={categoryRow}>

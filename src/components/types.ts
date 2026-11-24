@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { CategorySelection } from '../features/detections/categorySelection';
 import type { ImageInformationHost, InformationViewer } from '../features/image-information/ImageInformation';
 import type { DetectionExplorerOptions, DetectionSummary } from '../features/detections/detectionExploration';
@@ -250,6 +251,7 @@ export interface InfoBoxProps {
 
 // FilterBar props
 export interface FilterBarProps {
+    appearanceStyle?: CSSProperties;
     detectionLabelZoom?: number;
     signDisplayMode?: 'selected' | 'highlight';
     objectDisplayMode?: 'selected' | 'highlight';
@@ -383,6 +385,9 @@ export interface SequenceInfo {
 
 // ImageUtilityGroup props
 export interface ImageUtilityGroupProps {
+    widgetTheme?: import("../styles/appearance").WidgetTheme;
+    onWidgetThemeChange?(theme: import("../styles/appearance").WidgetTheme): void;
+    appearanceStyle?: CSSProperties;
     // config flags
     hideTimeTravel?: boolean;
     hideShareButton?: boolean;

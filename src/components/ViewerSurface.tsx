@@ -4,7 +4,6 @@ import * as styles from "../styles/viewerSurface";
 import { ImageryLoading } from "./ImageryLoading";
 import * as Icons from "./Icons";
 import type { LocaleValue } from "../i18n/WidgetLocale";
-import { glassStyles } from "../utils/styles";
 export interface ViewerSurfaceProps {
   children: React.ReactNode;
   viewerRef: React.Ref<HTMLDivElement>;
@@ -65,9 +64,9 @@ export function ViewerSurface({
       )}
       <div ref={measurementRef} style={styles.measurement}></div>
       {featuresLoading && (
-        <div style={glassStyles.featuresLoadingBadge}>
-          <div style={glassStyles.featuresLoadingSpinner} />
-          <span style={glassStyles.featuresLoadingText}>
+        <div style={styles.featuresLoadingBadge}>
+          <div style={styles.featuresLoadingSpinner} />
+          <span style={styles.featuresLoadingText}>
             {" "}
             {t("appLoadingFeatures")}{" "}
           </span>
@@ -77,15 +76,15 @@ export function ViewerSurface({
       {/* Loading feedback preserves the previous image while the selection opens. */}
       <ImageryLoading {...loading} />
       {!imageId && !isLoading && !turboLoading && !noImageMessageVisible && (
-        <div style={glassStyles.initialStateContainer}>
+        <div style={styles.initialStateContainer}>
           <div
             className="initial-state-card"
-            style={glassStyles.initialStateCard}
+            style={styles.initialStateCard}
           >
             <span style={styles.initialHeading}>
               {t("appClickAPointToViewImagery")}{" "}
             </span>
-            <span style={glassStyles.initialStateTextSecondary}>
+            <span style={styles.initialStateTextSecondary}>
               {" "}
               {t("appMapillaryImageryWillAppearHere")}{" "}
             </span>
@@ -93,8 +92,8 @@ export function ViewerSurface({
         </div>
       )}
       {noImageMessageVisible && (
-        <div style={glassStyles.noImageContainer}>
-          <div className="no-image-card" style={glassStyles.noImageContent}>
+        <div style={styles.noImageContainer}>
+          <div className="no-image-card" style={styles.noImageContent}>
             <div style={styles.noImageIcon}>
               <Icons.NoImage size={32} />
             </div>

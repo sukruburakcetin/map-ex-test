@@ -1,3 +1,4 @@
+import type { WidgetTheme } from "./styles/appearance";
 import { ImmutableObject } from "jimu-core";
 
 export type RoutingEngine = "world" | "osrm" | "portal" | "custom";
@@ -7,6 +8,8 @@ export type OSRMServerMode = "public" | "custom";
 export type RoutingAuthMode = "auto" | "api-key" | "user";
 
 export interface Config {
+  widgetTheme?: WidgetTheme;
+  allowUserThemeChoice?: boolean;
   /** Translation pilot: app locale by default; viewer preference can be disabled. */
   widgetLanguage?: 'auto' | 'en' | 'en-GB' | 'ar' | 'tr' | 'es' | 'fr' | 'de' | 'pt-BR' | 'it' | 'ja' | 'ko' | 'zh-CN' | 'zh-TW';
   allowUserLanguageChoice?: boolean;

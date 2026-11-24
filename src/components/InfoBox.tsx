@@ -28,7 +28,6 @@ import { SolarToolsSection } from '../features/solar/SolarToolsSection';
 
 import { infoPanelShellStyle, infoControlsViewportStyle, infoStatusCardStyle, infoPanelResponsiveCss, infoDetailsCss } from '../styles/infoBox';
 
-import { miniJoyStyle } from '../utils/styles';
 
 /** Extra-time presets are owned by features/routing/RouteControls.tsx. */
 
@@ -312,7 +311,6 @@ export class InfoBox extends React.PureComponent<InfoBoxProps, InfoBoxState> {
               onJoystickNudge={onJoystickNudge}
               onResetCalibration={onResetCalibration}
               onSetNudgeStep={onSetNudgeStep}
-              miniJoyStyle={miniJoyStyle}
             />
           )}
 

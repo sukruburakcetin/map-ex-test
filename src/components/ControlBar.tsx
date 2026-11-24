@@ -24,19 +24,19 @@ export const ControlBar: React.FC<ControlBarProps> = (props) => {
             </button>
             {active && <button type="button" className="mly-rail-button mly-rail-filter"
                 title={t('uiFilterLayer',{label})} aria-label={t('uiFilterLayer',{label})}
-                aria-expanded={expanded} onClick={filter}><Icons.Filter size={18}/></button>}
+                aria-expanded={expanded} onClick={filter}><Icons.Filter color="currentColor" size={18}/></button>}
         </div>;
     };
     return <div className="glass-control-panel mly-control-rail" role="group" aria-label={t('uiMapControls')}>
         <style>{controlBarInteractionCss}{controlBarCompactCss}{mapSpriteLoadingCss}{viewerCompactPlaybackCss}</style>
         <button type="button" className="mly-rail-button" title={props.isFullscreen ? t('uiExitFullscreen') : t('uiFullscreen')}
             aria-label={props.isFullscreen ? t('uiExitFullscreen') : t('uiFullscreen')}
-            aria-pressed={props.isFullscreen} onClick={props.onToggleFullscreen}><Icons.Maximize size={20}/></button>
+            aria-pressed={props.isFullscreen} onClick={props.onToggleFullscreen}><Icons.Maximize color="currentColor" size={20}/></button>
         {(!props.hideTurboFilter || props.enableTrafficSigns !== false || props.enableMapillaryObjects !== false) && <span className="mly-rail-divider" aria-hidden="true"/>}
         {!props.hideTurboFilter && <button type="button" className="mly-rail-button mly-rail-filter"
             title={props.turboModeActive ? t('uiCoverageFilters') : t('uiCoverageFiltersUnavailable')}
             aria-label={t('uiCoverageFilters')} aria-expanded={props.showTurboFilterBox}
-            disabled={!props.turboModeActive} onClick={props.onToggleTurboFilter}><Icons.Filter size={20}/></button>}
+            disabled={!props.turboModeActive} onClick={props.onToggleTurboFilter}><Icons.Filter color="currentColor" size={20}/></button>}
         {props.enableTrafficSigns !== false && layer("signs", !!props.trafficSignsActive, props.showTrafficSignsFilterBox, props.onToggleTrafficSigns, props.onToggleTrafficSignsFilter)}
         {props.enableMapillaryObjects !== false && layer("objects", !!props.objectsActive, props.showObjectsFilterBox, props.onToggleObjects, props.onToggleObjectsFilter)}
         {props.enablePlaces && <div className="mly-rail-group" role="group" aria-label={t('uiNearbyPlaces')}>
@@ -45,7 +45,7 @@ export const ControlBar: React.FC<ControlBarProps> = (props) => {
                 {!placesIconFailed?<img src="https://avatars.githubusercontent.com/u/120673461?s=280&v=4" alt="" aria-hidden="true" width="22" height="22" referrerPolicy="no-referrer" onError={()=>setPlacesIconFailed(true)} style={{display:'block',objectFit:'contain',borderRadius:3}}/>:<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 22s8-8 8-13a8 8 0 0 0-16 0c0 5 8 13 8 13Z"/><circle cx="12" cy="9" r="2.5"/></svg>}
                 {props.placesActive && <span className="mly-rail-check" aria-hidden="true">✓</span>}
             </button>
-            {props.placesActive && <button type="button" className="mly-rail-button mly-rail-filter" aria-label={t('uiFilterNearbyPlaces')} title={t('uiFilterNearbyPlaces')} aria-expanded={!!props.placesPanelOpen} onClick={props.onTogglePlacesPanel}><Icons.Filter size={18}/></button>}
+            {props.placesActive && <button type="button" className="mly-rail-button mly-rail-filter" aria-label={t('uiFilterNearbyPlaces')} title={t('uiFilterNearbyPlaces')} aria-expanded={!!props.placesPanelOpen} onClick={props.onTogglePlacesPanel}><Icons.Filter color="currentColor" size={18}/></button>}
         </div>}
     </div>;
 };

@@ -15,6 +15,7 @@ import { React, jsx } from "jimu-core";
 import { AllWidgetSettingProps } from "jimu-for-builder";
 import { SettingRow } from "jimu-ui/advanced/setting-components";
 import { MapWidgetSelector } from "jimu-ui/advanced/setting-components";
+import { isWidgetTheme, resolveWidgetTheme } from "../styles/appearance";
 import { Switch, TextInput, NumericInput, Select, Option, Button } from "jimu-ui";
 import { testPlacesApi } from "../features/places/placesApi";
 import { IMConfig } from "../config";
@@ -498,6 +499,24 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
           <p style={{fontSize:12,margin:'8px 0'}}> {t('appliesToTranslatedImageActionsFiltersDatesAndTime')} </p>
         </BuilderSettingsSection>
         <BuilderSettingsSection title={t('appearanceSettings')}>
+          <SettingRow flow="wrap" label={this.context.owned("Default theme")}>
+            <Select className="w-100" aria-label={this.context.owned("Default theme")} value={resolveWidgetTheme(config.widgetTheme, false)}
+              onChange={event => {
+                const theme = event.target.value;
+                if (isWidgetTheme(theme)) this.props.onSettingChange({ id: this.props.id, config: config.set("widgetTheme", theme) });
+              }}>
+              <Option value="green">{this.context.owned("Mapillary Green")}</Option>
+              <Option value="dark">{this.context.owned("Dark")}</Option>
+              <Option value="light">{this.context.owned("Porcelain")}</Option>
+              <Option value="high-contrast">{this.context.owned("High Contrast")}</Option>
+              <Option value="sandstone">{this.context.owned("Sandstone")}</Option>
+              <Option value="slate">{this.context.owned("Slate")}</Option>
+            </Select>
+          </SettingRow>
+          <SettingRow label={this.context.owned("Allow visitors to change the theme")}>
+            <Switch aria-label={this.context.owned("Allow visitors to change the theme")} checked={config.allowUserThemeChoice === true}
+              onChange={event => this.props.onSettingChange({ id: this.props.id, config: config.set("allowUserThemeChoice", event.target.checked) })} />
+          </SettingRow>
           <SettingRow>
             <span className="text" style={{ fontSize: "12px", marginTop: "5px", opacity: "0.3", fontStyle: "italic" }}>
                {t('toggleUiElementsAndActionToolsToSimplifyThe')} </span>

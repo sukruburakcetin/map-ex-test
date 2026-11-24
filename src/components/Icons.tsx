@@ -47,9 +47,9 @@ export const Filter = ({ size = 14, color = "#fff", ...props }: IconProps) => (
 // 6. Traffic Sign (Custom Composite Icon)
 export const AllMapillaryTrafficSigns = ({ size = 16, ...props }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-    <rect width="5" height="7" fill="#FFC01B"/>
-    <rect x="4" y="9" width="7" height="7" rx="3.5" fill="white"/>
-    <path d="M12.5 0L15.5311 1.75V5.25L12.5 7L9.46891 5.25V1.75L12.5 0Z" fill="#FF6D1B"/>
+    <rect width="5" height="7" fill="var(--mly-theme-sign-yellow, #FFC01B)"/>
+    <rect x="4" y="9" width="7" height="7" rx="3.5" fill="var(--mly-theme-sign-dot, white)"/>
+    <path d="M12.5 0L15.5311 1.75V5.25L12.5 7L9.46891 5.25V1.75L12.5 0Z" fill="var(--mly-theme-sign-orange, #FF6D1B)"/>
   </svg>
 );
 

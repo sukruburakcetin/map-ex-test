@@ -25,6 +25,7 @@ interface Removable { remove(): void; }
 export interface PreparedMapClick {
   point: ClickPoint;
   pointPreviewAtClick: __esri.Graphic | null;
+  panoramaBearing?: number;
   coveragePreviewAtClick: __esri.Graphic | null;
   clickCurrent(): boolean;
   coverageClickCurrent(): boolean;
@@ -77,7 +78,7 @@ export interface MapClickHost {
   showToast(message: string, milliseconds?: number): void;
   text(key: MessageKey): string;
   nearestCoverageImage(sequence: string, point: { lon: number; lat: number }, signal: AbortSignal): Promise<string | undefined>;
-  loadSequenceById(sequence: string, image: string, point: { lon: number; lat: number }, representative: boolean, nearest: boolean, started: number): Promise<unknown>;
+  loadSequenceById(sequence: string, image: string, point: { lon: number; lat: number }, representative: boolean, nearest: boolean, started: number, panoramaBearing?: number): Promise<unknown>;
   pickMapFeature(point: { x: number; y: number }, view: ClickView, signal: AbortSignal): Promise<unknown>;
   openPickedMapDetection(feature: unknown): void;
   pickTurboGraphic(point: { x: number; y: number }, view: ClickView, signal: AbortSignal): Promise<__esri.Graphic | null>;
@@ -355,7 +356,8 @@ export async function dispatchMapClick(evt: __esri.ViewClickEvent, host: MapClic
               }
               const anchor = host.getCoverageDisplayPosition(String(imageId), point.longitude, point.latitude);
               host.drawClickRipple(anchor.lon, anchor.lat);
-              await host.loadSequenceById(seqId, imageId, { lon: anchor.lon, lat: anchor.lat }, !!attrs.turbo_representative && !regionalLine && !displayedPreview, false, clickStartedAt);
+              await host.loadSequenceById(seqId, imageId, { lon: anchor.lon, lat: anchor.lat }, !!attrs.turbo_representative && !regionalLine && !displayedPreview, false, clickStartedAt,
+                pointPreviewAtClick && String(imageId) === String(pointPreviewAtClick.attributes.image_id) ? prepared.panoramaBearing : undefined);
               return;
             }
           }

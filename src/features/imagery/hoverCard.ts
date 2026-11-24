@@ -64,7 +64,7 @@ export function renderImageryHoverCard(host: HTMLElement, data: any, fallbackDat
   const portal = doc.fullscreenElement || doc.body;
   if (portal && host.parentNode !== portal) portal.appendChild(host);
   const user = doc.createElement('div'); Object.assign(user.style, styles.creator);
-  const userIcon = cardIcon(doc, 'creator'); userIcon.setAttribute('aria-hidden', 'true'); userIcon.style.color = '#83c9a5';
+  const userIcon = cardIcon(doc, 'creator'); userIcon.setAttribute('aria-hidden', 'true'); userIcon.style.color = 'var(--mly-theme-accent, #83c9a5)';
   const name = doc.createElement('b'); Object.assign(name.style, styles.name); l10n.bind(name,"textContent",()=>loading ? l10n.text("Loading image details…") : data?.creator?.username || l10n.text("Creator unavailable"));
   user.appendChild(userIcon);
   user.appendChild(name);
@@ -73,8 +73,8 @@ export function renderImageryHoverCard(host: HTMLElement, data: any, fallbackDat
     badge.textContent = '360°';
     Object.assign(badge.style, {
       marginInlineStart: 'auto', flexShrink: '0',
-      padding: '2px 6px', borderRadius: '5px', background: '#27463b',
-      color: '#fff', fontSize: '12px', fontWeight: '600', lineHeight: '1.25',
+      padding: '2px 6px', borderRadius: '5px', background: 'var(--mly-theme-control, #27463b)',
+      color: 'var(--mly-theme-text, #fff)', fontSize: '12px', fontWeight: '600', lineHeight: '1.25',
     });
     user.appendChild(badge);
   }

@@ -3,17 +3,16 @@ import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import { React, jsx } from 'jimu-core';
 import * as Icons from '../../components/Icons';
 import type { InfoBoxProps } from '../../components/types';
-import { calibrationPanelStyle, calibrationToggleStyle, calibrationHeadingStyle, calibrationIconStyle, calibrationDisclosureStyle, calibrationBodyStyle, calibrationStepsStyle, calibrationFineStepStyle, calibrationHiddenRadioStyle, calibrationCoarseStepStyle, calibrationPadStyle, calibrationResetStyle, calibrationVerticalRowStyle, calibrationVerticalButtonStyle } from '../../styles/pointCloudCalibration';
+import { calibrationPanelStyle, calibrationToggleStyle, calibrationHeadingStyle, calibrationIconStyle, calibrationDisclosureStyle, calibrationBodyStyle, calibrationStepsStyle, calibrationFineStepStyle, calibrationHiddenRadioStyle, calibrationCoarseStepStyle, calibrationPadStyle, calibrationNudgeButtonStyle, calibrationResetStyle, calibrationVerticalRowStyle, calibrationVerticalButtonStyle } from '../../styles/pointCloudCalibration';
 
 export type PointCloudCalibrationControlsProps = Pick<InfoBoxProps, 'showCalibrationPanel' | 'nudgeStep' | 'onToggleCalibrationPanel' | 'onJoystickNudge' | 'onResetCalibration' | 'onSetNudgeStep'> & {
- miniJoyStyle: React.CSSProperties;
 };
 
 /** Display calibration steps and forward axis/direction, reset and disclosure actions unchanged.
  * Runtime owns alignment offsets and scene updates. InfoBox retains cloud visibility and supplies
  * the existing shared joystick style for compatibility with legacy style layouts.
  */
-export const PointCloudCalibrationControls: React.FC<PointCloudCalibrationControlsProps> = ({ showCalibrationPanel, nudgeStep, onToggleCalibrationPanel, onJoystickNudge, onResetCalibration, onSetNudgeStep, miniJoyStyle }) => { const { t, locale } = useWidgetLocale(); return (
+export const PointCloudCalibrationControls: React.FC<PointCloudCalibrationControlsProps> = ({ showCalibrationPanel, nudgeStep, onToggleCalibrationPanel, onJoystickNudge, onResetCalibration, onSetNudgeStep }) => { const { t, locale } = useWidgetLocale(); return (
 <div
               style={calibrationPanelStyle(showCalibrationPanel)}
             >
@@ -42,23 +41,23 @@ export const PointCloudCalibrationControls: React.FC<PointCloudCalibrationContro
                   {/* Micro D-Pad */}
                   <div style={calibrationPadStyle}>
                     <div />
-                    <button onClick={() => onJoystickNudge?.("y", 1)} style={miniJoyStyle}>
+                    <button onClick={() => onJoystickNudge?.("y", 1)} style={calibrationNudgeButtonStyle}>
                       ▲
                     </button>
                     <div />
-                    <button onClick={() => onJoystickNudge?.("x", -1)} style={miniJoyStyle}>
+                    <button onClick={() => onJoystickNudge?.("x", -1)} style={calibrationNudgeButtonStyle}>
                       ◀
                     </button>
                     <button className="mly-text-action"
                       title={t('uiResetCalibration')} aria-label={t('uiResetCalibration')} onClick={onResetCalibration}
-                      style={calibrationResetStyle(miniJoyStyle)}
+                      style={calibrationResetStyle}
                     >
                        {t('uiRst')} </button>
-                    <button onClick={() => onJoystickNudge?.("x", 1)} style={miniJoyStyle}>
+                    <button onClick={() => onJoystickNudge?.("x", 1)} style={calibrationNudgeButtonStyle}>
                       ▶
                     </button>
                     <div />
-                    <button onClick={() => onJoystickNudge?.("y", -1)} style={miniJoyStyle}>
+                    <button onClick={() => onJoystickNudge?.("y", -1)} style={calibrationNudgeButtonStyle}>
                       ▼
                     </button>
                     <div />
@@ -66,9 +65,9 @@ export const PointCloudCalibrationControls: React.FC<PointCloudCalibrationContro
 
                   {/* Vertical Z-controls */}
                   <div style={calibrationVerticalRowStyle}>
-                    <button className="mly-text-action" onClick={() => onJoystickNudge?.("z", -1)} style={calibrationVerticalButtonStyle(miniJoyStyle)}>
+                    <button className="mly-text-action" onClick={() => onJoystickNudge?.("z", -1)} style={calibrationVerticalButtonStyle}>
                        {t('uiZ')} </button>
-                    <button className="mly-text-action" onClick={() => onJoystickNudge?.("z", 1)} style={calibrationVerticalButtonStyle(miniJoyStyle)}>
+                    <button className="mly-text-action" onClick={() => onJoystickNudge?.("z", 1)} style={calibrationVerticalButtonStyle}>
                        {t('uiZ2')} </button>
                   </div>
                 </div>

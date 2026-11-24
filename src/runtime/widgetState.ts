@@ -29,6 +29,7 @@ import type {
 import type { CaptureTravelMode } from "../utils/routingTypes";
 /** Shared runtime state contract; feature views consume only their own presentation fields. */
 export interface WidgetState {
+  widgetTheme?: import("../styles/appearance").WidgetTheme;
   placesActive: boolean;
   placesAutoUpdate: boolean;
   placeNotePhase: "idle" | "capturing" | "picking";

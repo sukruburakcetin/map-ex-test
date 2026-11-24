@@ -2,7 +2,7 @@
 /** @jsxFrag React.Fragment */
 import { useWidgetLocale } from '../i18n/WidgetLocale';
 import { React, jsx } from "jimu-core";
-import { glassStyles } from "../utils/styles";
+import { sequencePickerStyles } from "../styles/sequencePicker";
 import { distanceMeters, pickSequenceColor } from "../utils/geoUtils";
 import { SequenceInfo } from "../components/types";
 
@@ -72,13 +72,13 @@ const SequencePicker: React.FC<SequencePickerProps> = ({
     };
 
     return (
-        <div style={glassStyles.sequencePickerContainer}>
+        <div style={sequencePickerStyles.sequencePickerContainer}>
 
             {/* Prev Arrow */}
             {showArrows && (
                 <button
                     style={{
-                        ...glassStyles.sequenceArrow,
+                        ...sequencePickerStyles.sequenceArrow,
                         opacity: offset <= 0 ? 0.3 : 1,
                         cursor: offset <= 0 ? "default" : "pointer",
                     }}
@@ -106,14 +106,14 @@ const SequencePicker: React.FC<SequencePickerProps> = ({
                 return (
                     <div
                         key={seq.sequenceId}
-                        style={glassStyles.sequenceSlot(isActive)}
+                        style={sequencePickerStyles.sequenceSlot(isActive)}
                         title={t('uiSequenceTitle',{number:seqIndex+1,date})}
                         onClick={() => handleSelect(seq)}
                         onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.35)"}
                         onMouseLeave={e => e.currentTarget.style.background = isActive ? "rgba(255,255,255,0.25)" : "transparent"}
                     >
-                        <span style={glassStyles.sequenceDot(cssColor)} />
-                        <span style={glassStyles.sequenceText}>
+                        <span style={sequencePickerStyles.sequenceDot(cssColor)} />
+                        <span style={sequencePickerStyles.sequenceText}>
                             {seqIndex + 1}. {date}
                         </span>
                     </div>
@@ -124,7 +124,7 @@ const SequencePicker: React.FC<SequencePickerProps> = ({
             {showArrows && (
                 <button
                     style={{
-                        ...glassStyles.sequenceArrow,
+                        ...sequencePickerStyles.sequenceArrow,
                         opacity: offset + SLOTS >= total ? 0.3 : 1,
                         cursor: offset + SLOTS >= total ? "default" : "pointer",
                     }}
