@@ -21,7 +21,7 @@ Migration 003 adds owner-defined, colored categories and exact workspace queries
 
 See `tools/community-notes/guides/contributions.md` for installation, semantics, limits and the complete contributor map. Refresh is explicit; this does not add polling or ambient service traffic. Category authorization/retirement and statistics membership remain server-enforced.
 
-See `docs/user-guide/workspace-readability.md` for consistent screen-facing 3D icons, stable search results, category badges and task navigation.
+See `docs/user-guide/workspaces.md` for consistent screen-facing 3D icons, stable search results, category badges and task navigation.
 
 ## Local selection and full contribution text edits
 

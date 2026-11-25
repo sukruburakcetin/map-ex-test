@@ -1,138 +1,76 @@
-# Experience Builder 1.21 acceptance — stage 65
+# Experience Builder 1.21 live acceptance
 
-Prepared 19 November 2026. Source checkpoint: `609b81c` plus stages 47–65, preserved in the local working checkpoint. Confirm the actual installed source before treating results as acceptance
-of this checkpoint. The manifest's `exbVersion` declaration is not a test result.
+The earlier Windows fixture run reported **41 of 41 isolated Chromium fixtures passed**. The following live results were reported from a separate Windows Experience Builder 1.21 run. Record the final source identity and repeat the remaining checks against the artifact selected for release.
 
-## Current evidence
+## Reported Windows results
 
-| Check | Status |
+| Check | Result |
 | --- | --- |
-| Default portable tests | 2,265 passed; zero failures/skips; all 186 files |
-| Isolated runtime/settings bundle on 1.20.0 | Passed; zero errors/warnings |
-| Isolated bundle on 1.21 | User-supplied completed result: 1.21.0, 9,974 ms, zero errors/warnings; no ancestor override |
-| Normal 1.21 host compilation/start | Working browser reported; production-package build output not separately recorded |
-| Real 1.21 browser/SDK/layout checks | General smoke check reported good by user; per-case/device evidence not collected |
-| Whole-project semantic TypeScript checks | Not established by the transpile-only bundle checker |
+| Production build before the MIT metadata update | Passed in 22.8 seconds with two Webpack size warnings and zero compilation errors. |
+| Open a capture in Preview | The image opened and the map marked the selected capture. |
+| Panorama hover at low and close zoom | The preview worked at both zoom levels. The cyan cone stayed hidden below zoom 14. |
+| Panorama fullscreen round trip | Viewing direction was preserved when entering and exiting fullscreen after the camera fix. |
+| Three rapid capture selections | Viewer and marker stayed on the third capture. |
+| Widget Controller close and reopen | A different capture opened and the map marker followed it. |
+| Builder appearance walkthrough | The map-follow button was hidden and imagery still opened. |
+| Open a capture from the published test URL | Pending. |
 
-The cloud workspace has an installed 1.20 client only. The commands below must
-run on the machine with the actual 1.21 installation. No widget update or new
-installer is required to begin: the checker is already part of stage 47+.
+The reported checks cover the scenarios above. The broader browser matrix and final artifact identity remain open.
 
-See [checkpoint evidence](checkpoint-2026-11-19.md) for provenance and limits. The checklist below remains available for detailed acceptance.
+## Identify the build
 
-## 1. Confirm the client and dependencies
-
-Open a terminal in:
-
-```text
-C:\Users\BURAK\Desktop\arcgis-experience-builder-1.21\client\your-extensions\widgets\mapillary-explorer
-```
-
-Run:
-
-```sh
-node --version
-pnpm --version
-node -p "require('../../../package.json').version"
-```
-
-The third command must identify **1.21**, not 1.20. The relative path assumes the
-standard `client/your-extensions/widgets/mapillary-explorer` layout. Use an
-absolute `--client` path if your checkout lives elsewhere. The documented host
-recommendations are Node 24 and pnpm 11; a package-manager upgrade is not part of
-this validation.
-
-The latest incremental installer is `apply-detection-text-actions.cjs`, after
-stage 64. Do not apply it over an unknown stage or bypass its preflight. If your
-source came from GitHub, remember these stages were not pushed in this session.
-
-## 2. Run the isolated target bundle check
-
-From that same widget folder:
-
-```sh
-node tools/check-exb-build.cjs --client ../../..
-```
-
-Expected: **Experience Builder 1.21.x**, followed by **0 errors; 0 warnings**.
-The checker prints its output directory and writes `build-report.json` there.
-Keep the report. It does not install dependencies, replace the widget link or
-change host packages. It uses a transpile-only loader and omits normal host
-packaging plugins; success alone does not complete acceptance.
-
-If the checker reports a missing dependency, inspect the actual client installation first. The checker checks selected folders, whereas Node can resolve packages from ancestors. The message alone does not prove the package is unavailable to the running app:
-
-```sh
-cd ../../..
-pnpm list mapillary-js pbf @mapbox/vector-tile pako --depth=0
-```
-
-If the list is incomplete but the widget runs, use the installation guide's [declaration and resolution checks](../installation.md#if-the-widget-works-but-dependencies-appear-missing) before changing packages. Confirm the intended `exb-client` directory first.
-
-Use the existing [installation guide](../installation.md) if setup is genuinely
-incomplete. Do not reinstall everything, replace React, change pnpm versions or
-convert lockfiles merely to address a missing direct dependency. The reviewed
-widget packages are Mapillary JS 4.1.2, pbf 5.1.2, vector-tile 3.0.0 and pako 2.2.0.
-
-## 3. Compile and run the actual host
-
-In the **client** folder, inspect the provided scripts:
-
-```sh
-pnpm run
-```
-
-Run the production build script actually supplied by your host. If
-`build:prod` is listed, use `pnpm run build:prod`; do not invent or add a script
-if it is absent. Keep the output separately from the isolated bundle result.
-
-Start the existing server and client in separate terminals:
-
-| Terminal folder | Command |
+| Field | Value |
 | --- | --- |
-| `arcgis-experience-builder-1.21/server` | `pnpm start` |
-| `arcgis-experience-builder-1.21/client` | `pnpm start` |
+| Date and local time | |
+| Experience Builder client version | |
+| Browser and version | |
+| Widget stage or Git commit, if available | |
+| Widget runtime SHA-256 | |
+| Full host build result | |
+| Test experience and active map types | |
 
-Open the host at `https://localhost:3001/`, using its normal organization/Client
-ID setup. Follow the existing app-upgrade workflow if testing an older experience;
-do not overwrite the 1.20 host with 1.21 files. Preserve 1.20 as a comparison.
+From the widget root in Windows Command Prompt, capture the client version and normalized runtime hash:
 
-## 4. Browser checks
+```bat
+node -v
+node -p "require('../../../package.json').name + ' ' + require('../../../package.json').version"
+node -e "const fs=require('node:fs'),crypto=require('node:crypto');const src=fs.readFileSync('src/runtime/widget.tsx','utf8').replace(/^\uFEFF/,'').replace(/\r\n/g,'\n');console.log(crypto.createHash('sha256').update(src).digest('hex'))"
+```
 
-Record Pass / Fail / Not configured for each row, with browser/device and 2D/3D
-view noted. A configured optional feature needs its own check; an unavailable
-backend is not a pass and need not block core imagery validation.
+The stage 137 reference runtime hash is `43e5778804cd16f42547442b869f073c2c5cae9514b199eaadbe019e7f530457`. A different hash can reflect a local change. Record the actual hash used in the live run.
 
-| Area | Action and expected result | Result |
+From the Experience Builder **client** folder, run `pnpm run` to see the host scripts. If the installation exposes `build:prod`, run `pnpm run build:prod` and record its exit status and first relevant warning or error. Use the existing client and server development processes for the browser checks.
+
+## First live pass
+
+Use **Pass**, **Fail**, **Blocked**, or **Not run**. For failures, capture the map type, zoom, rotation, widget state, and the shortest sequence that reproduces the issue.
+
+| Check | Expected observation | Result and evidence |
 | --- | --- | --- |
-| Basic imagery | Open a coverage image; viewer and sprites load; no Pbf import/export warning or runtime error | Not run |
-| Coverage hover | Hover at low zoom, then zoom/pan and hover again; delayed/cancelled work cannot show another target's preview | Not run |
-| Navigation/info | Click and surf images rapidly; image info stays user-controlled; stale metadata cannot replace the active image | Not run |
-| Fullscreen | Enter/exit repeatedly; one viewer survives, controls work, map/view ownership restores | Not run |
-| Detection menu | Test scale, opacity, modes, overlap, labels, reset and close; selected state and callbacks still work | Not run |
-| Menu layout | Narrow viewport, coarse-pointer device and longest available translations: labels wrap without clipping; focus, Escape/outside close and fullscreen portal work | Not run |
-| Current-image marker | In 2D/tilted 3D, zoom through phone close levels and change images; marker/fan share the correct anchor without stale duplicates | Not run |
-| Time travel/Nearby | Open explicitly, change images/close while pending; foreground work keeps priority and stale results stay hidden | Not run |
-| Overture, if configured | Vector icons, family/confidence filters, paging/selection and imagery search work; disabling stops optional work | Not run |
-| Routes/cloud/notes, if configured | Exercise the enabled tools and cancellation/view transfer using the existing routing and feature guides | Not run |
+| Panorama hover below zoom 14 | Preview card and pulse still appear. The cyan panorama hover cone remains hidden. | Pending |
+| Hover at zoom 14 or closer | An individual panorama point shows the cyan projected cone when a bearing is available. Compare the open panorama with a different panorama on north-up and rotated 2D maps. | Pending |
+| Zoom out while the cone is visible | The cyan cone disappears below 14 and the preview continues to work. The yellow active-image fan is a separate indicator. | Pending |
+| Regular photo hover and selection | With the panorama filter set to **All**, a known regular-photo point at close zoom can be previewed and opened. | Pending |
+| Cold/warm startup and close/reopen | The widget opens imagery and reopens cleanly. Check the console for errors tied to startup or disposal. | Pending |
+| Fullscreen enter, exit, and resize | Record image/pose restoration, viewer recreation or cover flash, minimap, and access to controls. | Pending |
 
-Do not paste access tokens, credentials or signed URLs into results. For an error,
-keep the first useful console error and its stack, redacting token values.
+## Browser acceptance matrix
 
-## 5. Send the first result
+Portable tests and isolated webpack checks are prerequisites, not substitutes for these observations. Record source hash/commit, ExB/dependency versions, date, scenario and result.
 
-Start by sharing the isolated check's console output. A useful brief record is:
+| Scenario | Required observation | Recorded host evidence |
+| --- | --- | --- |
+| Cold/warm startup, close/reopen, active-map replacement during loading | No late listeners/layers/DOM on retired views; normal reopening | Pending current-source acceptance |
+| Low-zoom hover, rapid pan/zoom, cold/warm tile lookup, touch | Responsive picking, truthful loading feedback, no stale thumbnail | Pending |
+| Rapid A/B/C image selection, same/different sequences, error/cancel | Image-first opening; marker/cone/selected-sequence consistency | Only the earlier sequence-transition fix was reported working; full matrix pending |
+| Fullscreen enter/exit and repeated resize | Same viewer/pose; no new dispose-cover flash or lost controls | Pending |
+| Traffic-sign/object filters and labels at zoom 18+ | Same labels, hit precedence and disabled-source cancellation | Pending |
+| Places filters/categories/confidence, dense view and POI imagery links | Native tile behavior, matching hit/selection/filter results | Pending |
+| Routing with supported providers, cancellation and changed context | Same outputs, budgets, provider calls and late-result protection | Pending |
+| Point-cloud tools, solar and elevation in 2D/3D | Same cleanup, feedback, geometry and current-image tracking | Pending |
+| Field notes, attachments and configured remote publishing | Same local persistence; no implicit or duplicated remote writes | Pending |
+| Mobile/narrow layout, keyboard and locale, fullscreen portals | Usable controls, scrolling/focus and readable translated content | Pending |
 
-```text
-Installed source: stage 65 / other checkpoint:
-Client version:
-Node / pnpm versions:
-Isolated target bundle: pass/fail; errors/warnings:
-Normal host build/start: pass/fail/not run:
-Browser + viewport/device + 2D/3D:
-First failing action and redacted console error, if any:
-```
+Verify configured service scenarios separately and use an authorized test workspace or layer for writes.
 
-The isolated target result and general user browser confirmation are now recorded; detailed acceptance remains pending where no case-specific evidence exists. A clean
-portable run and isolated 1.20 bundle alone are not substitutes for target-host results. Keep every failure visible; do not weaken tests or change behavior
-without diagnosing the concrete incompatibility.
+See the [earlier stage-65 procedure and observations](../history/refactoring/exb-1.21-stage-65.md) for historical setup and troubleshooting.

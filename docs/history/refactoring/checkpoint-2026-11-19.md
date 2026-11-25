@@ -49,9 +49,9 @@ those earlier moments. This checkpoint supersedes that current-status wording.
 
 ## Resume
 
-Read [the milestone](../../REFACTORING-MILESTONE.md),
+Read [the milestone](REFACTORING-MILESTONE.md),
 [the current portable baseline](test-baseline.md) and
-[the target-host worksheet](exb-1.21-validation.md). Preserve the checkpoint and
+[the target-host worksheet](../../development/exb-1.21-validation.md). Preserve the checkpoint and
 compare any user-side changes before further extraction. Choose one cohesive
 remaining responsibility in `widget.tsx`, characterize its active behavior and
 keep request, cancellation and shared-map ownership explicit. Collect detailed

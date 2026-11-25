@@ -1,29 +1,36 @@
 # Mapillary Explorer
 
-An ArcGIS Experience Builder widget for exploring Mapillary street-level imagery, detected objects, nearby places and field notes.
+Mapillary Explorer adds street-level imagery to an ArcGIS Experience Builder map. Select a capture on the map to see what the street looks like and move through nearby captures. It can help you review an area remotely, compare imagery from different dates, and record observations.
 
-## Install the widget
+The **widget** is a panel you add to an Experience Builder app. People opening an app that already includes the widget can use it in their browser. App builders install the widget in Developer Edition and connect it to a Map widget.
 
-Follow the **[installation guide for Experience Builder 1.20 and 1.21](docs/installation.md)**. It covers host setup, the correct package manager, exact widget dependencies and moving an existing test installation.
+## Start here
 
-- **1.20:** existing development target; install dependencies with npm.
-- **1.21:** Esri requires pnpm (recommended Node.js 24 / pnpm 11). Full widget compatibility testing remains pending.
+| I want to | Go to |
+| --- | --- |
+| Open imagery, use filters, or save a note | [Use the widget](docs/user-guide/README.md) |
+| Install the widget and open my first capture | [Getting started](docs/getting-started.md) |
+| Fix an installation or runtime problem | [Troubleshooting](docs/troubleshooting.md) |
+| Make my first contribution | [Contributing](CONTRIBUTING.md) |
+| Customize or maintain Mapillary Explorer | [Customize and maintain the widget](docs/widget-development.md) |
+| Review, deploy, or update the widget | [Publisher guide](docs/publishing.md) |
+| Upgrade a 4.6 deployment | [5.0 migration guide](docs/releases/5.0-migration.md) |
 
-Place the source at `client/your-extensions/widgets/mapillary-explorer`, configure your Mapillary token, start the host and add the widget to an experience. This repository is a widget, not a standalone app. Current source includes the implemented features; new users do not apply a sequence of development patch installers.
+## What you can do
 
-## Add optional features
+- Browse street-level captures and filter coverage. Compare dates where nearby historical imagery is available.
+- Inspect detected traffic signs and objects and capture information.
+- Record Local notes. Administrators can also configure Enterprise notes or shared workspaces.
+- Explore Overture Places when the administrator configures a Places source. Some analysis tools depend on the active map, settings, and external services.
 
-| What you want | Read this |
-|---|---|
-| Businesses, services and landmarks from Overture | **[Places setup: download, publish and maintain](docs/places/README.md)** |
-| Organization-shared field notes | [Enterprise notes](docs/administration/enterprise-notes.md) |
-| Team collaboration workspaces | [Workspace backend setup](tools/community-notes/README.md) |
-| Viewer help or other documentation | [Documentation index](docs/README.md) |
-| Code changes and tests | [Contributing](CONTRIBUTING.md) |
-| Translation corrections | [Translation guide](docs/localization/CONTRIBUTING.md) |
+See the [documentation index](docs/README.md) for setup, administration and technical references.
 
-Places and shared-note backends are optional. Viewers use tools configured by an administrator; they do not publish datasets. Review applicable Mapillary, Esri and Overture terms for your deployment.
+## Status and participation
 
-## Icon attribution
+This development repository targets 5.0. The manifest declares Experience Builder 1.21.0, and live 1.21 acceptance is pending in the tracked record. See the [release status](docs/releases/README.md) and [host version table](docs/installation.md#1-choose-your-host-version).
 
-Traffic-sign and object icon sprites are **derived from Mapillary's sprite-source artwork (MIT)** and repackaged for this widget. The original Mapillary copyright and full license ship with the assets. See [third-party notices](THIRD_PARTY_NOTICES.md).
+Help by testing a workflow, improving a guide, reviewing a translation, or submitting a focused change. [Contribution guide](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Community standards](CODE_OF_CONDUCT.md)
+
+Mapillary Explorer is distributed under the [MIT License](LICENSE). Bundled assets carry their own [third-party notices](THIRD_PARTY_NOTICES.md).
+
+The public project has a video example of the widget in an Experience Builder app. The 5.0 interface may differ. [Watch the public demo](https://www.youtube.com/watch?v=5LGTJHSNFa8)

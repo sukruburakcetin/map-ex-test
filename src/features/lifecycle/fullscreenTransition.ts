@@ -5,6 +5,8 @@ interface ImageLocation {
 
 interface TransitionViewer {
   getBearing(): Promise<number>;
+  getCenter(): Promise<number[]>;
+  getImage(): Promise<{ id: string }>;
   remove(): void;
 }
 
@@ -25,7 +27,7 @@ interface FullscreenTransitionHost<View> {
   createViewer(container: HTMLElement, imageId: string): void;
   bindViewer(): void;
   restoreMapFeedback(location: ImageLocation, bearing: number): void;
-  restoreViewerTools(imageId: string): void;
+  restoreViewerTools(imageId: string, center?: [number, number]): void;
   createMinimap(): void;
   centerMap(view: View, location: ImageLocation): PromiseLike<unknown>;
   reportMapCentered(location: ImageLocation): void;
@@ -34,6 +36,15 @@ interface FullscreenTransitionHost<View> {
 
 const wait = (milliseconds: number) => new Promise<void>(resolve => setTimeout(resolve, milliseconds));
 
+async function readCenter(viewer: TransitionViewer, imageId: string): Promise<[number, number] | undefined> {
+  try {
+    const [image, [x, y]] = await Promise.all([viewer.getImage(), viewer.getCenter()]);
+    if (String(image.id) === imageId && Number.isFinite(x) && Number.isFinite(y)) return [x, y];
+  } catch {
+    // The viewer may not have a confirmed image yet.
+  }
+}
+
 /** Move between the embedded and portal mounts using the existing viewer recreation path. */
 export async function transitionFullscreen<View>(host: FullscreenTransitionHost<View>): Promise<void> {
   const entering = !host.fullscreen;
@@ -41,6 +52,7 @@ export async function transitionFullscreen<View>(host: FullscreenTransitionHost<
 
   let bearing = host.bearing || 0;
   const imageId = host.imageId;
+  let center: [number, number] | undefined;
   const location = imageId ? host.imageLocation(imageId) : undefined;
   host.clearMapFeedback();
 
@@ -51,15 +63,20 @@ export async function transitionFullscreen<View>(host: FullscreenTransitionHost<
 
   if (host.viewer) {
     try {
-      await host.viewer.getBearing().then(value => {
-        if (typeof value === 'number') {
-          bearing = value;
-          host.bearing = value;
-        }
-      }).catch(() => {});
+      const outgoing = host.viewer;
+      const [value, pose] = await Promise.all([
+        outgoing.getBearing().catch(() => undefined),
+        imageId ? readCenter(outgoing, imageId) : undefined,
+      ]);
+      if (host.viewer !== outgoing || host.imageId !== imageId) return;
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        bearing = value;
+        host.bearing = value;
+      }
+      center = pose;
 
       host.detachViewerTools();
-      host.viewer!.remove();
+      outgoing.remove();
       await wait(100);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -79,7 +96,7 @@ export async function transitionFullscreen<View>(host: FullscreenTransitionHost<
       host.bearing = bearing;
       host.bindViewer();
       if (location) host.restoreMapFeedback(location, bearing);
-      host.restoreViewerTools(imageId);
+      host.restoreViewerTools(imageId, center);
 
       if (host.fullscreen) {
         setTimeout(() => {

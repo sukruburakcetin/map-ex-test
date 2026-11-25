@@ -186,7 +186,7 @@ node tools/check-docs.cjs
 node --test tests/vectorTileDecoding.test.cjs
 ```
 
-With pnpm, resolve dependencies through their owning `client` package; do not rely on npm's old hoisting accidentally making an undeclared package available. If portable tests cannot find TypeScript, set `MAPILLARY_TYPESCRIPT` to the host's installed TypeScript module path. See the [test baseline](development/test-baseline.md) for existing fixture/dependency failures; a focused decoder pass does not establish a green full suite.
+With pnpm, resolve dependencies through their owning `client` package; do not rely on npm's old hoisting accidentally making an undeclared package available. If portable tests cannot find TypeScript, set `MAPILLARY_TYPESCRIPT` to the host's installed TypeScript module path. See the [test baseline](history/refactoring/test-baseline.md) for existing fixture/dependency failures; a focused decoder pass does not establish a green full suite.
 
 Run the build script actually provided by your host (`npm run` / `pnpm run` lists its scripts). For hosts providing `build:prod`, run `npm run build:prod` on 1.20 or `pnpm run build:prod` on 1.21 from `client`. After building, validate:
 

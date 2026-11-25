@@ -69,7 +69,7 @@ An older maintenance note identified `src/components/Legend.tsx`, `NearbyCarouse
 - Catalog checks pass: 1,174 runtime keys, 160 builder keys, 12 translation catalogs; the CSV matches.
 - The full portable Node run has 1,282 tests: 1,138 pass and 144 fail. A separate untouched checkout of `43b7a4b` produces the same totals and identical failing test names/counts. These are existing baseline failures, not a green release gate.
 
-See the [test baseline and failing-suite inventory](test-baseline.md) for commands, environment and next work. Portable tests and transpilation are distinct from full host type checking, a production build, or licensed ArcGIS Pro/Portal/browser acceptance.
+See the [test baseline and failing-suite inventory](../history/refactoring/test-baseline.md) for commands, environment and next work. Portable tests and transpilation are distinct from full host type checking, a production build, or licensed ArcGIS Pro/Portal/browser acceptance.
 
 ## Remaining publication gates
 

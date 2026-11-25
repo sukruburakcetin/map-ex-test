@@ -233,7 +233,7 @@ contract tests validate the shared English binding helper. The map-layer snippet
 compiler uses explicit TSX mode; the 15 map-layer tests previously could not load.
 No frozen fixture files were rewritten.
 
-See the [current full baseline](test-baseline.md) for scope and remaining failures.
+See the [current full baseline](../history/refactoring/test-baseline.md) for scope and remaining failures.
 The helper renders the shipped text-only localization wrappers against actual
 English messages. It preserves data/SDK traces and checks rendered feedback
 instead of treating React fragments as DOM nodes. Calibration explicitly permits

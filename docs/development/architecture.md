@@ -13,7 +13,7 @@
 
 The widget still coordinates cone presentation with the current image and ArcGIS view. Geometry, screen presentation and resource cleanup have dedicated helpers. Shared-note synchronization, publication and editing still bind panel state, authentication and Enterprise writers in the widget. These are retained coordination boundaries for the checkpoint. Future changes should start with the existing owners and preserve view identity, image identity and explicit write actions.
 
-P12 records validation for the exact installed source using the [browser acceptance matrix](refactoring-remaining-work.md#browser-acceptance-matrix). Earlier build and test counts in the history apply to their respective stages.
+P12 records validation for the exact installed source using the [browser acceptance matrix](exb-1.21-validation.md#browser-acceptance-matrix). Earlier build and test counts in the history apply to their respective stages.
 
 # Architecture history
 
@@ -64,7 +64,7 @@ P04 remains in progress after two changes. Next: explicit sequence opening/trans
 
 Validation: 3,219 passing portable tests / 224 files in workspace and clean installer-produced copy, zero failures or skips. Strict feature-module and real Mapillary Viewer contract checks pass. Isolated ExB 1.20 module-graph build: zero errors/warnings. BOM/CRLF, targeted mutation and reversible installer checks pass. Full ExB 1.21/browser acceptance remains pending under P12.
 
-See [the viewer-event checkpoint](viewer-event-binding.md) and [the finite plan](refactoring-remaining-work.md). No commit/push or full-host browser acceptance is implied.
+See [the viewer-event checkpoint](viewer-event-binding.md) and [the finite plan](../history/refactoring/refactoring-remaining-work.md). No commit/push or full-host browser acceptance is implied.
 
 <!-- viewer-image-tracking-stage97 -->
 
@@ -76,7 +76,7 @@ P04 is in progress after its first change. Next: remaining load/bearing/event li
 
 Validation: 3,187 passing portable tests / 223 files in workspace and clean installer-produced copy, zero failures or skips. Strict feature-module checking and a React-style generic commit-contract check pass. Isolated ExB 1.20 module-graph build: zero errors/warnings. BOM/CRLF comparisons, targeted mutation and reversible installer checks pass. Full ExB 1.21/provider/browser acceptance remains pending under P12.
 
-See [the image-tracking checkpoint](viewer-image-tracking.md) and [the finite plan](refactoring-remaining-work.md). No commit/push or full-host browser acceptance is implied.
+See [the image-tracking checkpoint](viewer-image-tracking.md) and [the finite plan](../history/refactoring/refactoring-remaining-work.md). No commit/push or full-host browser acceptance is implied.
 
 <!-- detection-hover-stage96 -->
 
@@ -88,7 +88,7 @@ Detection component hover/click, delayed tag updates, target flashing and listen
 
 Validation: 3,158 passing portable tests / 222 files in workspace and clean installer-produced copy, zero failures or skips. Strict detection-hover module checking against the installed Mapillary/PBF/vector-tile declarations passes without temporary type aliases. Isolated ExB 1.20 module-graph build: zero errors/warnings. BOM/CRLF, targeted mutation and reversible installer checks pass. Full ExB 1.21/browser acceptance remains pending under P12.
 
-See [the detection-hover review](detection-hover.md) for retained boundaries, validation limits and installation, and [the finite plan](refactoring-remaining-work.md). Source was recovered after the workspace reconnect; temporary dependencies were restored outside the repository. No commit/push or full-host browser acceptance is implied.
+See [the detection-hover review](detection-hover.md) for retained boundaries, validation limits and installation, and [the finite plan](../history/refactoring/refactoring-remaining-work.md). Source was recovered after the workspace reconnect; temporary dependencies were restored outside the repository. No commit/push or full-host browser acceptance is implied.
 
 ## Pointer/container hover boundary — stage 95
 
@@ -98,7 +98,7 @@ P03 remains in progress after two changes. Next: detection-hover extraction and 
 
 Validation: 3,129 passing portable tests / 221 files in workspace and clean installer-produced copy, zero failures or skips. Isolated ExB 1.20 module-graph build: zero errors/warnings. Targeted SDK-aware module checking, BOM/CRLF comparisons, mutation and reversible installer checks pass. Native Chromium confirms low-zoom hover status appears/clears and the preview opens in the isolated harness. Full ExB 1.21/browser acceptance remains pending under P12.
 
-See [the hover checkpoint](map-hover-dispatch.md) for ownership/validation limits and [the finite plan](refactoring-remaining-work.md). No commit/push or full-host browser acceptance is implied.
+See [the hover checkpoint](map-hover-dispatch.md) for ownership/validation limits and [the finite plan](../history/refactoring/refactoring-remaining-work.md). No commit/push or full-host browser acceptance is implied.
 
 ## Map click dispatch boundary — stage 94
 
@@ -108,7 +108,7 @@ P03 is in progress after its first change. Next: pointer/hover dispatch, contain
 
 Validation: 3,093 passing portable tests / 220 files in both workspace and clean installer-produced copy, zero failures or skips. The isolated ExB 1.20 module-graph build has zero errors/warnings. Targeted SDK-aware click-module type checking, BOM/CRLF comparisons, mutation checks and reversible installer checks pass. Live ExB 1.21/browser acceptance remains pending under P12.
 
-See [the click checkpoint](map-click-dispatch.md) for ownership/type-check limits and [the finite remaining plan](refactoring-remaining-work.md). No commit/push or browser acceptance is implied.
+See [the click checkpoint](map-click-dispatch.md) for ownership/type-check limits and [the finite remaining plan](../history/refactoring/refactoring-remaining-work.md). No commit/push or browser acceptance is implied.
 
 ## Active-view lifecycle coordination — stage 93
 
@@ -118,7 +118,7 @@ See [the click checkpoint](map-click-dispatch.md) for ownership/type-check limit
 
 Validation: 3,066 passing portable tests / 219 files in both workspace and clean installer-produced copy, zero failures or skips. Strict navigation-module TypeScript and the isolated ExB 1.20 module-graph build pass; the build has zero errors/warnings. Reversible installer, BOM/CRLF and targeted mutation checks pass. Live ExB 1.21/browser acceptance remains pending under P12.
 
-See [the attachment checkpoint](active-view-attachment.md) and [the finite remaining plan](refactoring-remaining-work.md). Widget size is 10,911 lines; the overall minimal-entry-point goal is not complete. No commit/push or browser acceptance is implied.
+See [the attachment checkpoint](active-view-attachment.md) and [the finite remaining plan](../history/refactoring/refactoring-remaining-work.md). Widget size is 10,911 lines; the overall minimal-entry-point goal is not complete. No commit/push or browser acceptance is implied.
 
 ## Active-view transfer owner — stage 92
 
@@ -128,7 +128,7 @@ P02 remains in progress after two changes. Next: committed-view startup registra
 
 Validation: 3,046 passing portable tests / 218 files in both workspace and clean installer-produced copy, with zero failures or skips. Strict transfer-module TypeScript and the isolated ExB 1.20 module-graph build pass; the build has zero errors/warnings. Reversible installer and BOM/CRLF checks pass. Live ExB 1.21/browser acceptance remains pending.
 
-See [the transfer checkpoint](active-view-transfer.md) and [the finite remaining plan](refactoring-remaining-work.md). No commit/push or browser acceptance is implied.
+See [the transfer checkpoint](active-view-transfer.md) and [the finite remaining plan](../history/refactoring/refactoring-remaining-work.md). No commit/push or browser acceptance is implied.
 
 ## Active-view startup boundary — stage 91
 
@@ -136,7 +136,7 @@ Committed-view restoration order now lives in `src/features/navigation/activeVie
 
 Validation: 3,017 passing portable tests / 217 files in the workspace and clean installer-produced copy; zero failures or skips. Strict feature-module TypeScript and the isolated ExB 1.20 module-graph build pass with zero errors/warnings. Reversible installer checks cover dry-run, repeat application, BOM/CRLF source, local documentation history, unknown edits and exact guarded rollback. Live ExB 1.21/browser acceptance remains pending.
 
-Use [the checkpoint guide](active-view-startup.md) and [the finite remaining plan](refactoring-remaining-work.md). No commit/push or live-host acceptance is implied.
+Use [the checkpoint guide](active-view-startup.md) and [the finite remaining plan](../history/refactoring/refactoring-remaining-work.md). No commit/push or live-host acceptance is implied.
 
 <!-- capture-route-warning-stage90 -->
 
@@ -527,7 +527,7 @@ Resume: verify installed source with the dry-run and run the target ExB 1.21 bui
 <!-- stage65-checkpoint-afca751 -->
 ## Stage 65 architecture checkpoint
 
-This checkpoint summary supersedes older baseline/build-status statements retained below. Runtime orchestration and request/map ownership remain in widget.tsx; stateless viewer surface, fullscreen chrome and image tray use dedicated components/styles, with runtime state in src/runtime/widgetState.ts. See the [runtime reading guide](runtime-reading-guide.md), [viewer boundary](viewer-presentation.md), [current portable baseline](test-baseline.md) and [checkpoint evidence](checkpoint-2026-11-19.md). The portable baseline is 2,265 passes. User-supplied isolated ExB 1.21.0 compilation passed with zero errors/warnings and browser smoke checks were reported good; detailed device/feature, semantic and production packaging acceptance remain separate. Existing architectural notes below are preserved.
+This checkpoint summary supersedes older baseline/build-status statements retained below. Runtime orchestration and request/map ownership remain in widget.tsx; stateless viewer surface, fullscreen chrome and image tray use dedicated components/styles, with runtime state in src/runtime/widgetState.ts. See the [runtime reading guide](../history/refactoring/runtime-reading-guide.md), [viewer boundary](viewer-presentation.md), [current portable baseline](../history/refactoring/test-baseline.md) and [checkpoint evidence](../history/refactoring/checkpoint-2026-11-19.md). The portable baseline is 2,265 passes. User-supplied isolated ExB 1.21.0 compilation passed with zero errors/warnings and browser smoke checks were reported good; detailed device/feature, semantic and production packaging acceptance remain separate. Existing architectural notes below are preserved.
 
 # Widget architecture
 
@@ -636,4 +636,4 @@ Stage 47 adds the [isolated runtime/settings checker](../../tools/check-exb-buil
 Stage 48 establishes the [viewer presentation boundary](viewer-presentation.md): stateless surface/fullscreen/tray components, dedicated styles and a separate runtime state contract. SDK refs, portals, requests and selection ownership remain in the runtime. Further controller extraction remains.
 
 <!-- widget-documentation-stage49 -->
-For lifecycle entry points, request/resource ownership, fullscreen completion semantics and comment conventions, read the [runtime contributor guide](runtime-reading-guide.md). Stage 49 changes documentation only.
+For lifecycle entry points, request/resource ownership, fullscreen completion semantics and comment conventions, read the [runtime contributor guide](../history/refactoring/runtime-reading-guide.md). Stage 49 changes documentation only.

@@ -216,8 +216,8 @@ Resume: verify installed source with the dry-run and run the target ExB 1.21 bui
 
 # Reading the widget runtime
 
-Start with [the architecture overview](architecture.md), then use this guide to
-navigate [widget.tsx](../../src/runtime/widget.tsx). The runtime is still a large
+Start with [the architecture overview](../../development/architecture.md), then use this guide to
+navigate [widget.tsx](../../../src/runtime/widget.tsx). The runtime is still a large
 coordinator; the presentation extraction does not complete its modularization.
 
 ## Read in this order
@@ -232,7 +232,7 @@ coordinator; the presentation extraction does not complete its modularization.
 | How is analysis converted to a route? | `runCoverageAnalysis`, `generateCaptureRoute`, `generateEsriDetourRoute` | Analysis snapshot, `RouteGeneration`, provider cancellation and guarded rendering |
 | What changes between layouts? | `toggleFullscreen`, `createMinimap`, `destroyMinimap` | Mapillary recreation, React body portal, separate ArcGIS minimap |
 | What releases resources? | `cleanupWidgetEnvironment`, `disposeStartupResources`, `componentWillUnmount` | Instance listeners/timers, feature owners and registered shared-map resources |
-| Where is the UI composed? | `render`, `renderLocalizedContent` | [Stateless viewer views](viewer-presentation.md), existing panels and localization |
+| Where is the UI composed? | `render`, `renderLocalizedContent` | [Stateless viewer views](../../development/viewer-presentation.md), existing panels and localization |
 
 The shared React state contract is in `src/runtime/widgetState.ts`. Feature views
 consume narrow presentation props; do not pass the widget itself into them.

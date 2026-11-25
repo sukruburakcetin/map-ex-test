@@ -1,6 +1,14 @@
 # Documentation
 
-## Start here
+## Choose your path
+
+- [Open your first capture](getting-started.md)
+- [Use the widget](user-guide/README.md) or [troubleshoot a problem](troubleshooting.md)
+- [Make a contribution](../CONTRIBUTING.md) or [customize and maintain Mapillary Explorer](widget-development.md)
+- [Review and publish a deployment](publishing.md) or [prepare a 4.6 app for 5.0](releases/5.0-migration.md)
+- [Find configuration and integration references](reference.md)
+
+## Configure an app
 
 - **[Install and configure the widget](installation.md)** in Experience Builder.
 - **[Set up Places](places/README.md)**: download an area → publish → connect → update later.
@@ -13,7 +21,7 @@
 - [Explore Places](places/README.md#explore-the-published-data)
 - [Select and view notes](user-guide/note-selection.md)
 - [Search notes](user-guide/notes-search.md)
-- [Use collaboration workspaces](user-guide/workspaces.md) and [workspace controls](user-guide/workspace-readability.md)
+- [Use collaboration workspaces](user-guide/workspaces.md)
 - [Read image information](user-guide/image-information.md)
 - [Compare capture dates](user-guide/time-travel.md)
 
@@ -29,7 +37,7 @@
 These are references, not extra installation steps.
 
 - [Contributing and checks](../CONTRIBUTING.md)
-- [Repository baseline and layout](development/repository-baseline.md) and [test baseline](development/test-baseline.md)
+- [Repository layout](development/repository-baseline.md), [portable checks](development/portable-tests.md), and [live Experience Builder acceptance](development/exb-1.21-validation.md)
 - [Architecture](development/architecture.md), [maintenance](development/maintenance.md) and [roadmap](development/roadmap.md)
 - [Places architecture](development/places-architecture.md), [package/schema reference](development/places-packages.md), [external API/hosting](development/places-service-contract.md), [tests](development/places-testing.md) and [research](development/places-research.md)
 - [Interaction owners](development/interaction-ux.md), [InfoBox](development/info-box.md), [point-cloud owners](development/point-cloud.md) and [field-note viewer](development/field-note-viewer.md)

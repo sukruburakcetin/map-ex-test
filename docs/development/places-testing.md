@@ -109,7 +109,7 @@ These cover saved snapshots/comparison, Pro orchestration fixtures, complete att
 
 Real supplied-package evidence is summarized in the [package reference](places-packages.md#verification-boundary). Extracted resources rendered through a local SDK simulator; this does not prove Enterprise import. The optional publisher's public API calls were checked against ArcGIS Python API 2.4.4 source, but its first authenticated publication remains a deployment acceptance test.
 
-The repository-wide [portable test baseline](test-baseline.md) records existing extracted-fixture failures, including missing Portal imports. Keep these distinct from focused feature results; rerun and report the actual checkout rather than claiming the entire repository is green.
+The repository-wide [portable test baseline](../history/refactoring/test-baseline.md) records existing extracted-fixture failures, including missing Portal imports. Keep these distinct from focused feature results; rerun and report the actual checkout rather than claiming the entire repository is green.
 
 ## Additional recorded package evidence
 

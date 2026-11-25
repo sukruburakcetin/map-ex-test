@@ -217,7 +217,7 @@ Resume: verify installed source with the dry-run and run the target ExB 1.21 bui
 # Portable test baseline — stage 65, 19 November 2026
 
 This local checkpoint contains `609b81c` plus stages 47–65. Every portable suite
-remains included. See [reproduction and fixture conventions](portable-tests.md).
+remains included. See [reproduction and fixture conventions](../../development/portable-tests.md).
 
 | Check | Result and scope |
 | --- | --- |
@@ -271,7 +271,7 @@ pako 2.2.0. Test-only packages remain outside the host and widget.
 
 Current source is `609b81c` plus uncommitted stages 47–64. Every portable suite
 remains included; the remaining failure still makes the runner exit nonzero.
-See [reproduction and fixture conventions](portable-tests.md).
+See [reproduction and fixture conventions](../../development/portable-tests.md).
 
 | Check | Result and scope |
 | --- | --- |
@@ -327,7 +327,7 @@ pako 2.2.0. Test-only packages remain outside the host and widget.
 
 Current source is `609b81c` plus uncommitted stages 47–63. Every portable suite
 remains included; unresolved failures still make the runner exit nonzero.
-See [reproduction and fixture conventions](portable-tests.md).
+See [reproduction and fixture conventions](../../development/portable-tests.md).
 
 | Check | Result and scope |
 | --- | --- |
@@ -386,7 +386,7 @@ pako 2.2.0. Test-only packages remain outside the host and widget.
 
 Current source is `609b81c` plus uncommitted stages 47–62. Every portable suite
 remains included; unresolved failures still make the runner exit nonzero.
-See [reproduction and fixture conventions](portable-tests.md).
+See [reproduction and fixture conventions](../../development/portable-tests.md).
 
 | Check | Result and scope |
 | --- | --- |
@@ -447,7 +447,7 @@ pako 2.2.0. Test-only packages remain outside the host and widget.
 
 Current source is `609b81c` plus uncommitted stages 47–61. Every portable suite
 remains included; unresolved failures still make the runner exit nonzero.
-See [reproduction and fixture conventions](portable-tests.md).
+See [reproduction and fixture conventions](../../development/portable-tests.md).
 
 | Check | Result and scope |
 | --- | --- |
@@ -506,7 +506,7 @@ pako 2.2.0. Test-only packages remain outside the host and widget.
 
 Current source is `609b81c` plus uncommitted stages 47–60. Every portable suite
 remains included; unresolved failures still make the runner exit nonzero.
-See [reproduction and fixture conventions](portable-tests.md).
+See [reproduction and fixture conventions](../../development/portable-tests.md).
 
 | Check | Result and scope |
 | --- | --- |
@@ -564,7 +564,7 @@ pako 2.2.0. Test-only packages remain outside the host and widget.
 
 Current source is `609b81c` plus uncommitted stages 47–59. Every portable suite
 remains included; unresolved failures still make the runner exit nonzero.
-See [reproduction and fixture conventions](portable-tests.md).
+See [reproduction and fixture conventions](../../development/portable-tests.md).
 
 | Check | Result and scope |
 | --- | --- |
@@ -622,7 +622,7 @@ pako 2.2.0. Test-only packages remain outside the host and widget.
 
 Current source is `609b81c` plus uncommitted stages 47–58. Every portable suite
 remains included; unresolved failures still make the runner exit nonzero.
-See [reproduction and fixture conventions](portable-tests.md).
+See [reproduction and fixture conventions](../../development/portable-tests.md).
 
 | Check | Result and scope |
 | --- | --- |
@@ -680,7 +680,7 @@ pako 2.2.0. Test-only packages remain outside the host and widget.
 
 Current source is `609b81c` plus uncommitted stages 47–57. Every portable suite
 remains included; unresolved failures still make the runner exit nonzero.
-See [reproduction and fixture conventions](portable-tests.md).
+See [reproduction and fixture conventions](../../development/portable-tests.md).
 
 | Check | Result and scope |
 | --- | --- |
@@ -740,7 +740,7 @@ pako 2.2.0. Test-only packages remain outside the host and widget.
 
 Current source is `609b81c` plus uncommitted stages 47–56. Every portable suite
 remains included; unresolved failures still make the runner exit nonzero.
-See [reproduction and fixture conventions](portable-tests.md).
+See [reproduction and fixture conventions](../../development/portable-tests.md).
 
 | Check | Result and scope |
 | --- | --- |
@@ -804,7 +804,7 @@ pako 2.2.0. Test-only packages remain outside the host and widget.
 
 Current source is `609b81c` plus uncommitted stages 47–55. Every portable suite
 remains included; unresolved failures still make the runner exit nonzero.
-See [reproduction and fixture conventions](portable-tests.md).
+See [reproduction and fixture conventions](../../development/portable-tests.md).
 
 | Check | Result and scope |
 | --- | --- |
@@ -863,7 +863,7 @@ pako 2.2.0. Test-only packages remain outside the host and widget.
 
 Current source is `609b81c` plus uncommitted stages 47–54. Every portable suite
 remains included; unresolved failures still make the runner exit nonzero.
-See [reproduction and fixture conventions](portable-tests.md).
+See [reproduction and fixture conventions](../../development/portable-tests.md).
 
 | Check | Result and scope |
 | --- | --- |
@@ -921,7 +921,7 @@ pako 2.2.0. Test-only packages remain outside the host and widget.
 
 Current source is `609b81c` plus uncommitted stages 47–53. Every portable suite
 remains included; the runner exits nonzero while unresolved failures remain.
-See [reproduction and fixture conventions](portable-tests.md).
+See [reproduction and fixture conventions](../../development/portable-tests.md).
 
 | Check | Result and scope |
 | --- | --- |
@@ -979,7 +979,7 @@ pako 2.2.0. Test-only packages remain outside the host and widget.
 
 Current source is `609b81c` plus uncommitted stages 47–52. The complete portable
 runner still includes every suite and exits nonzero while unresolved failures
-remain. See [reproduction and fixture conventions](portable-tests.md).
+remain. See [reproduction and fixture conventions](../../development/portable-tests.md).
 
 | Check | Result and scope |
 | --- | --- |
@@ -1039,7 +1039,7 @@ pako 2.2.0. Test-only packages remain outside the host and widget.
 # Historical stage-51 baseline — 18 November 2026
 
 Current source is `609b81c` plus uncommitted stages 47–51. Use the
-[complete portable runner](portable-tests.md); failing suites remain included and
+[complete portable runner](../../development/portable-tests.md); failing suites remain included and
 the full run still exits nonzero.
 
 | Check | Result and scope |
@@ -1108,7 +1108,7 @@ mobile/RTL/live Mapillary and licensed Pro/Portal acceptance remain separate.
 
 This is the current phase-1 baseline for `609b81c` plus uncommitted stages 47–50.
 It supersedes the old aggregate below; it is not a declaration of release readiness.
-Use the [portable runner and dependency setup](portable-tests.md) rather than a
+Use the [portable runner and dependency setup](../../development/portable-tests.md) rather than a
 hand-selected green subset.
 
 | Check | Current result and scope |

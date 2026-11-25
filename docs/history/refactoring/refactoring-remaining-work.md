@@ -119,7 +119,7 @@ The new suite compares frozen original and current full-run provider/UI/geometry
 
 P01 is **not complete**: ordered preflight, pruning, replacement and final-solve orchestration still occupy the remaining large method. No other package is marked complete by this step.
 
-Validation: 2,970 portable passes / 214 files in workspace and installer copy; isolated ExB 1.20 module-graph build has zero errors/warnings. See [the preparation checkpoint](capture-route-preparation.md) for scope and limits.
+Validation: 2,970 portable passes / 214 files in workspace and installer copy; isolated ExB 1.20 module-graph build has zero errors/warnings. See [the preparation checkpoint](../../development/capture-route-preparation.md) for scope and limits.
 
 ## P01 progress — stage 89
 
@@ -129,7 +129,7 @@ Operational await expressions and run checks retain their order. Existing prepar
 
 Validation: 2,987 passing portable tests / 215 files in both workspace and clean installer-produced copy, zero failures or skips. Seventeen new execution cases augment the retained 38 preparation/full-run comparisons and existing policy/integration suites. Strict feature-module TypeScript and the isolated ExB 1.20 module-graph build pass with zero errors/warnings. Ordered-stop/post-draw/finalization mutation checks, 55-case BOM/CRLF comparison and reversible installer checks pass; local plan edits and missing-plan creation are covered. No live provider/browser acceptance is inferred.
 
-See [execution details and limits](capture-route-execution.md), including the retained pre-existing warning-hook boundary to validate.
+See [execution details and limits](../../development/capture-route-execution.md), including the retained pre-existing warning-hook boundary to validate.
 
 ## P01 completion review — stage 90
 
@@ -141,7 +141,7 @@ Review decision: keep the explicit ordered provider loop inside the routing feat
 
 Validation: 2,993 passing portable tests / 216 files in both workspace and clean installer-produced copy, zero failures or skips. Six new real-binding regressions pass after reproducing the TypeError before the fix; reverting the binding fails them again. Existing execution/preparation/policy comparisons remain unchanged. Isolated ExB 1.20 module-graph build has zero errors/warnings. BOM/CRLF regressions and reversible installer checks pass, including local plan preservation, missing-plan creation, unknown edits and exact rollback. Live-host/provider/browser acceptance remains pending.
 
-See [the warning fix/review checkpoint](capture-route-warning.md) for evidence and acceptance limits.
+See [the warning fix/review checkpoint](../../development/capture-route-warning.md) for evidence and acceptance limits.
 
 ## P02 progress — stage 91
 
@@ -151,7 +151,7 @@ P02 is **not complete**: transfer invalidation, detach/teardown, view commitment
 
 Validation: 3,017 passing portable tests / 217 files in the workspace and clean installer-produced copy; zero failures or skips. Strict feature-module TypeScript and the isolated ExB 1.20 module-graph build pass with zero errors/warnings. Reversible installer checks cover dry-run, repeat application, BOM/CRLF source, local documentation history, unknown edits and exact guarded rollback. Live ExB 1.21/browser acceptance remains pending.
 
-See [the startup checkpoint](active-view-startup.md) for ownership, installation and acceptance limits.
+See [the startup checkpoint](../../development/active-view-startup.md) for ownership, installation and acceptance limits.
 
 ## P02 progress — stage 92
 
@@ -163,7 +163,7 @@ P02 remains **in progress**. Concrete feature cleanup bindings still live in the
 
 Validation: 3,046 passing portable tests / 218 files in both workspace and clean installer-produced copy, with zero failures or skips. Strict transfer-module TypeScript and the isolated ExB 1.20 module-graph build pass; the build has zero errors/warnings. Reversible installer and BOM/CRLF checks pass. Live ExB 1.21/browser acceptance remains pending.
 
-See [the transfer checkpoint](active-view-transfer.md) for boundaries, installation and acceptance limits.
+See [the transfer checkpoint](../../development/active-view-transfer.md) for boundaries, installation and acceptance limits.
 
 ## P02 implementation review — stage 93
 
@@ -175,7 +175,7 @@ Twenty new actual-binding attachment cases augment retained transfer/startup/cov
 
 Validation: 3,066 passing portable tests / 219 files in both workspace and clean installer-produced copy, zero failures or skips. Strict navigation-module TypeScript and the isolated ExB 1.20 module-graph build pass; the build has zero errors/warnings. Reversible installer, BOM/CRLF and targeted mutation checks pass. Live ExB 1.21/browser acceptance remains pending under P12.
 
-See [the attachment checkpoint](active-view-attachment.md) for scope, installation and acceptance limits.
+See [the attachment checkpoint](../../development/active-view-attachment.md) for scope, installation and acceptance limits.
 
 ## P03 progress — stage 94
 
@@ -187,7 +187,7 @@ P03 remains **in progress**: pointer/hover dispatch, touch/container/resume owne
 
 Validation: 3,093 passing portable tests / 220 files in both workspace and clean installer-produced copy, zero failures or skips. The isolated ExB 1.20 module-graph build has zero errors/warnings. Targeted SDK-aware click-module type checking, BOM/CRLF comparisons, mutation checks and reversible installer checks pass. Live ExB 1.21/browser acceptance remains pending under P12.
 
-See [the click checkpoint](map-click-dispatch.md) for validation scope, temporary external type aliases and installation/acceptance limits.
+See [the click checkpoint](../../development/map-click-dispatch.md) for validation scope, temporary external type aliases and installation/acceptance limits.
 
 ## P03 progress — stage 95
 
@@ -199,7 +199,7 @@ P03 remains **in progress**: `setupDetectionHover` and retained click-preview pr
 
 Validation: 3,129 passing portable tests / 221 files in workspace and clean installer-produced copy, zero failures or skips. Isolated ExB 1.20 module-graph build: zero errors/warnings. Targeted SDK-aware module checking, BOM/CRLF comparisons, mutation and reversible installer checks pass. Native Chromium confirms low-zoom hover status appears/clears and the preview opens in the isolated harness. Full ExB 1.21/browser acceptance remains pending under P12.
 
-See [the hover checkpoint](map-hover-dispatch.md) for module/type-check and isolated-browser limits, installation and acceptance steps.
+See [the hover checkpoint](../../development/map-hover-dispatch.md) for module/type-check and isolated-browser limits, installation and acceptance steps.
 
 ## P03 implementation review — stage 96
 
@@ -211,7 +211,7 @@ Twenty-nine frozen/current detection comparisons supplement retained label-toggl
 
 Validation: 3,158 passing portable tests / 222 files in workspace and clean installer-produced copy, zero failures or skips. Strict detection-hover module checking against the installed Mapillary/PBF/vector-tile declarations passes without temporary type aliases. Isolated ExB 1.20 module-graph build: zero errors/warnings. BOM/CRLF, targeted mutation and reversible installer checks pass. Full ExB 1.21/browser acceptance remains pending under P12.
 
-See [the detection-hover review](detection-hover.md) for installation, retained boundaries and precise validation scope.
+See [the detection-hover review](../../development/detection-hover.md) for installation, retained boundaries and precise validation scope.
 
 ## P04 progress — stage 97
 
@@ -223,7 +223,7 @@ P04 remains **in progress**: load/bearing/wheel/zoom/direction registration and 
 
 Validation: 3,187 passing portable tests / 223 files in workspace and clean installer-produced copy, zero failures or skips. Strict feature-module checking and a React-style generic commit-contract check pass. Isolated ExB 1.20 module-graph build: zero errors/warnings. BOM/CRLF comparisons, targeted mutation and reversible installer checks pass. Full ExB 1.21/provider/browser acceptance remains pending under P12.
 
-See [the image-tracking checkpoint](viewer-image-tracking.md) for ownership, type/build scope and installation/acceptance limits.
+See [the image-tracking checkpoint](../../development/viewer-image-tracking.md) for ownership, type/build scope and installation/acceptance limits.
 
 ## P04 progress — stage 98
 
@@ -235,7 +235,7 @@ P04 remains **in progress**. `loadSequenceById` opening/transition orchestration
 
 Validation: 3,219 passing portable tests / 224 files in workspace and clean installer-produced copy, zero failures or skips. Strict feature-module and real Mapillary Viewer contract checks pass. Isolated ExB 1.20 module-graph build: zero errors/warnings. BOM/CRLF, targeted mutation and reversible installer checks pass. Full ExB 1.21/browser acceptance remains pending under P12.
 
-See [the viewer-event checkpoint](viewer-event-binding.md) for registration/guard/cleanup contracts, installation and acceptance limits.
+See [the viewer-event checkpoint](../../development/viewer-event-binding.md) for registration/guard/cleanup contracts, installation and acceptance limits.
 
 ## P04 completion — stage 99
 

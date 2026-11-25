@@ -1,6 +1,6 @@
 # Isolated Chromium fixtures
 
-Run the fixtures from the widget root. They use controlled host and service inputs. Use the [browser acceptance matrix](refactoring-remaining-work.md#browser-acceptance-matrix) for live Experience Builder, ArcGIS rendering, and service checks.
+Run the fixtures from the widget root. They use controlled host and service inputs. Use the [browser acceptance matrix](exb-1.21-validation.md#browser-acceptance-matrix) for live Experience Builder, ArcGIS rendering, and service checks.
 
 ## Windows Command Prompt
 

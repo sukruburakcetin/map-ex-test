@@ -43,4 +43,4 @@ Targeted tests use actual PostgreSQL through PGlite, React/Chromium service fixt
 
 Rolling back widget source does not reverse database migrations or delete shared records. Retain operator backups and a compatible client; do not automatically downgrade schemas or remove data.
 
-See `docs/user-guide/workspace-readability.md` for consistent screen-facing 3D icons, stable search results, category badges and task navigation.
+See `docs/user-guide/workspaces.md` for consistent screen-facing 3D icons, stable search results, category badges and task navigation.

@@ -4,7 +4,7 @@ Use the search field in the **Local** or **Enterprise** tab. It matches descript
 
 - **Local:** searches all notes saved in this browser's collection.
 - **Enterprise:** searches only records already loaded in that tab. Use **Load more** to include additional pages, even when the current pages have no matches.
-- **Workspace:** uses its separate shared contribution search; see [workspace controls](workspace-readability.md).
+- **Workspace:** uses its separate shared contribution search; see [workspace controls](workspaces.md).
 
 Use the clear button or Escape to reset the search. Selecting/editing a result acts on that original note. Searching does not move markers, change stored notes or publish anything.
 

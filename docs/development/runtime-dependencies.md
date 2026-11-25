@@ -47,7 +47,7 @@ live viewer or GPU test.
 
 The isolated runtime/settings build uses the available ExB 1.20 host rules and
 transpile-only loader. Full ExB 1.21 packaging/browser acceptance remains separate.
-See the [current test baseline](test-baseline.md) for full-suite limitations.
+See the [current test baseline](../history/refactoring/test-baseline.md) for full-suite limitations.
 
 ## Updating existing installations
 

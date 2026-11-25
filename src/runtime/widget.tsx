@@ -209,7 +209,7 @@ import type { PointCloudResult, PointCloudPoint } from "../utils/pointCloudUtils
 import { decodeAndNormalizeGeometry, getDetectionColor } from "../utils/mapillaryDetections";
 import { YEAR_COLOR_PALETTE } from "../utils/mapillaryRenderers";
 import { loadImage, loadSpriteMetadata, cropSpriteImage, processInChunks } from "../utils/spriteUtils";
-import { Viewer, OutlineTag, PolygonGeometry, geodeticToEnu, RenderPass } from "mapillary-js";
+import { Viewer, OutlineTag, PolygonGeometry, geodeticToEnu, RenderPass, type ViewerImageEvent } from "mapillary-js";
 import { PanoramaDetectionLabels } from '../features/detections/PanoramaDetectionLabels';
 import { MapSpriteLoading } from '../features/detections/MapSpriteLoading';
 import { createNoteObjectChoice } from '../features/detections/NoteObjectChoice';
@@ -3452,8 +3452,21 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         this.currentGreenGraphic = this.drawPulsingPoint(lon, lat, [0, 255, 0, 1]);
         this.drawCone(lon, lat, bearing, this.coneLengths[this.zoomStepIndex], this.coneSpreads[this.zoomStepIndex]);
       },
-      restoreViewerTools: imageId => {
-        this.applyCustomCameraAngle();
+      restoreViewerTools: (imageId, center) => {
+        const viewer = this.mapillaryViewer;
+        if (viewer && center) {
+          // The normal image handler applies the configured angle first. Restore
+          // the saved center after that handler, once the same image is ready.
+          const restoreCenter = (event: ViewerImageEvent) => {
+            viewer.off("image", restoreCenter);
+            if (this.mapillaryViewer === viewer && String(event.image.id) === imageId) {
+              viewer.setCenter(center);
+            }
+          };
+          viewer.on("image", restoreCenter);
+        } else {
+          this.applyCustomCameraAngle();
+        }
         if (this.state.pointCloudVisible && this._pointCloudAcquisition.result) {
           this.addViewerPointCloudRenderer({ ...this._pointCloudAcquisition.result, points: this._filteredPointCloudPoints }, imageId);
         }

@@ -274,7 +274,7 @@ P06 remains in progress. Window/fullscreen resize handling and observer ownershi
 
 P05 implementation is complete across stages 100–102, within its three-change allowance. P01–P05 are implementation-complete; P06–P12 remain seven packages, provisionally 10–17 further changes. Next: P06 fullscreen/resize transitions. Full ExB 1.21/browser acceptance remains under P12.
 
-Validation and scope: [widget teardown](docs/development/widget-teardown.md). Portable tests: 3,360 / 229 files, zero failures/skips in workspace and installer-produced copy. Strict modules/actual SDK boundary and targeted installed-host adapter/readiness checks pass; isolated ExB 1.20 build has zero errors/warnings. Mutation, BOM/CRLF and guarded installer checks pass. Widget: 9,854 lines, 79 fewer than stage 101 and 301 fewer across P05.
+Validation and scope: [widget teardown](../../development/widget-teardown.md). Portable tests: 3,360 / 229 files, zero failures/skips in workspace and installer-produced copy. Strict modules/actual SDK boundary and targeted installed-host adapter/readiness checks pass; isolated ExB 1.20 build has zero errors/warnings. Mutation, BOM/CRLF and guarded installer checks pass. Widget: 9,854 lines, 79 fewer than stage 101 and 301 fewer across P05.
 
 <!-- widget-update-stage101 -->
 ## Stage 101 — P05 update/reopen reconciliation
@@ -283,7 +283,7 @@ Validation and scope: [widget teardown](docs/development/widget-teardown.md). Po
 
 P01–P04 remain implementation-complete. P05 has used two of its 2–3 changes; full cleanup/unmount coordination remains the final planned P05 change. P05–P12 remain eight packages, provisionally 11–18 further changes: one final P05 plus the original 10–17 for P06–P12. ExB 1.21/browser acceptance remains under P12.
 
-Validation and scope: [widget update](docs/development/widget-update.md). Portable tests: 3,322 / 227 files, zero failures/skips in workspace and installer-produced copy. Strict feature/actual SDK control boundary and targeted installed-host adapter checks pass; isolated ExB 1.20 build has zero errors/warnings. Mutation, BOM/CRLF and guarded installer checks pass. Widget: 9,933 lines, 155 fewer than stage 100 and 222 fewer across P05 so far.
+Validation and scope: [widget update](../../development/widget-update.md). Portable tests: 3,322 / 227 files, zero failures/skips in workspace and installer-produced copy. Strict feature/actual SDK control boundary and targeted installed-host adapter checks pass; isolated ExB 1.20 build has zero errors/warnings. Mutation, BOM/CRLF and guarded installer checks pass. Widget: 9,933 lines, 155 fewer than stage 100 and 222 fewer across P05 so far.
 
 <!-- widget-startup-stage100 -->
 ## Stage 100 — P05 startup lifecycle
@@ -292,7 +292,7 @@ Validation and scope: [widget update](docs/development/widget-update.md). Portab
 
 P01–P04 remain implementation-complete. P05 has used one of its 2–3 changes; update/reopen reconciliation and complete teardown remain. Next: component-update feature effects, then cleanup/unmount ordering. P05–P12 remain eight packages, provisionally 11–19 further changes. Live ExB 1.21/browser acceptance remains under P12.
 
-Validation and scope: [widget startup](docs/development/widget-startup.md). Portable tests: 3,274 / 226 files, zero failures/skips in workspace and installer-produced copy. Strict feature/real-SDK resize boundary and targeted host-adapter checks pass; isolated ExB 1.20 build has zero errors/warnings. Mutation, BOM/CRLF and reversible-installer checks pass. Widget: 10,088 lines, 67 fewer than stage 99.
+Validation and scope: [widget startup](../../development/widget-startup.md). Portable tests: 3,274 / 226 files, zero failures/skips in workspace and installer-produced copy. Strict feature/real-SDK resize boundary and targeted host-adapter checks pass; isolated ExB 1.20 build has zero errors/warnings. Mutation, BOM/CRLF and reversible-installer checks pass. Widget: 10,088 lines, 67 fewer than stage 99.
 
 <!-- sequence-opening-stage99 -->
 ## Stage 99 — P04 sequence-opening coordination
@@ -301,11 +301,11 @@ Validation and scope: [widget startup](docs/development/widget-startup.md). Port
 
 P04 implementation is complete across stages 97–99 (image events, viewer binding and explicit sequence opening); live-host acceptance remains under P12. Viewer construction/fullscreen belongs to P06, React disposal to P05 and coverage/analysis to P09. Next: begin P05 React lifecycle and teardown. Eight packages P05–P12 remain, provisionally 12–20 changes; this is not a whole-widget completion claim.
 
-Validation and exact scope are in [sequence opening](docs/development/sequence-opening.md). Portable tests: 3,252 / 225 files, zero failures/skips in workspace and installer-produced copy. Isolated ExB 1.20 build: zero errors/warnings. Strict feature/real-SDK compatibility, targeted adapter checks, BOM/CRLF, mutation and guarded rollback checks pass. Full ExB 1.21/browser acceptance remains pending. Widget: 10,155 lines, 103 fewer than stage 98 and 249 fewer across P04.
+Validation and exact scope are in [sequence opening](../../development/sequence-opening.md). Portable tests: 3,252 / 225 files, zero failures/skips in workspace and installer-produced copy. Isolated ExB 1.20 build: zero errors/warnings. Strict feature/real-SDK compatibility, targeted adapter checks, BOM/CRLF, mutation and guarded rollback checks pass. Full ExB 1.21/browser acceptance remains pending. Widget: 10,155 lines, 103 fewer than stage 98 and 249 fewer across P04.
 
 <!-- viewer-event-binding-stage98 -->
 
-## Stage 98 continuation — P04 viewer events
+## Stage 98 — viewer event binding (P04 part 2)
 
 Viewer load/bearing/image registration, wheel/zoom, cone redraw, URL debounce and direction scheduling now live in `viewerEventBinding.ts`, reusing image tracking and existing bearing/playback owners. Live capability bindings retain original timing, guard scope and cleanup slots. Playback construction remains before SDK sequence lookup. No new dependency, request, timer, subscription or viewer is introduced.
 
@@ -313,11 +313,11 @@ P04 remains in progress after two changes. Next: explicit sequence opening/trans
 
 Validation: 3,219 passing portable tests / 224 files in workspace and clean installer-produced copy, zero failures or skips. Strict feature-module and real Mapillary Viewer contract checks pass. Isolated ExB 1.20 module-graph build: zero errors/warnings. BOM/CRLF, targeted mutation and reversible installer checks pass. Full ExB 1.21/browser acceptance remains pending under P12.
 
-See [the viewer-event checkpoint](docs/development/viewer-event-binding.md) and [the finite plan](docs/development/refactoring-remaining-work.md). No commit/push or full-host browser acceptance is implied.
+See [the viewer-event checkpoint](../../development/viewer-event-binding.md) and [the finite plan](refactoring-remaining-work.md). No commit/push or full-host browser acceptance is implied.
 
 <!-- viewer-image-tracking-stage97 -->
 
-## Stage 97 continuation — P04 image tracking
+## Stage 97 — SDK image tracking (P04 part 1)
 
 The complete SDK image-event workflow now lives in `viewerImageTracking.ts`: confirmed-image guards, metadata resolution, lateral sequence updates, map presentation and latest-frame secondary work. The widget registers a direct promise-forwarding event thunk and binds live typed capabilities once per viewer binding. Existing frame/detail/request/presentation owners, state callback order and guard scopes are preserved. No dependency, timer, request or async handoff is added.
 
@@ -325,11 +325,11 @@ P04 is in progress after its first change. Next: remaining load/bearing/event li
 
 Validation: 3,187 passing portable tests / 223 files in workspace and clean installer-produced copy, zero failures or skips. Strict feature-module checking and a React-style generic commit-contract check pass. Isolated ExB 1.20 module-graph build: zero errors/warnings. BOM/CRLF comparisons, targeted mutation and reversible installer checks pass. Full ExB 1.21/provider/browser acceptance remains pending under P12.
 
-See [the image-tracking checkpoint](docs/development/viewer-image-tracking.md) and [the finite plan](docs/development/refactoring-remaining-work.md). No commit/push or full-host browser acceptance is implied.
+See [the image-tracking checkpoint](../../development/viewer-image-tracking.md) and [the finite plan](refactoring-remaining-work.md). No commit/push or full-host browser acceptance is implied.
 
 <!-- detection-hover-stage96 -->
 
-## Stage 96 continuation — P03 implementation complete
+## Stage 96 — detection hover and P03 implementation review
 
 Detection component hover/click, delayed tag updates, target flashing and listener/timer cleanup now live in `src/features/detections/detectionHover.ts`. The widget binds live viewer/label/draft capabilities. Existing component hooks, captured-viewer cleanup, 50ms/500ms timings, label modes, verified marker locations and stale-hit guards are preserved. No dependency, request, implicit publication or async handoff is added.
 
@@ -337,9 +337,9 @@ Detection component hover/click, delayed tag updates, target flashing and listen
 
 Validation: 3,158 passing portable tests / 222 files in workspace and clean installer-produced copy, zero failures or skips. Strict detection-hover module checking against the installed Mapillary/PBF/vector-tile declarations passes without temporary type aliases. Isolated ExB 1.20 module-graph build: zero errors/warnings. BOM/CRLF, targeted mutation and reversible installer checks pass. Full ExB 1.21/browser acceptance remains pending under P12.
 
-See [the detection-hover review](docs/development/detection-hover.md) for retained boundaries, validation limits and installation, and [the finite plan](docs/development/refactoring-remaining-work.md). Source was recovered after the workspace reconnect; temporary dependencies were restored outside the repository. No commit/push or full-host browser acceptance is implied.
+See [the detection-hover review](../../development/detection-hover.md) for retained boundaries, validation limits and installation, and [the finite plan](refactoring-remaining-work.md). Source was recovered after the workspace reconnect; temporary dependencies were restored outside the repository. No commit/push or full-host browser acceptance is implied.
 
-## Stage 95 continuation — P03 hover dispatch
+## Stage 95 — map hover dispatch (P03 part 2)
 
 `createMapHoverHandler` now owns pointer dispatch and its shared map-leave/touch/resume timer lifetime, reusing existing owners. The widget supplies live typed capabilities and registers click before the returned pointer handler. Independent coverage picking, optional detection isolation, cloud/POI tooltip priority and stale-result guards retain their original order. No dependency, request, delay or async handoff is added.
 
@@ -347,9 +347,9 @@ P03 remains in progress after two changes. Next: detection-hover extraction and 
 
 Validation: 3,129 passing portable tests / 221 files in workspace and clean installer-produced copy, zero failures or skips. Isolated ExB 1.20 module-graph build: zero errors/warnings. Targeted SDK-aware module checking, BOM/CRLF comparisons, mutation and reversible installer checks pass. Native Chromium confirms low-zoom hover status appears/clears and the preview opens in the isolated harness. Full ExB 1.21/browser acceptance remains pending under P12.
 
-See [the hover checkpoint](docs/development/map-hover-dispatch.md) for ownership/validation limits and [the finite plan](docs/development/refactoring-remaining-work.md). No commit/push or full-host browser acceptance is implied.
+See [the hover checkpoint](../../development/map-hover-dispatch.md) for ownership/validation limits and [the finite plan](refactoring-remaining-work.md). No commit/push or full-host browser acceptance is implied.
 
-## Stage 94 continuation — P03 click dispatch
+## Stage 94 — map click dispatch (P03 part 1)
 
 Ordered map-click dispatch now lives in `src/features/navigation/mapClickDispatch.ts`, reusing coverage hit-test, nearest-frame, Places and note helpers. The widget retains synchronous preview/revision capture and live typed capability bindings; the event thunk directly returns the feature promise. Priority, original await/guard positions, lazy transport and mutable request ownership are preserved. No dependency, timer or service request is added.
 
@@ -357,9 +357,9 @@ P03 is in progress after its first change. Next: pointer/hover dispatch, contain
 
 Validation: 3,093 passing portable tests / 220 files in both workspace and clean installer-produced copy, zero failures or skips. The isolated ExB 1.20 module-graph build has zero errors/warnings. Targeted SDK-aware click-module type checking, BOM/CRLF comparisons, mutation checks and reversible installer checks pass. Live ExB 1.21/browser acceptance remains pending under P12.
 
-See [the click checkpoint](docs/development/map-click-dispatch.md) for ownership/type-check limits and [the finite remaining plan](docs/development/refactoring-remaining-work.md). No commit/push or browser acceptance is implied.
+See [the click checkpoint](../../development/map-click-dispatch.md) for ownership/type-check limits and [the finite remaining plan](refactoring-remaining-work.md). No commit/push or browser acceptance is implied.
 
-## Stage 93 continuation — P02 implementation complete
+## Stage 93 — committed startup and attachments (P02 part 3)
 
 `ActiveViewTransfer.attach` now coordinates React-committed startup, independent shared-link restoration and existing zoom/Turbo/layer-order attachments. The readiness callback directly returns the stage-91 restoration promise; error guards, attachment order and deferred-commit timing are preserved. The widget supplies typed feature/SDK bindings rather than startup policy. No new dependency, request, timer or async handoff is added.
 
@@ -367,9 +367,9 @@ See [the click checkpoint](docs/development/map-click-dispatch.md) for ownership
 
 Validation: 3,066 passing portable tests / 219 files in both workspace and clean installer-produced copy, zero failures or skips. Strict navigation-module TypeScript and the isolated ExB 1.20 module-graph build pass; the build has zero errors/warnings. Reversible installer, BOM/CRLF and targeted mutation checks pass. Live ExB 1.21/browser acceptance remains pending under P12.
 
-See [the attachment checkpoint](docs/development/active-view-attachment.md) and [the finite remaining plan](docs/development/refactoring-remaining-work.md). Widget size is 10,911 lines; the overall minimal-entry-point goal is not complete. No commit/push or browser acceptance is implied.
+See [the attachment checkpoint](../../development/active-view-attachment.md) and [the finite remaining plan](refactoring-remaining-work.md). Widget size is 10,911 lines; the overall minimal-entry-point goal is not complete. No commit/push or browser acceptance is implied.
 
-## Stage 92 continuation
+## Stage 92 — active-view transfer (P02 part 2)
 
 `ActiveViewTransfer` now owns transfer revisions, current-view/map identity and ordered synchronous transfer policy. Full cleanup invalidates that same owner. The widget binds existing tool, interaction, presentation and request owners; React commitment and stage-91 startup retain their order. No new async boundary, request or dependency is added.
 
@@ -377,15 +377,15 @@ P02 remains in progress after two changes. Next: committed-view startup registra
 
 Validation: 3,046 passing portable tests / 218 files in both workspace and clean installer-produced copy, with zero failures or skips. Strict transfer-module TypeScript and the isolated ExB 1.20 module-graph build pass; the build has zero errors/warnings. Reversible installer and BOM/CRLF checks pass. Live ExB 1.21/browser acceptance remains pending.
 
-See [the transfer checkpoint](docs/development/active-view-transfer.md) and [the finite remaining plan](docs/development/refactoring-remaining-work.md). No commit/push or browser acceptance is implied.
+See [the transfer checkpoint](../../development/active-view-transfer.md) and [the finite remaining plan](refactoring-remaining-work.md). No commit/push or browser acceptance is implied.
 
-## Stage 91 continuation
+## Stage 91 — committed-view startup (P02 part 1)
 
 Committed-view restoration order now lives in `src/features/navigation/activeViewStartup.ts`, with narrow per-view operations bound by the widget. Coverage-first loading, guarded awaits, optional-tool ordering, cone/URL restoration and independent shared-link startup are preserved. Transfer teardown and click/pointer wiring remain in the widget; **P02 is in progress, not complete**. Next: transfer/invalidation and owned attachments, coordinating P03 without changing interaction precedence.
 
 Validation: 3,017 passing portable tests / 217 files in the workspace and clean installer-produced copy; zero failures or skips. Strict feature-module TypeScript and the isolated ExB 1.20 module-graph build pass with zero errors/warnings. Reversible installer checks cover dry-run, repeat application, BOM/CRLF source, local documentation history, unknown edits and exact guarded rollback. Live ExB 1.21/browser acceptance remains pending.
 
-Use [the checkpoint guide](docs/development/active-view-startup.md) and [the finite remaining plan](docs/development/refactoring-remaining-work.md). No commit/push or live-host acceptance is implied.
+Use [the checkpoint guide](../../development/active-view-startup.md) and [the finite remaining plan](refactoring-remaining-work.md). No commit/push or live-host acceptance is implied.
 
 <!-- capture-route-warning-stage90 -->
 
@@ -786,230 +786,379 @@ Resume: verify installed source with the dry-run and run the target ExB 1.21 bui
 <!-- stage65-checkpoint-afca751 -->
 > **Working checkpoint recorded: afca751 (19 November 2026).** All 2,265 portable tests pass. The user supplied a successful isolated ExB 1.21.0 build (zero errors/warnings) and reported browser smoke checks good. Detailed device/feature evidence, whole-project semantic types and production packaging remain separate. This file-based installer preserves your local history below and does not create/import Git commits or push anything. See docs/development/checkpoint-2026-11-19.md.
 
-> **Local Git checkpoint update — 19 November 2026.** Stages 47–65 and guide updates are preserved in the authorized local checkpoint. The user supplied a successful isolated ExB 1.21.0 result (9,974 ms, zero errors/warnings, no ancestor override) and reported browser smoke checks good. Granular browser/device, semantic types and production-package acceptance remain separate. See `docs/development/checkpoint-2026-11-19.md`. No push, publish or deployment. Earlier uncommitted/pending statements below are historical. Resume from the actual checkpoint, not the obsolete stage-61 failure list.
+# Mapillary Explorer — refactoring milestone
 
-<!-- detection-text-actions-stage65 -->
-> **Checkpoint update — 19 November 2026: stage 65 completed.**
-> This update supersedes the stage-61 resume point and failure inventory below; retain the rest as historical context.
-> Current full portable baseline: **2,265/2,265 pass**, all 186 files, zero skipped. The former four failures are resolved through stages 62–65. Stage 62 reconciled preview metadata tests; stage 63 removed 52 redundant UK overrides with identical effective text; stage 64 reconciled phone fallback projection tests; stage 65 added six `mly-text-action` classes without changing callbacks/state. No test exclusions.
-> Isolated runtime/settings bundle: **ExB 1.20.0, zero errors/warnings**. Target 1.21 normal build/browser, semantic typing, mobile/RTL/layout and live service permissions remain unverified.
-> Stages **47–65 remain uncommitted** on `609b81c`; preserve source, untracked files and backups. No push, deployment or publish. Next: inspect actual installed stage, read current REFACTORING-MILESTONE.md and test-baseline.md, then establish target 1.21 acceptance before broader extraction. Do not resume the obsolete four-failure inventory below.
-> Latest incremental installer: `apply-detection-text-actions.cjs`, after stage 64. Run `--dry-run` first, preserve backups, refresh the app; no dependency reinstall. The older file fingerprints below are historical and may differ after later stages. Markdown alone does not transfer code.
+Updated: **18 November 2026 (Asia/Riyadh)**. Resume point: **stage 46 — cumulative checkpoint v2 verified through stage 45**.
 
-# Mapillary Explorer — account handoff
+## Goal and current checkout
 
-Prepared: **18 November 2026 (Europe/Istanbul)**. Last completed checkpoint: **stage 61**.
+Extract bounded feature logic from `src/runtime/widget.tsx` while preserving exploration, request timing, cancellation, shared-map ownership and UI behavior. File organization does not establish a performance improvement; measure in the target host.
 
-## Paste this into the next chat
+- Current working checkout: `/workspace/map-ex-current`, based on commit **`968375a5d0f09fd2a79d45dd7a70fcc41a579aeb`**, `updating current activities v12`. Stages 19–46 are accumulated **uncommitted** work, including new modules/tests. Preserve them; no commit, push or deployment was made.
+- The earlier `/workspace/map-ex-synced` checkout retains accumulated local edits. Do not reset it or copy its older runtime over this checkout.
+- Stages 1–14 and the geometry/solve-history runtime code are present in this commit. The previous handoff's stage 15 helper and stage 16 integration/build-check files were **absent from the baseline**. Stage 20 adds a newly implemented controlled integration suite; the build checker remains absent. Final-solve recovery was inline at that baseline; stage 22 now extracts it with fresh characterization and integration coverage.
+- The user's client is Experience Builder **1.21**. Delivery of an installer does not confirm installation or browser validation. No commit, push or deployment was made during this continuation.
 
-> Continue the Mapillary Explorer V5 refactoring and release-readiness work from stage 61. Read this handoff, then inspect actual Git state and read REFACTORING-MILESTONE.md, docs/development/test-baseline.md, docs/development/portable-tests.md and the runtime reading guide. The last verified checkout is commit 609b81c5eacb542b7865d50a60bbca902b124137 plus UNCOMMITTED stages 47–61; do not assume GitHub contains them. Preserve local edits and untracked files. The full portable baseline is 2,264 tests: 2,260 pass, four fail, all 186 files included. The next planned step is stage 62: investigate detectionLinkedPreview.test.cjs, preserving opt-in previews, provenance and credential boundaries. Classify the failure before changing tests or production. Do not blanket-update expectations, discard assertions or resurrect retired rendering. Keep runtime behavior and performance intact. Deliver a reversible CJS installer, updated milestone/baseline and honest validation. The user's host is Experience Builder 1.21; cloud checks used 1.20, which is not 1.21 acceptance. Inspect the actual installation checkpoint before applying anything. No commit, push or deployment has been made for stages 47–61.
+Read [architecture](../../development/architecture.md), [routing validation](../../development/routing-validation.md) and [solve history](../../development/capture-solve-history.md). Preserve all local edits and untracked feature files.
 
-## What we are doing
+## Completed stages
 
-The broader goal is a maintainable, modular, nearly publishable Mapillary Explorer widget. `src/runtime/widget.tsx` should orchestrate features; feature implementation, presentation and styles should live in suitable existing components/modules. Preserve every working feature and avoid unnecessary dependencies or abstractions.
+| Order | Stage | Main result | Installer |
+| --- | --- | --- | --- |
+| 1 | Widget lifecycle safety | Startup cancellation, deferred-work disposal, exact ownership of shared-map resources and stylesheet cleanup. | `apply-widget-lifecycle-safety.cjs` |
+| 2 | Route generation safety | One active route run, stale-result guards and provider cancellation; older runs cannot overwrite newer UI state. | `apply-route-generation-safety.cjs` |
+| 3 | Detection controller extraction | Traffic-sign/object layer creation, replacement, styling and disposal moved into `DetectionLayerController`. | `apply-detection-controller-refactor.cjs` |
+| 4 | Pure route scoring extraction | Segment scoring, corridor decisions, stop ownership, diagnostics, target deduplication and summaries moved out of the widget. | `apply-route-scoring-refactor.cjs` |
+| 5 | Routing defaults fix | Intentional behavior/configuration fixes: finite priorities, existing thresholds/caps enforced, complete stop-reason type. | `apply-routing-defaults-fix.cjs` |
+| 6 | Adaptive corridor extraction | Synchronous corridor build/select loop moved into `adaptiveCaptureSelection`; widget reduced by 100 lines in this stage. | `apply-adaptive-corridor-refactor.cjs` |
+| 7 | Final-solve batch-pruning extraction | Calibration, efficiency ranking and removal plan moved into `finalSolveBatchPruning`; widget reduced by 66 lines. | `apply-final-solve-pruning-refactor.cjs` |
+| 8 | OSRM preflight batch-pruning extraction | Generic batch calibration and removal plan moved into `preflightBatchPruning`; widget reduced by another 51 lines. | `apply-preflight-pruning-refactor.cjs` |
+| 9 | Preflight diagnostics extraction | Anchor ownership/snap ranking and leg construction/top-ten ranking moved into `preflightDiagnostics`; widget reduced by another 45 lines. | `apply-preflight-diagnostics-refactor.cjs` |
+| 10 | Trial-preflight quality extraction | Three raw internal-traversal predicates consolidated into `trialPreflightQuality`; widget reduced by another 83 lines. | `apply-trial-preflight-quality-refactor.cjs` |
+| 11 | Replacement-pair ranking extraction | Addition/removal candidate filtering, pairing and ranking moved into `replacementPairRanking`; widget reduced by another 68 lines. | `apply-replacement-pair-ranking-refactor.cjs` |
+| 12 | Network-penalty scoring extraction | Leg-cost attribution, cleanup filtering and candidate ranking moved into `captureNetworkPenalties`; widget reduced by another 98 lines. | `apply-network-penalties-refactor.cjs` |
+| 13 | Near-budget probe comparison extraction | Network/fitting/progress winner comparisons and result types moved into `budgetProbeComparison`; widget reduced by another 61 lines. | `apply-budget-probe-comparison-refactor.cjs` |
+| 14 | Adaptive network-removal plan extraction | Overrun-based limits and ordered removal-ID planning moved into `adaptiveNetworkRemoval`; widget reduced by another 17 lines. | `apply-adaptive-network-removal-refactor.cjs` |
+| 15 | Final solved-route selection extraction (historical report) | Not present in this commit; recovery remains inline in the widget. Do not assume this stage is installed. | `apply-final-capture-selection-refactor.cjs` |
+| 16 | Routing integration verification (historical report) | Integration fixtures and bundle checker are absent from this commit; previous results cannot be reproduced here. | `apply-routing-integration-checks.cjs` |
+| 17 | Route geometry safety fix | Validate geometry before clearing/loading route graphics or publishing malformed final results. Intentional behavior fix; valid styling, coordinate references and cancellation are retained. | `apply-route-geometry-safety-v2.cjs` (recommended; v1 also exists) |
+| 18 | Best-solve bookkeeping | Route/time/opportunity snapshots consolidated in a run-local `CaptureSolveHistory`; strict ties and copying semantics preserved. | `apply-capture-solve-history.cjs` |
+| 19 | Milestone reconciliation and geometry regressions | Correct checkout/status and validation instructions; add geometry/drawing checks. No production runtime changes. | `apply-milestone-reconciliation.cjs` |
+| 20 | Controlled routing integration coverage | Actual widget methods with controlled provider promises; retry recovery, preflight pruning, cancellation and final summary ownership. No runtime changes. | `apply-route-integration-coverage.cjs` |
+| 21 | Route-result assembly extraction | Pure typed result builder preserves legacy fields, numeric semantics and coordinate references; widget reduced by 85 lines. | `apply-route-data-refactor.cjs` |
+| 22 | Final retry recovery extraction | Typed helper pairs the chosen solve and its opportunity snapshot; strict budget/improvement checks and warnings preserved. | `apply-final-selection-refactor.cjs` |
+| 23 | Final coverage reporting extraction | Synchronous summary and 20 ordered diagnostics moved out of the widget; widget reduced by 54 lines. | `apply-coverage-report-refactor.cjs` |
+| 24 | Main preflight quality extraction | Rounded-diagnostic classification, cleanup gating and owner set moved into a typed helper; raw trial checks remain separate. Widget reduced by 37 lines. | `apply-preflight-quality-refactor.cjs` |
+| 25 | Replacement-probe winner extraction | Value-first/time tie-break and winner record moved into a typed helper; added complete replacement-path integration case. Widget reduced by 30 lines. | `apply-replacement-probe-refactor.cjs` |
+| 26 | ArcGIS provider resolution extraction | World/auth, portal discovery branch and custom URL policy moved out of the widget; SDK/login ownership retained. Widget reduced by 122 lines. | `apply-provider-resolution-refactor.cjs` |
+| 27 | Provider construction extraction | OSRM/ArcGIS factories, options and logs moved into a typed module; late SDK/mode reads preserved. Widget reduced by 77 lines. | `apply-provider-factory-refactor.cjs` |
+| 28 | A/B marker construction extraction | Point geometry and 2D/3D symbol construction moved out; widget retains removal, ownership and stored references. Widget reduced by 27 lines. | `apply-route-marker-refactor.cjs` |
+| 29 | Routing authentication helpers | Portal discovery and authentication-failure policy moved into a routing module; SDK/login/feedback ownership retained. Widget reduced by 29 lines. | `apply-routing-auth-refactor.cjs` |
+| 30 | Runtime routing settings extraction | Pure engine/mode change plans preserve busy guards, OSRM drive coercion and generated-route invalidation. Widget reduced by 59 lines. | `apply-runtime-routing-refactor.cjs` |
+| 31 | Legacy routing cleanup | Remove the unreferenced widget solve bridge and correct outdated provider/authentication comments. No new modules or behavior changes; widget reduced by 59 lines. | `apply-routing-legacy-cleanup.cjs` |
+| 32 | Initial selection reporting extraction | Two reporting entry points preserve the empty-corridor/selection guards and diagnostics. Widget reduced by 22 lines; both early exits integration-tested. | `apply-selection-report-refactor.cjs` |
+| 33 | Cumulative delivery checkpoint | Replay stages 19–32, test installed output and verify exact reverse rollback; supply a cumulative installer. No new runtime change. | `apply-refactoring-checkpoint.cjs` |
+| 34 | Final route evaluation extraction | Synchronous geometry validation, target selection and both coverage evaluations moved together; widget reduced by 35 lines. | `apply-route-evaluation-refactor.cjs` |
+| 35 | Main snap classification consolidation | Advisory/hard snap rules moved into the existing quality module; thresholds, owner exclusions and rejection flow preserved. | `apply-preflight-snaps-refactor.cjs` |
+| 36 | Trial preparation consolidation | Three probe branches share pure ordered opportunity/stop/owner preparation; requests and run checks stay in the widget. Widget reduced by 15 lines. | `apply-trial-plan-refactor.cjs` |
+| 37 | Guarded route renderer extraction | Drawing moves behind a typed live host; widget retains layer clearing/teardown. Existing async guards and partial-failure order preserved. Widget reduced by 29 lines. | `apply-route-renderer-refactor.cjs` |
+| 38 | Unused Turbo renderer cleanup | Remove unreferenced widget renderer and unused import; native coverage styling unchanged. Widget reduced by 119 lines. | `apply-unused-turbo-renderer-cleanup.cjs` |
+| 39 | Retired tile-cache cleanup | Remove unreferenced feature-layer pruning routine and seven bookkeeping maps; active native coverage unchanged. Widget reduced by 47 lines. | `apply-legacy-tile-cache-cleanup.cjs` |
+| 40 | Minimap basemap-copy extraction | Standard-ID, JSON and existing fallback policy moved to a typed helper; map/view lifecycle retained. Widget reduced by 40 lines. | `apply-minimap-basemap-refactor.cjs` |
+| 41 | Minimap layer construction extraction | Active style copies and native minimap coverage construction moved together; insertion/tracking order retained. Widget reduced by 68 lines. | `apply-minimap-layers-refactor.cjs` |
+| 42 | Minimap click-selection extraction | Nearest-image math moved out; 5m/current-image guards and async handler retained. Added four actual click-handler cases. Widget reduced by 15 lines. | `apply-minimap-selection-refactor.cjs` |
+| 43 | Minimap tracking regression checkpoint | Add 27 actual-method checks for graphic reuse, navigation deduplication, line replacement and teardown. Tests/documentation only. | `apply-minimap-tracking-tests.cjs` |
+| 44 | Minimap click-handler extraction | Complete handler moved into existing selection module with live host adapters; requests, updates and error boundaries preserved. Widget reduced by 39 lines. | `apply-minimap-handler-refactor.cjs` |
+| 45 | Minimap view-options extraction | Initial center/zoom and native options moved together; lookup/read order, constructor and lifecycle guards retained. Widget reduced by 12 lines. | `apply-minimap-options-refactor.cjs` |
+| 46 | Cumulative checkpoint v2 | Replay stages 19–45, test installed output, audit relative imports and verify exact rollback; provide one cumulative installer. No new runtime changes. | `apply-refactoring-checkpoint-v2.cjs` |
 
-We temporarily prioritized trustworthy test/build foundations before further large extractions. Many failures came from old snippet harnesses that omitted current imports, JSX or localization. Repairing these tests is not evidence of an equivalent number of production bug fixes. The four remaining failures have **not yet been diagnosed or fixed**.
+## Installer order and compatibility
 
-User priorities:
-
-- Preserve exploration speed, request timing, cancellation, map/view ownership and low-budget/mobile behavior.
-- Keep optional work opt-in; do not automatically open image info or start enrichment without demand.
-- Preserve Overture vector POIs, categories, confidence controls, selection/imagery/note workflows. Do not copy the old GeoJSON/bbox/Graphic patterns automatically into vector rendering.
-- No day/night feature now; it was deferred. NeRF was discussed, not the current task.
-- Keep `widget.tsx` focused and documented; reuse existing feature modules and style conventions.
-- Continue useful authorized work without unnecessary confirmation questions. The user normally says “next” to approve the next bounded step.
-- Deliver a downloadable, reversible `.cjs` installer because downloading/replacing whole source trees has been difficult for the user.
-
-## Repository and transfer warning
-
-- GitHub remote recorded here: `https://github.com/sukruburakcetin/map-ex-test.git`.
-- Last observed HEAD: `609b81c5eacb542b7865d50a60bbca902b124137` — `updating current activities v13`.
-- Cloud checkout: `/workspace/map-ex-test-latest`.
-- User's latest Windows widget path: `C:\Users\BURAK\Desktop\arcgis-experience-builder-1.21\client\your-extensions\widgets\mapillary-explorer`.
-- Earlier testing used the analogous Experience Builder 1.20 path.
-- Stages **47–61 are uncommitted** in this checkout. No commit, push or deployment was performed for them. There are modified tracked files and important untracked source/test/tool files; `.gitkeep` is intentionally deleted as part of stage 50.
-- Older work was historically stashed before synchronization. Do not blindly replay stashes over the current source.
-
-**This Markdown transfers context, not code.** A new account/session may not retain this filesystem, `/tmp` artifacts or previous downloads. Preserve the working widget tree, including untracked files, and relevant installers before leaving. A fresh clone at the recorded commit alone is not the stage-61 working tree. If files are missing, obtain the actual checkpoint/source or installer artifacts; do not reconstruct it by guessing from this document or claim it is synchronized.
-
-At the start of the next session, run read-only checks such as:
-
-```sh
-git status --short
-git log -1 --format="%H %s"
-git remote -v
-```
-
-Compare actual files/checkpoint with this handoff. Do not reset, clean, overwrite unknown edits, or pull over the dirty checkout to “sync” it. The user has not confirmed which delivered stages are installed on their Windows machine.
-
-## Current verified baseline
-
-| Check | Last verified result |
-| --- | --- |
-| Full portable run | **2,264 total; 2,260 pass; four fail; zero skipped** |
-| Scope | All **186** `tests/*.test.cjs` files included; nonzero exit is expected while failures remain |
-| Last focused run | **30/30** community-workspace client cases pass |
-| Stage 61 assertions | All 96 original assertion calls retained; one import-boundary assertion added; no new cases |
-| Negative controls | Cookie forwarding or revision truncation each fails an existing client case in temporary copies |
-| Installer checks | 16 pass, including installed-output tests, LF/BOM/CRLF, preflight, repeat apply, exact rollback and edit protection |
-| Documentation | 101 Markdown files, 399 local links, zero broken links, before adding this handoff |
-| Repository layout | 823 source files checked; zero errors |
-| Production scope | Stages **52–61** changed tests/docs only. All 449 `src/` and frozen-fixture files unchanged within each of these stages |
-
-The early stages do contain runtime changes; do not describe all uncommitted work as test-only. No new bundle was needed for the later test-only stages. An earlier isolated 1.20 bundle passed, but semantic type checking and live ExB **1.21** acceptance remain outstanding. Browser/SDK/GPU, real service scale, multilingual rendering and deployed Enterprise/workspace permissions require their own validation.
-
-## Four remaining failures — investigate individually
-
-| Suite | Exact failing case / observed symptom |
-| --- | --- |
-| `tests/detectionLinkedPreview.test.cjs` | “preview is opt-in and portable across existing note text without credentials or file bytes”; parsed reference is `null`, expected image/detection IDs and `{x:0.2,y:0.3,width:0.1,height:0.4}`. **Next task.** |
-| `tests/regionalLocales.test.cjs` | “UK catalogs are sparse, inherit US text and keep meter devices distinct from length units”; `assert(Object.keys(gb).length < 80)` fails. Determine whether the numeric ceiling is outdated while preserving locale semantics. |
-| `tests/screenDirectionCone.test.cjs` | “phone close zoom keeps a 14px circle and uncompressed fan from zoom 21 onward”; expected fan transform to include `rotate(`. Inspect the actual transform contract before changing implementation or expectations. |
-| `tests/textButtons.test.cjs` | “owned translated actions use the shared policy; icon controls retain their own sizing”; reports missing `mly-text-action` at `src/features/detections/DetectionDisplayControls.tsx` lines 39, 44, 46, 48 (line 48 twice). Recheck current line numbers and distinguish text actions from icon controls. |
-
-These are diagnostic observations, not conclusions that all four are harness problems. Do not weaken privacy, accessibility, formatting, crop validation, opt-in behavior or current display contracts merely to make them pass.
-
-For stage 62, inspect the preview suite and its actual attachment serialization/parsing helpers first. Retain useful existing tests; if a representation was intentionally replaced, map the old intent to the active owner explicitly and document the reason. No stage-62 edits have been started.
-
-## Completed stages and delivery order
-
-Stages are incremental. Existing local files, not the conversation alone, determine which installer can safely apply. Run a dry run and respect unknown-edit refusal. A refusal is a reason to inspect differences, never to force an overwrite. Retain `.refactor-backups` and uninstall newer stages before older ones.
-
-| Stage | Completed work | Installer filename |
-| --- | --- | --- |
-| 47 | Restore bounded isolated build checker | `apply-isolated-build-check.cjs` |
-| 48 | Stateless viewer surface/fullscreen/tray; style separation and runtime state contract | `apply-viewer-presentation-refactor.cjs` |
-| 49 | Runtime ownership/function documentation and contributor reading guide | `apply-widget-documentation.cjs` |
-| 50 | Portable runner/dependency setup, baseline reconciliation, small approved cleanup | `apply-v5-phase1-foundation.cjs` |
-| 51 | Point-cloud fixture bindings/TSX; fix one `cluster s` feedback space | `apply-point-cloud-fixture-repair.cjs` |
-| 52 | Field-note draft/file/collection English bindings and counted feedback | `apply-field-note-fixture-repair.cjs` |
-| 53 | Coverage-analysis TSX/localization and late-classifier ownership checks | `apply-coverage-analysis-fixture-repair.cjs` |
-| 54 | AI-label bounds binding, focus/visibility/cleanup/stale-hover tests | `apply-detection-label-fixture-repair.cjs` |
-| 55 | Footer locale hook and live viewport/reduced-motion tests | `apply-info-footer-fixture-repair.cjs` |
-| 56 | Align native-anchor fixture and retired terrain/polygon assertions with current owners | `apply-native-alignment-fixture-repair.cjs` |
-| 57 | Isolate Nearby lifecycle statements from unrelated route logic | `apply-nearby-foreground-fixture-repair.cjs` |
-| 58 | Actual Places source identity; cache/source and overlapping-search checks | `apply-overture-places-fixture-repair.cjs` |
-| 59 | Builder API teardown dependency and unmount ownership checks | `apply-places-api-fixture-repair.cjs` |
-| 60 | Time-travel pure dependency loading; restore 24 original availability cases | `apply-time-travel-fixture-repair.cjs` |
-| 61 | Community client pure dependency loading; restore 30 original cases | `apply-community-client-fixture-repair.cjs` |
-
-Latest delivery, **only after the matching stage-60 source**:
+**Latest cumulative option:** `apply-refactoring-checkpoint-v2.cjs` consolidates stages 19–45 plus this delivery milestone. It supports the committed `968375a` baseline and recognized per-file revisions from those incremental installers, including checkpoint v1 and a fully updated stage-45 checkout. Use dry-run first. Unknown edits in affected files are refused; unrelated files are untouched. Matching files are skipped.
 
 ```sh
-node apply-community-client-fixture-repair.cjs --dry-run
-node apply-community-client-fixture-repair.cjs
+node apply-refactoring-checkpoint-v2.cjs --dry-run
+node apply-refactoring-checkpoint-v2.cjs
 ```
 
-Rollback uses `--uninstall`; preflight rollback with `--uninstall --dry-run`. Stage 61 requires neither restart nor dependency reinstall. Each installer supplies exact file backups, recognizes its known baseline, protects later edits and appends a milestone note. There is no new cumulative stages-47–61 installer. Historical checkpoint v2 covers earlier stages; do not assume it includes these later repairs.
+Keep the checkpoint backup folder. `--uninstall` restores the exact state immediately before v2 application, which may be partially updated rather than the Git baseline. Uninstall v2 before rolling back earlier installers. If runtime files were updated, restart the client and hard-refresh. On a stage-45 checkout, v2 only updates the delivery documentation. No dependency reinstall is needed.
 
-### Important implementation decisions already settled
+The older `apply-refactoring-checkpoint.cjs` (stage 33/v1) covers stages 19–32 only. Its validation is retained below as history. Neither checkpoint is a complete widget release or a replacement for changes committed before `968375a`.
 
-- `tests/helpers/englishFixture.cjs` provides real English catalog/formatting bindings for isolated snippets. Suites retain explicit SDK/network/clock controls. Do not invent a second translated catalog or blanket-normalize payloads.
-- Historical field-note Turkish notices are adapted only on the frozen comparison side; stored note content/error objects remain exact.
-- Do not revive old 3D DOM-pulse sampling/retry loops. Current `SelectionPulse` delegates steady 3D placement to SDK ground draping and schedules no 3D animation frames; 2D retains its separate behavior.
-- Current cone fallback uses a closed mesh and one perimeter. Stage 56 explicitly migrated obsolete polygon-face assertions; existing topology/reuse tests remain.
-- Unknown terrain is deferred; only explicitly empty ground supports the flat fallback. Assert recorded factory effects outside contained callbacks, since callback assertion exceptions can otherwise be swallowed.
-- Nearby foreground tests now isolate four actual lifecycle statements; unrelated route-generation reconciliation must not leak into this harness.
-- Overture imagery caching uses actual `placesSourceKey`, including Portal/source identity. Older imagery completion must not replace a newer controller or publish stale cache/results.
-- The time-travel and community client failures were suite-loading failures. Restoring their original cases increased totals without creating new cases; do not confuse that with extra production fixes.
+The previous handoff located stage 7–18 installers in `/workspace/shared/downloads/`; that location is not available in this continuation. Historical installer names are references, not proof that artifacts or installations are present. Stage 19 is delivered under `/workspace/artifacts/`. Save artifacts separately when changing environments. Stage 1–6 filenames above are historical references; their changes are already in the Git baseline. Do not reinstall stages already present in the user's source.
 
-## Read these project files
+For an older checkout, verify actual source and required runtime prerequisites before using historical incremental installers; the table alone is not an installation recipe. Each installer is incremental; none is a complete release. Stage 16 adds checks/documentation only. Runtime changes require restarting the client and hard-refreshing; no dependency reinstall is needed for these source updates.
 
-1. `REFACTORING-MILESTONE.md` — current resume point and stage history.
-2. `docs/development/test-baseline.md` — current four-failure inventory and historical results.
-3. `docs/development/portable-tests.md` — complete runner, dependencies, harness conventions and scope limits.
-4. `docs/development/runtime-reading-guide.md`, `architecture.md`, `routing-validation.md`, `capture-solve-history.md`, `viewer-presentation.md` — all under `docs/development/`.
-5. `CONTRIBUTING.md`, `docs/installation.md`, `docs/development/runtime-dependencies.md`, `docs/development/isolated-build-check.md`.
+**Geometry installer correction:** the user reported that v1 stopped with `Expected source block not found uniquely: src/runtime/widget.tsx`. That was a preflight failure: nothing changed. A reordered-import checkout reproduced this error. Prefer **`apply-route-geometry-safety-v2.cjs`**, which uses the installed client's TypeScript parser to recognize the affected methods, tolerates import order/formatting/BOM/CRLF and refuses unknown logic. It applies the runtime fix and updates recognized existing test fixtures; it does not reproduce v1's full documentation/test payload. If v1 already succeeded, the runtime fix does not need reinstalling.
 
-Important untracked files must be preserved: viewer presentation components/styles, `src/runtime/widgetState.ts`, `tests/helpers/englishFixture.cjs`, the viewer fixture/tests, portable runner/tests, and isolated build checker. Use `git status` to get the complete current list.
+Stage 18, **`apply-capture-solve-history.cjs`**, also uses method-based matching and supports v2 output. It preserves existing milestone text by appending a continuation note, rather than requiring an exact earlier documentation version. This consolidated milestone supersedes those appended handoff notes.
+
+```sh
+node apply-capture-solve-history.cjs --dry-run
+node apply-capture-solve-history.cjs
+```
+
+The example assumes geometry safety and prior required runtime stages are present. Keep installer backups. Uninstall later changes first, using each installer's own `--uninstall`; rollback refuses subsequent local edits and corrupted backups. Do not force-patch unknown source.
+
+## Boundaries to preserve
+
+- [OwnedMapResources](../../../src/features/map-graphics/OwnedMapResources.ts) tracks exact owned instances; unrelated, borrowed and same-ID resources must survive cleanup.
+- [RouteGeneration](../../../src/features/routing/RouteGeneration.ts) and [provider cancellation](../../../src/utils/routingCancellation.ts) retain ownership checks after awaits. Old runs cannot publish, clear newer busy state, attach graphics or restore a stale camera.
+- [DetectionLayerController](../../../src/features/detections/DetectionLayerController.ts) owns detection layer lifecycle/appearance; widget state and cross-feature coordination remain in the widget.
+- [Capture scoring](../../../src/features/routing/captureRouteScoring.ts) and [adaptive selection](../../../src/features/routing/adaptiveCaptureSelection.ts) remain synchronous local work. Provider calls, progress, toasts and cancellation remain with the widget.
+- [Final-solve pruning](../../../src/features/routing/finalSolveBatchPruning.ts) uses the existing **0.96** reserve; [preflight pruning](../../../src/features/routing/preflightBatchPruning.ts) uses **0.85**. Preserve the 1–6 calibration clamp, 0.25-minute floors, stable ties, ID-based removals and A-to-B survivor ordering.
+- [Preflight diagnostics](../../../src/features/routing/preflightDiagnostics.ts) round values before main quality decisions. [Trial quality](../../../src/features/routing/trialPreflightQuality.ts) uses **raw** values, inclusive 450m/4.5min thresholds and first-failure short-circuiting. Do not unify their precision rules.
+- [Replacement ranking](../../../src/features/routing/replacementPairRanking.ts) caps additions/removals at five **before** pairing, requires gain above 25, preserves current anchor accounting and returns at most five probe pairs.
+- [Network penalties](../../../src/features/routing/captureNetworkPenalties.ts) preserve full/split attribution, sentinel and cleanup exclusions, the 2–4 minute threshold, 100m denominator floor and stable ranking. [Removal planning](../../../src/features/routing/adaptiveNetworkRemoval.ts) preserves 1/2/4/6 limits at overrun ratios 1.4/2/3 and ID-set count semantics.
+- [Probe comparison](../../../src/features/routing/budgetProbeComparison.ts) preserves the 0.25 relief floor, strict 0.5 cost advantage, inclusive 0.5 tie band, higher-extra-time tie preference and strict 0.1-minute progress threshold. Quality/fit gates and fitting-over-progress fallback remain in the widget.
+- [Final recovery](../../../src/features/routing/finalCaptureSelection.ts), newly extracted in stage 22, pairs a selected solved route with its own opportunities. [CaptureSolveHistory](../../../src/features/routing/CaptureSolveHistory.ts) holds route/time/shallow snapshot together **per run**; strictly lower extra time wins, ties retain the first winner and losing solves do not copy selections.
+
+## Intentional fixes, separate from extraction
+
+Stage 5 explicitly sets neutral `centerDistanceWeight = 0`, enforces the existing 12m useful-length/weighted-new-coverage floors and 40-candidate limit, and shares the complete stop-reason type including `anchor-cap`. Do not silently retune these values.
+
+Stage 17 fixes a reproduced exception: drawing an empty array could clear the existing route and then throw. [Geometry validation](../../../src/features/routing/captureRouteGeometry.ts) now rejects empty, short, sparse, mixed or nonfinite paths before SDK layer loading/clearing and before final-route coverage evaluation/publication. Valid coordinates, altitude ordinates, references and purple-line styling remain intact. This was a behavior fix, not merely file extraction.
+
+## Current verification (stage 46)
+
+- All **47 available focused test files passed**, including 20 view-options comparisons, 17 full-handler comparisons, 27 tracking checks, 17 minimap-selection comparisons and four click-handler cases, 26 minimap-layer comparisons, 26 basemap comparisons, existing minimap lifecycle checks, 26 renderer comparisons, 14 trial-plan tests, 17 snap-classification tests, 17 final-evaluation tests, 13 selection-report tests, 21 runtime-settings tests, 30 authentication-helper tests, 18 marker tests, 18 provider factory tests, 23 provider-resolution tests, 17 replacement-comparison tests, 21 main-quality tests, 12 coverage-report tests, 14 final-selection tests, 14 result-assembly tests, 25 integration tests and the geometry regressions. The historical 24-file/405-test report below is not a current result.
+- Strict TypeScript passed for minimap view options, minimap selection, minimap layers, minimap basemap policy, the renderer, trial preparation, main preflight quality/snap classification, final evaluation, selection reporting, runtime settings, routing authentication, the marker factory, provider construction, provider resolution, replacement-probe comparison, the main preflight classifier, coverage reporter, final-selection helper and result builder with their dependencies. Stages 19–20 did not change runtime files; stages 21–30 move result assembly, final selection, coverage reporting, main quality classification, replacement comparison, provider resolution/construction, markers, authentication helpers and runtime-settings policy.
+- Documentation: 97 Markdown files, 343 local links, zero broken links. Repository layout: 805 source files, zero errors. `git diff --check` passed.
+- The incremental installer passed eight checks across LF and BOM/CRLF inputs: dry-run, exact application, repeat/rollback and refusal to overwrite unknown edits.
+- Full Experience Builder 1.21 build, browser routing integration and playback performance remain unverified.
+
+## Cumulative delivery verification (stage 46)
+
+All 27 installers from stages 19–45 passed dry-run, application and repeat application on an isolated copy of commit `968375a`. The resulting **70 affected files matched** the stage-45 workspace byte-for-byte. All **47 focused test files passed on that installed copy**. Reverse-order uninstall restored the entire committed baseline source tree exactly.
+
+Checkpoint v2 passed **32 safety checks** across baseline, stage-20, stage-33 and stage-45 file states with both LF and BOM/CRLF inputs: read-only dry-run, supported application, repeat/exact rollback and unknown-edit refusal. A static audit of **894 relative imports across 360 source files** found no missing local targets. This checks target existence, not named exports, SDK compatibility or bundling.
+
+Stage 46 changes delivery documentation only. Full Experience Builder 1.21 build/browser verification and live playback measurements remain pending.
+
+## Historical cumulative delivery verification (stage 33)
+
+On an isolated copy of commit `968375a`, all 14 installers from stages 19–32 passed dry-run, application and repeat application. The resulting 41 affected files matched the working source byte-for-byte. All 34 focused test files passed on that installed copy. Uninstalling those stages in reverse order restored the entire original source tree exactly.
+
+The cumulative checkpoint additionally passed 24 checks across baseline, stage-20 and stage-32 file states with LF and BOM/CRLF inputs: read-only dry-run, supported application, repeat application/exact rollback and refusal to overwrite unknown edits. These are delivery checks, not live Experience Builder validation. No runtime code was added or changed in stage 33.
+
+## Historical validation report (not reproduced from this commit)
+
+The table below preserves the previous handoff report. Missing integration/build files prevent reproducing it in this checkout. Do not present its 405-test or isolated-build results as current verification. See the current checks in [routing validation](../../development/routing-validation.md).
+
+| Check | Result and scope |
+| --- | --- |
+| Focused regressions | **405 tests across 24 files passed**, including 13 solve-history tests. This is not a full repository test pass. |
+| Characterization | Previous calculations are frozen under `tests/fixtures/`; tests compare outputs, diagnostic/distance-call order, boundaries, ties, nonfinite inputs, snapshot identity and deterministic varied cases. |
+| Route integration | Actual widget method with controlled provider promises and mocked view/rendering/coverage inputs: final/preflight cancellation, overlapping runs, drawing cancellation, worse/better retries and correct final opportunity summaries. |
+| TypeScript | Strict checks passed for the extracted routing modules and dependencies; changed TS/TSX syntax checks passed. |
+| Isolated bundle | Runtime and settings built with **Experience Builder 1.20.0 rules**, **zero errors and warnings**, using Mapillary JS **4.1.2**, pbf **5.1.2**, vector-tile **3.0.0**. |
+| Installed output | Geometry v2 followed by solve-history installation on reordered-import source passed the same **405-test suite** and isolated bundle check. Reverse-order rollback restored original source. |
+| Installer safety | Dry-run, apply, repeat application, exact rollback, BOM/CRLF, import order, formatting/comments, unrelated-edit preservation, unknown-code refusal and backup integrity checked. Earlier original installer stages were also replayed in sequence with reverse rollback; this is not confirmation of the user's installation. |
+| Documentation/layout | Local Markdown links, repository layout and `git diff --check` passed. |
+
+The isolated build checker uses host loader/external rules, disables the loader worker pool and writes temporary SystemJS bundles. It omits full host packaging and uses the host's **transpile-only** loader. The existing host widget link and dependency folder were left unchanged; documented dependency versions were installed separately for the check.
+
+**Still unverified:** full Experience Builder **1.21** build, live ArcGIS/Mapillary behavior, mobile/RTL presentation and playback performance. Previously observed `coverageAnalysisReliability.test.cjs` failures also occurred on the baseline; the focused routing suite does not establish a clean full repository run.
 
 ## Reproduce checks
 
-The widget is hosted inside Experience Builder; it is not a standalone npm app. Do not replace host React, SDK, lockfiles or package-manager settings merely to run tests.
-
-Previously available cloud paths (ephemeral, recheck):
-
-- ExB client: `/workspace/experience-builder-1.20/client`
-- Isolated test dependencies: `/tmp/mapillary-v5-test-deps/node_modules`
-- Node 24.19.0; TypeScript 5.9.3; React/DOM/renderer 19.2.3; jsdom 26.1.0; PGlite 0.5.16.
-- Tested runtime dependencies: Mapillary JS 4.1.2, pbf 5.1.2, `@mapbox/vector-tile` 3.0.0, pako 2.2.0. Refer to the installation guide for host-specific commands; React compatibility is a host constraint, not a pbf dependency.
-
-Full portable run from widget root; the report path must be NEW and its parent directory must exist:
+Use installed TypeScript, or set `MAPILLARY_TYPESCRIPT` to its location. This continuation used `/tmp/map-ex-validation/node_modules/typescript/lib/typescript.js` with TypeScript 5.9.3; that temporary path is not a portable dependency.
 
 ```sh
-node tools/check-portable-tests.cjs --client /workspace/experience-builder-1.20/client --dependencies /tmp/mapillary-v5-test-deps/node_modules --preflight
-node tools/check-portable-tests.cjs --client /workspace/experience-builder-1.20/client --dependencies /tmp/mapillary-v5-test-deps/node_modules --report /tmp/portable-next-report.json
-```
-
-Focused next-case example in the same cloud environment:
-
-```sh
-NODE_PATH=/tmp/mapillary-v5-test-deps/node_modules:/workspace/experience-builder-1.20/client/node_modules MAPILLARY_TYPESCRIPT=/workspace/experience-builder-1.20/client/node_modules/typescript node --test tests/detectionLinkedPreview.test.cjs
-```
-
-On Windows use the runner with your actual client/dependency paths; do not paste POSIX environment-variable syntax into CMD. Follow `portable-tests.md` if rebuilding isolated test dependencies. Database tests need PGlite; missing dependencies are not grounds to exclude suites.
-
-Routine repository checks:
-
-```sh
+node --test tests/minimapViewOptions.test.cjs tests/minimapClickHandler.test.cjs tests/minimapTracking.test.cjs tests/minimapSelection.test.cjs tests/minimapLayers.test.cjs tests/minimapBasemap.test.cjs tests/minimapLifecycle.test.cjs tests/nativeSequenceSelection.test.cjs tests/coverageHoverRuntime.test.cjs tests/captureRouteRenderer.test.cjs tests/captureTrialPlan.test.cjs tests/preflightSnaps.test.cjs tests/captureRouteEvaluation.test.cjs tests/captureSelectionReport.test.cjs tests/runtimeRoutingSettings.test.cjs tests/routingAuthentication.test.cjs tests/routePointGraphic.test.cjs tests/captureProviderFactory.test.cjs tests/routingProviderResolution.test.cjs tests/replacementProbeComparison.test.cjs tests/preflightQuality.test.cjs tests/captureCoverageReport.test.cjs tests/finalCaptureSelection.test.cjs tests/captureRouteData.test.cjs tests/captureRouteIntegration.test.cjs tests/captureSolveHistory.test.cjs tests/captureRouteGeometry.test.cjs tests/adaptiveNetworkRemoval.test.cjs tests/budgetProbeComparison.test.cjs tests/captureNetworkPenalties.test.cjs tests/replacementPairRanking.test.cjs tests/trialPreflightQuality.test.cjs tests/preflightDiagnostics.test.cjs tests/preflightBatchPruning.test.cjs tests/finalSolveBatchPruning.test.cjs tests/adaptiveCaptureSelection.test.cjs tests/routingDefaults.test.cjs tests/captureRouteScoring.test.cjs tests/routeGeneration.test.cjs tests/routingCancellation.test.cjs tests/routePreviewSimulation.test.cjs tests/sequenceV6Runtime.test.cjs tests/detectionLayerController.test.cjs tests/ownedMapResources.test.cjs tests/startupDisposal.test.cjs tests/coverageClickDispatch.test.cjs tests/coverageStartup.test.cjs
+npx --no-install tsc --strict --noEmit --target es2020 --lib es2020,dom src/features/minimap/minimapViewOptions.ts src/features/minimap/minimapSelection.ts src/features/minimap/minimapLayers.ts src/features/minimap/minimapBasemap.ts src/features/routing/captureRouteRenderer.ts src/features/routing/captureTrialPlan.ts src/features/routing/captureRouteEvaluation.ts src/features/routing/captureSelectionReport.ts src/features/routing/runtimeRoutingSettings.ts src/features/routing/routingAuthentication.ts src/features/routing/routePointGraphic.ts src/features/routing/captureProviderFactory.ts src/features/routing/routingProviderResolution.ts src/features/routing/replacementProbeComparison.ts src/features/routing/preflightQuality.ts src/features/routing/captureCoverageReport.ts src/features/routing/finalCaptureSelection.ts src/features/routing/captureRouteData.ts src/features/routing/CaptureSolveHistory.ts src/features/routing/captureRouteGeometry.ts src/features/routing/adaptiveNetworkRemoval.ts src/features/routing/budgetProbeComparison.ts src/features/routing/captureNetworkPenalties.ts src/features/routing/replacementPairRanking.ts src/features/routing/trialPreflightQuality.ts src/features/routing/preflightDiagnostics.ts src/features/routing/preflightBatchPruning.ts src/features/routing/finalSolveBatchPruning.ts
 node tools/check-docs.cjs
 node tools/check-repository.cjs
 git diff --check
 ```
 
-Run target ExB 1.21 host builds/browser checks separately when available. The isolated bundle checker is transpile-only and does not prove semantic type safety.
+The previously documented `tools/check-exb-build.cjs` is absent. Use the target client's normal build/start workflow; see [routing validation](../../development/routing-validation.md) for the current scope and host checks.
 
-## Workflow for the next bounded stage
+## Next session
 
-1. Confirm actual stage/source and preserve edits; inspect applicable project instructions.
-2. Reproduce the focused failure with complete dependencies. Inspect current production contracts before classifying it.
-3. Repair a missing binding/loader if that is the cause. If it is a product defect, make the smallest behavior-preserving fix and state the scope clearly.
-4. Preserve active assertions and frozen fixtures. Document any intentional migration from a retired representation; never silently rebaseline.
-5. Run focused checks and meaningful deliberate-fault controls where useful; use temporary source copies for controls.
-6. Run the complete portable suite and compare failing names against stage 61. Keep every suite included and report remaining failures honestly.
-7. Update milestone/baseline and produce one reviewable, reversible CJS installer. Test preflight, apply, repeat, rollback, BOM/CRLF, unknown edits and installed output.
-8. Summarize changed behavior (or test-only scope), results, limits and exact install commands. Do not claim performance/live host acceptance from controlled tests.
+1. Inspect actual Git state, installed modules and local edits. Preserve untracked modules and backups; do not reset or replay stashes blindly.
+2. Confirm the actual local source and whether cumulative or incremental installers were used. The checkpoint supports recognized stage 19–32 revisions; never force an unsupported preflight. Confirm whether geometry v2 and solve history were applied on the user's machine. If preflight fails, inspect the specific unsupported code; never bypass protection with a forced overwrite.
+3. Prioritize the target **1.21** normal build and browser checks: budget-fit/pruned/recovered routes, cancellation during requests/drawing, view/map changes, coverage/detection controls and ordinary imagery playback.
+4. Review remaining orchestration for one cohesive extraction using the restored integration suite and focused characterization. See the routing-validation guide for coverage limits. Keep provider awaits, run checks, UI and graphics ownership with the current owner. Any next extraction needs prior-output characterization and one reviewable installer.
+5. Treat adjacent behavior fixes separately: generic OSRM preflight still logs its summary twice; `maxFinalStops` documentation includes endpoints while some intermediate-anchor accounting uses the full limit. Neither was changed by the later extractions.
 
-## Evidence and artifact locations
+Suggested resume prompt:
 
-These locations belong to this session and may not exist on the next account:
+> Read REFACTORING-MILESTONE.md and the routing-validation/solve-history guides. Inspect and preserve actual local changes. Resume after stage 46; use the newly extracted final-selection helper; the historically reported build checker is still absent. Use the restored stage 20 controlled integration suite. Verify the user's geometry-v2 and solve-history installation, prioritize Experience Builder 1.21 host checks, and review remaining orchestration before proposing another bounded extraction. Preserve behavior, cancellation and resource ownership; deliver a reversible installer for any code change.
 
-- Last full report: `/tmp/v5-community-full-report.json`; full log: `/tmp/v5-community-full.log`.
-- Stage 61 source/frozen hash snapshot: `/tmp/v5-community-source-before.json` (449 entries).
-- Safety/negative checks: `/tmp/v5-community-installer-checks.json`, `/tmp/v5-community-controls.json`, `/tmp/v5-community-assertions.json`.
-- Installer test output: `/tmp/v5-community-installed-tests.log`.
-- Delivered installers and validation JSON: `/workspace/shared/downloads/`.
-- Latest validation: `community-client-fixture-repair-validation.json` in that directory.
-- Builder/safety helper scripts under `/tmp/` are session scratch files, not a supported repository build system. If lost, preserve the reviewed installer engine/behavior instead of assuming these scripts are committed.
+<!-- isolated-build-check-stage47 -->
+## Stage 47 — isolated build verification
 
-## Delivered fixture installer fingerprints
+The source checkpoint is `609b81c` (v13). The isolated runtime/settings checker is restored at `tools/check-exb-build.cjs`; no runtime source changes are introduced. Current-source verification passed 855 tests across 47 focused files, strict extracted-module TypeScript, and an isolated Experience Builder 1.20.0 build with zero errors/warnings using Mapillary JS 4.1.2, pbf 5.1.2 and vector-tile 3.0.0.
 
-Use these to identify existing downloads, not to bypass baseline checks. Earlier non-fixture stage installers are listed above but not fingerprinted here.
+This does not establish full target 1.21 packaging/browser compatibility or performance. Run the target client's normal build and the remaining live scenarios. See [checker usage and limits](../../development/isolated-build-check.md). The tooling installer is additive, preserves existing notes and does not require a runtime restart.
 
-| File | SHA-256 |
-| --- | --- |
-| `apply-community-client-fixture-repair.cjs` | `264e829d75f0810b90554a31d87fb16d843435562ca1fd1c5bde010d2f4e3b85` |
-| `apply-coverage-analysis-fixture-repair.cjs` | `c408293b9ab0ecc780c6d9f92cf5f51c32e591c057354626a4088368eeeed801` |
-| `apply-detection-label-fixture-repair.cjs` | `2b130e1bc98d7d24066718d584a637d74e61d0e3bc888a0122b31730a11ba307` |
-| `apply-field-note-fixture-repair.cjs` | `315eedef9718d92d17ad222625b55e401a8671364d44faf8f7acc8d5ba87c2e8` |
-| `apply-info-footer-fixture-repair.cjs` | `707f86062c485db1c20c9557653e61697e19e3782d5ba89e72c305786b9d5883` |
-| `apply-native-alignment-fixture-repair.cjs` | `e9dfb6185cadbb0feba56efcbc84efa84bfeca84de5d8ceb8ff3351a8f34975b` |
-| `apply-nearby-foreground-fixture-repair.cjs` | `be47ef2218c3031a28050de7137435cca6cbb372e57113b89ffee819a669928a` |
-| `apply-overture-places-fixture-repair.cjs` | `f09ebd4f3c1719a7b112725982df1cbd07dc5281282231a8a05e3eff3729a3a8` |
-| `apply-places-api-fixture-repair.cjs` | `9a5402b7922ae54919c53a1c5b6b3f8cbf0801eab562530a7d71e21a8c724b3b` |
-| `apply-point-cloud-fixture-repair.cjs` | `c1e27306866c7a2f4e98aea10aee222c9eea540006010d3a0744453116ecad96` |
-| `apply-time-travel-fixture-repair.cjs` | `db03951a383485236c65b8c8ed98d2112b8f5aac51b088ae3844f19f2775475f` |
+<!-- viewer-presentation-stage48 -->
+## Stage 48 — viewer presentation boundary
 
-## Selected working-file fingerprints at handoff
+Extracted viewer surface, nearby/associated image tray, fullscreen/minimap chrome, styles and the runtime state contract. Requests, portals, SDK DOM ownership and selection timing stay with the runtime. The widget is reduced from 12,915 to 12,371 lines and still requires further controller extraction before it becomes a minimal entry. No runtime dependencies were added.
 
-These identify this working tree, not the committed GitHub versions. A mismatch requires inspection, not overwriting.
+885 focused tests passed across 48 files, including 30 before/after presentation checks. Chromium passed 14 controlled layout/identity checks (desktop/mobile, LTR/RTL, tray scroll and SDK child retention) with SDK/control stubs. New presentation/style/state modules have no strict diagnostics; existing dependency/repository diagnostics prevent claiming a clean full typecheck. No additional widget diagnostics were introduced relative to the baseline. Isolated ExB 1.20 runtime/settings bundles passed with zero errors/warnings; target 1.21 normal build/live behavior/performance remain unverified.
 
-| File | SHA-256 |
-| --- | --- |
-| `src/runtime/widget.tsx` | `520ef354463135214186fbdd7d8a26c6fc4bf507ae0ee94ad03417c68a701780` |
-| `src/runtime/widgetState.ts` | `230ff45ecd68b68997a4c2e5da1c31235acd277766bcfcc9b3af63191c84bd65` |
-| `tests/helpers/englishFixture.cjs` | `747898ad711de0ffde919a3aa29020292b443d214585b8ae04cacfc7837c47fc` |
-| `tests/communityWorkspaceClient.test.cjs` | `07d79ee97eddbee6ddb603c7a12922f85593910e1dc6199a038f3bfc703e6f94` |
-| `tests/detectionLinkedPreview.test.cjs` | `758986f7c60ec1174d3f8ba4d7530e07e0d9053ee448cf58c0530b551945647e` |
-| `docs/development/test-baseline.md` | `5772926a2b11989915c610faeb16f0ab00ebd26122ad0efd5bdd780b904fc724` |
-| `REFACTORING-MILESTONE.md` | `d1479485ae0b09cd6ff17a2f3361ed835c42292a8c365d5b2a7295d55bc3d2c7` |
+See [presentation architecture and validation](../../development/viewer-presentation.md). Installer: `apply-viewer-presentation-refactor.cjs`. It preflights known v13 runtime/types sources, refuses unknown edits and supports exact rollback. Restart the client and hard-refresh after application; no dependency reinstall. Continue with coherent controller boundaries rather than moving the remaining monolith wholesale.
+
+<!-- widget-documentation-stage49 -->
+## Stage 49 — runtime contributor documentation
+
+Documentation-only audit after stage 48: reviewed 82 member descriptions and eight startup/request ownership counters. Corrected obsolete CDN startup, fullscreen, export, associated-image and sprite-preload descriptions; removed duplicate legacy preambles. See [runtime reading guide](runtime-reading-guide.md) for entry points, ownership rules and comment conventions.
+
+The full runtime syntax tree is unchanged, and emitted JavaScript with comments removed is byte-identical to the stage-48 input. All 885 focused regressions pass; all 47 JSDoc parameter names match signatures. Documentation links and repository layout checks pass. No runtime behavior, dependencies or fullscreen fixes are introduced. Existing full-repository type diagnostics and target 1.21/live-SDK validation remain separate.
+
+Installer: `apply-widget-documentation.cjs` (known stage-48 runtime; BOM/CRLF supported). Preflight refuses unknown edits; backups support exact rollback. Uninstall stage 49 before rolling back stage 48. Continue refactoring from the presentation boundary with these lifecycle/request contracts.
+
+<!-- v5-phase1-foundation-stage50 -->
+## Stage 50 — Version 5.0 phase-1 foundation
+
+Added a complete portable runner/preflight/report and test-environment guide. Six new runner/real-codec checks pass. With complete test dependencies, 185 Node files report **2,175 tests: 2,034 pass, 141 fail**; the pre-cleanup stage-49 application source under the same environment reproduces identical totals and failing names. No failures are suppressed or automatically accepted. See [baseline and failure inventory](test-baseline.md) and [reproduction guide](../../development/portable-tests.md).
+
+Removed five unused imports, the token-value debug log and the empty root `.gitkeep`. Emitted runtime code changes only by removal of that debug log. Token-source behavior and saved config fields are preserved. Docs now match manifest ExB 1.21 and document directly imported pako 2.2.0. The isolated ExB 1.20 runtime/settings build passes with zero errors/warnings; target 1.21 production/live SDK acceptance remains outstanding. No host packages, credentials or license choices were changed.
+
+Installer: `apply-v5-phase1-foundation.cjs`, targeting the known stage-49 source. Keep backups for exact rollback; uninstall stage 50 before older stages. From the target client, install the documented direct pako dependency if needed, then restart. Legacy files, migrations and assets remain. Next work: individually diagnose the 141 remaining loader/assertion failures without weakening requirements or blanket rebaselining.
+
+<!-- point-cloud-fixture-repair-stage51 -->
+## Stage 51 — point-cloud fixture repair
+
+All 257 point-cloud tests across 17 suites plus four English fixture checks pass (261 focused). Full suite: **2,194 tests, 2,135 pass, 59 fail**, all 186 files included. The former 82 point-cloud failure reports are resolved; the other failing names are unchanged. This corrects the earlier conversational count of 92. Fourteen extra map-layer cases now execute instead of one module-load failure; five new fixture/format checks also execute.
+
+Shared bindings use actual English catalogs, formatters and shipped text-only wrappers. SDK/clocks/writers and side-effect assertions remain suite-owned. Only rendered-toast text grouping/ordinary whitespace is canonicalized; props/styles, wording, counts, duration, state/order and non-toast identity stay checked. Calibration explicitly adapts historical compact-unit/XYZ spacing and separately asserts exact current feedback. No frozen fixtures or existing assertions were removed.
+
+A real feedback typo was fixed: one JSX space separated `cluster` from `s`. No other production source changed. Restoring that old space in a temporary control makes 13 result tests fail. The isolated ExB 1.20 bundle passes with zero errors/warnings; target 1.21/live SDK acceptance remains separate. A guide's reference to absent worker-thread tests is corrected, not treated as evidence.
+
+See [full baseline](test-baseline.md) and [point-cloud notes](../../development/point-cloud.md). Installer: `apply-point-cloud-fixture-repair.cjs` after stage 50; preserve backups for exact rollback and uninstall newer stages first. No package reinstall. Next: individually diagnose the other 59 failures, starting with field-note locale bindings, without weakening assertions.
+
+<!-- field-note-fixture-repair-stage52 -->
+## Stage 52 — field-note fixture repair
+
+All 46 draft/file/collection tests plus four shared English fixture checks pass (50 focused). Full portable run: **2,195 tests, 2,163 pass, 32 fail**, all 186 files included. The former 27 target failure reports are resolved; remaining failing names are unchanged. One new exact count-feedback case executes.
+
+The three suites reuse actual English bindings. Only four historical Turkish alerts and counted import wording are adapted on the frozen comparison side; note data, error objects, clocks, identities, storage/FileReader/publication operations and save/editor guards remain exact. Zero/singular/plural import and duplicate counts have explicit assertions. A temporary wrong duplicate-count control fails three file tests. No frozen JSON or original assertion calls were removed.
+
+All production source files and dependencies are unchanged relative to stage 51. This is test/documentation work; it does not establish live SDK, multilingual or authenticated Enterprise permission acceptance. See [current baseline](test-baseline.md) and [fixture conventions](../../development/portable-tests.md).
+
+Installer: `apply-field-note-fixture-repair.cjs`, after stage 51. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: diagnose the remaining 32 failures individually, starting with coverage-analysis bindings; do not force a green run by discarding tests or blanket-updating snapshots.
+
+<!-- coverage-analysis-fixture-repair-stage53 -->
+## Stage 53 — coverage-analysis fixture repair
+
+The reliability suite now compiles runtime snippets as TSX and uses the existing actual English bindings. Its lifecycle guard is identified by analysis-input ownership instead of statement position. All 17 existing cases and assertions remain, with four new cases covering pending-classifier cancellation, late progress/results, newer-run ownership, replaced views and rate-limit cooldown feedback.
+
+Focused result: **25 passed** (21 reliability tests plus four shared-fixture checks). Complete portable run: **2,199 tests, 2,173 pass, 26 fail**, across all 186 files. The six previous coverage-analysis failures are resolved, with no newly failing names. Removing only the post-classification stale-result guard in a temporary copy makes three new late-result tests fail.
+
+All 449 production-source/frozen-fixture files remain unchanged from stage 52; no dependencies changed. The classifier is stubbed: this validates orchestration, not classification accuracy or real server/GPU behavior. No new bundle or live ExB 1.21 acceptance is claimed. See [current baseline](test-baseline.md) and [fixture conventions](../../development/portable-tests.md).
+
+Installer: `apply-coverage-analysis-fixture-repair.cjs`, after stage 52. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: diagnose the remaining 26 failures individually, starting with detection-label fixture bindings; retain every suite and behavior assertion.
+
+<!-- detection-label-fixture-repair-stage54 -->
+## Stage 54 — detection-label fixture repair
+
+The AI viewer label fixture now explicitly supplies its missing bounds adapter, matching the existing detection-exploration fixture. Bounds are inert in this label-only harness. Controlled timers, pointer hits and viewer events retain all three original cases/15 assertions and add four regressions/22 assertions for panorama visibility, focus/all mode, viewer-removal cleanup and out-of-order hover hits.
+
+Focused result: **20 passed** across AI-label toggle, exploration, map-label and display suites (seven AI-label cases). Full portable run: **2,203 tests, 2,180 pass, 23 fail**, across all 186 files. The three previous AI-label failure reports are resolved, with no newly failing names. Removing visibility forwarding in a temporary copy fails two cases; removing hover ownership checks fails the newer-pointer case.
+
+All 449 production-source/frozen-fixture files remain unchanged from stage 53. No dependencies or production behavior changed. These tests use controlled SDK substitutes and do not establish live pointer/WebGL or ExB 1.21 acceptance. Optional Mapbox style-spec checks were not configured. See [current baseline](test-baseline.md) and [fixture conventions](../../development/portable-tests.md).
+
+Installer: `apply-detection-label-fixture-repair.cjs`, after stage 53. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: diagnose the remaining 23 failures individually, starting with the info-panel footer fixture bindings; keep every suite and behavior assertion.
+
+<!-- info-footer-fixture-repair-stage55 -->
+## Stage 55 — info-panel footer fixture repair
+
+The footer fixture now explicitly binds `useWidgetLocale` to the shared actual English catalog instead of returning styles for every unknown import. Unknown imports fail clearly and each case restores the original global `window` descriptor. All four original cases/eight assertions remain; two regressions/four assertions check replacement viewport/current height, live reduced-motion preferences and absent matchMedia.
+
+Focused result: **10 passed** (six footer cases plus four English fixture checks). Complete portable run: **2,205 tests, 2,186 pass, 19 fail**, across all 186 files. Four previous footer failure reports resolved, with no newly failing names. Temporary relative-distance and forced-smooth-motion controls fail three and two cases respectively.
+
+All 449 production-source/frozen-fixture files remain unchanged from stage 54. No dependencies or production behavior changed. Controlled component checks do not establish React-provider lifecycle, keyboard/focus, browser layout, screen-reader or live ExB 1.21 acceptance. See [current baseline](test-baseline.md) and [fixture conventions](../../development/portable-tests.md).
+
+Installer: `apply-info-footer-fixture-repair.cjs`, after stage 54. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: individually diagnose the remaining 19 failures, starting with native coverage alignment/terrain ownership; distinguish harness failures from production behavior defects and preserve all assertions.
+
+<!-- native-alignment-fixture-repair-stage56 -->
+## Stage 56 — native alignment / current terrain contracts
+
+Two warm-playback fixture failures lacked the screen-direction owner now used by `drawCone`; that branch is explicitly recorded. Three legacy cases are migrated: retired DOM-pulse terrain projection/retry assumptions now exercise current `renderedGroundPoint` height/readiness safety, and old polygon-face apex assertions use mesh local vertices/origin and the current perimeter. The bounded DOM retry expectation is retired with its implementation; existing pulse tests independently require SDK draping and zero 3D frames. Mesh topology/reuse stays covered by the existing closed-mesh suite.
+
+Focused result: **39 passed** (24 native-alignment, six pulse, nine mesh cases). Full portable run: **2,207 tests, 2,193 pass, 14 fail**, across all 186 files. Five previous alignment failure reports resolved; no newly failing names. All 43 assertion calls outside the three migrated cases remain exact. Two new cases check flat-ground/reference and invalid/throwing terrain samples. Factory calls are asserted outside contained callbacks. Temporary speculative-flat, lifted-apex and ignored-anchor mutations fail three, one and two cases respectively.
+
+All 449 production-source/frozen-fixture files remain unchanged from stage 55; no dependency or production behavior changes. No new bundle or live SDK terrain/projection, browser/GPU or ExB 1.21 acceptance claimed. See [current baseline](test-baseline.md) for the explicit old-to-current assertion mapping and [fixture conventions](../../development/portable-tests.md).
+
+Installer: `apply-native-alignment-fixture-repair.cjs`, after stage 55. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: individually diagnose the remaining 14 failures, starting with Nearby foreground/runtime bindings; preserve request ownership, opt-in behavior and all active-path assertions.
+
+<!-- nearby-foreground-fixture-repair-stage57 -->
+## Stage 57 — Nearby foreground fixture repair
+
+The foreground harness now selects only Nearby's four lifecycle statements (visibility declarations, demand assignment and visibility branch) instead of a prefix ending at another feature's guard. The old prefix had begun executing unbound route-generation reconciliation. A count assertion protects the boundary; original statement order remains.
+
+Focused result: **30 passed** across foreground runtime, actual discovery-owner and coverage-anchor suites. All five original runtime cases/15 assertions remain; two regressions and the binding-count check add 17 assertions. New cases cover tab/hidden-widget demand, pointer reset, priority and paused/playback image transitions. Existing real-owner tests retain cancellation, stale-publication and background-slot checks. Temporary eligibility-removal and forced-immediate controls fail three cases each.
+
+Full portable run: **2,209 tests, 2,197 pass, 12 fail**, across all 186 files. Both previous Nearby runtime failure reports resolved; no newly failing names. All 449 production-source/frozen-fixture files remain unchanged from stage 56, with no dependency changes. No new bundle or live SDK/browser/network timing/ExB 1.21 acceptance claimed. See [current baseline](test-baseline.md) and [fixture conventions](../../development/portable-tests.md).
+
+Installer: `apply-nearby-foreground-fixture-repair.cjs`, after stage 56. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: diagnose the remaining 12 failures individually, starting with Overture Places/runtime bindings; preserve category, confidence, caching, request ownership and opt-in behavior.
+
+<!-- overture-places-fixture-repair-stage58 -->
+## Stage 58 — Overture Places source-identity fixture repair
+
+Five runtime fixtures now bind actual `placesSourceKey` instead of only the former external API URL helper. Both imagery fixtures supply runtime configuration and share one local extracted-method constructor. All 62 existing Overture cases/387 assertions remain exact; two new source-scope/overlapping-search regressions add 17 assertions.
+
+Focused result: **85 passed** across Overture Places, configured runtime and Portal-source suites. New cases verify external/Portal/query-endpoint cache isolation and prevent an old completion from caching, clearing a newer controller or resynchronizing its owner. Temporary fixed-source and cache-write-removal controls fail the relevant assertions; the source-audit test also detects these deliberate edits.
+
+Full portable run: **2,211 tests, 2,204 pass, 7 fail**, across all 186 files. Five previous Overture failures resolved; other failing names unchanged. All 449 production-source/frozen-fixture files remain unchanged from stage 57; no dependencies changed. No new bundle or live SDK/Portal permissions/service-scale/ExB 1.21 acceptance claimed. See [current baseline](test-baseline.md) and [fixture conventions](../../development/portable-tests.md).
+
+Installer: `apply-overture-places-fixture-repair.cjs`, after stage 57. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: diagnose the seven remaining failures individually, starting with the Places API fixture; preserve source validation, category/confidence contracts and active behavior assertions.
+
+<!-- places-api-fixture-repair-stage59 -->
+## Stage 59 — Places API builder teardown fixture repair
+
+The builder fixture now extracts actual `clearPlacesArea` and its preview/view/revision fields, required by current unmount. All three original API cases/19 assertions remain. A held abort-ignoring response regression adds ten assertions for controller detachment-before-abort, one preview destruction, cleared ownership, repeated unmount and no post-unmount state write. Temporary removal of cancellation or preview cleanup fails this case.
+
+Focused result: **13 passed** across API and area-profile suites (four API and nine area cases). Complete portable run: **2,212 tests, 2,206 pass, 6 fail**, across all 186 files. Previous API builder failure resolved; no newly failing names. All 449 production-source/frozen-fixture files unchanged from stage 58; no dependencies changed. No new bundle, real HTTP/CORS, SDK builder rendering or ExB 1.21 acceptance claimed. See [current baseline](test-baseline.md) and [fixture conventions](../../development/portable-tests.md).
+
+Installer: `apply-places-api-fixture-repair.cjs`, after stage 58. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: diagnose the remaining six failures individually, starting with the time-travel suite loading failure; preserve cancellation, stale-result guards and all active-path assertions.
+
+<!-- time-travel-fixture-repair-stage60 -->
+## Stage 60 — time-travel dependency fixture repair
+
+The availability loader now follows actual pure-module relative dependencies with cached module records; the background queue shares that loader. Previously `geoUtils` was evaluated without `require`, so its current detection-label/presentation imports prevented all availability cases from registering. No helper is replaced with an empty mock.
+
+All 24 original availability cases/61 assertion calls remain, with one import-boundary assertion added and no new cases. Focused result: **45 passed** (24 availability, five preview, 16 background queue). Temporary stale-apply-guard removal fails nine cases; removing cached-result assignment fails one. Cancellation, retry/coalescing and physical slot retention through JSON settlement remain checked.
+
+Full portable run: **2,235 tests, 2,230 pass, 5 fail**, across all 186 files. The suite-load failure is replaced by 24 passing tests, raising the total by 23. Other five failing names unchanged. All 449 production-source/frozen-fixture files unchanged from stage 59; no dependencies changed. No new bundle or live Mapillary/SDK/browser/network-timing/ExB 1.21 acceptance claimed. See [current baseline](test-baseline.md) and [fixture conventions](../../development/portable-tests.md).
+
+Installer: `apply-time-travel-fixture-repair.cjs`, after stage 59. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: diagnose the five remaining failures individually, starting with community-workspace client loading; preserve credential boundaries, cancellation and active-path assertions.
+
+<!-- community-client-fixture-repair-stage61 -->
+## Stage 61 — community-workspace client dependency fixture repair
+
+The client fixture now follows its actual pure relative dependency graph, including attachment helpers, with cached module records and a non-relative import rejection. Previously the evaluator omitted `require`, so attachment support prevented all client cases from registering. Transport and clocks remain explicitly injected; no service connection is made.
+
+All 30 existing cases/96 assertions remain unchanged; one import-boundary assertion added, no new cases. Focused result: **30 passed**. Temporary cookie-forwarding and exact-revision-truncation controls each fail an original case. Credential/key/endpoint boundaries, session expiry/disposal, invitations, whitelists and duplicate/revision checks remain active.
+
+Full portable run: **2,264 tests, 2,260 pass, 4 fail**, across all 186 files. The suite-load failure becomes 30 passing existing cases, raising the total by 29. Other four failing names unchanged. All 449 production-source/frozen-fixture files unchanged from stage 60; no dependencies changed. No new bundle, deployed operator permissions, browser attachment persistence or live ExB 1.21 acceptance claimed. Full-run PostgreSQL/RLS suites remain included. See [current baseline](test-baseline.md) and [fixture conventions](../../development/portable-tests.md).
+
+Installer: `apply-community-client-fixture-repair.cjs`, after stage 60. Keep backups and uninstall newer stages first. No restart or dependency reinstall. Next: diagnose the remaining four failures individually, starting with detection-linked preview; preserve opt-in behavior, provenance and credential boundaries.
+
+<!-- detection-preview-fixture-repair-stage62 -->
+## Stage 62 — detection preview representation fixture
+
+The legacy round-trip case now explicitly uses `detectionPreviewLink`; current `detectionNoteDescription` emits URN attachment metadata. A separate case validates that metadata through `attachmentMetadata`: IDs/bounds, absent attachment by default, optional saved identity, compatibility and no URLs/credentials/image bytes. Actual crop capture remains separately gated by `includePreview` in the runtime; it was not changed.
+
+All 16 original assertion calls retained; one new current-format case adds 13 assertions. Focused result: **20 passed** across linked preview, field-note and crop-ownership suites. Dropped attachment identity and accepted zero-width controls each fail the relevant case in temporary source copies.
+
+Full portable run: **2,265 tests, 2,262 pass, 3 fail**, all 186 files, zero skipped. Compared with recorded stage 61, the preview failure is resolved and other failing names unchanged. Temporary dependency packages were restored at their recorded versions after resume; the previous ephemeral full report was unavailable. All 449 production-source/frozen-fixture files unchanged; no production dependency changes. No new bundle or real browser/IndexedDB/SDK/Enterprise/ExB 1.21 acceptance claimed. See [current baseline](test-baseline.md) and [fixture conventions](../../development/portable-tests.md).
+
+Installer: `apply-detection-preview-fixture-repair.cjs`, after stage 61. Keep backups and uninstall newer stages first. No app restart or host dependency reinstall. Next: diagnose the three remaining failures individually, starting with regional locales; preserve semantic locale fallback and units rather than blindly updating a numeric ceiling.
+
+<!-- regional-catalog-cleanup-stage63 -->
+## Stage 63 — UK override deduplication / semantic regional contract
+
+Removed 44 runtime and eight settings UK entries byte-for-byte equal to their US base. Effective merged text is exactly unchanged for all 1,210 runtime and 171 settings messages; 41/19 genuine overrides remain. Two arbitrary size ceilings are replaced by inheritance/key-coverage/value checks. All other 47 assertion calls, including placeholders, unit/device distinction, regional selection and formatting, remain. No cases added or removed.
+
+Focused result: **59 passed**. Temporary redundant-override and corrupted-placeholder controls each fail. Complete portable run: **2,265 tests, 2,263 pass, 2 fail**, all 186 files, zero skipped; no newly failing names. Only the two UK catalog files changed under `src/`; other 447 source/frozen files unchanged. No dependencies changed.
+
+Isolated Experience Builder **1.20.0** runtime/settings bundle passed with zero errors/warnings. This is transpile-only, not whole-project semantic checking or live ExB 1.21/browser/RTL acceptance. See [current baseline](test-baseline.md) and [fixture conventions](../../development/portable-tests.md).
+
+Installer: `apply-regional-catalog-cleanup.cjs`, after stage 62. Keep backups and uninstall newer stages first. No host dependency reinstall. Next: diagnose the remaining screen-direction-cone and text-button failures individually, starting with the phone close-zoom transform contract; preserve marker dimensions, projection/ground alignment and shared text-action sizing.
+
+<!-- phone-cone-fixture-repair-stage64 -->
+## Stage 64 — phone SVG-fallback ground-plane fixture
+
+Replaced two obsolete camera-facing expectations in the close-zoom case with three ground-plane assertions: independently specified normalized projection `[1,0,0,0.1,0,0]` and shared marker/fan transform. Other 86 assertion calls remain exact, including nominal geometry, visibility, one overlay and zoom-return checks. The mobile predicate controls native sampling; it does not select a flat SVG mode. No production rendering changed or 14-screen-pixel unforeshortened 3D circle promised.
+
+Focused result: **26 passed** across SVG fallback/native-marker suites; no new cases. Temporary flat-fan and separate-marker controls fail seven and three cases. Complete portable run: **2,265 tests, 2,264 pass, 1 fail**, all 186 files, zero skipped. The phone failure is resolved; text-button audit remains; no new failing names.
+
+All 449 source/frozen files unchanged from stage 63, no dependency changes. No new bundle; stage 63's isolated 1.20 result still applies to this byte-identical production source. No live mobile/SDK/terrain/ExB 1.21 acceptance claimed. See [current baseline](test-baseline.md) and [fixture conventions](../../development/portable-tests.md).
+
+Installer: `apply-phone-cone-fixture-repair.cjs`, after stage 63. Keep backups and uninstall newer stages first. No app restart or host dependency reinstall. Next: diagnose the remaining shared text-action sizing audit in DetectionDisplayControls; distinguish text actions from icons and preserve control behavior.
+
+<!-- detection-text-actions-stage65 -->
+## Stage 65 — detection menu shared text-action sizing / clean portable baseline
+
+Added `mly-text-action` to six existing text-button JSX sites: percentage presets, mode, overlap, label toggle, reset and close. Removing only those six additions exactly reproduces prior source, including callbacks, state, ARIA, styles and lifecycle. No new CSS policy/dependency or test changes. Restoring the prior component in a temporary copy fails the unchanged policy audit.
+
+Focused result: **10 passed**. Complete portable run: **2,265 tests, 2,265 pass, 0 fail**, all 186 files, zero skipped, exit 0. The former final failure is resolved. Only DetectionDisplayControls changed under `src/`; other 448 source/frozen files unchanged from stage 64.
+
+Isolated Experience Builder **1.20.0** runtime/settings bundle passed with zero errors/warnings. This is transpile-only; not target 1.21 normal host/build/browser, whole-project semantic or narrow translated/coarse-pointer/fullscreen portal acceptance. No publish/deployment or live permissions acceptance is implied. See [current baseline](test-baseline.md) and [fixture conventions](../../development/portable-tests.md).
+
+Installer: `apply-detection-text-actions.cjs`, after stage 64. Keep backups and uninstall newer stages first. Refresh the running app; no host dependency reinstall. Optional existing ACCOUNT-HANDOFF receives a checkpoint banner without replacing its history. Next: establish target ExB 1.21 normal build/browser acceptance, checkpoint the actual reviewed tree when authorized, then choose the next cohesive extraction. Preserve requests, cancellation and shared-view ownership; do not equate a clean portable run with release readiness.

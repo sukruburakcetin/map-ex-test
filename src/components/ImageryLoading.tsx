@@ -6,7 +6,7 @@ import { getImageryLoadingOverlayStyle, imageryLoadingAnimationCss, imageryLoadi
 
 export const ImageryLoading: React.FC<{ loading: boolean; hasImage: boolean; representative?: boolean 
   resolving?: boolean; progress?: string; onCancel?: () => void}> = ({ loading, hasImage, representative, resolving, progress, onCancel}) => {
- const { t, locale } = useWidgetLocale();
+ const { t } = useWidgetLocale();
 
     const [slow, setSlow] = React.useState(false);
     React.useEffect(() => {
@@ -16,7 +16,7 @@ export const ImageryLoading: React.FC<{ loading: boolean; hasImage: boolean; rep
         return () => clearTimeout(timer);
     }, [loading]);
     if (!loading) return null;
-    return <div style={getImageryLoadingOverlayStyle(hasImage)}>
+    return <div className="mly-imagery-loading-overlay" style={getImageryLoadingOverlayStyle(hasImage)}>
       <style>{imageryLoadingAnimationCss}</style>
       <div role="status" aria-live="polite" style={imageryLoadingCardStyle}>
         <span aria-hidden="true" className="mly-imagery-spinner" style={imagerySpinnerStyle} />

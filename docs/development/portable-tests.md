@@ -60,7 +60,7 @@ client for normal development/builds; see [installation](../installation.md).
    resource ownership, identity and compatibility requirements.
 4. Move useful coverage from retired implementations to active owners before
    retiring either their code or tests.
-5. Keep every unresolved assertion listed in the [test baseline](test-baseline.md).
+5. Keep every unresolved assertion listed in the [test baseline](../history/refactoring/test-baseline.md).
 
 The isolated bundle checker validates exports/module resolution, using the
 available host's transpile-only loader. It cannot replace semantic type checking

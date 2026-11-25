@@ -19,8 +19,10 @@ const { transitionFullscreen } = (() => {
 })();
 const newViewerEvents = [];
 class Viewer {
-  constructor(options) { this.options = options; this.events = new Map(); newViewerEvents.push(this); }
-  on(name, callback) { this.events.set(name, callback); }
+  constructor(options) { this.options = options; this.events = new Map(); this.center = null; newViewerEvents.push(this); }
+  on(name, callback) { this.events.set(name, [...(this.events.get(name) || []), callback]); }
+  off(name, callback) { this.events.set(name, this.events.get(name).filter(handler => handler !== callback)); }
+  setCenter(center) { this.center = center; }
 }
 const Runtime = new Function('Viewer', 'readCachedSequenceCoordinates', 'debounceUtil', 'setTimeout', 'trackViewerImage', 'transitionFullscreen',
   compile('class Runtime {' + members.map(member).join('\n') + '}') + '; return Runtime;')(
@@ -99,6 +101,8 @@ test('explicit active-sequence cleanup still removes its pulse and cone', () => 
 
 for (const entering of [true, false]) test('fullscreen ' + (entering ? 'entry' : 'exit') + ' restores the pulse after actual event binding clears stale graphics', async () => {
   const { w, events, view } = setup('3d'); w.state.isFullscreen = !entering;
+  w.mapillaryViewer.getCenter = async () => [0.81, 0.42];
+  w.mapillaryViewer.getImage = async () => ({ id: w.state.imageId });
   w.applyCustomCameraAngle = () => events.push('camera-angle');
   w.createMinimap = () => events.push('minimap-create');
   w.destroyMinimap = () => events.push('minimap-destroy');
@@ -118,8 +122,26 @@ for (const entering of [true, false]) test('fullscreen ' + (entering ? 'entry' :
   assert.equal(w.currentGreenGraphic.attributes.image_id, currentImageId); assert.equal(w.currentGreenGraphic.removed, false);
   assert(w.currentCone, 'binding the recreated viewer must not erase its restored cone');
   assert.equal(w._lastBearing, 37);
+  const viewer = w.mapillaryViewer;
+  assert.equal(viewer.center, null, 'do not position the viewer before the image event');
+  const restore = viewer.events.get('image')[1];
+  assert.equal(typeof restore, 'function');
+  restore({ image: { id: currentImageId } });
+  assert.deepEqual(viewer.center, [0.81, 0.42]);
+  assert.equal(viewer.events.get('image').length, 1, 'restore runs only once');
   const transitionEvents = new Set(['camera-angle', 'viewer-remove', 'minimap-create', 'minimap-destroy', 'map-center', 'deferred-note']);
   assert.deepEqual(events.filter(event => transitionEvents.has(event)), entering
-    ? ['viewer-remove', 'camera-angle', 'minimap-create']
-    : ['minimap-destroy', 'viewer-remove', 'camera-angle', 'map-center', 'deferred-note']);
+    ? ['viewer-remove', 'minimap-create']
+    : ['minimap-destroy', 'viewer-remove', 'map-center', 'deferred-note']);
+});
+
+test('fullscreen restoration ignores a different image on the replacement viewer', async () => {
+  const { w } = setup();
+  w.mapillaryViewer.getCenter = async () => [0.81, 0.42];
+  w.mapillaryViewer.getImage = async () => ({ id: w.state.imageId });
+  await w.toggleFullscreen(); await Promise.all(w.stateCallbacks);
+  const viewer = w.mapillaryViewer;
+  viewer.events.get('image')[1]({ image: { id: 'different-image' } });
+  assert.equal(viewer.center, null);
+  assert.equal(viewer.events.get('image').length, 1);
 });

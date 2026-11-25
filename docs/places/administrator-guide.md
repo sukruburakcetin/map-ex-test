@@ -331,7 +331,7 @@ There is no automatic hot swap or destructive overwrite command. Stop/restart ca
 | Places absent in one responsive layout | Check that layout's widget configuration and service URL; do not assume another instance's settings carry over. |
 | New release not visible | Verify the configured database and `/status` release, then reload the app and check configuration/cache delivery. |
 
-For technical contract details, see [Places service configuration](service-contract.md). For everyday use, see [Nearby places](README.md).
+For technical contract details, see [Places service configuration](../development/places-service-contract.md). For everyday use, see [Nearby places](README.md).
 
 ## Saved areas and release refreshes
 

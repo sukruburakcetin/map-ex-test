@@ -63,6 +63,27 @@ export const coverageBarCss = `
         .mly-coverage-notice button[aria-label="Dismiss coverage message"] { width:30px !important; font-size:18px !important; }
     }
 
+    /* Reserve only the host grip's 15px footprint when Explorer is in a resizable panel. */
+    .jimu-floating-panel:has(.resizer-0.bottom-right) .mly-coverage-notice {
+        padding-right:15px !important;
+        pointer-events:none;
+    }
+    .jimu-floating-panel:has(.resizer-0.bottom-right) .mly-coverage-notice button { pointer-events:auto; }
+    .jimu-floating-panel:has(.mly-coverage-notice) .resizer-0.bottom-right {
+        z-index:61;
+        cursor:nwse-resize;
+    }
+    .jimu-floating-panel:has(.mly-coverage-notice) .resizer-0.bottom-right::after {
+        content:"";
+        position:absolute;
+        right:2px;
+        bottom:2px;
+        width:9px;
+        height:9px;
+        background:linear-gradient(135deg, transparent 48%, #c1ebd8 49% 56%, transparent 57% 72%, #c1ebd8 73% 80%, transparent 81%);
+        pointer-events:none;
+    }
+
     .mly-coverage-bar-action {
         box-sizing: border-box;
         flex: 0 1 auto;

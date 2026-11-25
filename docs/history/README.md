@@ -10,3 +10,19 @@ Current setup begins at the [documentation index](../README.md). Intermediate vi
 - **Publication is explicit.** Local drafts, workspace contributions and Enterprise notes have different owners and save boundaries. Database upgrades remain operator actions. See [Enterprise notes](../administration/enterprise-notes.md) and [workspace operations](../../tools/community-notes/README.md).
 
 The [5.0 inventory](../releases/5.0-change-inventory.md) retains the release comparison and unfinished acceptance work. It is separate from beginner setup. Use Git history for committed earlier implementations; no sequence of development installers is required for current source.
+
+## Refactoring and installer history
+
+These records preserve dated installer prerequisites, rollback instructions, and test evidence. Use the [current resume page](../../CONTINUE-HERE.md) for active work.
+
+- [ACCOUNT-HANDOFF.md](refactoring/ACCOUNT-HANDOFF.md)
+- [CONTINUE-HERE.md](refactoring/CONTINUE-HERE.md)
+- [MAPILLARY-ACCOUNT-HANDOFF-2026-11-20.md](refactoring/MAPILLARY-ACCOUNT-HANDOFF-2026-11-20.md)
+- [MAPILLARY-EXPLORER-ACCOUNT-HANDOFF.md](refactoring/MAPILLARY-EXPLORER-ACCOUNT-HANDOFF.md)
+- [REFACTORING-MILESTONE.md](refactoring/REFACTORING-MILESTONE.md)
+- [checkpoint-2026-11-19.md](refactoring/checkpoint-2026-11-19.md)
+- [exb-1.21-stage-65.md](refactoring/exb-1.21-stage-65.md)
+- [refactoring-remaining-work.md](refactoring/refactoring-remaining-work.md)
+- [runtime-reading-guide.md](refactoring/runtime-reading-guide.md)
+- [test-baseline.md](refactoring/test-baseline.md)
+- [Localization rollout](localization-rollout.md)
