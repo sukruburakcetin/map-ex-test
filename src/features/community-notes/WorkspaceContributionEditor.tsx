@@ -1,5 +1,6 @@
 /** @jsx jsx */
 import { WorkspaceFieldHelp } from "./WorkspaceFieldHelp";
+import { comparisonNoteAttachment, withComparisonNoteAttachment } from '../imagery/timeTravelPreview';
 import { React, jsx } from 'jimu-core';
 import { useWidgetLocale } from '../../i18n/WidgetLocale';
 import type { CommunityRecord, WorkspaceCategory, ContributionEditValues } from './communityWorkspace';
@@ -14,17 +15,18 @@ const statuses=[['open','Open'],['in_progress','In progress'],['completed','Comp
 export function WorkspaceContributionEditor({note,categories,busy,error,onSave,onCancel}:{note:CommunityRecord;categories:readonly WorkspaceCategory[];busy:boolean;error:string;
  onSave(values:ContributionEditValues,expectedVersion:string):void;onCancel():void}) {
   const {owned:text}=useWidgetLocale();
-  const [values,setValues]=React.useState<ContributionEditValues>(()=>({title:note.title||'',category:note.category,status:note.status,note:note.note_text,resolutionNote:note.resolution_note}));
+  const attachment=comparisonNoteAttachment(note.note_text);
+  const [values,setValues]=React.useState<ContributionEditValues>(()=>({title:note.title||'',category:note.category,status:note.status,note:attachment.text,resolutionNote:note.resolution_note}));
   const version=React.useRef(note.updated_at||note.created_at),heading=React.useRef<HTMLHeadingElement>(null);
   React.useEffect(()=>{heading.current?.scrollIntoView({block:'nearest'});heading.current?.focus({preventScroll:true});},[]);
   const active=categories.filter(category=>!category.archived);
-  return <form aria-label={text('Edit contribution')} style={{...section,borderColor:'#8bbba1'}} onSubmit={event=>{event.preventDefault();if(!busy)onSave(values,version.current);}}>
+  return <form aria-label={text('Edit contribution')} style={{...section,borderColor:'#8bbba1'}} onSubmit={event=>{event.preventDefault();if(!busy)onSave({...values,note:withComparisonNoteAttachment(values.note,attachment.comparison)},version.current);}}>
     <h4 ref={heading} tabIndex={-1} style={{margin:0}}>{text('Edit contribution')}</h4>
     <small>{text('Changes update this shared contribution. Its local copy stays unchanged.')}</small>
     <fieldset disabled={busy} style={{display:'grid',gap:10,border:0,padding:0,margin:0,minWidth:0}}>
       <WorkspaceFieldHelp label={text('Title')} help={text("Change the short title used in the workspace list and search.")}><input aria-label={text('Contribution title')} style={input} maxLength={160} value={values.title||''} onChange={event=>setValues({...values,title:event.target.value})} /></WorkspaceFieldHelp>
       <small>{text('The category is used as the heading when the title is empty.')}</small>
-      <WorkspaceFieldHelp label={text('Description')} help={text("Update the shared observation or add missing context.")}><textarea aria-label={text('Contribution description')} style={{...input,resize:'vertical',minHeight:90}} rows={4} maxLength={8000} value={values.note} onChange={event=>setValues({...values,note:event.target.value})} /></WorkspaceFieldHelp>
+      <WorkspaceFieldHelp label={text('Description')} help={text("Update the shared observation or add missing context.")}><textarea aria-label={text('Contribution description')} style={{...input,resize:'vertical',minHeight:90}} rows={4} maxLength={8000-withComparisonNoteAttachment('',attachment.comparison).length} value={values.note} onChange={event=>setValues({...values,note:event.target.value})} /></WorkspaceFieldHelp>
       <WorkspaceFieldHelp label={text('Status')} help={text("Choose the current workflow state for this observation.")}><select aria-label={text('Status')} style={input} value={values.status} onChange={event=>setValues({...values,status:event.target.value})}>{statuses.map(([value,label])=><option key={value} value={value}>{text(label)}</option>)}</select></WorkspaceFieldHelp>
       <WorkspaceFieldHelp label={text('Contribution category')} help={text("Move this contribution to a category configured in the current workspace.")}><select aria-label={text('Edit contribution category')} style={input} value={values.category} onChange={event=>setValues({...values,category:event.target.value})}>
         {!active.some(category=>category.name===values.category)&&<option value={values.category}>{values.category} · {text('Retired')}</option>}{active.map(category=><option key={category.name} value={category.name}>{category.name}</option>)}

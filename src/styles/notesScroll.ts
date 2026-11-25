@@ -28,8 +28,35 @@ export const notesScrollCss = `
 .mly-notes-context:empty { display:none; }
 .mly-notes-context > [role="status"] { display:flex; align-items:center; flex-wrap:wrap; gap:4px; }
 .mly-notes-context .mly-enterprise-account { padding:0 !important; }
-.mly-notes-sheet :is(.mly-notes-context,.mly-notes-tabs,.mly-notes-toolbar) button.mly-text-action { margin:0; padding-block:2px !important; min-block-size:26px; }
-.mly-notes-sheet .mly-notes-tabs { gap:4px !important; }
+.mly-notes-sheet :is(.mly-notes-context,.mly-notes-toolbar) button.mly-text-action { margin:0; padding-block:2px !important; min-block-size:26px; }
+/* Source tabs and content use the sheet's shared horizontal inset. */
+.mly-notes-tabs {
+  display:flex; flex-wrap:wrap; align-items:stretch; align-self:flex-start; flex-shrink:0; gap:3px;
+  box-sizing:border-box; max-inline-size:100%; padding:3px;
+  background:var(--mly-theme-input, #14251d);
+  border:1px solid var(--mly-theme-border, #3c5145); border-radius:9px;
+}
+.mly-notes-tabs > .mly-notes-source-tab {
+  display:inline-flex; align-items:center; justify-content:center; gap:5px; min-inline-size:0;
+  min-block-size:28px; max-inline-size:100%; margin:0; padding:3px 9px; border:1px solid transparent;
+  border-radius:6px; background:transparent; color:var(--mly-theme-muted, #a6b4ad);
+  font:inherit; font-weight:600; cursor:pointer; overflow-wrap:anywhere;
+}
+.mly-notes-tabs > .mly-notes-source-tab:hover { color:var(--mly-theme-text, #d4e7dc); background:var(--mly-theme-control, #263c31); }
+.mly-notes-tabs > .mly-notes-source-tab[aria-selected="true"] {
+  color:var(--mly-theme-text, #d4e7dc); background:var(--mly-theme-selected, #214d35);
+  border-color:var(--mly-theme-accent, #75b990);
+}
+.mly-notes-tabs > .mly-notes-source-tab:focus-visible { outline:2px solid var(--mly-theme-accent, #75b990); outline-offset:-2px; }
+.mly-notes-source-count {
+  flex:none; min-inline-size:1.4em; padding-inline:3px; border-radius:999px;
+  background:var(--mly-theme-panel, #102019); color:var(--mly-theme-text, #d4e7dc);
+  font-variant-numeric:tabular-nums; font-size:.9em; text-align:center;
+}
+@media (forced-colors: active) {
+  .mly-notes-tabs > .mly-notes-source-tab[aria-selected="true"] { border-color:Highlight; color:Highlight; }
+}
+
 .mly-notes-sheet .mly-notes-search-row { gap:4px 8px; }
 .mly-notes-sheet .mly-notes-search-row :is(input,select) { min-height:28px; margin:0; padding-block:3px; }
 .mly-notes-sheet .mly-notes-search-row .mly-notes-sort { flex:0 1 auto; }

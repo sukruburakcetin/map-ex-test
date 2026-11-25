@@ -11,7 +11,8 @@ export async function startNoteHighlight(
   view: __esri.MapView | __esri.SceneView,
   layer: __esri.GraphicsLayer,
   graphic: __esri.Graphic,
-  current: () => boolean
+  current: () => boolean,
+  applyDocking?: () => void
 ): Promise<NoteHighlightHandle> {
   const [layerView, [reactiveUtils]] = await Promise.all([
     view.whenLayerView(layer), loadArcGISJSAPIModules(['esri/core/reactiveUtils'])
@@ -33,8 +34,14 @@ export async function startNoteHighlight(
       if (visible === false) remove();
     });
     // openPopup may return a promise; report rejection without retaining a highlight.
+    applyDocking?.();
     const opening = view.openPopup({ features: [graphic], location: graphic.geometry as __esri.Point });
-    if (opening && typeof opening.then === 'function') void opening.then(() => { if (removed || !current()) { remove(); closeOwnedPopup(); } }, remove);
+    const opened = () => {
+      if (removed || !current()) { remove(); closeOwnedPopup(); }
+      else if (view.popup?.selectedFeature === graphic) applyDocking?.();
+    };
+    if (opening && typeof opening.then === 'function') void opening.then(opened, remove);
+    else opened();
     if (!current()) remove();
     return { remove };
   } catch (error) { remove(); throw error; }

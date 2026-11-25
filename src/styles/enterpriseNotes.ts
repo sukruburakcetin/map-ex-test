@@ -1,8 +1,5 @@
 /** Local/Enterprise source selection and Enterprise list presentation. */
 import type { React } from 'jimu-core';
-export const notesTabsStyle: React.CSSProperties = { display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 };
-export const getNotesTabStyle = (selected: boolean): React.CSSProperties => ({ padding: '5px 10px', borderRadius: 5,
-  border: selected ? '1px solid var(--mly-theme-border, #48966b)' : '1px solid var(--mly-theme-border, #3c5145)', background: selected ? 'var(--mly-theme-selected, #214d35)' : 'transparent', color: 'var(--mly-theme-text, #d4e7dc)', cursor: 'pointer', fontSize: 11 });
 export const enterpriseToolbarStyle: React.CSSProperties = { display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, flexWrap: 'wrap', fontSize: 10, color: '#b2cbbc' };
 export const enterpriseRowsStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 5, flex: '0 0 auto', minWidth: 0 };
 /** Enterprise tools and records share one viewport, so fixed help cannot squeeze cards to zero. */
@@ -24,7 +21,7 @@ export const notesLocalPanelStyle: React.CSSProperties = { display: 'flex', flex
 export const notesSheetStyle: React.CSSProperties = { position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 999999990,
   height: 'min(300px, 65%)', boxSizing: 'border-box', background: 'var(--mly-theme-panel, rgba(12,12,12,0.92))', color: 'var(--mly-theme-text, inherit)', backdropFilter: 'blur(10px)',
   borderTop: '1px solid var(--mly-theme-border, rgba(255,255,255,0.1))', padding: '4px 8px 6px', display: 'flex', flexDirection: 'column', gap: 4,
-  minHeight: 0, maxHeight: '100%', overflow: 'hidden', animation: 'nearbySlideUp 0.2s ease-out' };
+  minHeight: 0, maxHeight: '100%', borderRadius: '12px 12px 0 0', overflow: 'hidden', animation: 'nearbySlideUp 0.2s ease-out' };
 export const notesRowHeadingStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between', minHeight: 32, minWidth: 0 };
 export const notesRowMetaStyle: React.CSSProperties = { fontSize: 9, color: 'var(--mly-theme-muted, #a0ada5)' };
 

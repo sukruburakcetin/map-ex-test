@@ -1,6 +1,7 @@
 /** @jsx jsx */
 import { WorkspaceFieldHelp } from "./WorkspaceFieldHelp";
 import type { ExternalContributionSeed } from '../places/placeNote';
+import { comparisonNoteHref, withComparisonNoteAttachment } from '../imagery/timeTravelPreview';
 import { detectionNoteDescription } from '../detections/detectionNote';
 import { attachmentMetadata, withAttachmentMetadata, withPlaceAttachmentMetadata } from '../detections/detectionImageAttachment';
 import { React, jsx } from 'jimu-core';
@@ -14,8 +15,8 @@ import { workspaceSectionStyle as section, workspaceSummaryStyle as summary, wor
  * Its source ID survives failed submissions; location changes are explicit and
  * unmount/cancel cleans map intent. Existing drafts retain their category choice.
  */
-export function WorkspaceContributionDraft({categories,busy,error,onPickLocation,onPublish,sectionRef,currentImageId,detectionDraft,onClearDetectionDraft,onDetectionDraftFinished,onDetectionDraftLocation}:{categories:readonly WorkspaceCategory[];busy:boolean;error:string;onPickLocation?:WorkspaceLocationRequest;
- onPublish(values:DirectContributionValues,onSaved:()=>void):void;sectionRef:React.RefObject<HTMLDetailsElement>;currentImageId?:string|null;detectionDraft?:ExternalContributionSeed|null;onClearDetectionDraft?:(applied?:boolean)=>void;onDetectionDraftFinished?:(requestId:string)=>void;onDetectionDraftLocation?:(requestId:string,point:WorkspaceMapLocation)=>void}) {
+export function WorkspaceContributionDraft({categories,busy,error,onPickLocation,onPublish,sectionRef,currentImageId,detectionDraft,onClearDetectionDraft,onDetectionDraftFinished,onDetectionDraftLocation,embedded,onClose}:{categories:readonly WorkspaceCategory[];busy:boolean;error:string;onPickLocation?:WorkspaceLocationRequest;
+ onPublish(values:DirectContributionValues,onSaved:()=>void):void;sectionRef:React.RefObject<HTMLDetailsElement>;embedded?:boolean;onClose?:()=>void;currentImageId?:string|null;detectionDraft?:ExternalContributionSeed|null;onClearDetectionDraft?:(applied?:boolean)=>void;onDetectionDraftFinished?:(requestId:string)=>void;onDetectionDraftLocation?:(requestId:string,point:WorkspaceMapLocation)=>void}) {
  const {owned:text}=useWidgetLocale();
  const [title,setTitle]=React.useState(''),[description,setDescription]=React.useState(''),[category,setCategory]=React.useState('');
  const [point,setPoint]=React.useState<WorkspaceMapLocation|null>(null),[picking,setPicking]=React.useState(false),[attach,setAttach]=React.useState<string|null>(null);
@@ -30,26 +31,29 @@ export function WorkspaceContributionDraft({categories,busy,error,onPickLocation
  function applyDetection(){
   if(!detectionDraft||busy)return;
   cancel.current?.();cancel.current=null;source.current='';setPicking(false);
-  setTitle(detectionDraft.title.slice(0,160));setDescription('placeId' in detectionDraft?detectionDraft.description:attachmentMetadata(detectionNoteDescription(detectionDraft)).text);appliedSeed.current=detectionDraft;
+  setTitle(detectionDraft.title.slice(0,160));setDescription('detectionId' in detectionDraft?attachmentMetadata(detectionNoteDescription(detectionDraft)).text:detectionDraft.description);appliedSeed.current=detectionDraft;
   setPoint({lon:detectionDraft.lon,lat:detectionDraft.lat});setAttach(detectionDraft.imageId);
   appliedDetection.current=detectionDraft.requestId;
   if(sectionRef.current){sectionRef.current.open=true;sectionRef.current.scrollIntoView({block:'nearest'});}
   onClearDetectionDraft?.(true);
  }
  React.useEffect(()=>{if(detectionDraft&&appliedDetection.current!==detectionDraft.requestId){if(sectionRef.current){sectionRef.current.open=true;sectionRef.current.scrollIntoView({block:'nearest'});}if(!point&&!title&&!description&&!busy)applyDetection();}},[detectionDraft,busy]);
+ const comparison=appliedSeed.current&&'comparison' in appliedSeed.current?appliedSeed.current.comparison:undefined;
+ const comparisonHref=comparison&&point&&comparisonNoteHref(comparison,point);
  const active=categories.filter(item=>!item.archived),validCategory=active.some(item=>item.name===category);
  function reset(){appliedSeed.current=null;if(appliedDetection.current){onDetectionDraftFinished?.(appliedDetection.current);appliedDetection.current='';}cancel.current?.();cancel.current=null;source.current='';setTitle('');setDescription('');setPoint(null);setPicking(false);setAttach(null);}
  function chooseLocation(){if(!onPickLocation)return;cancel.current?.();setPicking(true);cancel.current=onPickLocation(location=>{cancel.current=null;setPoint(location);if(appliedSeed.current&&'placeId' in appliedSeed.current)setDescription(value=>value.replace(/^Note location: [^\n]*$/m,`Note location: ${location.lat.toFixed(6)}, ${location.lon.toFixed(6)}`).replace(/^Location: mapped Overture place\.$/m,'Location: adjusted on map.'));if(appliedDetection.current)onDetectionDraftLocation?.(appliedDetection.current,location);setPicking(false);},()=>{cancel.current=null;setPicking(false);});}
- return <details ref={sectionRef} className="mly-workspace-section" style={{...section,display:'block'}}><summary style={summary}>{text('Create contribution')}</summary>
-  {detectionDraft&&appliedDetection.current!==detectionDraft.requestId&&<div role="status" style={{display:'grid',gap:6,paddingTop:8}}><strong>{detectionDraft.title}</strong><span>{text('A contribution draft is already open. Replace it with the incoming note?')}</span><button className="mly-text-action" type="button" style={secondary} disabled={busy} onClick={applyDetection}>{text(detectionDraft&&'placeId' in detectionDraft?'Use selected place':'Use detected object')}</button><button className="mly-text-action" type="button" style={secondary} disabled={busy} onClick={()=>onClearDetectionDraft?.()}>{text('Keep current draft')}</button></div>}
-  <form aria-label={text('Create contribution')} style={{display:'grid',gap:10,minWidth:0,paddingTop:8}} onSubmit={event=>{event.preventDefault();if(busy||!point||!validCategory||!title.trim())return;if(!source.current)source.current='community:'+crypto.randomUUID();onPublish({sourceId:source.current,title:title.trim(),description:appliedSeed.current&&'detectionId' in appliedSeed.current?withAttachmentMetadata(description,appliedSeed.current):appliedSeed.current&&'placeId' in appliedSeed.current&&attach===appliedSeed.current.imageId?withPlaceAttachmentMetadata(description,appliedSeed.current):description,category,lon:point.lon,lat:point.lat,imageId:attach},reset);}}>
-   <p style={{margin:0}}>{text('Choose a map location and use this workspace’s categories. No local draft or Builder access is required.')}</p>
+ return <details ref={sectionRef} open={embedded || undefined} className="mly-workspace-section" style={{...section,display:'block'}}><summary style={summary} hidden={embedded}>{text('Create contribution')}</summary>
+  {detectionDraft&&appliedDetection.current!==detectionDraft.requestId&&<div role="status" style={{display:'grid',gap:6,paddingTop:8}}><strong>{detectionDraft.title}</strong><span>{text('A contribution draft is already open. Replace it with the incoming note?')}</span><button className="mly-text-action" type="button" style={secondary} disabled={busy} onClick={applyDetection}>{text('comparison' in detectionDraft?'Use this comparison':'placeId' in detectionDraft?'Use selected place':'Use detected object')}</button><button className="mly-text-action" type="button" style={secondary} disabled={busy} onClick={()=>onClearDetectionDraft?.()}>{text('Keep current draft')}</button></div>}
+  <form aria-label={text('Create contribution')} style={{display:'grid',gap:10,minWidth:0,paddingTop:8}} onSubmit={event=>{event.preventDefault();if(busy||!point||!validCategory||!title.trim())return;if(!source.current)source.current='community:'+crypto.randomUUID();onPublish({sourceId:source.current,title:title.trim(),description:comparison?withComparisonNoteAttachment(description,comparison):appliedSeed.current&&'detectionId' in appliedSeed.current?withAttachmentMetadata(description,appliedSeed.current):appliedSeed.current&&'placeId' in appliedSeed.current&&attach===appliedSeed.current.imageId?withPlaceAttachmentMetadata(description,appliedSeed.current):description,category,lon:point.lon,lat:point.lat,imageId:attach},reset);}}>
+   <p style={{margin:0}}>{text('Choose a location on the map. Press Escape or use Cancel location picking to return to this draft.')}</p>
    <button className="mly-text-action" type="button" style={secondary} disabled={busy||!onPickLocation} onClick={chooseLocation}>{text(point?'Choose another map location':'Choose location on map')}</button>
    <span ref={locationStatus} tabIndex={-1} role="status">{picking?text('Click the map to place this contribution.'):point?`${text('Selected location')}: ${point.lat.toFixed(6)}, ${point.lon.toFixed(6)}`:text('Select a location before publishing.')}</span>
    <WorkspaceFieldHelp label={text('Title')} help={text("Use a short title that makes the observation easy to identify in search results.")}><input aria-label={text('New contribution title')} style={input} required maxLength={160} disabled={busy} value={title} onChange={event=>setTitle(event.target.value)}/></WorkspaceFieldHelp>
    <WorkspaceFieldHelp label={text('Workspace category')} help={text("Choose the category that best matches this observation.")}><select aria-label={text('New contribution category')} style={input} disabled={busy} value={category} onChange={event=>setCategory(event.target.value)}>{!validCategory&&<option value={category}>{category||text('No active categories')}</option>}{active.map(item=><option key={item.name} value={item.name}>{item.name}</option>)}</select></WorkspaceFieldHelp>
    {category&&!validCategory&&<small>{text('This category is no longer active. Choose another before publishing.')}</small>}
-   <WorkspaceFieldHelp label={text('Description')} help={text("Describe what you observed. Add enough context for another member to understand it.")}><textarea aria-label={text('New contribution description')} style={{...input,resize:'vertical',minHeight:90}} rows={4} maxLength={8000} disabled={busy} value={description} onChange={event=>setDescription(event.target.value)}/></WorkspaceFieldHelp>
+   <WorkspaceFieldHelp label={text('Description')} help={text("Describe what you observed. Add enough context for another member to understand it.")}><textarea aria-label={text('New contribution description')} style={{...input,resize:'vertical',minHeight:90}} rows={4} maxLength={8000-withComparisonNoteAttachment('',comparison).length} disabled={busy} value={description} onChange={event=>setDescription(event.target.value)}/></WorkspaceFieldHelp>
+   {comparisonHref&&<a href={comparisonHref} target="_blank" rel="noopener noreferrer" style={{justifySelf:'start',color:'var(--mly-theme-accent, #a9dcba)'}}>{text('Open comparison')}</a>}
    {currentImageId&&<WorkspaceFieldHelp label={`${text('Attach the currently viewed image')} (${currentImageId})`}
      help={text('Attach the image only if it shows the selected location. Clear attached image removes the reference from this draft.')}>
      <input type="checkbox" disabled={busy} checked={attach===currentImageId}
@@ -57,7 +61,7 @@ export function WorkspaceContributionDraft({categories,busy,error,onPickLocation
    </WorkspaceFieldHelp>}
    {attach&&<div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:'8px 12px',minWidth:0,paddingInlineStart:26}}><small style={{minWidth:0,overflowWrap:'anywhere'}}>{text('Attached image')}: {attach}</small><button className="mly-text-action" type="button" style={secondary} disabled={busy} onClick={()=>setAttach(null)}>{text('Clear attached image')}</button></div>}
    {error&&<div role="alert" style={{color:'#ffb8a6'}}>{text(error)}</div>}
-   <div style={actions}><button className="mly-text-action" type="submit" style={button} disabled={busy||!point||!validCategory||!title.trim()}>{text('Publish contribution')}</button><button className="mly-text-action" type="button" style={secondary} disabled={busy} onClick={()=>{reset();if(sectionRef.current)sectionRef.current.open=false;}}>{text('Cancel draft')}</button></div>
+   <div style={actions}><button className="mly-text-action" type="submit" style={button} disabled={busy||!point||!validCategory||!title.trim()}>{text(embedded?'Publish note':'Publish contribution')}</button><button className="mly-text-action" type="button" style={secondary} disabled={busy} onClick={()=>{reset();if(embedded)onClose?.();else if(sectionRef.current)sectionRef.current.open=false;}}>{text('Cancel draft')}</button></div>
   </form>
  </details>;
 }

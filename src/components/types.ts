@@ -385,8 +385,8 @@ export interface SequenceInfo {
 
 // ImageUtilityGroup props
 export interface ImageUtilityGroupProps {
-    widgetTheme?: import("../styles/appearance").WidgetTheme;
-    onWidgetThemeChange?(theme: import("../styles/appearance").WidgetTheme): void;
+    widgetThemePreference?: import("../styles/appearance").WidgetTheme;
+    onWidgetThemeChange?(theme?: import("../styles/appearance").WidgetTheme): void;
     appearanceStyle?: CSSProperties;
     // config flags
     hideTimeTravel?: boolean;
@@ -419,7 +419,12 @@ export interface ImageUtilityGroupProps {
     pointCloudVisible?: boolean;
     pointCloudAvailable?: boolean; // false = no sfm_cluster for this image
     // callbacks
-    loadTimeTravelPreview?: (imageId: string, signal: AbortSignal) => Promise<import('../features/imagery/timeTravelPreview').TravelPreview>;
+    loadTimeTravelPreview?: (imageId: string, signal: AbortSignal, comparison?: import('../features/imagery/timeTravelPreview').SharedComparison) => Promise<import('../features/imagery/timeTravelPreview').TravelPreview>;
+    sharedComparison?: import('../features/imagery/timeTravelPreview').SharedComparison;
+    onOpenSharedComparison?(): void;
+    onAddComparisonNote?(comparison: import('../features/imagery/timeTravelPreview').SharedComparison,
+        point: {lon:number;lat:number}, title: string, description: string): boolean;
+    onShareComparison?(comparison: import('../features/imagery/timeTravelPreview').SharedComparison): Promise<boolean>;
     onTimeTravel: (lat: number, lon: number, imageId: string) => void;
     onShare: () => void;
     onDownload: () => void;

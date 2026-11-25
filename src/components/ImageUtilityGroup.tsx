@@ -4,14 +4,15 @@ import { useWidgetLocale, LanguageChoice } from '../i18n/WidgetLocale';
 import ReactDOM from "react-dom";
 import { TimeTravelPreview } from "./TimeTravelPreview";
 import { isWidgetTheme } from '../styles/appearance';
-import { utilityDockCss, utilityThemeChoiceCss } from '../styles/controlPanels';
+import { utilityDockCss, utilityPreferenceCss } from '../styles/controlPanels';
 import * as Icons from "./Icons";
 import { ImageUtilityGroupProps } from "./types";
 
 /** Compact viewer actions. SDK work remains in the supplied runtime callbacks. */
 export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
-    const {t,owned,locale,allowSwitch} = useWidgetLocale();
+    const {t,owned,locale,direction,allowSwitch} = useWidgetLocale();
     const [travelOpen, setTravelOpen] = React.useState(false);
+    const [comparison, setComparison] = React.useState<ImageUtilityGroupProps['sharedComparison']>();
     const travelTrigger = React.useRef<HTMLButtonElement>(null);
     const closeTravel = React.useCallback(() => { setTravelOpen(false); travelTrigger.current?.focus(); }, []);
     const [open, setOpen] = React.useState<"more" | "cloud" | null>(null);
@@ -51,7 +52,15 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
     React.useLayoutEffect(() => { if (mobile && collapsed) setOpen(null); }, [mobile, collapsed]);
 
 
-    React.useLayoutEffect(() => { setOpen(null); setTravelOpen(false); }, [props.imageId, props.is3D, props.hideTimeTravel]);
+    React.useLayoutEffect(() => { setOpen(null); setTravelOpen(false); setComparison(undefined); }, [props.imageId, props.is3D, props.hideTimeTravel]);
+    React.useEffect(() => {
+        const shared = props.sharedComparison;
+        if (!shared || props.hideTimeTravel || !props.loadTimeTravelPreview || shared.imageId !== props.imageId) return;
+        props.onOpenSharedComparison?.();
+        setOpen(null);
+        setComparison(shared);
+        setTravelOpen(true);
+    }, [props.sharedComparison, props.imageId, props.hideTimeTravel, props.loadTimeTravelPreview, props.onOpenSharedComparison]);
     React.useEffect(() => { if ((open === "more" && !hasMore) || (open === "cloud" && !cloudMode)) setOpen(null); }, [open, hasMore, cloudMode]);
     React.useLayoutEffect(() => {
         if (!open || !trigger.current || !menu.current || !dock.current) return;
@@ -68,13 +77,20 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
         setPosition({ width, maxHeight, left: Math.max(left, Math.min(anchor.right - width, right - width)),
             top: Math.max(top, Math.min(above ? dockBounds.top - height - 6 : dockBounds.bottom + 6, bottom - height)) });
         menu.current.querySelector<HTMLElement>('button:not(:disabled), select:not(:disabled)')?.focus();
-    }, [open, props.isDownloading, cloudMode, locale]);
+    }, [open, props.isDownloading, cloudMode, locale, allowSwitch, props.onWidgetThemeChange]);
     React.useEffect(() => {
         if (!open) return;
         const outside = (event: Event) => {
             if (!menu.current?.contains(event.target as Node) && !dock.current?.contains(event.target as Node)) setOpen(null);
         };
-        const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); setOpen(null); trigger.current?.focus(); } };
+        const escape = (event: KeyboardEvent) => {
+            if (event.key !== 'Escape') return;
+            if (CSS.supports('selector(select:open)') && menu.current?.querySelector('select:open')) return;
+            event.preventDefault();
+            event.stopPropagation();
+            setOpen(null);
+            trigger.current?.focus();
+        };
         const dismiss = () => setOpen(null);
         const scroll = (event: Event) => { if (!menu.current?.contains(event.target as Node)) setOpen(null); };
         const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => {
@@ -99,7 +115,7 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
     }, [open]);
 
     const cloudLabel = props.pointCloudLoading ? t('cancelCloud') : cloudOn ? t('closeCloud') : cloudBlocked ? t('noCloud') : t('loadCloud');
-    if (!hasNavigation && !hasSceneTools && !hasMore) return null;
+    if (!hasNavigation && !hasSceneTools && !hasMore && !travelOpen) return null;
     return <div lang={locale} ref={dock} className={`glass-image-utility-panel mly-utility-dock${mobile && collapsed ? ' is-collapsed' : ''}`} data-mobile={mobile ? 'true' : undefined} role="group" aria-label={t('imageActions')}>
         <style>{utilityDockCss}</style>
         {!props.hideCenterMapButton && <button type="button" className="utility-button" title={t('centerMap')} aria-label={t('centerMap')} onClick={props.onCenterMap}><Icons.Crosshair size={16}/></button>}
@@ -107,7 +123,7 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
             title={props.lockToImage ? t('lockOn') : t('lockOff')}
             onClick={props.onToggleImageLock}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d={props.lockToImage ? 'M8 10V6a4 4 0 0 1 8 0v4' : 'M8 10V6a4 4 0 0 1 8 0'}/></svg></button>}
         {!props.hideTimeTravel && props.hasTimeTravel && <button ref={travelTrigger} type="button" className="utility-button" aria-haspopup="dialog" aria-expanded={travelOpen} title={t('otherDates')} aria-label={t('timeTravel')} disabled={!currentImage}
-            onClick={() => { if (currentImage && props.imageId) { if (props.loadTimeTravelPreview) { setOpen(null); setTravelOpen(true); } else props.onTimeTravel(currentImage.lat, currentImage.lon, props.imageId); } }}><Icons.TimeTravel size={16}/></button>}
+            onClick={() => { if (currentImage && props.imageId) { if (props.loadTimeTravelPreview) { setOpen(null); setComparison(undefined); setTravelOpen(true); } else props.onTimeTravel(currentImage.lat, currentImage.lon, props.imageId); } }}><Icons.TimeTravel size={16}/></button>}
         {hasNavigation && hasSceneTools && <span className="mly-dock-divider" aria-hidden="true"/>}
         {props.is3D && !props.hideSyncHeadingButton && <button type="button" className="utility-button" aria-label={t('followHeading')} aria-pressed={props.syncHeading}
             title={props.syncHeading ? t('keepNorth') : t('followHeading')} onClick={props.onToggleSyncHeading}>{props.syncHeading ? <Icons.CompassLocked/> : <Icons.CompassUnlocked/>}</button>}
@@ -133,17 +149,21 @@ export const ImageUtilityGroup: React.FC<ImageUtilityGroupProps> = props => {
             </svg>
             {collapsed && toolsActive && <span className="mly-dock-collapsed-active" aria-hidden="true"/>}
         </button>}
-        {travelOpen && props.imageId && props.loadTimeTravelPreview && <TimeTravelPreview key={props.imageId} imageId={props.imageId} load={props.loadTimeTravelPreview} onClose={closeTravel}
+        {travelOpen && props.imageId && props.loadTimeTravelPreview && <TimeTravelPreview key={props.imageId} appearanceStyle={props.appearanceStyle} imageId={props.imageId} load={props.loadTimeTravelPreview} onClose={closeTravel} comparison={comparison}
+            onAddNote={currentImage&&props.onAddComparisonNote&&!props.hideShareButton
+                ? (pair,title,description)=>props.onAddComparisonNote!(pair,{lon:currentImage.lon,lat:currentImage.lat},title,description)
+                : undefined}
+            onShare={props.hideShareButton ? undefined : props.onShareComparison}
             onExternal={() => { if (currentImage && props.imageId) props.onTimeTravel(currentImage.lat, currentImage.lon, props.imageId); }}/>}
-        {open && ((open === "more" && hasMore) || (open === "cloud" && cloudMode)) && ReactDOM.createPortal(<div lang={locale} ref={menu} id={menuId} role="dialog" aria-label={open === "cloud" ? t('cloudMode') : t('moreActions')} className="mly-utility-popover" style={{ ...props.appearanceStyle, ...position, position: 'fixed', zIndex: 2147483000 }}>
+        {open && ((open === "more" && hasMore) || (open === "cloud" && cloudMode)) && ReactDOM.createPortal(<div lang={locale} dir={direction} ref={menu} id={menuId} role="dialog" aria-label={open === "cloud" ? t('cloudMode') : t('moreActions')} className="mly-utility-popover" style={{ ...props.appearanceStyle, ...position, position: 'fixed', zIndex: 2147483000 }}>
             {open === "more" && !props.hideShareButton && <button className="mly-text-action" type="button" onClick={() => { close(true); props.onShare(); }}><Icons.Share size={15}/><span>{t('shareView')} </span></button>}
             {open === "more" && !props.hideImageDownload && <button className="mly-text-action" type="button" disabled={props.isDownloading} onClick={() => { close(true); props.onDownload(); }}><Icons.Download size={15}/><span>{props.isDownloading ? t('downloading') : t('downloadImage')}</span></button>}
-            {open === "more" && <LanguageChoice/>}
-            {open === "more" && props.onWidgetThemeChange && <label className="mly-utility-theme-choice">
-                <style>{utilityThemeChoiceCss}</style>
+            {open === "more" && <React.Fragment><style>{utilityPreferenceCss}</style><LanguageChoice/></React.Fragment>}
+            {open === "more" && props.onWidgetThemeChange && <label className="mly-utility-preference">
                 {owned("Appearance")}
-                <select aria-label={owned("Appearance")} value={props.widgetTheme || "green"}
-                    onChange={event => { const theme = event.currentTarget.value; if (isWidgetTheme(theme)) props.onWidgetThemeChange?.(theme); }}>
+                <select aria-label={owned("Appearance")} value={props.widgetThemePreference ?? ""}
+                    onChange={event => { const theme = event.currentTarget.value; if (theme === "") props.onWidgetThemeChange?.(); else if (isWidgetTheme(theme)) props.onWidgetThemeChange?.(theme); }}>
+                    <option value="">{owned("Use app default")}</option>
                     <option value="green">{owned("Mapillary Green")}</option>
                     <option value="dark">{owned("Dark")}</option>
                     <option value="light">{owned("Porcelain")}</option>

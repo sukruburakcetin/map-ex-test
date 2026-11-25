@@ -517,6 +517,9 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
             <Switch aria-label={this.context.owned("Allow visitors to change the theme")} checked={config.allowUserThemeChoice === true}
               onChange={event => this.props.onSettingChange({ id: this.props.id, config: config.set("allowUserThemeChoice", event.target.checked) })} />
           </SettingRow>
+          <p style={{fontSize:12,margin:'8px 0'}}>
+            {this.context.owned("Builder and draft previews start with the default theme. When enabled, Appearance is available under More actions. Theme changes in draft previews are temporary.")}
+          </p>
           <SettingRow>
             <span className="text" style={{ fontSize: "12px", marginTop: "5px", opacity: "0.3", fontStyle: "italic" }}>
                {t('toggleUiElementsAndActionToolsToSimplifyThe')} </span>

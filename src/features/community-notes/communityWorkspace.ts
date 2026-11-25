@@ -84,6 +84,15 @@ export class CommunityWorkspaceClient {
       headers: { apikey: this.connection.publicKey, 'Content-Type': 'application/json', ...(authenticated ? { Authorization: `Bearer ${this.session!.token}` } : {}), ...(method === 'POST' && (path.startsWith('/rest/v1/mly_workspace_notes')||path.startsWith('/rest/v1/mly_workspace_note_images')) ? { Prefer: 'resolution=ignore-duplicates,return=representation' } : (method === 'PATCH' || method === 'DELETE') ? { Prefer: 'return=representation' } : {}) },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
+    if (!response.ok && path === '/rest/v1/rpc/mly_delete_workspace_category') {
+      if (response.status === 404)
+        throw new Error('Category deletion is unavailable. Ask the operator to apply migration 008.');
+      if (response.status === 409) {
+        const error = await response.json().catch(() => null);
+        if (error?.code === '23503')
+          throw new Error('This category is used by a note. Retire it to hide it from new notes.');
+      }
+    }
     if (response.status === 404 && path === '/rest/v1/rpc/mly_delete_workspace')
       throw new Error('Workspace deletion is unavailable. Ask the operator to apply migration 007.');
     if (!response.ok && path === '/auth/v1/token?grant_type=password') {
@@ -92,6 +101,13 @@ export class CommunityWorkspaceClient {
       if (code === 'invalid_credentials') throw new Error('Sign-in failed. Check the email and password for this workspace service.');
       if (code === 'email_not_confirmed') throw new Error('Confirm your email with the workspace operator before signing in.');
       throw new Error(`Could not sign in to the workspace service (HTTP ${response.status}).`);
+    }
+    if (!response.ok && (path === '/rest/v1/rpc/mly_join_workspace' || path === '/rest/v1/rpc/mly_join_workspace_named') && response.status === 400) {
+      const error = await response.json().catch(() => null);
+      if (error?.code === 'P0001' && error.message === 'Invitation unavailable')
+        throw new Error('This invitation is no longer available. Ask the workspace owner for a new code.');
+      if (error?.code === 'P0001' && error.message === 'Invalid invitation')
+        throw new Error('This invitation code is invalid. Check the code or ask the workspace owner for a new one.');
     }
     if (!response.ok) throw new Error(response.status === 401 ? 'Session expired. Sign in again.' : response.status === 403 ? 'The workspace operator has not granted this action.' : `Workspace request failed (HTTP ${response.status}). Refresh before retrying a submission.`);
     if (response.status === 204) return null;
@@ -174,6 +190,10 @@ export class CommunityWorkspaceClient {
   async setCategory(workspace: string, name: string, color: string, archived = false): Promise<void> {
     if(!name.trim()||name.trim().length>120||!/^#[a-f0-9]{6}$/i.test(color)) throw new Error('Provide a category name and a six-digit color.');
     await this.request('/rest/v1/rpc/mly_set_workspace_category','POST',{p_workspace:uuid(workspace),p_name:name.trim(),p_color:color,p_archived:archived});
+  }
+  async deleteCategory(workspace: string, name: string): Promise<void> {
+    if (!name || Array.from(name).length > 120) throw new Error('Invalid category name.');
+    await this.request('/rest/v1/rpc/mly_delete_workspace_category','POST',{p_workspace:uuid(workspace),p_name:name});
   }
   async publish(workspace: string, note: FieldNote, risk: string|null): Promise<boolean> {
     if((note.title!==undefined&&(typeof note.title!=='string'||note.title.length>160))||!note.id||!note.category||!Number.isFinite(note.lon)||!Number.isFinite(note.lat)||Math.abs(note.lon)>180||Math.abs(note.lat)>90||!statuses.has(note.status||'open')||(risk!==null&&!risks.has(risk)))throw new Error('Invalid local note or assessment.');

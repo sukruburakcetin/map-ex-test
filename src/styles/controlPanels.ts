@@ -252,9 +252,10 @@ export const viewerCompactPlaybackCss = `
 `;
 
 /** Native select in the viewer's More menu. The menu carries the active theme across its portal. */
-export const utilityThemeChoiceCss = `
-.mly-utility-theme-choice { display: grid; gap: 4px; padding: 4px; }
-.mly-utility-theme-choice select {
+export const utilityPreferenceCss = `
+.mly-utility-preference { display:grid; gap:4px; min-inline-size:0; margin:0; padding:4px; font-size:11px; }
+.mly-utility-preference > label { display:grid; gap:4px; min-inline-size:0; }
+.mly-utility-preference select {
   width: 100%; min-width: 0; box-sizing: border-box; min-height: 30px;
   padding: 6px 8px; font: inherit; border-radius: 5px;
   color: var(--mly-theme-text, #e1eee5);
@@ -262,7 +263,27 @@ export const utilityThemeChoiceCss = `
   border: 1px solid var(--mly-theme-border, #648b73);
   color-scheme: var(--mly-theme-color-scheme, dark);
 }
-.mly-utility-theme-choice select:focus-visible {
+.mly-utility-preference select:focus-visible {
   outline: 2px solid var(--mly-theme-accent, #c5f6d6); outline-offset: 1px;
+}
+.mly-utility-preference select option {
+  color: var(--mly-theme-text, #e1eee5);
+  background: var(--mly-theme-panel, #192f24);
+}
+@supports (appearance: base-select) and (inline-size: anchor-size(width)) {
+  .mly-utility-preference select:not(:disabled),
+  .mly-utility-preference select::picker(select) { appearance: base-select; }
+  .mly-utility-preference select::picker(select) {
+    inline-size: anchor-size(width); min-inline-size: 0; max-inline-size: anchor-size(width);
+    box-sizing:border-box; max-block-size:min(260px, 50dvh); overflow:auto;
+    margin:4px 0; padding:3px; border:1px solid var(--mly-theme-border, #648b73); border-radius:5px;
+    color:var(--mly-theme-text, #e1eee5); background:var(--mly-theme-panel, #192f24);
+    font:inherit;
+  }
+  .mly-utility-preference select option { padding:5px; white-space:normal; overflow-wrap:anywhere; }
+  .mly-utility-preference select option:checked { background:var(--mly-theme-selected, #31543d); }
+  .mly-utility-preference select option:is(:hover,:focus-visible) {
+    outline:1px solid var(--mly-theme-accent, #c5f6d6); outline-offset:-1px;
+  }
 }
 `;

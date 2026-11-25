@@ -18,13 +18,14 @@ type DetectionActions = Pick<React.ComponentProps<typeof DetectionNoteAction>, '
 
 interface FieldNotesOverlayProps {
   state: NotesState;
+  appearanceStyle?: React.CSSProperties;
   settings: NotesSettings;
   panelActions: PanelActions;
   detectionActions: DetectionActions;
 }
 
 /** Compose the active detection prompt and the persistent notes panel. */
-export function FieldNotesOverlay({ state, settings, panelActions, detectionActions }: FieldNotesOverlayProps) {
+export function FieldNotesOverlay({ state, settings, panelActions, detectionActions, appearanceStyle }: FieldNotesOverlayProps) {
   const detection = state.viewerDetectionNote;
   const enterpriseEnabled = !!settings.sharedFieldNotesEnabled;
   const sharingEnabled = enterpriseEnabled && !!settings.sharedFieldNotesUrl;
@@ -32,8 +33,10 @@ export function FieldNotesOverlay({ state, settings, panelActions, detectionActi
     <React.Fragment>
       {state.detectionsActive && detection && (
         <DetectionNoteAction
-          {...detectionActions}
           key={detection.imageId + ':' + detection.detectionId}
+          onChoose={detectionActions.onChoose}
+          onCancel={detectionActions.onCancel}
+          onClose={detectionActions.onClose}
           selection={detection}
           enterpriseEnabled={sharingEnabled}
           hasTray={state.nearbyStripOpen}
@@ -44,6 +47,7 @@ export function FieldNotesOverlay({ state, settings, panelActions, detectionActi
       )}
       <FieldNotesPanel
         {...panelActions}
+        appearanceStyle={appearanceStyle}
         detectionWorkspaceDraft={state.detectionWorkspaceDraft}
         isAnnotationMode={state.isAnnotationMode}
         pendingNote={state.pendingFieldNote}

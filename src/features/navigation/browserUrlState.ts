@@ -135,11 +135,16 @@ export interface BrowserShareLinkHost {
  * Cross-origin/read failures use the existing error callback without a fallback URL.
  * Runtime owns image-selection eligibility and toast presentation.
  */
-export async function copyBrowserShareLink(host: BrowserShareLinkHost): Promise<void> {
+export async function copyBrowserShareLink(host: BrowserShareLinkHost, customize?: (url: URL) => void): Promise<void> {
   try {
     const browserWindow = host.getWindow();
     const targetWindow = browserWindow.self !== browserWindow.top && browserWindow.parent ? browserWindow.parent : browserWindow;
-    const urlString = targetWindow.location.href;
+    let urlString = targetWindow.location.href;
+    if (customize) {
+      const url = new URL(urlString);
+      customize(url);
+      urlString = url.href;
+    }
     if (host.getClipboard() && browserWindow.isSecureContext) {
       try {
         await host.getClipboard()!.writeText(urlString);
@@ -153,11 +158,18 @@ export async function copyBrowserShareLink(host: BrowserShareLinkHost): Promise<
       textArea.value = urlString;
       textArea.style.position = 'fixed';
       textArea.style.left = '-9999px';
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      const successful = document.execCommand('copy');
-      document.body.removeChild(textArea);
+      const container = document.fullscreenElement || document.body;
+      const previous = document.activeElement as HTMLElement | null;
+      container.appendChild(textArea);
+      let successful = false;
+      try {
+        textArea.focus();
+        textArea.select();
+        successful = document.execCommand('copy');
+      } finally {
+        container.removeChild(textArea);
+        previous?.focus({preventScroll:true});
+      }
       if (successful) { host.onCopied('textarea'); return; }
     } catch (error) {}
     host.onFailure();

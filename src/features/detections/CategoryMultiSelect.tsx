@@ -6,11 +6,11 @@ import type { FilterOption } from '../../components/types';
 import { categorySearchIndex, rankCategoryMatches } from './categorySearch';
 import { sameCategorySelection, type CategorySelection } from './categorySelection';
 const PAGE_SIZE = 40;
-interface Props { appearanceStyle?: React.CSSProperties; label: string; allLabel: string; options: readonly FilterOption[]; selected: CategorySelection; onChange(value: CategorySelection): void; }
+interface Props { appearanceStyle?: React.CSSProperties; label: string; allLabel: string; kind: 'signs' | 'objects'; options: readonly FilterOption[]; selected: CategorySelection; onChange(value: CategorySelection): void; }
 /** Local draft + explicit Apply: checkbox/search/page changes never touch map layers.
  * Search covers the full catalog; only 40 rows/images are mounted per page.
  */
-export const CategoryMultiSelect = React.memo(function CategoryMultiSelect({ appearanceStyle, label, allLabel, options, selected, onChange }: Props) {
+export const CategoryMultiSelect = React.memo(function CategoryMultiSelect({ appearanceStyle, label, allLabel, kind, options, selected, onChange }: Props) {
   const { t, formatLocale, direction } = useWidgetLocale();
   const trigger = React.useRef<HTMLButtonElement>(null), menu = React.useRef<HTMLDivElement>(null), search = React.useRef<HTMLInputElement>(null);
   const id = React.useId();
@@ -27,7 +27,9 @@ export const CategoryMultiSelect = React.memo(function CategoryMultiSelect({ app
   const currentPage = Math.min(page, Math.max(0, Math.ceil(matches.length / PAGE_SIZE) - 1)), offset = currentPage * PAGE_SIZE;
   const selection: CategorySelection = draft === null ? null : [...draft];
   const dirty = !sameCategorySelection(selected, selection);
-  const summary = selected === null ? allLabel : selected.length ? t('featureSelectedCount',{count:numbers.format(selected.length)}) : t('featureNoneSelected');
+  const summary = selected === null ? allLabel : selected.length === 0 ? t('featureNoneSelected') :
+    selected.length === 1 ? rows.find(row=>row.code===selected[0])?.option.label ?? selected[0] :
+    t(kind==='signs'?'featureSignTypeCount':'featureObjectTypeCount',{count:numbers.format(selected.length)});
   const close = React.useCallback((focus = false) => { setOpen(false); if (focus) trigger.current?.focus({preventScroll:true}); }, []);
   const place = React.useCallback(() => {
     const anchor = trigger.current; if (!anchor) return;
@@ -68,8 +70,8 @@ export const CategoryMultiSelect = React.memo(function CategoryMultiSelect({ app
   const toggle = (code: string) => setDraft(previous => { const next = new Set(previous ?? rows.map(row=>row.code)); next.has(code) ? next.delete(code) : next.add(code); return next.size===rows.length ? null : next; });
   const action: React.CSSProperties = {font:'inherit',padding:'4px 7px',border:'1px solid var(--mly-theme-border, #648b7366)',borderRadius:4,background:'var(--mly-theme-control, #244633)',color:'var(--mly-theme-text, #e0eee5)',cursor:'pointer'};
   return <div dir={direction} className="mly-category-select" style={{minWidth:0,flexShrink:0}} onClick={event=>event.stopPropagation()} onPointerDown={event=>event.stopPropagation()} onKeyDown={event=>event.stopPropagation()}>
-    <button ref={trigger} className="mly-text-action mly-category-trigger" type="button" aria-label={`${label}: ${summary}`} aria-haspopup="dialog" aria-expanded={open} aria-controls={open?id:undefined} title={`${label}: ${summary}`}
-      style={{...action,fontSize:10,minHeight:24,maxWidth:180}} onClick={()=>open?close(true):show()} onKeyDown={event=>{if(!open&&['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();show();}}}>{summary} <span aria-hidden="true">▾</span></button>
+    <button ref={trigger} className="mly-text-action mly-category-trigger" data-filtered={selected!==null} type="button" aria-label={`${label}: ${summary}`} aria-haspopup="dialog" aria-expanded={open} aria-controls={open?id:undefined} title={`${label}: ${summary}`}
+      style={{...action,fontSize:10,minHeight:24,maxWidth:180}} onClick={()=>open?close(true):show()} onKeyDown={event=>{if(!open&&['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();show();}}}><span className="mly-category-summary">{summary}</span><span aria-hidden="true">▾</span></button>
     {open && ReactDOM.createPortal(<div ref={menu} id={id} dir={direction} lang={formatLocale} role="dialog" aria-label={label} className={`mly-category-menu${Number(position.height)<260?' mly-category-menu--short':''}`} style={{...appearanceStyle,...position,zIndex:2147483647,boxSizing:'border-box',background:'var(--mly-theme-panel, #162b22)',color:'var(--mly-theme-text, #e0eee5)',border:'1px solid var(--mly-theme-border, #648b73)',borderRadius:7,boxShadow:'0 5px 22px #0008',padding:8,display:'flex',flexDirection:'column',gap:6,overflowY:'auto',font:'11px/1.35 "Segoe UI",sans-serif'}} onClick={event=>event.stopPropagation()} onPointerDown={event=>event.stopPropagation()} onKeyDown={event=>event.stopPropagation()}>
       <style>{`
 .mly-category-menu *{box-sizing:border-box}
@@ -117,7 +119,11 @@ export const CategoryMultiSelect = React.memo(function CategoryMultiSelect({ app
   .mly-category-menu,.mly-category-options{scrollbar-color:auto!important}
 }
 `}</style>
-      <strong style={{flexShrink:0}}>{label}</strong>
+      <div className="mly-category-menu-title" style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,flexShrink:0}}>
+        <strong>{label}</strong>
+        {selected!==null&&<button type="button" className="mly-text-action" style={action}
+          disabled={draft===null} onClick={()=>setDraft(null)}>{t('featureClearFilters')}</button>}
+      </div>
       <input ref={search} type="search" maxLength={256} aria-label={t('featureSearchCategories')} placeholder={t('featureSearchCategories')} value={query} onChange={event=>{setQuery(event.target.value);setPage(0);}} style={{flexShrink:0,minWidth:0,width:'100%',padding:6,border:'1px solid var(--mly-theme-border, #648b73)',borderRadius:4,background:'var(--mly-theme-input, #0e2118)',color:'inherit',font:'inherit'}}/>
       <div className="mly-category-selection-bar" style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',alignItems:'stretch',gap:6,flexShrink:0}}>
         <button type="button" className="mly-text-action" style={action} disabled={!rows.length} title={t('featureSelectAllHint')} onClick={()=>setDraft(null)}>{t('featureSelectAll')}</button>

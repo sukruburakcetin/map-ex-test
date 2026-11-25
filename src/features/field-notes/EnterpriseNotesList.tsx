@@ -19,6 +19,7 @@ export interface EnterpriseNotesListProps {onLoadDetectionPreview?:DetectionPrev
   layerUrl?: string;
   editorBusy?: boolean;
   attachmentsBusy?: boolean;
+  onOpenLinkedImage?: (note: FieldNote) => void;
   onFocus: (note: FieldNote) => void;
   onEdit?: (note: FieldNote) => void;
   onAttachments?: (note: FieldNote) => void;
@@ -26,7 +27,7 @@ export interface EnterpriseNotesListProps {onLoadDetectionPreview?:DetectionPrev
 
 /** Abort obsolete/unmounted requests and retain loaded rows when a subsequent page fails. */
 export const EnterpriseNotesList: React.FC<EnterpriseNotesListProps> = props => {
- const { t, formatLocale:locale } = useWidgetLocale();
+ const { t, owned, formatLocale:locale } = useWidgetLocale();
 
   const [notes, setNotes] = React.useState<FieldNote[]>([]);
   const [busy, setBusy] = React.useState(false);
@@ -80,6 +81,7 @@ export const EnterpriseNotesList: React.FC<EnterpriseNotesListProps> = props => 
           <div style={notesWorkflowStatusStyle}><span>{t('uiStatus')}:</span><span style={getNoteStatusBadgeStyle(note.status)}>{t(note.status==='in_progress'?'uiStatusProgress':note.status==='completed'?'uiStatusCompleted':note.status==='dismissed'?'uiStatusDismissed':'uiStatusOpen')}</span></div>
           <div style={notesRowButtonsStyle}>
           <button className="mly-text-action" type="button" style={noteListActionStyle} disabled={!validPosition} onClick={() => props.onFocus(note)}> {t('uiShowOnMap')} </button>
+          {note.imageId&&props.onOpenLinkedImage&&<button className="mly-text-action" type="button" style={noteListActionStyle} onClick={()=>props.onOpenLinkedImage?.(note)}>{owned('Open linked image')}</button>}
           {canManage && props.onEdit && <button className="mly-text-action" type="button" style={noteListActionStyle} disabled={props.editorBusy} onClick={() => props.onEdit?.(note)}> {t('uiUpdateShared')} </button>}
           {canManage && props.onAttachments && <button className="mly-text-action" type="button" style={noteListActionStyle} disabled={props.attachmentsBusy} onClick={() => props.onAttachments?.(note)}> {t('uiAttachments')} </button>}
           </div>

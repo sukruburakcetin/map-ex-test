@@ -17,9 +17,9 @@ An ownership boundary is an engineering arrangement, not a promise of zero legal
 
 ## New installation or upgrade?
 
-**New project:** follow steps 1–3 below. Run `schema.sql` once; it includes creator capabilities, categories, display names and direct-contribution titles. For optional cropped detection-image attachments, run `migrations/006-detection-image-attachments.sql` afterward. Run [migration 007](migrations/007-workspace-deletion.sql) to enable owner-only workspace deletion.
+**New project:** follow steps 1–3 below. Run `schema.sql` once; it includes creator capabilities, categories, display names and direct-contribution titles. For optional cropped detection-image attachments, run `migrations/006-detection-image-attachments.sql` afterward. Run [migration 007](migrations/007-workspace-deletion.sql) to enable owner-only workspace deletion. Apply [008](migrations/008-workspace-category-deletion.sql) to enable deletion of unused categories.
 
-**Existing project:** back it up, identify already applied migrations, and run only the missing migrations in order: 002 → 003 → 004 → 005. Add 006 if you use cropped detection attachments, and [007](migrations/007-workspace-deletion.sql) to enable owner-only workspace deletion. Do not rerun the fresh schema over existing tables. Then deploy the matching widget and reconnect/sign in. The guides linked below explain individual upgrades; the widget never executes SQL for you.
+**Existing project:** back it up, identify already applied migrations, and run only the missing migrations in order: 002 → 003 → 004 → 005. Add 006 if you use cropped detection attachments, and [007](migrations/007-workspace-deletion.sql) to enable owner-only workspace deletion. Apply [008](migrations/008-workspace-category-deletion.sql) to enable deletion of unused categories. Do not rerun the fresh schema over existing tables. Then deploy the matching widget and reconnect/sign in. The guides linked below explain individual upgrades; the widget never executes SQL for you.
 
 Workspace creation requires the trusted `workspace_creator` capability; Owner, Contributor and Reader remain roles inside a workspace. A creation capability is not service-administrator access.
 
@@ -45,29 +45,35 @@ The kit does not create any cloud service or send messages when downloaded or in
 2. Open **Connect manually** and enter the project URL and public key. Confirm that you recognize and choose that service, then select **Connect**. Connection configuration alone sends no request; sign-in makes the first service request.
 3. Sign in using the operator-provisioned workspace-creator account. Credentials and auth tokens remain in the mounted panel's memory; they are not written to localStorage/sessionStorage, URLs, invitations or exports. No refresh token is retained. Switching tabs or closing the notes sheet keeps the in-memory connection so you can place local drafts. Use Disconnect before leaving a shared device. Disconnect or actual widget/page unmount forgets the session; reconnect/sign in after provider expiry. Hiding the panel is not signing out.
 4. Choose **Create a workspace**. Enter a workspace name, a contact that members can use to reach the operator, and your display name. Select **Create workspace**. Both database creation and owner-only operations are enforced on the service.
-5. Open **Manage invitations and members**. Choose Reader or Contributor and a maximum number of joins, then create a seven-day invitation. The UI produces selectable JSON invitation details containing the public connection details and an expiring join code. Share it through your own team or community channel together with account instructions and operator contact. There is no automated email, global invitation directory, QR code or share-link service in this first version.
+5. Open **Members → Manage invitations and members**. Choose Reader or Contributor and a maximum number of joins, then create a seven-day invitation. The UI produces selectable JSON invitation details containing the public connection details and an expiring join code. Share it through your own team or community channel together with account instructions and operator contact. There is no automated email, global invitation directory, QR code or share-link service in this first version.
 6. Refresh invitations/members to see their current state. Revoke unused invitations; remove members or make them read-only as needed. These actions take effect in server policies, not just button visibility. The first version displays up to 100 members/invitations; manage larger cohorts through the operator's backend until paged administration is added.
 
 ## 3. Participants join and contribute
 
-1. Open **Notes → Workspaces** in a second browser profile or private window. Paste the invitation JSON into **Invitation details**, then select **Use invitation details**. Verify the destination, confirm the operator, and select **Connect**.
-2. Sign in with the contributor account created in the same Supabase project. In **Join with an invitation**, check the prefilled code, enter your display name, and select **Join workspace**.
-3. Create observations with the existing Local notes workflow. In the workspace tab, choose **Publish a local note**, select one note and optionally a risk opinion, then Publish. Only the selected text/category/position/image ID/status/opinion is submitted. Images, attachments, unrelated local notes and Esri/Mapillary credentials are not uploaded. The local copy remains unchanged.
+1. Open **Notes → Workspaces** in a second browser profile or private window with the invitation from your workspace owner.
+2. In **Workspaces**, paste the full invitation and select **Use invitation details**. Verify the project shown under **Data destination**, confirm the operator, and select **Continue to sign in**. Sign in with the account supplied for that project. Enter your display name and select **Join workspace**. If the code has expired, ask the owner for a new one and open **Use a replacement invitation code**. Use **Start with a new invitation** if the new invitation belongs to a different service.
+3. Create observations with the existing Local notes workflow. In the workspace **Notes** tab, choose **Add a note → Share a note from Local**, select one note, enter a title and category, and select **Publish note**. Only the selected text/category/position/image ID/status/opinion is submitted. Images, attachments, unrelated local notes and Esri/Mapillary credentials are not uploaded. The local copy remains unchanged.
 4. Risk assessment is optional: leave its disclosure closed for general collaboration notes. Unassessed records do not show an empty risk row. Risk opinion and workflow status are separate. `Completed` can coexist with `High risk`. `No obvious hazards observed` is an observation label, not a claim of no risk.
 5. Contributors can update their own assessments and remove their own submissions. Owners can moderate/remove shared notes; readers can only view/focus/export records. A stable `(workspace, author, local-note ID)` key prevents a retried publication from creating a second copy or overwriting an existing assessment. Different contributors can retain separate opinions at the same location.
 
 Refresh and Load more are explicit; no background polling or synchronization loop is installed. Shared records are not silently merged into Local/Enterprise collections. Show on map reuses the existing note-focus action. The map shows the authorized loaded results, including other contributors. Paging does not load the entire workspace at once.
 
+## Find your way around a workspace
+
+- **Notes** contains the shared notes and **Add a note**. Choose **Write a new note** or **Share a note from Local**. Sort, refresh, statistics, and export are under **More note tools**.
+- **Members** contains invitation and access management for the owner.
+- **Settings** contains your display name, categories, and the owner’s workspace deletion control. New workspaces need at least one active category before anyone can publish. Retire hides a category from new notes and preserves existing assignments. Owners can permanently delete a category when no shared notes reference it, after applying migration 008.
+
 ## Verify the two-account test
 
-1. As a contributor, publish one local test note. Confirm the local copy is still listed under **Local**.
-2. As the owner, select **Refresh notes**. Confirm the contribution appears once, shows the contributor's display name, and opens at the expected map location.
+1. As a contributor, publish one local test note. Select **Show saved note on map** and confirm the map opens at the saved location. Confirm the local copy is still listed under **Local**.
+2. As the owner, open **Notes → More note tools → Refresh notes**. Confirm the contribution appears once, shows the contributor's display name, and opens at the expected map location.
 3. If **Create a workspace** is missing for the owner, verify the SQL update returned exactly one account and sign out and reconnect after granting the flag.
 4. If sign-in fails, check that the email and password belong to the project shown as **Data destination**. An expired Supabase email link needs a fresh link and an account recovery page configured by the operator.
 
 ## Delete a test workspace
 
-Select the workspace as its owner, then open **Manage workspace → Delete workspace**. Type the workspace's name and select **Permanently delete workspace**. Export shared contributions first if you need a copy. The service removes shared notes, attachments, category records, profiles, memberships, and invitations for that workspace. Local notes and Supabase user accounts remain. The owner check runs on the service even if a client bypasses the confirmation UI.
+Select the workspace as its owner, then open **Settings → Workspace management → Delete workspace**. Type the workspace's name and select **Permanently delete workspace**. Export shared contributions first if you need a copy. The service removes shared notes, attachments, category records, profiles, memberships, and invitations for that workspace. Local notes and Supabase user accounts remain. The owner check runs on the service even if a client bypasses the confirmation UI.
 
 ## Operation and limits
 

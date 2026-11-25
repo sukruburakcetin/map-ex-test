@@ -5,7 +5,6 @@ import type { Place } from '../places/placesModel';
 import type { PlacesCoordinator } from '../places/PlacesCoordinator';
 import type { PlacesVectorLayer } from '../places/PlacesVectorLayer';
 import { deferNoteObjectPopup } from '../detections/NoteObjectChoice';
-import { attachmentMetadata } from '../detections/detectionImageAttachment';
 import type { PointCloudAnnotationPicker, AnnotationMapPoint } from '../field-notes/PointCloudAnnotationPicker';
 import type { FieldNoteMap } from '../field-notes/FieldNoteMap';
 import type { PointCloudHitRouting, PointCloudHitGeometry } from '../point-cloud/PointCloudHitRouting';
@@ -72,6 +71,7 @@ export interface MapClickHost {
   setState(patch: { clickLon?: number; clickLat?: number; coverageFrameResolving?: boolean }): void;
   openFieldNoteAttachments(graphic: __esri.Graphic): unknown;
   openSharedFieldNoteEditor(graphic: __esri.Graphic): unknown;
+  applyPopupDocking?(view: ClickView): void;
   offerNoteObjectChoice(view: ClickView, graphic: __esri.Graphic, open: () => void, current: () => boolean): boolean;
   showPlacesHit(results: unknown[], target: string | null): boolean;
   placesBusy(): boolean;
@@ -137,7 +137,12 @@ export async function dispatchMapClick(evt: __esri.ViewClickEvent, host: MapClic
     const enterpriseNoteHit = response.results.find((result: any) => (result.layer || result.graphic?.layer) === host.sharedNotesLayer);
     if (enterpriseNoteHit && (enterpriseNoteHit as any).graphic) {
       const openEnterpriseNote = () => {
-        view.openPopup({ features: [(enterpriseNoteHit as any).graphic], location: (enterpriseNoteHit as any).graphic.geometry });
+        const graphic = (enterpriseNoteHit as any).graphic;
+        host.applyPopupDocking?.(view);
+        const opening = view.openPopup({ features: [graphic], location: graphic.geometry });
+        void Promise.resolve(opening).then(() => {
+          if (clickCurrent() && view.popup?.selectedFeature === graphic) host.applyPopupDocking?.(view);
+        }, () => {});
         host.sharedNotesPopup?.remove();
         host.sharedNotesPopup = view.popup?.on("trigger-action", (event: { action: { id: string } }) => {
           if (event.action.id === "enterprise-note-attachments" && view.popup?.selectedFeature?.layer === host.sharedNotesLayer) void host.openFieldNoteAttachments(view.popup.selectedFeature);
@@ -156,7 +161,7 @@ export async function dispatchMapClick(evt: __esri.ViewClickEvent, host: MapClic
       const graphic = (noteHit as any).graphic;
       const note = host.fieldNotes.noteForGraphic(graphic);
       const openNote = () => { if (note) void host.fieldNotes.focusNote(note).catch(() => { }); };
-      if (note && (host.trafficSignsActive || host.objectsActive) && host.offerNoteObjectChoice(view, graphic, () => { openNote(); const popupGraphic = graphic.clone(); popupGraphic.attributes = { ...popupGraphic.attributes, note: attachmentMetadata(note.note).text }; view.openPopup({ features: [popupGraphic], location: graphic.geometry }); }, clickCurrent)) return;
+      if (note && (host.trafficSignsActive || host.objectsActive) && host.offerNoteObjectChoice(view, graphic, openNote, clickCurrent)) return;
       openNote(); return;
     }
 

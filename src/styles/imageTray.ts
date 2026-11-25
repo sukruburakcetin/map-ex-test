@@ -20,6 +20,10 @@ export const responsiveCss = `
                             .mapillary-image-tray { --tray-height:176px; --tray-image-height:104px; --tray-card-width:clamp(140px,25vw,220px); }
                             @media(max-width:600px),(max-height:500px) { .mapillary-image-tray { --tray-height:148px; --tray-image-height:76px; --tray-card-width:160px; } }
 
+                            .mapillary-nearby-card > img, .mapillary-associated-image-frame { transition: transform 0.12s; }
+                            @media (hover:hover) and (prefers-reduced-motion:no-preference) {
+                                .mapillary-nearby-card:hover > img, .mapillary-associated-card:hover .mapillary-associated-image-frame { transform: scale(1.04); }
+                            }
                             @keyframes nearbySlideUp {
                                 from { transform: translateY(100%); opacity: 0; }
                                 to   { transform: translateY(0);    opacity: 1; }
@@ -27,9 +31,9 @@ export const responsiveCss = `
                         `;
 export const header: CSSProperties = {
   display: "flex",
-  justifyContent: "space-between",
   alignItems: "center",
-  height: "24px",
+  gap: 6,
+  minHeight: 24,
   flexShrink: 0,
   fontSize: "9px",
   color: "rgba(255,255,255,0.45)",
@@ -55,6 +59,7 @@ export const searchMore: CSSProperties = {
   cursor: "pointer",
 };
 export const close: CSSProperties = {
+  marginInlineStart: "auto",
   background: "none",
   border: "none",
   color: "rgba(255,255,255,0.4)",
@@ -95,7 +100,6 @@ export function nearbyCard(isCurrent: boolean): CSSProperties {
     overflow: "hidden",
     border: isCurrent ? "2px solid var(--mly-theme-accent, #05a056)" : "2px solid transparent",
     position: "relative",
-    transition: "transform 0.12s",
   };
 }
 export const nearbyThumbnail: CSSProperties = {
@@ -143,7 +147,6 @@ export function associatedCard(selected: boolean): CSSProperties {
     flex: "0 0 auto",
     width: "var(--tray-card-width)",
     padding: 0,
-    transition: "transform 0.12s",
     background: "var(--mly-theme-control, #182321)",
     color: "var(--mly-theme-text, #ddd)",
     border: selected ? "2px solid var(--mly-theme-accent, #05a056)" : "2px solid transparent",
@@ -157,6 +160,7 @@ export const associatedPreview: CSSProperties = {
   alignItems: "center",
   justifyContent: "center",
   height: "var(--tray-image-height)",
+  overflow: "hidden",
   background: "var(--mly-theme-panel, #0f1618)",
 };
 export const associatedImageFrame: CSSProperties = {

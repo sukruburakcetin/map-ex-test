@@ -262,7 +262,7 @@ import { PendingNoteMarker } from '../features/field-notes/PendingNoteMarker';
 import { createFieldNoteViewerRenderer } from '../features/field-notes/viewerRenderer';
 import { selectViewerFieldNotes } from '../features/field-notes/viewerSelection';
 import type { EnterpriseNotesLoader } from '../features/field-notes/enterpriseList';
-import { loadTimeTravelPreview } from '../features/imagery/timeTravelPreview';
+import { applySharedComparison, comparisonNoteAttachment, loadTimeTravelPreview, readSharedComparison, type SharedComparison } from '../features/imagery/timeTravelPreview';
 import { TimeTravelAvailability } from '../features/imagery/timeTravel';
 import { CachedSequencePreview } from '../features/imagery/CachedSequencePreview';
 import { copyCoordinates } from '../services/browser/coordinateClipboard';
@@ -929,11 +929,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     } catch { /* Diagnostics must never affect map interaction. */ }
   }
 
-  private applyObjectPopupDocking(view: __esri.MapView | __esri.SceneView) {
+  private applyMapPopupDocking(view: __esri.MapView | __esri.SceneView) {
     const widgetId = this.props.useMapWidgetIds?.[0];
     const config = widgetId ? getAppStore().getState().appConfig?.widgets?.[widgetId]?.config : null;
     const position = config?.popupDockPosition;
-    if (!view.popup || !['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'].includes(position)) return;
+    if (config?.popupDockEnabled === false || !view.popup || !['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'].includes(position)) return;
     // openPopup lazily creates the SDK Popup in current Experience Builder versions.
     // Preserve its responsive breakpoint and other options; apply the Map widget's corner.
     view.popup.dockOptions = { ...view.popup.dockOptions, position };
@@ -948,11 +948,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     this._objectPopupView = view;
     this.updateSelectedObjectPopup();
     this.traceObjectPopupDocking(view, 'before-open');
-    this.applyObjectPopupDocking(view);
+    this.applyMapPopupDocking(view);
     const opening = view.openPopup({ location: selected.geometry, title: String(this.state.selectedFeatureMetadata.name).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"), content: this._objectPopupContent });
     void Promise.resolve(opening).then(() => {
       if (view.destroyed || this._objectPopupView !== view || view.popup?.content !== this._objectPopupContent) return;
-      this.applyObjectPopupDocking(view);
+      this.applyMapPopupDocking(view);
       this.traceObjectPopupDocking(view, 'after-open');
     }, () => { });
   }
@@ -1309,10 +1309,14 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     },
     readGraphicFactory: () => {
       const { Graphic } = this.ArcGISModules;
-      return (note, is3D) => new Graphic(buildLocalNoteGraphic(note, is3D));
+      return (note, is3D) => {
+        const properties = buildLocalNoteGraphic(note, is3D);
+        const description = attachmentMetadata(comparisonNoteAttachment(note.note).text).text;
+        return new Graphic({ ...properties, attributes: { ...properties.attributes, note: description } });
+      };
     },
     configureFocusLayer: (layer, measured) => { layer.elevationInfo = { mode: measured ? 'absolute-height' : 'on-the-ground' }; },
-    highlightNote: (view, layer, graphic, current) => startNoteHighlight(view, layer, graphic, current),
+    highlightNote: (view, layer, graphic, current) => startNoteHighlight(view, layer, graphic, current, () => this.applyMapPopupDocking(view)),
   });
   private _workspaceNoteLocation = new WorkspaceLocationPicker<__esri.MapView | __esri.SceneView>();
   /** Map intent only; workspace auth, categories and draft content remain feature-owned. */
@@ -1600,6 +1604,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   /** Invalidates delayed setup/shared-link work when the active map view is replaced. */
   private readonly _activeViewTransfer = new ActiveViewTransfer<__esri.MapView | __esri.SceneView>(this.activeViewTransferHost());
   private _startupUrlParameters: URLSearchParams | null = null;
+  private _incomingComparisonOpened = false;
+  private markIncomingComparisonOpened = () => { this._incomingComparisonOpened = true; };
   private _sharedStateRestoreComplete: boolean = false;
   private _isFlyInActive: boolean = false;
   private _sharedStartupBearing: number | null = null;
@@ -1698,15 +1704,17 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private _lastInteractionTime: number = 0;
   private readonly CAPTURE_ROUTE_CONFIG = CAPTURE_ROUTE_CONFIG;
 
-  private setWidgetTheme = (theme: appearance.WidgetTheme) => {
-    if (!appearance.canUseVisitorTheme(this.props.config.allowUserThemeChoice)) return;
-    appearance.saveWidgetTheme(theme);
-    if (this.tooltipDiv) appearance.applyWidgetThemeVariables(this.tooltipDiv, theme);
+  private readonly themeStorageKey = appearance.widgetThemeStorageKey(this.props.id);
+
+  private setWidgetTheme = (theme?: appearance.WidgetTheme) => {
+    const allowed = this.props.config.allowUserThemeChoice;
+    if (!appearance.canSelectVisitorTheme(allowed)) return;
+    if (appearance.canUseVisitorTheme(allowed)) appearance.saveWidgetTheme(this.themeStorageKey, theme);
     this.setState({ widgetTheme: theme });
   };
 
   state: State = {
-    widgetTheme: appearance.readWidgetTheme(),
+    widgetTheme: appearance.canUseVisitorTheme(true) ? appearance.readWidgetTheme(this.themeStorageKey) : undefined,
     jimuMapView: null,
     turboModeActive: true,
     imageId: null,
@@ -3042,7 +3050,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         widget.tooltipDiv = value;
         const config = widget.props.config;
         if (value && (config?.widgetTheme || config?.allowUserThemeChoice === true)) {
-          const theme = appearance.resolveWidgetTheme(config.widgetTheme, appearance.canUseVisitorTheme(config.allowUserThemeChoice), widget.state.widgetTheme);
+          const theme = appearance.resolveWidgetTheme(config.widgetTheme, appearance.canSelectVisitorTheme(config.allowUserThemeChoice), widget.state.widgetTheme);
           appearance.applyWidgetThemeVariables(value, theme);
         }
       },
@@ -3668,7 +3676,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const controller = new AbortController();
     this._objectDetailsAbort = controller;
     const request = ++this._objectDetailsRequest;
-    ++this._alternateNavigationRequest;
+    const navigationRequest = ++this._alternateNavigationRequest;
     this._pendingDetectionFocus = null;
     this._alternateNavigationAbort?.abort();
     const layerId = this._selectedMapFeature?.layer?.id || this._selectedMapFeature?.graphic?.layer?.id;
@@ -3680,13 +3688,33 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     const metadata = { id: String(featureId), name: attrs.name || attrs.value || "Selected object", firstSeen: attrs.first_seen_at, lastSeen: attrs.last_seen_at };
     const current = () => !controller.signal.aborted && request === this._objectDetailsRequest && this.selectedMapFeatureEnabled();
     const cached = this._objectDetailsCache.get(String(featureId));
+    const highlightCurrentCapture = async (images: readonly AssociatedImage[]) => {
+      const viewer = this.mapillaryViewer;
+      const capture = images.find(image => String(image.id) === String(this.state.imageId));
+      if (!viewer || !capture || !current() || navigationRequest !== this._alternateNavigationRequest) return;
+      const stillCurrent = () => current() && navigationRequest === this._alternateNavigationRequest &&
+        viewer === this.mapillaryViewer && String(this.state.imageId) === String(capture.id);
+      try {
+        const image = await viewer.getImage();
+        if (!stillCurrent() || String(image.id) !== String(capture.id)) return;
+        this._pendingDetectionFocus = { imageId: String(capture.id), detectionId: String(capture.detectionId), request: navigationRequest };
+        this.setState({ targetDetectionId: capture.detectionId, detectionsActive: true }, () => {
+          if (stillCurrent() && this.state.detectionsActive && this.state.targetDetectionId === capture.detectionId)
+            void this.loadDetections(capture.id);
+        });
+      } catch { /* The selected capture must be confirmed by the viewer before targeting a detection. */ }
+    };
+
     this.setState({
       selectedFeatureMetadata: cached?.metadata || metadata, featureMetadataLoading: !cached,
       featureMetadataError: "", alternateImagesError: "", isFetchingAlternates: !cached,
       selectedFeatureLocation: { lat: featureLat, lon: featureLon }, alternateImages: cached?.images || [],
-      nearbyStripOpen: true, imageTrayTab: "object", fieldNotesListOpen: false
+      targetDetectionId: null, nearbyStripOpen: true, imageTrayTab: "object", fieldNotesListOpen: false
     }, () => this.showSelectedObjectPopup());
-    if (cached) return;
+    if (cached) {
+      void highlightCurrentCapture(cached.images);
+      return;
+    }
     let resolvedMetadata = metadata;
     let resolvedImages: any[] = [];
     let metadataOK = false;
@@ -3717,6 +3745,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
           }).slice(0, LIMITS.ALTERNATE_IMAGES).map((det: any) => ({ id: String(det.image.id), detectionId: String(det.id), detectionBounds: det.geometry ? detectionThumbnailBounds(decodeAndNormalizeGeometry(det.geometry)) : undefined, detectionLabel: det.value ? formatTrafficSignName(det.value) : undefined, thumbUrl: det.image.thumb_256_url, capturedAt: new Date(det.image.captured_at).getTime(), geometry: det.image.geometry }));
           imagesOK = true;
           this.setState({ alternateImages: resolvedImages, isFetchingAlternates: false }, () => this.updateSelectedObjectPopup());
+          void highlightCurrentCapture(resolvedImages);
           // Image detections use the same supported endpoint as the main viewer.
           // Fetch at most one bounded list per displayed capture; outlines never block thumbnails.
           if (resolvedImages.length) {
@@ -4142,7 +4171,12 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       if (!choiceCurrent() || controller.signal.aborted || !picked?.graphic) return false;
       view.closePopup(); this.openPickedMapDetection(picked); return true;
     }, choiceCurrent);
-    view.openPopup({ title: this._owned('Note and map objects'), content, location: graphic.geometry as __esri.Point }); return true;
+    this.applyMapPopupDocking(view);
+    const opening = view.openPopup({ title: this._owned('Note and map objects'), content, location: graphic.geometry as __esri.Point });
+    void Promise.resolve(opening).then(() => {
+      if (!view.destroyed && current() && view.popup?.content === content) this.applyMapPopupDocking(view);
+    }, () => {});
+    return true;
   }
 
   /** Resolve a pointer-local detection from source tiles under the current map-click request; return only a still-current pick. */
@@ -4338,7 +4372,29 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
   private copyShareLink = async () => {
     if (!this.state.imageId) return;
-    await copyBrowserShareLink(this._browserShareLinkHost);
+    await copyBrowserShareLink(this._browserShareLinkHost, url=>applySharedComparison(url));
+  };
+
+  private addComparisonToWorkspace = (comparison: SharedComparison, point: {lon:number;lat:number}, title: string, description: string): boolean => {
+    if (this.props.config.hideShareButton || this.state.imageId !== comparison.imageId || !validDetectionNoteLocation(point) ||
+        this.state.pendingFieldNote || this.state.detectionWorkspaceDraft || this._detectionWorkspaceMarkerOwner || this.state.detectionNoteCapturing) return false;
+    this.dismissViewerDetection();
+    const requestId = crypto.randomUUID();
+    this._detectionWorkspaceMarkerOwner = requestId;
+    this.drawPendingNoteGraphic(point.lon, point.lat);
+    this.setState({ detectionWorkspaceDraft: { ...point, requestId, comparison, title, description, imageId: comparison.imageId },
+      fieldNotesListOpen: true, nearbyStripOpen: false });
+    return true;
+  };
+
+  private copyComparisonLink = async (comparison: SharedComparison) => {
+    if (this.props.config.hideShareButton || this.state.imageId !== comparison.imageId) return false;
+    let copied = false;
+    await copyBrowserShareLink({ ...this._browserShareLinkHost,
+      onCopied: () => { copied = true; },
+      onFailure: () => {},
+    }, url=>applySharedComparison(url, comparison));
+    return copied;
   };
 
   /** Keep browser copying separate from the existing toast markup and wording. */
@@ -7272,11 +7328,12 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
    * The existing button owns confirmation; Enterprise notes remain unchanged.
    */
   private clearAllFieldNotes = () => this._localNoteCollection.clear();  /**
-   * Centers the ArcGIS map on the selected field note and navigates
-   * the Mapillary viewer to the associated image if one exists.
+   * Centers the ArcGIS map on the selected note and opens its native popup.
    * @param note The target field note to focus.
    */
   private focusFieldNote = (note: FieldNote) => {
+    if (!validDetectionNoteLocation(note)) return;
+    ++this._mapClickRevision;
     this._focusedViewerNote = this.state.fieldNotes.some(item => item.id === note.id) ? null : note;
     this.updateViewerFieldNoteMarkers();
     const view = this.state.jimuMapView?.view;
@@ -7286,11 +7343,27 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       .catch(() => this.showToast(this._owned('Selected note marker could not be displayed. Try Show on map again.')));
     this.navigateMapView(view, { center: [note.lon, note.lat], zoom: Math.max(view.zoom, 18) }, { animate: true, duration: 600 });
 
-    // If the note has an associated image, jump the viewer there too
-    if (note.imageId && note.imageId !== this.state.imageId) {
-      if (this.mapillaryViewer) {
-        this.mapillaryViewer.moveTo(note.imageId).catch(() => { });
-      }
+  };
+
+  /** Open the linked capture through normal image navigation, using its camera position. */
+  private openFieldNoteImage = async (note: FieldNote) => {
+    const imageId = note.imageId;
+    if (!imageId || imageId === this.state.imageId) return;
+    const click = ++this._mapClickRevision;
+    const selection = this._selectionRequestId;
+    const view = this.state.jimuMapView?.view;
+    const current = () => click === this._mapClickRevision && selection === this._selectionRequestId &&
+      this.state.jimuMapView?.view === view && !view?.destroyed && this.props.state !== 'CLOSED' && this.props.visible !== false;
+    try {
+      const knownSequence = this._liveSequenceFrames.find(imageId) && this._liveSequenceFrames.sequenceId;
+      const image = knownSequence ? { id: imageId, sequence: knownSequence } :
+        await this.fetchMapillaryJson(`${GRAPH_API.BASE}/${encodeURIComponent(imageId)}?fields=id,sequence`, this.accessToken);
+      if (!current()) return;
+      if (!image?.sequence || String(image.id) !== imageId) throw new Error('Linked image unavailable.');
+      this._focusedViewerNote = this.state.fieldNotes.some(item => item.id === note.id) ? null : note;
+      await this.loadSequenceById(image.sequence, imageId);
+    } catch {
+      if (current()) this.showToast(this._owned('The linked image could not be opened.'));
     }
   };
 
@@ -7647,10 +7720,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
    * Handle close/reopen, fullscreen resize observation and background-work priority without owning feature implementation details.
    */
   componentDidUpdate(prevProps: AllWidgetProps<any>, prevState: State) {
-    if (this.tooltipDiv && (prevProps.config.widgetTheme !== this.props.config.widgetTheme ||
+    if (this.tooltipDiv && (prevState.widgetTheme !== this.state.widgetTheme ||
+        prevProps.config.widgetTheme !== this.props.config.widgetTheme ||
         prevProps.config.allowUserThemeChoice !== this.props.config.allowUserThemeChoice)) {
       const theme = appearance.resolveWidgetTheme(this.props.config.widgetTheme,
-        appearance.canUseVisitorTheme(this.props.config.allowUserThemeChoice), this.state.widgetTheme);
+        appearance.canSelectVisitorTheme(this.props.config.allowUserThemeChoice), this.state.widgetTheme);
       appearance.applyWidgetThemeVariables(this.tooltipDiv, theme);
     }
     reconcileWidgetUpdate(prevProps, prevState, this.widgetUpdateHost());
@@ -8000,6 +8074,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       openFieldNoteAttachments: (...args) => this.openFieldNoteAttachments(...args),
       openSharedFieldNoteEditor: (...args) => this.openSharedFieldNoteEditor(...args),
       offerNoteObjectChoice: (...args) => this.offerNoteObjectChoice(...args),
+      applyPopupDocking: view => this.applyMapPopupDocking(view),
       showPlacesHit: (...args) => this.showPlacesHit(...args),
       placesBusy: (...args) => this.placesBusy(...args),
       showToast: (...args) => this.showToast(...args),
@@ -8509,7 +8584,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
    * 2. Compass Angle Difference < 22.5°.
    * 3. Must be from a different date (to be "Time Travel").
    */
-  private loadTimeTravelPreview = (imageId: string, signal: AbortSignal) => loadTimeTravelPreview(imageId, this.accessToken, signal);
+  private loadTimeTravelPreview = (imageId: string, signal: AbortSignal, comparison?: SharedComparison) => loadTimeTravelPreview(imageId, this.accessToken, signal, comparison);
 
   private checkForTimeTravel = (currentImageId: string): Promise<void> => {
     this._timeTravelAvailability ??= new TimeTravelAvailability(() => this.accessToken, (imageId, hasTimeTravel) => {
@@ -8738,7 +8813,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private renderLocalizedContent() {
     const mapWidgetId = this.props.useMapWidgetIds?.[0];
 
-    const allowUserThemeChoice = appearance.canUseVisitorTheme(this.props.config.allowUserThemeChoice);
+    const allowUserThemeChoice = appearance.canSelectVisitorTheme(this.props.config.allowUserThemeChoice);
     const widgetTheme = appearance.resolveWidgetTheme(this.props.config.widgetTheme, allowUserThemeChoice, this.state.widgetTheme);
     const appearanceStyle = appearance.widgetThemeStyles[widgetTheme];
 
@@ -8762,7 +8837,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
         {/* IMAGE UTILITY GROUP */}
         {this.state.imageId && (
           <ImageUtilityGroup
-            widgetTheme={widgetTheme} onWidgetThemeChange={allowUserThemeChoice ? this.setWidgetTheme : undefined}
+            widgetThemePreference={this.state.widgetTheme} onWidgetThemeChange={allowUserThemeChoice ? this.setWidgetTheme : undefined}
             appearanceStyle={appearanceStyle}
             hideTimeTravel={this.props.config.hideTimeTravel}
             hideShareButton={this.props.config.hideShareButton}
@@ -8784,6 +8859,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
             imageId={this.state.imageId}
             sequenceImages={this.state.sequenceImages}
             loadTimeTravelPreview={this.loadTimeTravelPreview}
+            sharedComparison={!this._incomingComparisonOpened && this._startupUrlParameters
+              ? readSharedComparison(this._startupUrlParameters) : undefined}
+            onOpenSharedComparison={this.markIncomingComparisonOpened}
+            onShareComparison={this.copyComparisonLink}
+            onAddComparisonNote={this.addComparisonToWorkspace}
             onTimeTravel={(lat, lon, imageId) => {
               const url = `https://www.mapillary.com/app/time-travel?lat=${lat}&lng=${lon}&z=17&pKey=${imageId}&focus=photo`;
               window.open(url, "_blank", "noopener,noreferrer");
@@ -8885,13 +8965,14 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
 
           </div>}
 
-          <FieldNotesOverlay state={this.state} settings={this.props.config}
+          <FieldNotesOverlay state={this.state} settings={this.props.config} appearanceStyle={appearanceStyle}
             detectionActions={{
               onChoose: this.chooseDetectionNoteLocation,
               onCancel: this.cancelDetectionNoteLocation,
               onClose: this.dismissViewerDetection,
             }}
             panelActions={{
+              onLoadWorkspaceComparison: this.loadTimeTravelPreview,
               onLoadDetectionPreview: this.loadDetectionPreview,
               onLoadDetectionAttachment: this.loadDetectionNoteAttachment,
               onDetectionDraftFinished: this.finishDetectionWorkspaceMarker,
@@ -8916,6 +8997,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
               onExport: this.exportFieldNotes,
               onImportFile: this.importFieldNotesFile,
               onFocusNote: this.focusFieldNote,
+              onOpenLinkedImage: this.openFieldNoteImage,
               onWorkspaceMapChange: this.updateWorkspaceMapNotes,
               onWorkspacePickLocation: this.requestWorkspaceNoteLocation,
               onCloseList: () => this.setState({ fieldNotesListOpen: false }),

@@ -225,7 +225,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             {/* TRAFFIC SIGN FILTERS */}
             {showTrafficSignsFilterBox && (
                 <div className="mly-filter-group mly-filter-group--features" role="group" aria-label={t('signFilters')}>
-                    {onTrafficSignCategoriesChange ? <CategoryMultiSelect appearanceStyle={appearanceStyle} label={t('signFilters')} allLabel={t('uiAllSigns')} options={signOptions} selected={trafficSignsSelectedCodes} onChange={onTrafficSignCategoriesChange}/> : <GlassSelect floatingMenu compact
+                    {onTrafficSignCategoriesChange ? <CategoryMultiSelect kind="signs" appearanceStyle={appearanceStyle} label={t('signFilters')} allLabel={t('uiAllSigns')} options={signOptions} selected={trafficSignsSelectedCodes} onChange={onTrafficSignCategoriesChange}/> : <GlassSelect floatingMenu compact
                         value={trafficSignsFilterValue}
                         onChange={onTrafficSignsFilterChange}
                         options={signOptions}
@@ -239,7 +239,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             {/* OBJECT FILTERS */}
             {showObjectsFilterBox && (
                 <div className="mly-filter-group mly-filter-group--features" role="group" aria-label={t('objectFilters')}>
-                    {onObjectCategoriesChange ? <CategoryMultiSelect appearanceStyle={appearanceStyle} label={t('objectFilters')} allLabel={t('uiAllPoints')} options={pointOptions} selected={objectsSelectedCodes} onChange={onObjectCategoriesChange}/> : <GlassSelect floatingMenu compact
+                    {onObjectCategoriesChange ? <CategoryMultiSelect kind="objects" appearanceStyle={appearanceStyle} label={t('objectFilters')} allLabel={t('featureAllObjects')} options={pointOptions} selected={objectsSelectedCodes} onChange={onObjectCategoriesChange}/> : <GlassSelect floatingMenu compact
                         value={objectsFilterValue}
                         onChange={onObjectsFilterChange}
                         options={pointOptions}

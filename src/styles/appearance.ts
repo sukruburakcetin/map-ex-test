@@ -1,24 +1,31 @@
 import type { CSSProperties } from "react";
 
 export type WidgetTheme = "green" | "dark" | "light" | "high-contrast" | "sandstone" | "slate";
-const themeStorageKey = "mapillary-explorer:theme";
+/** Scope an override to its experience and widget instance. Ignore map and selection query parameters. */
+export function widgetThemeStorageKey(widgetId: string): string {
+  const location = typeof window === "undefined" ? undefined : window.location;
+  const experienceId = new URLSearchParams(location?.search).get("id");
+  return "mapillary-explorer:theme:" + JSON.stringify([location?.pathname ?? "", experienceId, widgetId]);
+}
 export function isWidgetTheme(value: unknown): value is WidgetTheme {
   return value === "green" || value === "dark" || value === "light" || value === "high-contrast" || value === "sandstone" || value === "slate";
 }
-export function readWidgetTheme(): WidgetTheme | undefined {
+export function readWidgetTheme(storageKey: string): WidgetTheme | undefined {
   try {
-    const value = window.localStorage.getItem(themeStorageKey);
+    const value = window.localStorage.getItem(storageKey);
     if (isWidgetTheme(value)) return value;
   } catch { /* The widget can run without browser storage. */ }
   return undefined;
 }
-/** Builder and draft previews show the authored preset. Published experiences may honor visitor preferences. */
+/** Draft previews allow a session-only choice; the Builder canvas always shows the authored theme. */
+export function canSelectVisitorTheme(allowed: boolean | undefined): boolean {
+  if (allowed !== true || typeof window === "undefined") return false;
+  const host = window as Window & { jimuConfig?: { isInBuilder?: boolean } };
+  return host.jimuConfig?.isInBuilder !== true;
+}
+
 export function canUseVisitorTheme(allowed: boolean | undefined): boolean {
-  if (allowed !== true) return false;
-  const host = typeof window === "undefined" ? undefined :
-    window as Window & { jimuConfig?: { isInBuilder?: boolean } };
-  if (host?.jimuConfig?.isInBuilder === true) return false;
-  return new URLSearchParams(host?.location?.search).get("draft") !== "true";
+  return canSelectVisitorTheme(allowed) && new URLSearchParams(window.location?.search).get("draft") !== "true";
 }
 
 export function resolveWidgetTheme(configured: unknown, allowOverride: boolean, preference?: WidgetTheme): WidgetTheme {
@@ -26,8 +33,11 @@ export function resolveWidgetTheme(configured: unknown, allowOverride: boolean, 
   return isWidgetTheme(configured) ? configured : "green";
 }
 
-export function saveWidgetTheme(theme: WidgetTheme): void {
-  try { window.localStorage.setItem(themeStorageKey, theme); }
+export function saveWidgetTheme(storageKey: string, theme?: WidgetTheme): void {
+  try {
+    if (theme === undefined) window.localStorage.removeItem(storageKey);
+    else window.localStorage.setItem(storageKey, theme);
+  }
   catch { /* Keep the current session's appearance when storage is unavailable. */ }
 }
 

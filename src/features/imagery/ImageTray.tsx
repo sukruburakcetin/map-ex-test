@@ -136,17 +136,12 @@ export function ImageTray({
           return (
             <div
               key={img.id}
+              className="mapillary-nearby-card"
               onClick={() => {
                 void onSelectNearby(img);
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "scale(1.04)";
-                onHighlightNearby(img);
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "scale(1)";
-                onHighlightNearby(null);
-              }}
+              onMouseEnter={() => onHighlightNearby(img)}
+              onMouseLeave={() => onHighlightNearby(null)}
               style={styles.nearbyCard(isCurrent)}
             >
               <img
@@ -195,14 +190,8 @@ export function ImageTray({
           )}
         {state.alternateImages.map((img) => (
           <button
-            className="mly-text-action"
+            className="mly-text-action mapillary-associated-card"
             key={img.id}
-            onMouseEnter={(event) => {
-              event.currentTarget.style.transform = "scale(1.04)";
-            }}
-            onMouseLeave={(event) => {
-              event.currentTarget.style.transform = "scale(1)";
-            }}
             onClick={() => void onSelectAssociated(img)}
             aria-label={owned("Open associated image {value0}", {
               value0: String(img.id),
@@ -211,7 +200,7 @@ export function ImageTray({
             style={styles.associatedCard(img.id === state.imageId)}
           >
             <span style={styles.associatedPreview}>
-              <span style={styles.associatedImageFrame}>
+              <span className="mapillary-associated-image-frame" style={styles.associatedImageFrame}>
                 <img
                   src={img.thumbUrl}
                   alt={t("appAssociatedCameraCapture")}

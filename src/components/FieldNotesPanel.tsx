@@ -7,6 +7,8 @@ import { detectionNoteDescription } from '../features/detections/detectionNote';
 import { OwnedMessage } from '../i18n/WidgetLocale';
 import { useWidgetLocale } from '../i18n/WidgetLocale';
 import { React, jsx } from "jimu-core";
+import { TimeTravelPreview } from './TimeTravelPreview';
+import type { SharedComparison, TravelPreview } from '../features/imagery/timeTravelPreview';
 import { notesScrollCss } from '../styles/notesScroll';
 import { noteMapMessageStyle, noteMapRefreshStyle } from '../styles/fieldNotes';
 import { EnterpriseAccountIndicator } from '../features/field-notes/EnterpriseAccountIndicator';
@@ -19,10 +21,12 @@ import { EnterpriseNotesList } from '../features/field-notes/EnterpriseNotesList
 import type { WorkspaceLocationRequest } from '../features/community-notes/WorkspaceLocationPicker';
 import { WorkspaceBoundary } from '../features/community-notes/WorkspaceBoundary';
 import type { EnterpriseNotesLoader } from '../features/field-notes/enterpriseList';
-import { notesTabsStyle, getNotesTabStyle, notesSheetStyle, notesSheetHandleStyle, notesSheetGripStyle, notesSheetHeaderStyle, notesSheetCloseStyle } from '../styles/enterpriseNotes';
+import { notesSheetStyle, notesSheetHandleStyle, notesSheetGripStyle, notesSheetHeaderStyle, notesSheetCloseStyle } from '../styles/enterpriseNotes';
 import { FieldNote, FieldNoteEditor, FieldNoteAttachments, FIELD_NOTE_CATEGORIES } from "./types";
 
 interface Props {
+    appearanceStyle?: React.CSSProperties;
+    onLoadWorkspaceComparison?: (imageId: string, signal: AbortSignal, comparison?: SharedComparison) => Promise<TravelPreview>;
     onDetectionDraftLocation?:(requestId:string,point:{lon:number;lat:number})=>void;
     onDetectionDraftFinished?:(requestId:string)=>void;
     onLoadDetectionAttachment?:(note:FieldNote,id:string,signal:AbortSignal)=>Promise<string>;
@@ -65,6 +69,7 @@ interface Props {
     onExport: () => void;
     onImportFile: (file: File) => void;
     onFocusNote: (note: FieldNote) => void;
+    onOpenLinkedImage?: (note: FieldNote) => void;
     onCloseList: () => void;
 }
 
@@ -132,6 +137,12 @@ export const FieldNotesPanel: React.FC<Props> = (props) => {
     const [noteSource, setNoteSource] = React.useState<"local" | "enterprise" | "workspace">("local");
     const enterpriseAvailable = !!props.enterpriseEnabled && !!props.onLoadEnterpriseNotes;
     const activeSource = noteSource === "enterprise" && !enterpriseAvailable ? "local" : noteSource;
+    const [workspaceComparison,setWorkspaceComparison]=React.useState<{comparison:SharedComparison;href?:string}|null>(null);
+    const openWorkspaceComparison=React.useCallback((comparison:SharedComparison,href?:string)=>{
+        setWorkspaceComparison({comparison,href});
+    },[]);
+    const closeWorkspaceComparison=React.useCallback(()=>setWorkspaceComparison(null),[]);
+    React.useEffect(()=>{if(!listOpen||activeSource!=='workspace')closeWorkspaceComparison();},[listOpen,activeSource,closeWorkspaceComparison]);
     // Warm only the interface code while the user reads Local/Enterprise notes.
     React.useEffect(() => { if (listOpen) void loadWorkspaceControls().catch(() => {}); }, [listOpen]);
     const [workspaceVisited, setWorkspaceVisited] = React.useState(false);
@@ -182,7 +193,7 @@ export const FieldNotesPanel: React.FC<Props> = (props) => {
                     {props.sharedMessage && activeSource !== 'workspace' && <div role="status" style={noteMapMessageStyle}>{<OwnedMessage source={String(props.sharedMessage ?? "")}/>} <button className="mly-text-action" type="button" onClick={props.onRetrySharedDisplay} style={noteMapRefreshStyle}> {t('uiRefresh')} </button></div>}
                     {listOpen && !workspacePicking && props.enterpriseEnabled && props.enterpriseWriteUrl && props.loadEnterpriseIdentityManager && activeSource !== 'workspace' && <EnterpriseAccountIndicator url={props.enterpriseWriteUrl} loadManager={props.loadEnterpriseIdentityManager} />}
                     </div>
-                    <div className="mly-notes-tabs" role="tablist" aria-label={t('uiNoteSource')} style={{ ...notesTabsStyle, flexWrap: 'wrap' }} onKeyDown={event => {
+                    <div className="mly-notes-tabs" role="tablist" aria-label={t('uiNoteSource')} onKeyDown={event => {
                       if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
                       event.preventDefault();
                       const index = sources.indexOf(activeSource);
@@ -191,10 +202,14 @@ export const FieldNotesPanel: React.FC<Props> = (props) => {
                       setNoteSource(nextSource); setIsConfirmingClear(false);
                       (event.currentTarget.querySelector('[data-source="' + nextSource + '"]') as HTMLButtonElement | null)?.focus();
                     }}>
-                      {sources.map(source => <button className="mly-text-action" key={source} type="button" role="tab" data-source={source} aria-selected={activeSource === source}
-                        tabIndex={activeSource === source ? 0 : -1} style={getNotesTabStyle(activeSource === source)}
+                      {sources.map(source => <button className="mly-notes-source-tab" key={source} type="button" role="tab" data-source={source} aria-selected={activeSource === source}
+                        tabIndex={activeSource === source ? 0 : -1}
+                        aria-label={source==='local' ? `${t('uiLocal').trim()}${notes.length})` : undefined}
                         onClick={() => { setNoteSource(source); setIsConfirmingClear(false); }}>
-                        {source === 'local' ? `${t('uiLocal').trim()}${notes.length})` : source === 'enterprise' ? t('uiEnterprise') : owned('Workspaces')}
+                        {source === 'local' ? <React.Fragment>
+                          <span>{t('uiLocal').replace(/\s*\($/, '')}</span>
+                          <span className="mly-notes-source-count" aria-hidden="true">{notes.length}</span>
+                        </React.Fragment> : source === 'enterprise' ? t('uiEnterprise') : owned('Workspaces')}
                       </button>)}
                     </div>
                     {/* Keep the explicit connection in memory while placing local drafts.
@@ -203,16 +218,20 @@ export const FieldNotesPanel: React.FC<Props> = (props) => {
                       style={{ display: activeSource === 'workspace' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, flex: '1 1 0' }}>
                       <WorkspaceBoundary fallback={<div role="alert" style={workspaceFeedbackStyle}>{owned('Workspace controls could not load. Local notes remain available; reload the page to retry.')}</div>}>
                         <React.Suspense fallback={<div role="status" style={workspaceFeedbackStyle}>{owned('Loading workspace controls…')}</div>}>
-                          <CommunityWorkspacePanel onDetectionDraftLocation={props.onDetectionDraftLocation} onDetectionDraftFinished={props.onDetectionDraftFinished} onLoadDetectionPreview={props.onLoadDetectionPreview} detectionDraft={props.detectionWorkspaceDraft} onClearDetectionDraft={props.onClearDetectionWorkspaceDraft} notes={notes} onFocus={onFocusNote} onMapNotes={props.onWorkspaceMapChange} onPickLocation={props.onWorkspacePickLocation?requestWorkspacePick:undefined} currentImageId={props.currentImageId} />
+                          <CommunityWorkspacePanel onOpenLinkedImage={props.onOpenLinkedImage} onOpenComparison={props.onLoadWorkspaceComparison ? openWorkspaceComparison : undefined} onDetectionDraftLocation={props.onDetectionDraftLocation} onDetectionDraftFinished={props.onDetectionDraftFinished} onLoadDetectionPreview={props.onLoadDetectionPreview} detectionDraft={props.detectionWorkspaceDraft} onClearDetectionDraft={props.onClearDetectionWorkspaceDraft} notes={notes} onFocus={onFocusNote} onMapNotes={props.onWorkspaceMapChange} onPickLocation={props.onWorkspacePickLocation?requestWorkspacePick:undefined} currentImageId={props.currentImageId} />
                         </React.Suspense>
                       </WorkspaceBoundary>
                     </div>}
-                    {listOpen && activeSource !== 'workspace' && (activeSource === "enterprise" && props.onLoadEnterpriseNotes ? <EnterpriseNotesList onLoadDetectionAttachment={props.onLoadDetectionAttachment} onLoadDetectionPreview={props.onLoadDetectionPreview} loadPage={props.onLoadEnterpriseNotes} context={props.enterpriseContext} layerUrl={props.enterpriseLayerUrl} onFocus={onFocusNote} onEdit={props.sharingEnabled ? props.onEditSharedNote : undefined} onAttachments={props.onAttachments} editorBusy={!!props.editor?.saving} attachmentsBusy={!!props.attachments?.busy} /> : <LocalNotesList onLoadDetectionAttachment={props.onLoadDetectionAttachment} onLoadDetectionPreview={props.onLoadDetectionPreview} notes={notes} fileInputRef={fileInputRef} isConfirmingClear={isConfirmingClear} setIsConfirmingClear={setIsConfirmingClear}
+                    {listOpen && activeSource !== 'workspace' && (activeSource === "enterprise" && props.onLoadEnterpriseNotes ? <EnterpriseNotesList onOpenLinkedImage={props.onOpenLinkedImage} onLoadDetectionAttachment={props.onLoadDetectionAttachment} onLoadDetectionPreview={props.onLoadDetectionPreview} loadPage={props.onLoadEnterpriseNotes} context={props.enterpriseContext} layerUrl={props.enterpriseLayerUrl} onFocus={onFocusNote} onEdit={props.sharingEnabled ? props.onEditSharedNote : undefined} onAttachments={props.onAttachments} editorBusy={!!props.editor?.saving} attachmentsBusy={!!props.attachments?.busy} /> : <LocalNotesList onOpenLinkedImage={props.onOpenLinkedImage} onLoadDetectionAttachment={props.onLoadDetectionAttachment} onLoadDetectionPreview={props.onLoadDetectionPreview} notes={notes} fileInputRef={fileInputRef} isConfirmingClear={isConfirmingClear} setIsConfirmingClear={setIsConfirmingClear}
                       sharingEnabled={props.sharingEnabled} editorBusy={props.editor?.saving} attachmentsBusy={props.attachments?.busy}
                       onShareNote={props.onShareNote} onEditNote={props.onEditNote} onEditSharedNote={props.onEditSharedNote} onAttachments={props.onAttachments}
                       onDeleteNote={onDeleteNote} onClearAll={onClearAll} onExport={onExport} onImportFile={onImportFile} onFocusNote={onFocusNote} />)}
                 </div>
             )}
+            {listOpen&&activeSource==='workspace'&&workspaceComparison&&props.onLoadWorkspaceComparison&&
+                <TimeTravelPreview imageId={workspaceComparison.comparison.imageId} comparison={workspaceComparison.comparison}
+                    noteLink={workspaceComparison} appearanceStyle={props.appearanceStyle}
+                    load={props.onLoadWorkspaceComparison} onClose={closeWorkspaceComparison}/>}
         </React.Fragment>
     );
 };

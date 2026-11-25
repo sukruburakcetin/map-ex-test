@@ -10,6 +10,7 @@ export function DetectionDisplayControls({appearanceStyle,zoom,label,scale,opaci
   const [open,setOpen]=React.useState(false),[position,setPosition]=React.useState<React.CSSProperties>({});
   const anchor=React.useRef<HTMLButtonElement>(null),menu=React.useRef<HTMLDivElement>(null);
   const id=React.useId();
+  const displayLabel=t('featureDisplay');
   const close=()=>{setOpen(false);anchor.current?.focus({preventScroll:true});};
   React.useEffect(()=>{
     if(!open)return;
@@ -30,10 +31,10 @@ export function DetectionDisplayControls({appearanceStyle,zoom,label,scale,opaci
   const percent=(v:number)=>new Intl.NumberFormat(formatLocale,{style:'percent',maximumFractionDigits:0}).format(v);
   const button:React.CSSProperties={minHeight:36,padding:'5px 7px',border:'1px solid var(--mly-theme-border, #648b7366)',borderRadius:5,color:'inherit',background:'var(--mly-theme-control, #244633)',font:'inherit',cursor:'pointer'};
   return <div onClick={event=>event.stopPropagation()} onPointerDown={event=>event.stopPropagation()} className="mly-detection-display" style={{flexShrink:0}}>
-    <button ref={anchor} type="button" className="mly-text-action" aria-label={`${label}: ${owned('Display')}`} aria-expanded={open} aria-haspopup="dialog" aria-controls={open?id:undefined} onClick={()=>setOpen(!open)} style={{...button,minHeight:24,padding:'2px 6px',fontSize:10}}>{owned('Display')} ▾</button>
-    {open&&ReactDOM.createPortal(<div id={id} ref={menu} role="dialog" aria-label={`${label}: ${owned('Display')}`} dir={direction} className="mly-detection-display-menu" style={{...appearanceStyle,...position,zIndex:2147483647,boxSizing:'border-box',padding:10,border:'1px solid var(--mly-theme-border, #648b73)',borderRadius:8,background:'var(--mly-theme-panel, #162b22)',color:'var(--mly-theme-text, #e0eee5)',font:'13px/1.35 "Segoe UI",sans-serif',overflowY:'auto',boxShadow:'0 5px 22px #0008'}}>
+    <button ref={anchor} type="button" className="mly-text-action mly-detection-display-trigger" aria-label={`${label}: ${displayLabel}`} title={displayLabel} aria-expanded={open} aria-haspopup="dialog" aria-controls={open?id:undefined} onClick={()=>setOpen(!open)} style={{...button,minHeight:24,padding:'2px 6px',fontSize:10}}><span className="mly-detection-display-label">{displayLabel}</span><span aria-hidden="true">▾</span></button>
+    {open&&ReactDOM.createPortal(<div id={id} ref={menu} role="dialog" aria-label={`${label}: ${displayLabel}`} dir={direction} className="mly-detection-display-menu" style={{...appearanceStyle,...position,zIndex:2147483647,boxSizing:'border-box',padding:10,border:'1px solid var(--mly-theme-border, #648b73)',borderRadius:8,background:'var(--mly-theme-panel, #162b22)',color:'var(--mly-theme-text, #e0eee5)',font:'13px/1.35 "Segoe UI",sans-serif',overflowY:'auto',boxShadow:'0 5px 22px #0008'}}>
       <style>{`.mly-detection-display-menu button{font:inherit!important;min-width:0;white-space:normal;overflow-wrap:anywhere}.mly-detection-display-menu .mly-detection-size-options button{white-space:nowrap;overflow-wrap:normal;padding-inline:3px!important}.mly-detection-display-menu input{box-sizing:border-box;max-width:100%}@media(pointer:coarse){.mly-detection-display-menu button{min-height:44px!important}}`}</style>
-      <strong>{label} · {owned('Display')}</strong>
+      <strong>{label} · {displayLabel}</strong>
       <div style={{marginTop:10}}>{t('size')}</div>
       <div role="group" aria-label={t('iconSize',{label})} className="mly-detection-size-options" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(48px,1fr))',gap:4,marginTop:4}}>{[.75,1,1.25,1.5,2].map(value=><button key={value} type="button" className="mly-text-action" aria-pressed={value===scale} onClick={()=>onScale(value)} style={{...button,background:value===scale?'var(--mly-theme-selected, #347852)':'var(--mly-theme-control, #244633)'}}>{percent(value)}</button>)}</div>
       <label style={{display:'block',marginTop:12}}>{owned('Opacity')} <output>{percent(opacity)}</output><input aria-label={`${label}: ${owned('Opacity')}`} type="range" min="20" max="100" step="5" value={Math.round(opacity*100)} onChange={event=>onOpacity(Number(event.target.value)/100)} style={{display:'block',width:'100%',minHeight:32,accentColor:'var(--mly-theme-check, #63c38e)'}}/></label>
@@ -47,7 +48,7 @@ export function DetectionDisplayControls({appearanceStyle,zoom,label,scale,opaci
       </div>
       <button type="button" className="mly-text-action" aria-pressed={labels} onClick={()=>onLabels?.(!labels)} style={{...button,width:'100%',marginTop:8,background:labels?'var(--mly-theme-selected, #347852)':'var(--mly-theme-control, #244633)'}}>{owned('Show labels at zoom 18+')}</button>
       {labels && (zoom === undefined || zoom < 18) && <div role="status" style={{fontSize:11,opacity:.8,marginTop:6}}>{owned('Zoom to 18+ to see labels.')}</div>}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginTop:8}}><button type="button" className="mly-text-action" onClick={onReset} style={button}>{owned('Reset all')}</button><button type="button" className="mly-text-action" onClick={close} style={button}>{owned('Close')}</button></div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginTop:8}}><button type="button" className="mly-text-action" onClick={onReset} style={button}>{t('featureResetDisplay')}</button><button type="button" className="mly-text-action" onClick={close} style={button}>{owned('Close')}</button></div>
     </div>,anchor.current?.ownerDocument.fullscreenElement||anchor.current?.ownerDocument.body||document.body)}
   </div>;
 }
