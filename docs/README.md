@@ -32,16 +32,11 @@
 - [Enterprise notes](administration/enterprise-notes.md)
 - [Workspace backend setup and migrations](../tools/community-notes/README.md)
 
-## Contribute or maintain the code
+## Develop and contribute
 
-These are references, not extra installation steps.
-
-- [Contributing and checks](../CONTRIBUTING.md)
-- [Repository layout](development/repository-baseline.md), [portable checks](development/portable-tests.md), and [live Experience Builder acceptance](development/exb-1.21-validation.md)
-- [Architecture](development/architecture.md), [maintenance](development/maintenance.md) and [roadmap](development/roadmap.md)
-- [Places architecture](development/places-architecture.md), [package/schema reference](development/places-packages.md), [external API/hosting](development/places-service-contract.md), [tests](development/places-testing.md) and [research](development/places-research.md)
-- [Interaction owners](development/interaction-ux.md), [InfoBox](development/info-box.md), [point-cloud owners](development/point-cloud.md) and [field-note viewer](development/field-note-viewer.md)
-- [Bundled sign/object sprites and release maintenance](development/sprites.md)
-- [Translations](localization/CONTRIBUTING.md), [glossary](localization/GLOSSARY.md) and [review table](localization/translations.csv)
-- [Continuing design decisions](history/README.md)
-- [5.0 release preparation and change inventory](releases/README.md)
+- [Repository contribution guide](../CONTRIBUTING.md)
+- [Runtime architecture](development/runtime-architecture.md)
+- [Portable checks](development/portable-tests.md) and [live Experience Builder acceptance](development/exb-1.21-validation.md)
+- [Places API contract](development/places-service-contract.md) and [package format](development/places-packages.md)
+- [Translations](localization/CONTRIBUTING.md) and [glossary](localization/GLOSSARY.md)
+- [Changelog](../CHANGELOG.md)

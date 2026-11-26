@@ -45,14 +45,26 @@ def main():
         name = root / unquote(url.path[len(base.path):])
         return (name / "index.html" if name.is_dir() else name), unquote(url.fragment)
 
+    excluded_paths = (
+        "docs/history/",
+        "docs/development/architecture/",
+        "docs/releases/5.0-change-inventory/",
+        "docs/releases/5.0-draft/",
+    )
+
     checked = 0
     for file, page in pages.items():
         relative = file.relative_to(root).as_posix()
+        if relative.startswith(excluded_paths):
+            errors.add(f"Unpublished page in site output: {relative}")
         if relative == "404.html":
             continue
         url = urljoin(base.geturl(), relative.removesuffix("index.html"))
         for link in page.links:
-            dest, fragment = target(urljoin(url, link))
+            address = urljoin(url, link)
+            if any(section in urlsplit(address).path for section in excluded_paths):
+                errors.add(f"{relative}: link to unpublished material {link}")
+            dest, fragment = target(address)
             if dest is None:
                 continue
             checked += 1

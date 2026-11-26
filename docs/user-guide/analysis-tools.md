@@ -12,9 +12,3 @@ These workflows use the active map and selected capture. Availability depends on
 
 !!! tip "Choose the right view"
     If a map tool is unavailable, check the selected capture and the active map type. Some point-cloud analysis and scene-lighting controls depend on a 3D view.
-
-## Related references
-
-- [Coverage readiness and startup](../development/coverage-readiness.md) and [routing validation](../development/routing-validation.md)
-- [Elevation profile workflow](../development/sequence-profile-workflow.md) and [solar model workflow](../development/solar-model-workflow.md)
-- [Point-cloud ownership and validation](../development/point-cloud.md)

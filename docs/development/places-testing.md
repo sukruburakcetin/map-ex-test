@@ -23,7 +23,7 @@ Install Playwright in your test environment. `MAPILLARY_PLAYWRIGHT` may point to
 
 ## Host acceptance
 
-Verify in the actual Experience Builder 1.20 host, 2D/3D and each mobile layout:
+Verify in the Developer Edition 1.21 host, 2D/3D and each mobile layout:
 
 1. Places off makes no source requests. Explicit enable loads metadata, style, sprites and visible tiles; disable during loading leaves no late layer.
 2. Service/view changes retire old resources. A failed service shows retry feedback without a request loop.
@@ -108,25 +108,3 @@ node --test tests/placesOverviewZoom.test.cjs
 These cover saved snapshots/comparison, Pro orchestration fixtures, complete attribute restoration, native geometry/resources/ZIP headers, growing bundle-record sizes, sprites, filtered overview histograms and cache fallback. Publisher fixtures cover read-only plans, no-overwrite/private publication order, failures, returned IDs, account/Portal/source guards and repeat protection. They do not run licensed ArcGIS Pro or publish to an authenticated Portal.
 
 Real supplied-package evidence is summarized in the [package reference](places-packages.md#verification-boundary). Extracted resources rendered through a local SDK simulator; this does not prove Enterprise import. The optional publisher's public API calls were checked against ArcGIS Python API 2.4.4 source, but its first authenticated publication remains a deployment acceptance test.
-
-The repository-wide [portable test baseline](../history/refactoring/test-baseline.md) records existing extracted-fixture failures, including missing Portal imports. Keep these distinct from focused feature results; rerun and report the actual checkout rather than claiming the entire repository is green.
-
-## Additional recorded package evidence
-
-## ArcGIS Pro package feasibility
-
-`tests/placesProPackage.test.py` checks the standalone MVT/Compact V2 inspector, bounded nearby sampling, sanitized reports and mocked ArcPy orchestration. It does not establish native ArcGIS Pro behavior. Run the [small Pro package test](../places/pro-package-test.md), review its real report and establish attribute preservation before building/publishing the full dataset.
-
-## Attribute restoration
-
-Use `tests/placesVtpkRestoration.test.py` for complete source coverage, unambiguous identity, geometry/resource preservation, null/zero confidence, unsupported data and publication-conflict handling. Portal fixtures also check scalar source counts and `maxLOD` rather than scheme-only levels. See the [restoration/full-build guide](../places/attribute-restoration.md) for independently decoded user-package evidence and the real Pro/Portal acceptance boundary.
-
-The restoration regression suite also covers exact coincident sets with equal native/source multiplicity, preservation of different scores/statuses, refusal of native-ID/metadata/cardinality mismatches, distinct nearby positions, and the metre-bounded projection-rounding allowance. Independent validation of the supplied full package checks all 52 tiles, 14,933 instances and 7,089 source IDs with no geometry/native-property changes. This does not substitute for a hosted Portal acceptance test.
-
-Additional publication checks preserve separate local/central ZIP extra fields and reproduce an unmodified native Pro archive byte-for-byte using the production member writer. The full native and repaired resources both loaded and rendered through ArcGIS SDK 4.33.12 in Chromium using a local HTTP service simulator (six visible tile requests each, no missing resources/errors). This tests rendering of extracted resources, not Esri's hosted VTPK importer. Portal metadata tests cover capabilities-only/incomplete definitions and sanitized 499/404 diagnostics; real hosted acceptance remains required.
-
-Growing-tile regression coverage verifies that bundle maximum-record-size headers increase when restored payloads exceed the native floor, and that understated maxima fail validation. The supplied full package now declares 167,410 bytes for its largest bundle record. A capabilities-only service simulation reproduces the SDK layer-load failure; neither this simulation nor local rendering verifies Enterprise cache import.
-
-## Portal clusters and zoom coverage
-
-See [Portal clusters and zoom coverage](../places/portal-clusters-and-zoom.md). Run the cluster histogram Python suite, Portal source/vector adapter fixtures, overview controller suite and external HTTP service tests.

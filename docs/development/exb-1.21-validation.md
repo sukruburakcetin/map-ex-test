@@ -37,7 +37,6 @@ node -p "require('../../../package.json').name + ' ' + require('../../../package
 node -e "const fs=require('node:fs'),crypto=require('node:crypto');const src=fs.readFileSync('src/runtime/widget.tsx','utf8').replace(/^\uFEFF/,'').replace(/\r\n/g,'\n');console.log(crypto.createHash('sha256').update(src).digest('hex'))"
 ```
 
-The stage 137 reference runtime hash is `43e5778804cd16f42547442b869f073c2c5cae9514b199eaadbe019e7f530457`. A different hash can reflect a local change. Record the actual hash used in the live run.
 
 From the Experience Builder **client** folder, run `pnpm run` to see the host scripts. If the installation exposes `build:prod`, run `pnpm run build:prod` and record its exit status and first relevant warning or error. Use the existing client and server development processes for the browser checks.
 
@@ -72,5 +71,3 @@ Portable tests and isolated webpack checks are prerequisites, not substitutes fo
 | Mobile/narrow layout, keyboard and locale, fullscreen portals | Usable controls, scrolling/focus and readable translated content | Pending |
 
 Verify configured service scenarios separately and use an authorized test workspace or layer for writes.
-
-See the [earlier stage-65 procedure and observations](../history/refactoring/exb-1.21-stage-65.md) for historical setup and troubleshooting.

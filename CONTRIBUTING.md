@@ -1,6 +1,6 @@
 # Contributing
 
-This is a React/TypeScript widget hosted by ArcGIS Experience Builder Developer Edition. The existing development target is 1.20; the 1.21 setup uses pnpm and still needs full host/SDK acceptance. Use the host's supported Node/dependency versions and build pipeline; there is no standalone widget package manifest. Keep SDK/browser acceptance separate from portable unit checks. Follow the [version-specific installation guide](docs/installation.md) before running the host.
+This is a React/TypeScript widget hosted by ArcGIS Experience Builder Developer Edition. The development and installer-testing target is Developer Edition 1.21, which uses pnpm. Use the host's supported Node/dependency versions and build pipeline; there is no standalone widget package manifest. Keep SDK/browser acceptance separate from portable unit checks. Follow the [version-specific installation guide](docs/installation.md) before running the host.
 
 ## Your first contribution
 
@@ -15,7 +15,7 @@ This is a React/TypeScript widget hosted by ArcGIS Experience Builder Developer 
 ## Development and checks
 
 - [Documentation index](docs/README.md)
-- [Architecture](docs/development/architecture.md) and [roadmap](docs/development/roadmap.md)
+- [Architecture](docs/development/runtime-architecture.md)
 - [Places tests](docs/development/places-testing.md)
 - [Localization contributions](docs/localization/CONTRIBUTING.md)
 
@@ -38,6 +38,4 @@ python tests/overturePlacesLocal.test.py
 
 Check the changed feature's tests, TypeScript/TSX syntax and the full host build when available. For moves, update imports, documentation links, commands and regression fixtures together. Keep useful tests of cancellation, bounded work, selection identity and attachment/save boundaries. Do not add local backup directories, Python caches, environments or generated regional datasets to Git.
 
-Prefer current task-based guides to patch-by-patch delivery notes. Historical evidence belongs in `docs/history/` only when it explains a continuing design decision. Database migrations in `tools/community-notes/migrations/` remain operational assets; they are not disposable patch installers.
-
-See the [repository layout and baseline](docs/development/repository-baseline.md) for source ownership, packaging boundaries and remaining publication checks.
+Prefer current task-based guides to patch-by-patch delivery notes. Database migrations in `tools/community-notes/migrations/` remain operational assets; they are not disposable patch installers.

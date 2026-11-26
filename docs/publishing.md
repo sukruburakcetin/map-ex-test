@@ -4,7 +4,7 @@ A publisher is the person authorized to deploy the build and publish the Experie
 
 ## 1. Prepare a candidate
 
-Review a specific commit and record its widget, host, Node.js and package-manager versions. Coordinate with the maintainer on the manifest version, release notes, supported host versions and licensing. Include the full build output and runtime assets. Reviewers need build evidence, installation instructions and the pending or completed acceptance items. [Release procedure](releases/README.md)
+Review a specific commit and record its widget, host, Node.js and package-manager versions. Coordinate with the maintainer on the manifest version, release notes, supported host versions and licensing. Include the full build output and runtime assets. Reviewers need build evidence, installation instructions and the pending or completed acceptance items. [Changelog](../CHANGELOG.md)
 
 ## 2. Validate before approving
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Build the site from repository Markdown while keeping file paths meaningful."""
 import argparse
-from collections import defaultdict
 import os
 from pathlib import Path
 import posixpath
@@ -35,17 +34,6 @@ def repository():
     return match[1]
 
 
-def public_documents():
-    roots = ("docs", "src", "examples", "tools")
-    public = {file.relative_to(ROOT).as_posix(): file.relative_to(ROOT).as_posix()
-              for folder in roots for file in (ROOT / folder).rglob("*.md")
-              if "HANDOFF" not in file.name and file.name != "CONTINUE-HERE.md"}
-    for name in ("CHANGELOG.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SUPPORT.md", "SECURITY.md",
-                 "THIRD_PARTY_NOTICES.md"):
-        public[name] = name
-    return {**public, "website/index.md": "index.md"}
-
-
 def rewrite_source_links(markdown, source, dest, published, repo, ref):
     def replace(match):
         target = match["url"].strip("<>")
@@ -57,6 +45,8 @@ def rewrite_source_links(markdown, source, dest, published, repo, ref):
             address = posixpath.relpath(published[resolved], posixpath.dirname(dest) or ".")
         elif resolved == README:
             address = posixpath.relpath("index.md", posixpath.dirname(dest) or ".")
+        elif resolved.lower().endswith(".md"):
+            raise ValueError(f"{source} links to an unpublished document: {resolved}")
         else:
             location = ROOT / resolved
             if not location.resolve().is_relative_to(ROOT) or not location.exists():
@@ -99,34 +89,6 @@ def nav_paths(entries):
             yield from nav_paths(entry)
 
 
-def title(file):
-    text = (ROOT / file).read_text(encoding="utf-8-sig")
-    heading = re.search(r"^# ([^\n]+)", text, re.M)
-    return heading[1].replace("`", "").strip() if heading else Path(file).stem.replace("-", " ").title()
-
-
-def append_reference_library(nav, published):
-    groups = defaultdict(list)
-    included = set(nav_paths(nav))
-    for file, dest in sorted(published.items()):
-        if dest in included:
-            continue
-        if file.startswith("docs/history/"):
-            section = "Historical records"
-        elif file.startswith("docs/development/"):
-            section = "Runtime and layer behavior"
-        elif file.startswith("docs/places/"):
-            section = "Places setup and maintenance"
-        elif file.startswith("tools/community-notes/"):
-            section = "Workspace operations"
-        elif file.startswith("src/"):
-            section = "Source module notes"
-        else:
-            section = "Examples, tools, and release evidence"
-        groups[section].append({title(file): dest})
-    nav.append({"Reference library": [{section: groups[section]} for section in sorted(groups)]})
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--site-url", default=os.environ.get("DOCS_SITE_URL"))
@@ -146,21 +108,19 @@ def main():
         shutil.rmtree(STAGED)
     STAGED.mkdir()
     (STAGED / ".generated").touch()
-    published = public_documents()
+    settings = load_config(config_file=str(ROOT / "mkdocs.yml"), site_dir=str(output),
+                           site_url=options.site_url or "http://localhost:8000/",
+                           repo_url=f"https://github.com/{repo}", repo_name=repo)
+    published = {name: name for name in nav_paths(settings.nav) if name != "index.md"}
+    published["website/index.md"] = "index.md"
     for source, dest in published.items():
         text = (ROOT / source).read_text(encoding="utf-8-sig")
         text = rewrite_source_links(text, source, dest, published, repo, ref)
-        if source.startswith("docs/history/") and not text.startswith("---\n"):
-            text = "---\nsearch:\n  exclude: true\n---\n\n" + text
         target = STAGED / dest
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(text, encoding="utf-8")
     shutil.copytree(ROOT / "website/assets", STAGED / "assets")
     shutil.copy2(ROOT / "logo.png", STAGED / "assets/logo.png")
-    settings = load_config(config_file=str(ROOT / "mkdocs.yml"), site_dir=str(output),
-                           site_url=options.site_url or "http://localhost:8000/",
-                           repo_url=f"https://github.com/{repo}", repo_name=repo)
-    append_reference_library(settings.nav, published)
     build(settings)
     (output / ".generated-docs-site").touch()
     print(f"Built {len(published)} documentation pages at {output}.")

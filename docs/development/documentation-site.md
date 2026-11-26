@@ -1,6 +1,6 @@
 # Maintain the documentation website
 
-The website builds from the same Markdown you review in the repository. Edit the guide that owns a topic and link to it from other pages. Keep current workflows in user and administrator guides and dated implementation decisions in the historical records.
+The website builds from the same Markdown you review in the repository. Edit the guide that owns a topic and link to it from other pages.
 
 ## Build and preview
 
@@ -19,9 +19,9 @@ Open [the local preview](http://localhost:8000/). Rerun the builder after editin
 
 - Start with the [documentation index](../README.md) when deciding where a topic belongs.
 - Edit the page in place. Add a relative link to its source path and keep examples beside the instructions that need them.
-- Use `mkdocs.yml` for primary navigation. Other public Markdown pages go into the reference library automatically. Dated history stays available through the sidebar.
+- Add reviewed public guides to the navigation in `mkdocs.yml`. The build publishes only pages listed there and rejects links to unpublished Markdown.
 - Update [the landing page](../../website/index.md) when a workflow needs a different entry point.
-- Source links outside the site point to the same Git revision on GitHub. AI handoff and continuation documents stay in the repository.
+- Source links outside the site point to the same Git revision on GitHub.
 
 Use admonitions for operational details readers might miss.
 
