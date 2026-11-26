@@ -155,7 +155,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                     </div>
 
                     {/* Divider */}
-                    <div style={{ width: "1px", height: "16px", background: "rgba(255,255,255,0.1)", margin: "0 2px" }} />
+                    <div style={{ width: "1px", height: "16px", background: "var(--mly-theme-border, #456b58)", margin: "0 2px" }} />
 
                     {/* Is Pano toggle */}
                     <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
@@ -176,7 +176,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                                             fontSize: "8px",
                                             fontWeight: isActive ? 700 : 400,
                                             background: isActive ? "var(--mly-theme-selected, #2b8054)" : "var(--mly-theme-control, #183f2c)",
-                                            border: isActive ? "1px solid #74c397" : "1px solid #456b58",
+                                            border: isActive ? "1px solid var(--mly-theme-accent, #74c397)" : "1px solid var(--mly-theme-border, #456b58)",
                                             borderRadius: "3px",
                                             color: "var(--mly-theme-text, white)",
                                             cursor: "pointer",
@@ -200,22 +200,24 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                     {/* Date colour toggle */}
                     <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                         <span style={filterLabelStyle}>{t('dateColor')} </span>
-                        <label style={{ position: "relative", display: "inline-block", width: "26px", height: "16px", marginBottom: 0, marginRight: "2px" }}>
+                        <label className="mly-filter-date-toggle" style={{ position: "relative", display: "inline-block", width: "26px", height: "16px", marginBottom: 0, marginRight: "2px" }}>
                             <input
                                 type="checkbox"
+                                aria-label={t('dateColor')}
                                 checked={turboColorByDate === true}
                                 onChange={(e) => onTurboColorByDateChange(e.target.checked)}
                                 style={{ opacity: 0, width: 0, height: 0 }}
                             />
                             <span style={{
                                 position: "absolute", cursor: "pointer", top: 0, left: 0, right: 0, bottom: 0,
-                                backgroundColor: turboColorByDate ? "#4CAF50" : "rgba(255,255,255,0.2)",
+                                backgroundColor: turboColorByDate ? "var(--mly-theme-accent, #74c397)" : "var(--mly-theme-input, #122c22)",
+                                border: "1px solid var(--mly-theme-border, #648b73)",
                                 borderRadius: "34px", transition: "0.3s"
                             }} />
                             <span style={{
                                 position: "absolute", height: "12px", width: "12px",
-                                left: turboColorByDate ? "14px" : "2px", bottom: "2px",
-                                backgroundColor: "white", transition: "0.3s", borderRadius: "50%"
+                                left: turboColorByDate ? "12px" : "2px", bottom: "2px",
+                                backgroundColor: turboColorByDate ? "var(--mly-theme-input, #122c22)" : "var(--mly-theme-text, #edf7f0)", transition: "0.3s", borderRadius: "50%"
                             }} />
                         </label>
                     </div>

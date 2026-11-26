@@ -132,7 +132,7 @@ export const expandButton: CSSProperties = {
   border: "1px solid var(--mly-theme-border, #ffffff45)",
   borderRadius: 4,
   background: "var(--mly-theme-chrome, #17251ede)",
-  color: "white",
+  color: "var(--mly-theme-text, #edf7f0)",
   cursor: "pointer",
 };
 

@@ -3,7 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
-const ignored = new Set(['.git', '.refactor-backups', '.repository-cleanup-backups', 'node_modules', '__pycache__']);
+const ignored = new Set(['.git', '.docs-source', 'site', '.refactor-backups', '.repository-cleanup-backups', 'node_modules', '__pycache__']);
 const documents = [];
 function scan(directory) {
   for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {

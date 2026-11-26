@@ -6,6 +6,8 @@ The **widget** is a panel you add to an Experience Builder app. People opening a
 
 ## Start here
 
+Browse the [documentation website](https://sukruburakcetin.github.io/map-ex-test/) when GitHub Pages is enabled for this repository. The [Markdown documentation index](docs/README.md) is available from the source checkout.
+
 | I want to | Go to |
 | --- | --- |
 | Open imagery, use filters, or save a note | [Use the widget](docs/user-guide/README.md) |
@@ -23,7 +25,7 @@ The **widget** is a panel you add to an Experience Builder app. People opening a
 - Record Local notes. Administrators can also configure Enterprise notes or shared workspaces.
 - Explore Overture Places when the administrator configures a Places source. Some analysis tools depend on the active map, settings, and external services.
 
-See the [documentation index](docs/README.md) for setup, administration and technical references.
+
 
 ## Status and participation
 

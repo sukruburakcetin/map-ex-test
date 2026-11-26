@@ -280,6 +280,7 @@ export const utilityPreferenceCss = `
     color:var(--mly-theme-text, #e1eee5); background:var(--mly-theme-panel, #192f24);
     font:inherit;
   }
+  .mly-utility-preference .mly-language-select::picker(select) { scrollbar-width:thin; }
   .mly-utility-preference select option { padding:5px; white-space:normal; overflow-wrap:anywhere; }
   .mly-utility-preference select option:checked { background:var(--mly-theme-selected, #31543d); }
   .mly-utility-preference select option:is(:hover,:focus-visible) {

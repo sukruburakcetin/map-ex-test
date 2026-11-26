@@ -115,9 +115,9 @@ export function FullscreenViewer({
           style={styles.expandButton}
         >
           {minimapExpanded ? (
-            <Icons.Minimize size={14} />
+            <Icons.Minimize size={16} color="currentColor" aria-hidden="true" focusable="false" />
           ) : (
-            <Icons.Maximize size={14} />
+            <Icons.Maximize size={16} color="currentColor" aria-hidden="true" focusable="false" />
           )}
         </button>
       </div>

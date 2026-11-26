@@ -35,3 +35,7 @@ node_modules/
 # Reversible source-cleanup installer and local recovery state
 /.repository-cleanup-backups/
 /apply-repository-cleanup*.cjs
+
+# Generated documentation site and staged Markdown
+/.docs-source/
+/site/

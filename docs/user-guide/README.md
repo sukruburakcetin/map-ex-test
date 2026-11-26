@@ -12,6 +12,7 @@ Open the Experience Builder app and look for Mapillary Explorer. Your app builde
 - [Read image information](image-information.md)
 - [Compare image dates](time-travel.md)
 - [Filter traffic signs and objects](detection-filters.md)
+- [Use optional coverage, routing, and analysis tools](analysis-tools.md)
 - [Select notes](note-selection.md), [search notes](notes-search.md), or [use a collaboration workspace](workspaces.md)
 - [Explore configured Places data](../places/README.md#explore-the-published-data)
 - [Troubleshoot a problem](../troubleshooting.md)

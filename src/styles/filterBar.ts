@@ -2,10 +2,10 @@ import type { CSSProperties } from "react";
 
 export const filterInputStyle: CSSProperties = {
     background: "rgba(0, 0, 0, 0.2)",
-    border: "1px solid rgba(255, 255, 255, 0.15)",
+    border: "1px solid var(--mly-theme-border, #456b58)",
     borderRadius: "20px",
     padding: "4px 20px 4px 10px",
-    color: "#fff",
+    color: "var(--mly-theme-text, #edf7f0)",
     fontSize: "10px",
     width: "110px",
     outline: "none",
@@ -15,7 +15,7 @@ export const filterInputStyle: CSSProperties = {
 
 export const filterLabelStyle: CSSProperties = {
     fontSize: '9px',
-    color: 'rgba(255,255,255,0.8)',
+    color: 'var(--mly-theme-text, #e1f2e8)',
     fontWeight: 500
 };
 
@@ -38,6 +38,8 @@ export const filterPanelCss = `
 .mly-filter-group { display:flex; align-items:center; gap:6px; flex:0 0 auto; height:28px; padding:0 4px; box-sizing:border-box; border:1px solid var(--mly-theme-border, #416756); border-radius:6px; background:var(--mly-theme-control, #1b392d); }
 .mly-filter-panel[lang="ar"] .mly-filter-group { direction:rtl; text-align:start; }
 .mly-filter-group label { margin:0 !important; min-height:0; line-height:1; }
+.mly-filter-group input[type="text"]::placeholder { color:var(--mly-theme-muted, #b5ccbf); opacity:1; }
+.mly-filter-date-toggle:focus-within:has(input:focus-visible) { outline:2px solid var(--mly-theme-accent, #76dba5); outline-offset:1px; }
 .mly-filter-group input[type="text"] { height:24px !important; min-height:24px !important; padding-top:0 !important; padding-bottom:0 !important; box-sizing:border-box; border-radius:5px !important; border-color:var(--mly-theme-border, #456b58) !important; background:var(--mly-theme-input, #122c22) !important; }
 .mly-filter-group select { display:block; height:24px !important; min-height:24px !important; max-height:24px !important; box-sizing:border-box; margin:0; border:1px solid var(--mly-theme-border, #507d64) !important; border-radius:5px; padding:0 4px !important; font-size:10px !important; line-height:normal; background:var(--mly-theme-control, #173d2b) !important; color:var(--mly-theme-text, #edf7f0); color-scheme:var(--mly-theme-color-scheme, dark); }
 .mly-filter-group .mly-filter-travel select { width:88px; min-width:0; }

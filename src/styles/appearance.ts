@@ -43,7 +43,23 @@ export function saveWidgetTheme(storageKey: string, theme?: WidgetTheme): void {
 
 type ThemeVariables = CSSProperties & Record<`--mly-theme-${string}`, string>;
 export const widgetThemeStyles: Record<WidgetTheme, ThemeVariables> = {
-  green: {},
+  green: {
+    "--mly-theme-color-scheme": "dark",
+    "--mly-theme-panel": "#10231c",
+    "--mly-theme-chrome": "#11271eed",
+    "--mly-theme-control": "#18382b",
+    "--mly-theme-input": "#0d2019",
+    "--mly-theme-selected": "#1b4936",
+    "--mly-theme-text": "#effaf4",
+    "--mly-theme-muted": "#b5d7c6",
+    "--mly-theme-accent": "#53dc9b",
+    "--mly-theme-border": "#5d8871",
+    "--mly-theme-hover": "#24533d",
+    "--mly-theme-check": "#00a660",
+    "--mly-theme-danger": "#ffb6a6",
+    "--mly-theme-primary": "#007747",
+    "--mly-theme-idle-pulse": "rgba(0, 166, 96, 0.6)",
+  },
   dark: {
     "--mly-theme-color-scheme": "dark",
     "--mly-theme-panel": "#22262e",
@@ -150,7 +166,7 @@ export const widgetThemeStyles: Record<WidgetTheme, ThemeVariables> = {
 const themeVariableKeys = new Set(Object.values(widgetThemeStyles).flatMap(style => Object.keys(style)));
 
 export function applyWidgetThemeVariables(element: HTMLElement, theme: WidgetTheme): void {
-  // Portaled DOM tooltips have no themed ancestor. Remove old variables when returning to Green.
+  // Portaled DOM tooltips have no themed ancestor. Clear the previous palette when changing themes.
   for (const key of themeVariableKeys)
     element.style.removeProperty(key);
   for (const [key, color] of Object.entries(widgetThemeStyles[theme])) element.style.setProperty(key, color);

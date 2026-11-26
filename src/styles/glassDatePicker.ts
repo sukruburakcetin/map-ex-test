@@ -21,10 +21,10 @@ export function getDateTriggerStyle(open: boolean, selected: Date | null, disabl
                         alignItems: "center",
                         gap: "4px",
                         padding: "3px 7px",
-                        background: open ? "rgba(55,213,130,0.15)" : "rgba(255,255,255,0.08)",
-                        border: `1px solid ${open ? ACCENT : "rgba(255,255,255,0.18)"}`,
+                        background: open ? "var(--mly-theme-selected, #31543d)" : "var(--mly-theme-control, #173d2b)",
+                        border: `1px solid ${open ? "var(--mly-theme-accent, #37d582)" : "var(--mly-theme-border, #456b58)"}`,
                         borderRadius: "5px",
-                        color: selected ? "#fff" : "rgba(255,255,255,0.5)",
+                        color: selected ? "var(--mly-theme-text, #edf7f0)" : "var(--mly-theme-muted, #c2d7ca)",
                         fontSize: "9px",
                         cursor: disabled ? "not-allowed" : "pointer",
                         opacity: disabled ? 0.5 : 1,
@@ -44,7 +44,7 @@ export const dateLabelStyle: React.CSSProperties = { fontSize: "8px", lineHeight
 
 export const dateClearStyle: React.CSSProperties = {
                                 marginLeft: "1px",
-                                color: "rgba(255,255,255,0.45)",
+                                color: "currentColor",
                                 fontSize: "10px",
                                 lineHeight: 1,
                                 cursor: "pointer",

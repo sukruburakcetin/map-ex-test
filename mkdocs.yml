@@ -1,0 +1,115 @@
+site_name: Mapillary Explorer
+site_description: Guides and technical references for Mapillary Explorer in ArcGIS Experience Builder.
+docs_dir: .docs-source
+site_dir: site
+strict: true
+
+theme:
+  name: material
+  logo: assets/logo.png
+  favicon: assets/logo.png
+  font: false
+  features:
+    - navigation.sections
+    - navigation.path
+    - navigation.indexes
+    - navigation.footer
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+plugins:
+  - search
+extra_css:
+  - assets/website.css
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds: {case: lower, unicode: true}
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+nav:
+  - Home: index.md
+  - Get started:
+      - First capture: docs/getting-started.md
+      - Install and configure: docs/installation.md
+      - Troubleshooting: docs/troubleshooting.md
+  - Use the widget:
+      - docs/user-guide/README.md
+      - Image information: docs/user-guide/image-information.md
+      - Time Travel: docs/user-guide/time-travel.md
+      - Coverage and analysis: docs/user-guide/analysis-tools.md
+      - Traffic signs and objects: docs/user-guide/detection-filters.md
+      - Notes:
+          - Select a note: docs/user-guide/note-selection.md
+          - Search notes: docs/user-guide/notes-search.md
+          - Collaboration workspaces: docs/user-guide/workspaces.md
+      - Places: docs/places/README.md
+  - Configure and publish:
+      - Appearance and controls: docs/administration/builder-appearance.md
+      - Enterprise notes: docs/administration/enterprise-notes.md
+      - Operate a workspace: tools/community-notes/README.md
+      - Places administration:
+          - Administrator guide: docs/places/administrator-guide.md
+          - Portal administrator guide: docs/places/portal-administrator-guide.md
+          - External Places service: docs/places/external-service.md
+          - Area maintenance: docs/places/area-maintenance.md
+          - Troubleshoot Places: docs/places/troubleshooting.md
+      - Publisher guide: docs/publishing.md
+      - Upgrade from 4.6: docs/releases/5.0-migration.md
+  - Develop and contribute:
+      - Customize the widget: docs/widget-development.md
+      - Architecture: docs/development/architecture.md
+      - Contributing: CONTRIBUTING.md
+      - Test and validate:
+          - Portable tests: docs/development/portable-tests.md
+          - Browser fixtures: docs/development/browser-fixtures.md
+          - Isolated bundle build: docs/development/isolated-build-check.md
+          - Experience Builder acceptance: docs/development/exb-1.21-validation.md
+      - Localization:
+          - Translation workflow: docs/localization/CONTRIBUTING.md
+          - Glossary: docs/localization/GLOSSARY.md
+      - Maintain this website: docs/development/documentation-site.md
+  - Reference:
+      - Configuration and integrations: docs/reference.md
+      - Places API contract: docs/development/places-service-contract.md
+      - Runtime dependencies: docs/development/runtime-dependencies.md
+      - Places package format: docs/development/places-packages.md
+      - Places examples: examples/places/README.md
+      - Documentation index: docs/README.md
+  - Releases:
+      - Preparation: docs/releases/README.md
+      - Changelog: CHANGELOG.md
+      - Change inventory: docs/releases/5.0-change-inventory.md
+      - Release draft: docs/releases/5.0-draft.md
+  - Support and policies:
+      - Support: SUPPORT.md
+      - Security: SECURITY.md
+      - Code of conduct: CODE_OF_CONDUCT.md
+      - Third-party notices: THIRD_PARTY_NOTICES.md

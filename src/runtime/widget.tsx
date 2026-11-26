@@ -3049,8 +3049,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       get tooltipDiv() { return widget.tooltipDiv; }, set tooltipDiv(value) {
         widget.tooltipDiv = value;
         const config = widget.props.config;
-        if (value && (config?.widgetTheme || config?.allowUserThemeChoice === true)) {
-          const theme = appearance.resolveWidgetTheme(config.widgetTheme, appearance.canSelectVisitorTheme(config.allowUserThemeChoice), widget.state.widgetTheme);
+        if (value) {
+          const theme = appearance.resolveWidgetTheme(config?.widgetTheme, appearance.canSelectVisitorTheme(config?.allowUserThemeChoice), widget.state.widgetTheme);
           appearance.applyWidgetThemeVariables(value, theme);
         }
       },
