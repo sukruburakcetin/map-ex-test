@@ -6,6 +6,7 @@ export interface StartupConfig {
   turboDefaultStartDate?: string;
   turboDefaultEndDate?: string;
   turboDefaultIsPano?: boolean;
+  turboDefaultOnFoot?: boolean | null;
   turboDefaultColorByDate?: boolean;
   turboCreator?: string;
 }
@@ -13,6 +14,7 @@ interface StartupPresets {
   turboFilterStartDate: string;
   turboFilterEndDate: string;
   turboFilterIsPano: boolean | undefined;
+  turboFilterOnFoot?: boolean;
   turboColorByDate: boolean;
 }
 /** Existing instance-owned invalidation and DOM slots. This coordinator creates no parallel lifetime owner. */
@@ -80,6 +82,7 @@ export async function mountWidget(host: WidgetStartupHost): Promise<void> {
       const presetStartDate = host.config.turboDefaultStartDate || undefined;
       const presetEndDate = host.config.turboDefaultEndDate || undefined;
       const presetIsPano = host.config.turboDefaultIsPano ?? undefined;
+      const presetOnFoot = host.config.turboDefaultOnFoot;
       const presetColorByDate = host.config.turboDefaultColorByDate ?? false;
 
       let defaultFilterId: number | undefined = undefined;
@@ -97,6 +100,7 @@ export async function mountWidget(host: WidgetStartupHost): Promise<void> {
         turboFilterStartDate: presetStartDate || "",
         turboFilterEndDate: presetEndDate || "",
         turboFilterIsPano: presetIsPano,
+        ...(typeof presetOnFoot === "boolean" ? { turboFilterOnFoot: presetOnFoot } : {}),
         turboColorByDate: presetColorByDate,
       });
     } catch (err) {

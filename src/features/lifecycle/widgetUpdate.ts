@@ -20,6 +20,7 @@ export interface WidgetUpdateConfig extends PlacesSourceConfig {
   turboDefaultColorByDate?: boolean;
   turboDefaultEndDate?: string;
   turboDefaultIsPano?: boolean;
+  turboDefaultOnFoot?: boolean | null;
   turboDefaultStartDate?: string;
   turboOrganization?: string;
 }
@@ -51,6 +52,7 @@ export interface WidgetUpdateState<Map> {
   trafficSignsActive?: boolean;
   turboFilterEndDate?: string;
   turboFilterIsPano?: boolean;
+  turboFilterOnFoot?: boolean;
   turboFilterOrganization?: string;
   turboFilterStartDate?: string;
   turboLoading?: boolean;
@@ -64,6 +66,7 @@ export interface ReopenState {
   turboFilterStartDate: string;
   turboFilterEndDate: string;
   turboFilterIsPano: boolean | undefined;
+  turboFilterOnFoot?: boolean;
   turboColorByDate: boolean;
   turboYearLegend: { year: string; color: string }[];
   showTurboFilterBox: false;
@@ -123,6 +126,7 @@ export interface WidgetUpdateHost<View extends object, Map extends { view: View 
   setCreator(value: string, after: () => void): void;
   setStartDate(value: string, after: () => void): void;
   setEndDate(value: string, after: () => void): void;
+  setTravelMethod(value: boolean | undefined, after: () => void): void;
   setPanorama(value: boolean | undefined, after: () => void): void;
   setColorByDate(value: boolean, after: () => void): void;
   enableTurboCoverageLayer(creator?: string): unknown;
@@ -228,6 +232,7 @@ function reconcileWidgetVisibility<View extends object, Map extends { view: View
           host.initMapillaryObjectsLayer();
         }
 
+        const travelDefault = host.props.config.turboDefaultOnFoot;
         // Restore state
         host.restoreReopenState(
           {
@@ -237,6 +242,8 @@ function reconcileWidgetVisibility<View extends object, Map extends { view: View
             turboFilterStartDate: host.props.config.turboDefaultStartDate || "",
             turboFilterEndDate: host.props.config.turboDefaultEndDate || "",
             turboFilterIsPano: host.props.config.turboDefaultIsPano ?? undefined,
+            ...(typeof travelDefault === "boolean" || host.state.turboFilterOnFoot !== undefined
+              ? { turboFilterOnFoot: typeof travelDefault === "boolean" ? travelDefault : undefined } : {}),
             turboColorByDate: host.props.config.turboDefaultColorByDate ?? false,
             turboYearLegend: [],
             showTurboFilterBox: false,
@@ -344,6 +351,14 @@ function reconcileConfiguration<View extends object, Map extends { view: View }>
       host.setPanorama(host.props.config.turboDefaultIsPano ?? undefined, () => {
         host.debouncedTurboFilter();
       });
+    }
+
+    const previousTravel = prevProps.config.turboDefaultOnFoot;
+    const configuredTravel = host.props.config.turboDefaultOnFoot;
+    const previousTravelFilter = typeof previousTravel === "boolean" ? previousTravel : undefined;
+    const nextTravelFilter = typeof configuredTravel === "boolean" ? configuredTravel : undefined;
+    if (previousTravelFilter !== nextTravelFilter && host.state.turboFilterOnFoot !== nextTravelFilter) {
+      host.setTravelMethod(nextTravelFilter, () => host.debouncedTurboFilter());
     }
 
     // Turbo Preset: Color by Date

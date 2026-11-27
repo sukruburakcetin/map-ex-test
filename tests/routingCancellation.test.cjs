@@ -2,10 +2,35 @@ const fs=require('node:fs'),path=require('node:path'),test=require('node:test'),
 const root=path.resolve(__dirname,'..'),cache=new Map();function load(relative){if(cache.has(relative))return cache.get(relative);const m={exports:{}};new Function('require','module','exports',ts.transpileModule(fs.readFileSync(path.join(root,'src',relative+'.ts'),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText)(id=>id==='./geoUtils'?{distanceMeters:()=>100}:load(path.posix.normalize(path.posix.join(path.posix.dirname(relative),id))),m,m.exports);cache.set(relative,m.exports);return m.exports;}
 const {createOSRMRoutingProvider}=load('utils/osrmRoutingProvider'),{createArcGISRoutingProvider}=load('utils/arcgisRoutingProvider'),stops=[[0,0],[1,1]];
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return{promise,resolve};},flush=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
-for(const kind of ['solve','preflight'])test('OSRM '+kind+' forwards abort and preserves AbortError',async t=>{const seen=[];t.mock.method(global,'fetch',async(url,options)=>new Promise((resolve,reject)=>{seen.push(options.signal);options.signal.addEventListener('abort',()=>reject(new DOMException('Cancelled','AbortError')),{once:true});}));const p=createOSRMRoutingProvider({baseUrl:'https://fixture.invalid'}),abort=new AbortController(),pending=kind==='solve'?p.solve({stops,signal:abort.signal}):p.preflightOrderedStops(stops,abort.signal);assert.equal(seen[0],abort.signal);abort.abort();await assert.rejects(pending,{name:'AbortError'});});
+for(const kind of ['solve','preflight'])test('OSRM '+kind+' forwards abort and preserves AbortError',async t=>{const seen=[];t.mock.method(global,'fetch',async(url,options)=>new Promise((resolve,reject)=>{seen.push(options.signal);options.signal.addEventListener('abort',()=>reject(new DOMException('Cancelled','AbortError')),{once:true});}));const p=createOSRMRoutingProvider({baseUrl:'https://fixture.invalid'}),abort=new AbortController(),pending=kind==='solve'?p.solve({stops,signal:abort.signal}):p.preflightOrderedStops(stops,abort.signal);assert.equal(seen[0].aborted,false);abort.abort();assert.equal(seen[0].aborted,true);await assert.rejects(pending,{name:'AbortError'});});
 for(const kind of ['solve','preflight'])test('OSRM '+kind+' stops before HTTP for an aborted run',async t=>{let calls=0;t.mock.method(global,'fetch',async()=>{calls++;});const abort=new AbortController();abort.abort();const p=createOSRMRoutingProvider({baseUrl:'https://fixture.invalid'});await assert.rejects(kind==='solve'?p.solve({stops,signal:abort.signal}):p.preflightOrderedStops(stops,abort.signal),{name:'AbortError'});assert.equal(calls,0);});
 for(const kind of ['solve','preflight'])test('OSRM '+kind+' rejects late JSON after cancellation',async t=>{const body=deferred();t.mock.method(global,'fetch',async()=>({ok:true,json:()=>body.promise}));const abort=new AbortController(),p=createOSRMRoutingProvider({baseUrl:'https://fixture.invalid'}),pending=kind==='solve'?p.solve({stops,signal:abort.signal}):p.preflightOrderedStops(stops,abort.signal);await flush();abort.abort();body.resolve({code:'Ok'});await assert.rejects(pending,{name:'AbortError'});});
 function arcgis(overrides={}){const inputs=[];class Record{constructor(value){Object.assign(this,value);}}const provider=createArcGISRoutingProvider({route:{solve:async(...args)=>{inputs.push(args);return {routeResults:[{route:{attributes:{Total_TravelTime:2,Total_Kilometers:1},geometry:{paths:[stops]}}}]};}},networkService:{},RouteParameters:Record,FeatureSet:Record,Graphic:Record,Point:Record,routeUrl:'https://fixture.invalid/route',kind:'arcgis-world',label:'Test',travelMode:'drive',...overrides});return{provider,inputs};}
 test('ArcGIS forwards the signal as request options and preserves normalized output',async()=>{const {provider,inputs}=arcgis(),abort=new AbortController(),result=await provider.solve({stops,signal:abort.signal});assert.equal(inputs[0][2].signal,abort.signal);assert.equal(result.durationMinutes,2);assert.equal(result.distanceMeters,1000);assert.deepEqual(result.paths,[stops]);});
 test('ArcGIS rejects late SDK results and pre-aborted solves',async()=>{const response=deferred();let solves=0;const {provider}=arcgis({route:{solve:()=>{solves++;return response.promise;}}}),abort=new AbortController(),pending=provider.solve({stops,signal:abort.signal});await flush();abort.abort();response.resolve({});await assert.rejects(pending,{name:'AbortError'});await assert.rejects(provider.solve({stops,signal:abort.signal}),{name:'AbortError'});assert.equal(solves,1);});
 test('cancelled ArcGIS travel-mode discovery cannot start a route solve',async()=>{const description=deferred();let solves=0;const {provider}=arcgis({travelMode:'walk',networkService:{fetchServiceDescription:()=>description.promise},route:{solve:()=>{solves++;}}}),abort=new AbortController(),pending=provider.solve({stops,signal:abort.signal});abort.abort();description.resolve({supportedTravelModes:[{name:'Walking Time',impedanceAttributeName:'WalkTime'}]});await assert.rejects(pending,{name:'AbortError'});assert.equal(solves,0);});
+
+test('OSRM Table retries a gateway failure once and returns the recovered result', async t => {
+ let calls = 0;
+ t.mock.method(global,'fetch',async()=>++calls===1 ? {ok:false,status:503} :
+   {ok:true,json:async()=>({code:'Ok',durations:[[60]]})});
+ const provider=createOSRMRoutingProvider({baseUrl:'https://fixture.invalid'});
+ await provider.preflightOrderedStops(stops);
+ assert.equal(calls,2);
+});
+
+test('OSRM honors a rate-limit delay without sending an automatic retry', async t => {
+ let calls = 0;
+ t.mock.method(global,'fetch',async()=>{calls++;return {ok:false,status:429,headers:{get:()=> '9'}};});
+ const provider=createOSRMRoutingProvider({baseUrl:'https://fixture.invalid'});
+ await assert.rejects(provider.solve({stops}),/rate-limited.*9 seconds/);
+ assert.equal(calls,1);
+});
+
+test('OSRM NoRoute is actionable and does not retry', async t => {
+ let calls = 0;
+ t.mock.method(global,'fetch',async()=>{calls++;return {ok:false,status:400,json:async()=>({code:'NoRoute'})};});
+ const provider=createOSRMRoutingProvider({baseUrl:'https://fixture.invalid'});
+ await assert.rejects(provider.solve({stops}),/No route found between these stops/);
+ assert.equal(calls,1);
+});

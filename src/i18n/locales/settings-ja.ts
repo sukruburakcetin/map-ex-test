@@ -2,6 +2,12 @@ import type { SettingsMessages } from '../settingsMessages';
 /** Japanese presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const ja: SettingsMessages = {
   "builderMapConnection": "地図への接続",
+  "builderDefaultTravelMode": "既定の移動モード",
+  "builderTravelOnFoot": "徒歩",
+  "builderTravelOther": "その他の移動",
+  "builderRoadDataSource": "道路データソース",
+  "builderCustomRoadService": "カスタムサービス",
+  "builderPublicOverpass": "公開 Overpass",
   "builderCoverageDefaults": "カバレッジの既定値",
   "builderEnableServiceHint": "上のオプションを有効にしてサービスを設定します。既存の値は保持されます。",
 

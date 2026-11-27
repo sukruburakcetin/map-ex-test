@@ -2,6 +2,12 @@ import type { SettingsMessages } from '../settingsMessages';
 /** Traditional Chinese (Taiwan) presentation catalog; stored values and protocol identifiers remain unchanged. */
 const zhTW: SettingsMessages = {
   "builderMapConnection": "地圖連線",
+  "builderDefaultTravelMode": "預設移動方式",
+  "builderTravelOnFoot": "步行",
+  "builderTravelOther": "其他移動方式",
+  "builderRoadDataSource": "道路資料來源",
+  "builderCustomRoadService": "自訂服務",
+  "builderPublicOverpass": "公開 Overpass",
   "builderCoverageDefaults": "覆蓋範圍預設值",
   "builderEnableServiceHint": "啟用上方選項以設定服務。現有值會保留。",
 

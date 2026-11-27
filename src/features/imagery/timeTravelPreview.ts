@@ -25,7 +25,7 @@ export function relatedCaptures(current: any, images: any[]): TravelCapture[] {
    if (Math.min(difference,360-difference) > TIME_TRAVEL.MAX_ANGLE_DEG) return [];
   }
   seen.add(id);return [capture(image,distance)];
- }).sort((a,b)=>b.capturedAt-a.capturedAt || a.distance-b.distance).slice(0,12);
+ }).sort((a,b)=>b.capturedAt-a.capturedAt || a.distance-b.distance || a.id.localeCompare(b.id)).slice(0,12);
 }
 export interface SharedComparison {
  imageId: string; startId: string; compareId: string; split: number;
@@ -108,6 +108,50 @@ export async function loadTimeTravelPreview(imageId: string, token: string, sign
  const origin = coordinates(current);
  if (!origin?.every(Number.isFinite) || !current.thumb_1024_url) throw new Error('A preview is not available for this image.');
  const offset=BBOX.TIME_TRAVEL, bbox=[origin[0]-offset,origin[1]-offset,origin[0]+offset,origin[1]+offset].join(',');
- const result=await read(`${GRAPH_API.BASE}/images?bbox=${bbox}&fields=${fields}&limit=${LIMITS.TIME_TRAVEL_CANDIDATES}&access_token=${auth}`);
- return {current:capture(current),alternatives:relatedCaptures(current,Array.isArray(result.data)?result.data:[])};
+ const url = `${GRAPH_API.BASE}/images?bbox=${bbox}&fields=${fields}&limit=${LIMITS.TIME_TRAVEL_CANDIDATES}&access_token=${auth}`;
+ const images: any[] = [];
+ const visited = new Set<string>();
+ let pageUrl = url;
+ for (let page = 0; page < 3; page++) {
+  const result = await read(pageUrl);
+  if (!Array.isArray(result.data)) throw new Error('Time travel returned an invalid candidate list.');
+  images.push(...result.data);
+  const next = result.paging?.next;
+  if (typeof next !== 'string' || !next) break;
+  let cursor = result.paging?.cursors?.after;
+  if (typeof cursor !== 'string' || !cursor) {
+   try { cursor = new URL(next, url).searchParams.get('after'); }
+   catch { break; }
+  }
+  if (typeof cursor !== 'string' || !cursor || visited.has(cursor)) break;
+  visited.add(cursor);
+  pageUrl = `${url}&after=${encodeURIComponent(cursor)}`;
+ }
+ return {current:capture(current),alternatives:relatedCaptures(current,images)};
+}
+
+/** Preserve a successful nearby search across brief dialog closes. Shared links resolve their exact IDs. */
+export function createTimeTravelPreviewLoader(load = loadTimeTravelPreview) {
+ const cache = new Map<string, {preview: TravelPreview; expires: number}>();
+ let scope: string | undefined;
+ return async (imageId: string, token: string, signal: AbortSignal, comparison?: SharedComparison): Promise<TravelPreview> => {
+  if (signal.aborted) throw new DOMException('Cancelled','AbortError');
+  if (comparison) return load(imageId, token, signal, comparison);
+  if (scope !== token) {
+   scope = token;
+   cache.clear();
+  }
+  const cached = cache.get(imageId);
+  cache.delete(imageId);
+  if (cached && cached.expires > Date.now()) {
+   cache.set(imageId, cached);
+   return cached.preview;
+  }
+  const preview = await load(imageId, token, signal);
+  if (!signal.aborted && scope === token) {
+   cache.set(imageId, { preview, expires: Date.now() + (preview.alternatives.length ? 120_000 : 10_000) });
+   while (cache.size > 16) cache.delete(cache.keys().next().value!);
+  }
+  return preview;
+ };
 }

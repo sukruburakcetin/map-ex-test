@@ -2,6 +2,12 @@ import type { SettingsMessages } from '../settingsMessages';
 /** Italian presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const it: SettingsMessages = {
   "builderMapConnection": "Connessione mappa",
+  "builderDefaultTravelMode": "Modalità di spostamento predefinita",
+  "builderTravelOnFoot": "A piedi",
+  "builderTravelOther": "Altri spostamenti",
+  "builderRoadDataSource": "Fonte dei dati stradali",
+  "builderCustomRoadService": "Servizio personalizzato",
+  "builderPublicOverpass": "Overpass pubblico",
   "builderCoverageDefaults": "Valori predefiniti di copertura",
   "builderEnableServiceHint": "Attivare l’opzione sopra per configurare il servizio. I valori esistenti vengono mantenuti.",
 

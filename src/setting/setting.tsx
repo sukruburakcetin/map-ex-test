@@ -669,6 +669,20 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
             </div>
           </SettingRow>
 
+          <SettingRow flow="wrap" label={t('builderDefaultTravelMode')}>
+            <Select size="sm" aria-label={t('builderDefaultTravelMode')} className="w-100"
+              value={config.turboDefaultOnFoot === true ? "foot" : config.turboDefaultOnFoot === false ? "other" : "any"}
+              onChange={event => {
+                const mode = event.target.value;
+                const updated = this.props.config.set("turboDefaultOnFoot", mode === "foot" ? true : mode === "other" ? false : null);
+                this.props.onSettingChange({ id: this.props.id, config: updated });
+              }}>
+              <Option value="any">{t('allImagesNoFilter')}</Option>
+              <Option value="foot">{t('builderTravelOnFoot')}</Option>
+              <Option value="other">{t('builderTravelOther')}</Option>
+            </Select>
+          </SettingRow>
+
           {/* Color by Date */}
           <SettingRow label={t('defaultColorByCaptureYear')}>
             <Switch checked={config.turboDefaultColorByDate === true} onChange={this.onToggleTurboDefaultColorByDate} />
@@ -677,6 +691,25 @@ class Setting extends React.PureComponent<AllWidgetSettingProps<IMConfig>, any> 
             <span className="text" style={{ fontSize: "11px", fontStyle: "italic", opacity: "0.4" }}>
                {t('whenEnabledCoveragePointsAreColouredByTheirCapture')} </span>
           </SettingRow>
+          <details style={{ marginTop: 10, borderTop: "1px solid var(--border-color, #ffffff24)", paddingTop: 8 }}>
+            <summary style={{ cursor: "pointer", overflowWrap: "anywhere" }}>
+              <strong>{t('builderRoadDataSource')}</strong>
+              {" · "}
+              {t(config.coverageRoadEndpoint?.trim() ? 'builderCustomRoadService' : 'builderPublicOverpass')}
+            </summary>
+            <p style={{ fontSize: 11, marginBlock: "6px 2px" }}><OwnedMessage source="Supplies street geometry for Analyze Coverage."/></p>
+            <SettingRow flow="wrap">
+              <div className="w-100">
+                <div style={{ marginBottom: 5, fontWeight: 500 }}><OwnedMessage source="Coverage road service URL"/></div>
+                <TextInput className="w-100" aria-label={this.context.owned('Coverage road service URL')}
+                  placeholder="https://overpass-api.de/api/interpreter" value={config.coverageRoadEndpoint || ""}
+                  onChange={event => this.props.onSettingChange({
+                    id: this.props.id, config: this.props.config.set("coverageRoadEndpoint", event.target.value)
+                  })}/>
+                <div style={{ marginTop: 4, fontSize: 11 }}><OwnedMessage source="Use an HTTPS ArcGIS FeatureServer polyline layer or Overpass interpreter. Leave blank to use the default public Overpass service."/></div>
+              </div>
+            </SettingRow>
+          </details>
         </BuilderSettingsSection>
         <BuilderSettingsSection title={t('placesVectorServiceTitle')} toggleLabel={t('offerPlacesLayer')} enabled={config.enablePlaces===true} onToggle={this.onTogglePlacesEnabled} onExpandedChange={open=>{if(!open)this.clearPlacesArea();}}>
           {config.enablePlaces===true ? <React.Fragment>

@@ -21,3 +21,11 @@ test('container replacement during module wait is used by observer attachment',a
 test('live creator configuration after lookup retains original snapshot boundaries',async()=>{await compare(async f=>{const gate=deferred();f.w.getUserIdFromUsername=()=>gate.promise;const task=f.w.componentDidMount();await flush();f.w.props.config={turboCreator:'changed',turboDefaultStartDate:'later'};gate.resolve(42);await task;assert.equal(f.w.state.turboFilterUsername,'changed');assert.equal(f.w.state.turboFilterStartDate,'earlier');},{turboCreator:'initial',turboDefaultStartDate:'earlier'});});
 test('startup disposal clears both timers and only its own stylesheet, retaining non-startup resources',async()=>{await compare(async f=>{await f.w.componentDidMount();f.w._introDismissTimer=f.platform.setTimeout(()=>{},500);const foreign={tag:'style',style:{},innerText:'foreign'};f.nodes.push(foreign);const tooltip=f.w.tooltipDiv;f.w.disposeStartupResources();assert(f.nodes.includes(foreign));assert(f.nodes.includes(tooltip));assert.equal(f.w.resizeObserver,f.observers[0]);assert.equal(f.timers.size,0);assert.equal(f.w._overrideStyleSheet,null);});});
 test('repeated disposal preserves revision and idempotent resource-removal policy',async()=>{await compare(async f=>{await f.w.componentDidMount();f.w.disposeStartupResources();f.w.disposeStartupResources();assert.equal(f.w._startupRevision,3);assert.equal(f.events.filter(e=>e[0]==='remove').length,1);});});
+
+test('startup applies either classified travel preset and leaves legacy Any unfiltered', async () => {
+ for (const preset of [true, false, null, undefined]) {
+  const f = fixture(false, { turboDefaultOnFoot: preset });
+  await f.w.componentDidMount();
+  assert.equal(f.w.state.turboFilterOnFoot, preset ?? undefined);
+ }
+});

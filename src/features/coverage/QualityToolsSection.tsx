@@ -11,7 +11,7 @@ export type QualityToolsSectionProps = Pick<InfoBoxProps, 'qualityViewActive' | 
 /** Presentation thresholds, adjustable independently for each view type. */
 export const QUALITY_HINT_ZOOM = { '2d': 6, '3d': 8 } as const;
 
-/** Keep legend colors/ranges, selected-band dimming and original callbacks; no effects or SDK work occur here. */
+/** Keep legend colors/ranges, selected-band indication and original callbacks; no effects or SDK work occur here. */
 export const QualityToolsSection: React.FC<QualityToolsSectionProps> = props => {
  const { t, locale , owned} = useWidgetLocale();
 
@@ -45,12 +45,12 @@ export const QualityToolsSection: React.FC<QualityToolsSectionProps> = props => 
       </button>}
 
       {showZoomNotice && (
-        <div role="status" style={{ marginTop: 4, padding: '3px 5px', borderLeft: '2px solid #F5A623', background: 'rgba(245,166,35,0.10)', color: '#fff0ce', fontSize: 9, lineHeight: 1.25, overflowWrap: 'anywhere' }}>
+        <div role="status" style={{ marginTop: 4, padding: '3px 5px', borderLeft: '2px solid #F5A623', background: 'rgba(245,166,35,0.10)', color: 'var(--mly-theme-text, #fff0ce)', fontSize: 9, lineHeight: 1.25, overflowWrap: 'anywhere' }}>
            {t('uiZoomCloserForImageDetail')} </div>
       )}
 
       {qualityViewActive && (
-        <div style={qualityToolsLegendStyle}>
+        <div className="mly-quality-legend" style={qualityToolsLegendStyle}>
           {(
             [
               ["#35AF6D", t('uiGood'), "≥0.70", "good"],
@@ -60,13 +60,12 @@ export const QualityToolsSection: React.FC<QualityToolsSectionProps> = props => 
             ] as [string, string, string, "good" | "fair" | "poor" | "unscored"][]
           ).map(([color, label, range, band]) => {
             const isSelected = selectedQualityBand === band;
-            const isAnySelected = !!selectedQualityBand;
             return (
               <div
                 key={label}
                 onClick={() => onQualityLegendClick(band)}
                 title={(band === 'unscored' ? t('uiPurpleMeansScoreUnavailableNotPoorQuality') : '') + (isSelected ? t('uiClickToShowAllQualityBands') : owned("Show only {value0} captures",{value0:String(label)}))}
-                style={getQualityToolsBandStyle(isSelected, isAnySelected)}
+                style={getQualityToolsBandStyle(isSelected)}
               >
                 <div style={getQualityToolsSwatchStyle(color)} />
                 <span style={getQualityToolsBandLabelStyle(isSelected)}>{label}</span>

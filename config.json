@@ -9,6 +9,7 @@
   "turboDefaultStartDate": "",
   "turboDefaultEndDate": "",
   "turboDefaultIsPano": null,
+  "turboDefaultOnFoot": null,
   "turboDefaultColorByDate": false,
   "syncMapWithImage": false,
   "syncMapPosition": "center",

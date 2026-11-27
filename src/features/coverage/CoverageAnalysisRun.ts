@@ -2,7 +2,8 @@ import { OVERPASS_ROAD_QUERY, STREET_COVERAGE_CONFIG } from '../../utils/constan
 import { classifyCoverageAsync, coverageAnalysisDelay, insetBbox, parseOverpassRoads, segmentMidpointInBbox, type RoadSegment } from '../../utils/geoUtils';
 import type { TurboBbox, TurboFilters, TurboPoint } from '../../utils/turboCoverageUtils';
 import type { LocaleValue } from '../../i18n/WidgetLocale';
-import { fetchCoverageRoads } from './fetchCoverageRoads';
+import { fetchFeatureLayerRoads, isRoadFeatureLayer } from './fetchFeatureLayerRoads';
+import { fetchCoverageRoads, type RoadCooldownReason } from './fetchCoverageRoads';
 
 interface Extent { xmin: number; ymin: number; xmax: number; ymax: number }
 interface AnalysisView { extent?: Extent | null; destroyed?: boolean }
@@ -16,6 +17,7 @@ export interface CoverageAnalysisHost<View extends AnalysisView> {
   filters(): TurboFilters;
   username(): string;
   configuredUsername(): string | undefined;
+  roadEndpoint?(): string | undefined;
   token(): string;
   turboActive(): boolean;
   watchExtent(view: View, callback: () => void): { remove(): void };
@@ -34,6 +36,10 @@ export interface CoverageAnalysisHost<View extends AnalysisView> {
 /** Owns coverage analysis from road fetch through guarded result publication. */
 export class CoverageAnalysisRun<View extends AnalysisView> {
   private retryAt = 0;
+  private cooldownReason: RoadCooldownReason = "rate-limit";
+  private capacityFailures = 0;
+  private roadCache?: { view: View; area: string; expires: number; segments: RoadSegment[] };
+  private lastRoadEndpoint: string | undefined;
   private controller: AbortController | null = null;
   private revision = 0;
   private current: (() => boolean) | null = null;
@@ -58,8 +64,26 @@ export class CoverageAnalysisRun<View extends AnalysisView> {
       host.showToast(host.translate('appCoverageIsStillLoadingTryAgainWhenItIs'), 4000);
       return;
     }
-    if (Date.now() < this.retryAt) {
-      host.showCooldown(Math.ceil((this.retryAt - Date.now()) / 1000));
+    const view = map.view;
+    const extentKey = () => view.extent ? [view.extent.xmin, view.extent.ymin, view.extent.xmax, view.extent.ymax].join('/') : '';
+    const area = extentKey();
+    const roadEndpoint = host.roadEndpoint?.();
+    if (this.lastRoadEndpoint !== roadEndpoint) {
+      this.retryAt = 0;
+      this.capacityFailures = 0;
+      this.roadCache = undefined;
+      this.lastRoadEndpoint = roadEndpoint;
+    }
+    const cached = this.roadCache;
+    const cachedSegments = cached && cached.view === view && cached.area === area && cached.expires > Date.now()
+      ? cached.segments : undefined;
+    if (!cachedSegments && Date.now() < this.retryAt) {
+      const seconds = Math.ceil((this.retryAt - Date.now()) / 1000);
+      if (this.cooldownReason === "capacity") {
+        host.showToast(host.owned(`Road service is at capacity. Try again in ${seconds} seconds.`), 5000);
+      } else {
+        host.showCooldown(seconds);
+      }
       return;
     }
 
@@ -68,15 +92,12 @@ export class CoverageAnalysisRun<View extends AnalysisView> {
     const controller = new AbortController();
     this.controller = controller;
     const signal = controller.signal;
-    const view = map.view;
     const filters = host.filters();
     const inputKey = () => JSON.stringify({
       filters: host.filters(), username: host.username(),
-      configuredUsername: host.configuredUsername(), token: host.token()
+      configuredUsername: host.configuredUsername(), roadEndpoint: host.roadEndpoint?.(), token: host.token()
     });
     const key = inputKey();
-    const extentKey = () => view.extent ? [view.extent.xmin, view.extent.ymin, view.extent.xmax, view.extent.ymax].join('/') : '';
-    const area = extentKey();
     const current = () => !signal.aborted && revision === this.revision && !view.destroyed &&
       host.map()?.view === view && host.turboActive() && key === inputKey() && area === extentKey();
     this.current = current;
@@ -95,16 +116,43 @@ export class CoverageAnalysisRun<View extends AnalysisView> {
       const geo = host.geographic(map.view);
       const { xmin: west, ymin: south, xmax: east, ymax: north } = geo;
 
-      // 2. Fetch OSM Road Network (with Overpass retry mechanism)
-      const query = OVERPASS_ROAD_QUERY(south, west, north, east);
-      const osmData = await fetchCoverageRoads(query, signal, {
-        fetch: (url, options) => fetch(url, options), delay: coverageAnalysisDelay,
-        onRetry: () => progress("Road server busy; trying again"),
-        onRateLimit: retryAt => { this.retryAt = retryAt; },
-      });
-      if (!current()) return;
-      if (!osmData || osmData.remark || !Array.isArray(osmData.elements)) throw new Error("Road server returned incomplete data. Please retry later; previous results are preserved.");
-      const segments = parseOverpassRoads(osmData);
+      let segments = cachedSegments;
+      if (!segments) {
+        if (roadEndpoint && isRoadFeatureLayer(roadEndpoint)) {
+          segments = await fetchFeatureLayerRoads(roadEndpoint, [west, south, east, north], signal);
+          if (!current()) return;
+        } else {
+          // 2. Fetch OSM Road Network (with Overpass retry mechanism)
+          const query = OVERPASS_ROAD_QUERY(south, west, north, east);
+          const midLatitude = (north + south) / 2;
+          const midLongitude = (east + west) / 2;
+          const splitQueries: [string, string] = (east - west) * Math.cos(midLatitude * Math.PI / 180) >= north - south
+            ? [OVERPASS_ROAD_QUERY(south, west, north, midLongitude, 12), OVERPASS_ROAD_QUERY(south, midLongitude, north, east, 12)]
+            : [OVERPASS_ROAD_QUERY(south, west, midLatitude, east, 12), OVERPASS_ROAD_QUERY(midLatitude, west, north, east, 12)];
+          const osmData = await fetchCoverageRoads(query, signal, {
+            splitQueries,
+            fetch: (url, options) => fetch(url, options), delay: coverageAnalysisDelay, endpoint: roadEndpoint,
+            onRetry: reason => progress(host.owned(reason === "timeout" ? "Road request timed out. Loading smaller road areas…"
+              : reason === "area-limit" ? "Road area is large. Loading it in two parts…"
+              : reason === "network" ? "Could not reach the road service. Retrying…"
+                : "Road service temporarily unavailable. Retrying…")),
+            capacityBackoffMs: 15_000 * 2 ** this.capacityFailures,
+            onRateLimit: (retryAt, reason) => {
+              if (!current()) return;
+              this.retryAt = retryAt;
+              this.cooldownReason = reason;
+              if (reason === "capacity") this.capacityFailures = Math.min(this.capacityFailures + 1, 2);
+            },
+          });
+          if (!current()) return;
+          if (!osmData || osmData.remark || !Array.isArray(osmData.elements)) throw new Error("Road server returned incomplete data. Please retry later; previous results are preserved.");
+          this.capacityFailures = 0;
+          segments = parseOverpassRoads(osmData);
+        }
+        if (segments.length && segments.length <= 100_000) {
+          this.roadCache = { view, area, expires: Date.now() + 10 * 60_000, segments };
+        }
+      }
       if (!segments.length) {
         host.showToast(host.translate('appNoRoadNetworkFoundInThisArea'));
         return;

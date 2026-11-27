@@ -66,8 +66,6 @@ export function infoControlsViewportStyle(isOverflowing: boolean): React.CSSProp
         flexShrink: 1,
         overflowY: "auto",
         overflowX: "hidden",
-        scrollbarWidth: "thin",
-        scrollbarColor: "rgba(255,255,255,0.25) transparent",
         paddingRight: isOverflowing ? "4px" : "0px",
     };
 }
@@ -100,8 +98,7 @@ export const infoDetailsCss = `
 .mly-info-location { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mly-info-body { min-height: 0; display: flex; flex-direction: column; pointer-events: auto; border-radius: 0; background: var(--mly-theme-chrome, rgba(18,31,27,.62)); backdrop-filter: blur(8px); padding: 0; }
 .mly-info-body[hidden] { display: none; }
-.mly-info-panel .mly-info-scroll { align-items: stretch !important; padding-right: 0 !important; scrollbar-width: none; }
-.mly-info-panel .mly-info-scroll::-webkit-scrollbar { display: none; }
+.mly-info-panel .mly-info-scroll { align-items: stretch !important; padding-right: 0 !important; }
 .mly-info-panel .info-box { width: 100% !important; max-width: none !important; padding: 4px !important; background: transparent !important; box-shadow: none !important; border: 0 !important; font-size: 9px !important; }
 .mly-info-panel .info-box button { font-size: 9px !important; min-height: 26px; line-height: 1.3; }
 .mly-info-panel .info-box button > span { font-size: inherit !important; }
@@ -114,6 +111,8 @@ export const infoDetailsCss = `
 .mly-info-panel .mly-info-quick { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 3px; }
 .mly-info-panel .mly-info-quick button { min-width: 0; min-height: 28px; padding: 3px 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; border: 0; border-radius: 4px; background: var(--mly-theme-control, rgba(255,255,255,.055)); color: var(--mly-theme-text, #d9e5de); font: inherit; font-size: 8px !important; line-height: 1.15; cursor: pointer; }
 .mly-info-panel .mly-info-quick button[aria-pressed="true"], .mly-info-panel .mly-info-quick button[aria-expanded="true"] { background: var(--mly-theme-selected, rgba(57,168,111,.24)); color: var(--mly-theme-accent, #a3f2c1); box-shadow: inset 0 -2px var(--mly-theme-accent, #56c18a); }
+.mly-info-panel .mly-info-quick button.mly-text-action { padding-inline: 2px !important; box-sizing: border-box; }
+.mly-info-panel .mly-info-quick button.mly-text-action .mly-quick-label { display: block; min-width: 0; max-width: 100%; white-space: nowrap !important; overflow-wrap: normal !important; overflow: hidden; text-overflow: ellipsis; }
 .mly-info-panel .mly-quick-count { font-size: 7px; line-height: 1; color: var(--mly-theme-accent, #96dcb1); }
 .mly-info-panel .mly-quick-count:empty { display: none; }
 .mly-info-panel .mly-quick-state { width: 10px; height: 2px; border-radius: 2px; background: #ffffff4a; }
@@ -230,9 +229,19 @@ export const infoDetailsCss = `
 /** Scoped definition-list reset protects the compact card from Experience Builder typography. */
 export const imageInformationCss = `
 .mly-info-panel .mly-info-body { overflow: hidden; flex: 1 1 auto; }
-.mly-info-panel .mly-info-scroll { flex: 1 1 auto; scrollbar-width: thin !important; scrollbar-color: #a8cbb480 transparent; }
-.mly-info-panel .mly-info-scroll::-webkit-scrollbar { display: block; width: 5px; }
-.mly-info-panel .mly-info-scroll::-webkit-scrollbar-thumb { background: #a8cbb480; border-radius: 4px; }
+.mly-info-panel .mly-info-scroll { flex: 1 1 auto; scrollbar-width: thin; scrollbar-color: #a8cbb480 transparent; }
+/* Chromium uses native thickness when standard scrollbar settings are non-auto. */
+@supports selector(::-webkit-scrollbar) {
+  @media (forced-colors: none) {
+    .mly-info-panel .mly-info-scroll { scrollbar-width: auto; scrollbar-color: auto; }
+    .mly-info-panel .mly-info-scroll::-webkit-scrollbar { width: 3px; }
+    .mly-info-panel .mly-info-scroll::-webkit-scrollbar-thumb { background: #a8cbb480; border-radius: 3px; }
+    .mly-info-panel .mly-info-scroll::-webkit-scrollbar-button { display: none; }
+  }
+}
+@media (forced-colors: active) {
+  .mly-info-panel .mly-info-scroll { scrollbar-color: auto; }
+}
 .mly-info-panel .mly-info-scroll > * { flex-shrink: 0; }
 .mly-info-panel .mly-info-scroll:focus-visible { outline: 1px solid var(--mly-theme-accent, #b4f3ca); outline-offset: -1px; }
 .mly-image-information { margin: 0 !important; padding: 0 !important; min-width: 0; color: var(--mly-theme-text, #d9e5de); font: 9px/1.4 "Segoe UI", sans-serif; text-align: start; }
@@ -245,5 +254,7 @@ export const imageInformationCss = `
 .mly-image-information .mly-image-information-row dt, .mly-image-information .mly-image-information-row dd { display: block; float: none; width: auto; max-width: 100%; min-width: 0; margin: 0 !important; padding: 0 !important; font: inherit !important; line-height: 1.3 !important; overflow-wrap: anywhere; white-space: normal; }
 .mly-image-information .mly-image-information-row dt { color: var(--mly-theme-muted, #a9c8b6) !important; font-size: 8px !important; font-weight: 400 !important; }
 .mly-image-information .mly-image-information-row dd { color: var(--mly-theme-text, #e0eee5) !important; }
-.mly-image-information-id { display: block; margin: 4px 0 0; color: var(--mly-theme-muted, #a9c8b6); font: 8px/1.4 "Segoe UI", sans-serif; overflow-wrap: anywhere; }
+.mly-image-information-group { margin-block-start: 5px; border-top: 1px solid var(--mly-theme-border, #8ab89b2e); }
+.mly-image-information-group > summary { padding-block: 5px; cursor: pointer; font-weight: 600; }
+.mly-image-information .mly-text-action { min-height: 26px; text-align: start; overflow-wrap: anywhere; white-space: normal; }
 `;

@@ -2,6 +2,12 @@ import type { SettingsMessages } from '../settingsMessages';
 /** Modern Standard Arabic. Assisted draft; community native review is welcome. */
 const ar: SettingsMessages = {
   "builderMapConnection": "اتصال الخريطة",
+  "builderDefaultTravelMode": "وضع التنقل الافتراضي",
+  "builderTravelOnFoot": "سيرًا على الأقدام",
+  "builderTravelOther": "وسائل تنقل أخرى",
+  "builderRoadDataSource": "مصدر بيانات الطرق",
+  "builderCustomRoadService": "خدمة مخصصة",
+  "builderPublicOverpass": "Overpass العام",
   "builderCoverageDefaults": "إعدادات التغطية الافتراضية",
   "builderEnableServiceHint": "فعّل الخيار أعلاه لإعداد خدمته. تُحفظ القيم الحالية.",
 

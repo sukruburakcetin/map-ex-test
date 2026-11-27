@@ -220,7 +220,7 @@ import type { DetectionPreviewLoader } from '../features/detections/detectionPre
 import { defaultDetectionExplorer, detectionGroup, showDetection } from '../features/detections/detectionExploration';
 import type { DetectionExplorerOptions, DetectionSummary } from '../features/detections/detectionExploration';
 import "mapillary-js/dist/mapillary.css";
-import { IMAGE_INFORMATION_FIELDS, normalizeImageInformation, viewerImageInformation, type ImageInformationHost } from '../features/image-information/ImageInformation';
+import { IMAGE_INFORMATION_FIELDS, normalizeImageInformation, viewerImageInformation, imagePosition, type ImagePosition, type InformationViewer, type ImageInformationHost } from '../features/image-information/ImageInformation';
 import { InfoBox } from "../components/InfoBox";
 import { followMapImage2D, shouldRecenterImage } from "../features/imagery/imageFollowPolicy";
 import { sceneFollowCamera } from '../features/imagery/sceneFollowCamera';
@@ -262,7 +262,7 @@ import { PendingNoteMarker } from '../features/field-notes/PendingNoteMarker';
 import { createFieldNoteViewerRenderer } from '../features/field-notes/viewerRenderer';
 import { selectViewerFieldNotes } from '../features/field-notes/viewerSelection';
 import type { EnterpriseNotesLoader } from '../features/field-notes/enterpriseList';
-import { applySharedComparison, comparisonNoteAttachment, loadTimeTravelPreview, readSharedComparison, type SharedComparison } from '../features/imagery/timeTravelPreview';
+import { applySharedComparison, comparisonNoteAttachment, createTimeTravelPreviewLoader, readSharedComparison, type SharedComparison } from '../features/imagery/timeTravelPreview';
 import { TimeTravelAvailability } from '../features/imagery/timeTravel';
 import { CachedSequencePreview } from '../features/imagery/CachedSequencePreview';
 import { copyCoordinates } from '../services/browser/coordinateClipboard';
@@ -1033,6 +1033,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     filters: () => this.getTurboFilters(),
     username: () => this.state.turboFilterUsername,
     configuredUsername: () => this.props.config.turboCreator,
+    roadEndpoint: () => this.props.config.coverageRoadEndpoint?.trim(),
     token: () => this.accessToken,
     turboActive: () => !!this.state.turboModeActive,
     watchExtent: (view, callback) => view.watch("extent", callback),
@@ -1052,7 +1053,14 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       this._coverageSegments = segments;
       this._coverageCoveredFlags = coverage.segmentTiers.map(tier => tier !== "none");
       this._coverageSegmentTiers = coverage.segmentTiers;
-      this.setState({ coverageResult: coverage, coverageSegmentsVisible: false });
+      const view = this.state.jimuMapView?.view;
+      const renderRevision = this._coverageRenderRevision;
+      this.setState({ coverageResult: coverage, coverageSegmentsVisible: !!view }, () => {
+        if (view && this.state.jimuMapView?.view === view && this._coverageRenderRevision === renderRevision &&
+            this.state.coverageResult === coverage && this.state.coverageSegmentsVisible) {
+          void this.drawCoverageSegments();
+        }
+      });
     },
     log: message => this.log(message),
   });
@@ -1143,6 +1151,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
   private readonly _sequenceTileIndex = new SequenceTileIndex();
   private readonly _backgroundRequests = new BackgroundRequestQueue(2);
   /** Explicit, read-only information enrichment. It never changes queue policy or foreground work. */
+  private _imageInformationPositionChanged?: () => void;
   private readonly _imageInformationHost: ImageInformationHost = {
     hasImage: () => !!this._profileConfirmedImageId && this._profileConfirmedViewer === this.mapillaryViewer,
     isPaused: () => this._userPaused !== false,
@@ -1150,6 +1159,11 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     scope: () => this.accessToken,
     isCurrent: (viewer, id) => this.mapillaryViewer === viewer && this._profileConfirmedViewer === viewer && this._profileConfirmedImageId === id,
     seed: image => ({ ...normalizeImageInformation(String(image.id), this._turboMetadataCache.get(String(image.id))), ...viewerImageInformation(image) }),
+    watchMapPosition: changed => {
+      this._imageInformationPositionChanged = changed;
+      return () => { if (this._imageInformationPositionChanged === changed) this._imageInformationPositionChanged = undefined; };
+    },
+    mapPosition: (viewer, id) => this.imageInformationMapPosition(viewer, id),
     load: (viewer, id, signal) => this._backgroundRequests.run(async queuedSignal => {
       const token = this.accessToken;
       const current = () => !queuedSignal.aborted && this._imageInformationHost.isPaused() && this._imageInformationHost.isVisible()
@@ -1161,6 +1175,14 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       return normalizeImageInformation(id, data);
     }, signal),
   };
+
+  private imageInformationMapPosition(viewer: InformationViewer, id: string): ImagePosition | null {
+    if (!this._imageInformationHost.isCurrent(viewer, id)) return null;
+    const graphic = this.currentGreenGraphic;
+    if (!graphic || this._selectionPulse?.view !== this.state.jimuMapView?.view || graphic.attributes?.image_id !== id) return null;
+    const point = graphic.geometry as __esri.Point | undefined;
+    return imagePosition(point?.longitude, point?.latitude);
+  }
 
   private readonly _sequencePerformance = new SequencePerformance();
   private _tileRequestToken: string | null = null;
@@ -1742,7 +1764,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
     turboFilterStartDate: "",
     turboFilterEndDate: "",
     turboFilterIsPano: undefined,
-    turboFilterOnFoot: undefined,
+    turboFilterOnFoot: typeof this.props.config.turboDefaultOnFoot === "boolean" ? this.props.config.turboDefaultOnFoot : undefined,
     showTurboFilterBox: false,
     turboYearLegend: [],
     qualityViewActive: false,
@@ -7795,6 +7817,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       setCreator: (value, after) => this.setState({ turboFilterUsername: value }, after),
       setStartDate: (value, after) => this.setState({ turboFilterStartDate: value }, after),
       setEndDate: (value, after) => this.setState({ turboFilterEndDate: value }, after),
+      setTravelMethod: (value, after) => this.setState({ turboFilterOnFoot: value }, after),
       setPanorama: (value, after) => this.setState({ turboFilterIsPano: value }, after),
       setColorByDate: (value, after) => this.setState({ turboColorByDate: value }, after),
       showToast: (...args) => this.showToast(...args),
@@ -8195,6 +8218,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
       try { this.ensureScreenDirectionCone()?.showMarker(view, anchor.lon, anchor.lat, baseColor, String(imageId)); }
       catch (error) { console.warn('[Mapillary] Combined marker unavailable; using native marker', error); }
     }
+    if (this._imageInformationHost.isPaused()) this._imageInformationPositionChanged?.();
     if (this.state.turboModeActive && imageId) void this.resolveNativeImageAnchor(String(imageId), lon, lat);
     return graphic;
   }
@@ -8597,7 +8621,8 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
    * 2. Compass Angle Difference < 22.5°.
    * 3. Must be from a different date (to be "Time Travel").
    */
-  private loadTimeTravelPreview = (imageId: string, signal: AbortSignal, comparison?: SharedComparison) => loadTimeTravelPreview(imageId, this.accessToken, signal, comparison);
+  private readonly _timeTravelPreviewLoader = createTimeTravelPreviewLoader();
+  private loadTimeTravelPreview = (imageId: string, signal: AbortSignal, comparison?: SharedComparison) => this._timeTravelPreviewLoader(imageId, this.accessToken, signal, comparison);
 
   private checkForTimeTravel = (currentImageId: string): Promise<void> => {
     this._timeTravelAvailability ??= new TimeTravelAvailability(() => this.accessToken, (imageId, hasTimeTravel) => {
@@ -9020,6 +9045,7 @@ export default class Widget extends React.PureComponent<AllWidgetProps<any>, Sta
           {/* INFO BOX */}
           {!this.state.isFullscreen && <InfoBox
             imageInformationHost={this._imageInformationHost} imageInformationViewer={this.mapillaryViewer}
+            imageInformationMapView={this.state.jimuMapView?.view}
             imageInformationActive={this.props.state !== 'CLOSED' && this.props.visible !== false}
             detectionToolsRequest={this._detectionToolsRequest}
             hideInfoBox={this.props.config.hideInfoBox}

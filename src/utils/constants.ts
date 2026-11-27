@@ -289,9 +289,10 @@ export const OVERPASS_ROAD_QUERY = (
   south: number,
   west: number,
   north: number,
-  east: number
+  east: number,
+  serverTimeoutSeconds = 25
 ) => `
-[out:json][timeout:25];
+[out:json][timeout:${serverTimeoutSeconds}];
 way["highway"](${south},${west},${north},${east});
 out body geom;
 `.trim();

@@ -29,3 +29,29 @@ for(const key of ['turboDefaultStartDate','turboDefaultEndDate','turboDefaultIsP
 for(const hidden of [false,true])test('bearing and zoom controls '+hidden+' retain activate/deactivate policy',async()=>{await compare(f=>{f.w.props.config.hideBearing=!hidden;f.w.props.config.hideZoom=!hidden;const prev=f.previous();f.w.props.config.hideBearing=hidden;f.w.props.config.hideZoom=hidden;f.update(prev);assert(f.events.some(e=>e[0]===(hidden?'deactivate':'activate')&&e[1]==='bearing'));assert(f.events.some(e=>e[0]===(hidden?'deactivate':'activate')&&e[1]==='zoom'));});});
 test('configuration changes tolerate absent SDK viewer',async()=>{await compare(f=>{const prev=f.previous();f.w.mapillaryViewer=null;f.w.props.config.hideBearing=true;f.w.props.config.hideZoom=true;f.update(prev);assert(!names(f).includes('activate'));assert(!names(f).includes('deactivate'));});});
 test('synchronous cleanup mutations remain visible to subsequent configuration phase',async()=>{await compare(f=>{const prev=f.previous();f.w.props.visible=false;f.w.props.config.turboCreator='new';f.w.cleanupWidgetEnvironment=()=>{f.log('cleanup-mutates');f.w.state.turboModeActive=false};f.update(prev);assert(!names(f).includes('enableTurboCoverageLayer'));});});
+
+test('reopening coverage restores the configured travel default including false and Any', async () => {
+ for (const preset of [true, false, null]) {
+  const f = fixture(false);
+  f.w.props.config.turboDefaultOnFoot = preset;
+  f.w.state.turboFilterOnFoot = preset !== true;
+  f.w.props.state = 'CLOSED';
+  const previous = f.previous();
+  f.w.props.state = 'OPENED';
+  f.update(previous);
+  assert.equal(f.w.state.turboFilterOnFoot, preset ?? undefined);
+ }
+});
+
+test('live travel default changes use the existing debounced coverage refresh', () => {
+ const f = fixture(false);
+ let previous = f.previous();
+ f.w.props.config.turboDefaultOnFoot = false;
+ f.update(previous);
+ assert.equal(f.w.state.turboFilterOnFoot,false);
+ previous = f.previous();
+ f.w.props.config.turboDefaultOnFoot = null;
+ f.update(previous);
+ assert.equal(f.w.state.turboFilterOnFoot,undefined);
+ assert.equal(names(f).filter(name=>name==='filter').length,2);
+});

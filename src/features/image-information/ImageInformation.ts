@@ -1,13 +1,34 @@
+export interface ImagePosition { lon: number; lat: number; }
+
 /** Small, normalized metadata only. No thumbnails, reconstruction, detection or SDK image retention. */
 export interface ImageInformation {
   id: string; capturedAt?: number | null; contributor?: string | null; organization?: string | null;
   make?: string | null; model?: string | null; projection?: string | null;
+  originalPosition?: ImagePosition | null; processedPosition?: ImagePosition | null;
+  originalHeading?: number | null; processedHeading?: number | null;
+  originalAltitude?: number | null; processedAltitude?: number | null;
+  panorama?: boolean | null; sequenceId?: string | null; quality?: number | null;
   width?: number | null; height?: number | null; onFoot?: boolean | null;
 }
-export const IMAGE_INFORMATION_FIELDS = 'id,captured_at,creator.username,organization.name,make,model,camera_type,width,height,on_foot';
+export const IMAGE_INFORMATION_FIELDS = 'id,captured_at,creator.username,organization.name,make,model,camera_type,width,height,on_foot,geometry,computed_geometry,compass_angle,computed_compass_angle,altitude,computed_altitude,is_pano,sequence,quality_score';
 const text = (v: unknown): string | null => typeof v === 'string' && v.trim() ? v.trim().slice(0, 256) : null;
 const size = (v: unknown): number | null => typeof v === 'number' && Number.isSafeInteger(v) && v > 0 && v <= 100000 ? v : null;
 const timestamp = (v: unknown): number | null => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= 8640000000000000 ? v : null;
+const number = (value: unknown): number | null => typeof value === 'number' && Number.isFinite(value) ? value : null;
+export function imagePosition(lon: unknown, lat: unknown): ImagePosition | null {
+  return typeof lon === 'number' && Math.abs(lon) <= 180 && typeof lat === 'number' && Math.abs(lat) <= 90 ? { lon, lat } : null;
+}
+function graphPosition(value: any): ImagePosition | null {
+  return value?.type === 'Point' && Array.isArray(value.coordinates) ? imagePosition(value.coordinates[0], value.coordinates[1]) : null;
+}
+const heading = (value: unknown): number | null => {
+  const bearing = number(value);
+  return bearing !== null && bearing >= 0 && bearing <= 360 ? bearing % 360 : null;
+};
+const metadataKeys = ['capturedAt', 'contributor', 'organization', 'make', 'model', 'projection', 'width', 'height', 'onFoot',
+  'originalPosition', 'processedPosition', 'originalHeading', 'processedHeading', 'originalAltitude', 'processedAltitude',
+  'panorama', 'sequenceId', 'quality'] as const;
+
 /** Project just requested scalar fields; absent properties do not erase an already loaded value. */
 export function normalizeImageInformation(id: string, raw: any): ImageInformation {
   const out: ImageInformation = { id };
@@ -21,15 +42,28 @@ export function normalizeImageInformation(id: string, raw: any): ImageInformatio
   if ('width' in raw) out.width = size(raw.width);
   if ('height' in raw) out.height = size(raw.height);
   if ('on_foot' in raw) out.onFoot = typeof raw.on_foot === 'boolean' ? raw.on_foot : null;
+  if ('geometry' in raw) out.originalPosition = graphPosition(raw.geometry);
+  if ('computed_geometry' in raw) out.processedPosition = graphPosition(raw.computed_geometry);
+  if ('compass_angle' in raw) out.originalHeading = heading(raw.compass_angle);
+  if ('computed_compass_angle' in raw) out.processedHeading = heading(raw.computed_compass_angle);
+  if ('altitude' in raw) out.originalAltitude = number(raw.altitude);
+  if ('computed_altitude' in raw) out.processedAltitude = number(raw.computed_altitude);
+  if ('is_pano' in raw) out.panorama = typeof raw.is_pano === 'boolean' ? raw.is_pano : null;
+  if ('sequence' in raw) out.sequenceId = text(raw.sequence);
+  if ('quality_score' in raw) {
+    const quality = number(raw.quality_score);
+    out.quality = quality !== null && quality >= 0 && quality <= 1 ? quality : null;
+  }
   return out;
 }
-export interface InformationViewerImage { id?: string | number; capturedAt?: number | null; creatorUsername?: string | null; cameraType?: string | null; }
+export interface InformationViewerImage { id?: string | number; capturedAt?: number | null; creatorUsername?: string | null; cameraType?: string | null; sequenceId?: string | null; }
 /** Read public, already available SDK scalars only; original dimensions come from Graph. */
 export function viewerImageInformation(image: InformationViewerImage): ImageInformation {
   const out: ImageInformation = { id: String(image.id) };
   if (timestamp(image.capturedAt) !== null) out.capturedAt = timestamp(image.capturedAt);
   if (text(image.creatorUsername)) out.contributor = text(image.creatorUsername);
   if (text(image.cameraType)) out.projection = text(image.cameraType);
+  if (text(image.sequenceId)) out.sequenceId = text(image.sequenceId);
   return out;
 }
 export interface InformationEvents { on(type: string, listener: (event: any) => void): unknown; off?(type: string, listener: (event: any) => void): unknown; }
@@ -39,6 +73,8 @@ export interface ImageInformationHost {
   isPaused(): boolean; isVisible(): boolean; scope(): unknown;
   isCurrent(viewer: InformationViewer, id: string): boolean;
   seed(image: InformationViewerImage): ImageInformation;
+  watchMapPosition?(changed: () => void): () => void;
+  mapPosition?(viewer: InformationViewer, id: string): ImagePosition | null;
   load(viewer: InformationViewer, id: string, signal: AbortSignal): Promise<ImageInformation>;
 }
 export interface ImageInformationView { kind: 'empty' | 'loading' | 'ready' | 'deferred' | 'error'; data?: ImageInformation; }
@@ -96,7 +132,7 @@ export class ImageInformationController {
     const cached = this.cache.get(id);
     if (cached) { this.cache.delete(id); this.cache.set(id, cached); this.emit({ kind: 'ready', data: cached }); return; }
     const seed = this.host.seed(image);
-    if (['capturedAt', 'contributor', 'organization', 'make', 'model', 'projection', 'width', 'height', 'onFoot'].every(key => Object.prototype.hasOwnProperty.call(seed, key))) {
+    if (metadataKeys.every(key => Object.prototype.hasOwnProperty.call(seed, key))) {
       this.remember(id, seed); this.emit({ kind: 'ready', data: seed }); return;
     }
     this.emit({ kind: 'loading', data: seed });

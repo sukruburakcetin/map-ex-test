@@ -2,6 +2,12 @@ import type { SettingsMessages } from '../settingsMessages';
 /** Korean presentation catalog; persisted values and protocol identifiers remain unchanged. */
 const ko: SettingsMessages = {
   "builderMapConnection": "지도 연결",
+  "builderDefaultTravelMode": "기본 이동 방식",
+  "builderTravelOnFoot": "도보",
+  "builderTravelOther": "기타 이동",
+  "builderRoadDataSource": "도로 데이터 소스",
+  "builderCustomRoadService": "사용자 지정 서비스",
+  "builderPublicOverpass": "공개 Overpass",
   "builderCoverageDefaults": "커버리지 기본값",
   "builderEnableServiceHint": "위 옵션을 활성화하여 서비스를 설정하세요. 기존 값은 유지됩니다.",
 

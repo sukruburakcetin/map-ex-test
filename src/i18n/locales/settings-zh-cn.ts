@@ -2,6 +2,12 @@ import type { SettingsMessages } from '../settingsMessages';
 /** Simplified Chinese presentation catalog; stored values and protocol identifiers remain unchanged. */
 const zhCN: SettingsMessages = {
   "builderMapConnection": "地图连接",
+  "builderDefaultTravelMode": "默认出行方式",
+  "builderTravelOnFoot": "步行",
+  "builderTravelOther": "其他出行方式",
+  "builderRoadDataSource": "道路数据源",
+  "builderCustomRoadService": "自定义服务",
+  "builderPublicOverpass": "公共 Overpass",
   "builderCoverageDefaults": "覆盖范围默认设置",
   "builderEnableServiceHint": "启用上方选项以配置服务。现有值会保留。",
 

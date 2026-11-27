@@ -97,6 +97,12 @@ export interface Config {
    */
   turboDefaultIsPano?: boolean | null;
 
+  /** Coverage travel preset. true = on foot, false = other travel, null = any. */
+  turboDefaultOnFoot?: boolean | null;
+
+  /** Optional HTTPS ArcGIS polyline layer or Overpass interpreter for coverage analysis. */
+  coverageRoadEndpoint?: string;
+
   /**
    * If true, Turbo Mode coverage points are coloured by their capture year
    * when the widget first loads (pre-enables the "Color by Date" toggle).

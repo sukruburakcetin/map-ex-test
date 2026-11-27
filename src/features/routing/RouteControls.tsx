@@ -201,15 +201,13 @@ export const RouteControls: React.FC<RouteControlsProps> = props => {
           </div>
 
           {/* Generate Route Button with Progress Bar */}
-          <button className="mly-text-action"
+          <button className="mly-text-action mly-route-generate" type="button" aria-busy={!!isGeneratingRoute}
             onClick={onGenerateRoute}
             disabled={isGeneratingRoute || !routeStartPoint || !routeEndPoint}
             style={getRouteGenerateStyle(isGeneratingRoute, !!routeStartPoint, !!routeEndPoint)}
           >
             {isGeneratingRoute && routeGenerationProgress && (
-              <div
-                style={getRouteProgressStyle(routeGenerationProgress)}
-              />
+              <span aria-hidden="true" style={getRouteProgressStyle(routeGenerationProgress)} />
             )}
             <span style={routeGenerateLabelStyle}>
               {isGeneratingRoute

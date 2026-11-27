@@ -11,6 +11,9 @@ export const TimeTravelPreview: React.FC<Props> = ({imageId,load,onClose,onExter
  const date = (value:number) => Number.isFinite(value) ? new Intl.DateTimeFormat(locale,{year:'numeric',month:'short',day:'numeric'}).format(value) : t('dateUnavailable');
  const [data,setData]=React.useState<TravelPreview|null>(null),[error,setError]=React.useState(''),[retry,setRetry]=React.useState(0);
  const [selected,setSelected]=React.useState(1),[compare,setCompare]=React.useState(false),[split,setSplit]=React.useState(50),[failed,setFailed]=React.useState<string[]>([]);
+ const [timeline,setTimeline]=React.useState(false);
+ const [timelineCaptureId,setTimelineCaptureId]=React.useState<string|null>(null);
+ const activeDateMark=React.useRef<HTMLButtonElement>(null);
  const [start,setStart]=React.useState(0);
  const [noteBlocked,setNoteBlocked]=React.useState(false);
  const [copyStatus,setCopyStatus]=React.useState<'pending'|'copied'|'failed'|null>(null);
@@ -34,7 +37,7 @@ export const TimeTravelPreview: React.FC<Props> = ({imageId,load,onClose,onExter
   }else setExpanded(true);
  }
  React.useEffect(()=>{
-  const controller=new AbortController();setData(null);setError('');setSelected(1);setStart(0);setSplit(50);setCompare(false);setFailed([]);
+  const controller=new AbortController();setData(null);setError('');setSelected(1);setStart(0);setSplit(50);setCompare(false);setFailed([]);setTimeline(false);setTimelineCaptureId(null);
   load(imageId,controller.signal,comparison).then(result=>{
    if(controller.signal.aborted)return;
    if(comparison){
@@ -69,6 +72,13 @@ export const TimeTravelPreview: React.FC<Props> = ({imageId,load,onClose,onExter
  },[onClose,expanded]);
  const captures=data?[data.current,...data.alternatives]:[];
  const starting=captures[start],candidate=captures[selected];
+ const datedCaptures=captures.filter(capture=>Number.isFinite(capture.capturedAt))
+  .sort((a,b)=>a.capturedAt-b.capturedAt || a.id.localeCompare(b.id));
+ const timelineIndex=Math.max(0,datedCaptures.findIndex(capture=>capture.id===(timelineCaptureId??data?.current.id)));
+ const timelineCapture=datedCaptures[timelineIndex];
+ React.useEffect(()=>{
+  if(timeline)activeDateMark.current?.scrollIntoView({block:'nearest',inline:'nearest'});
+ },[timeline,timelineCapture?.id]);
  const fullscreen=expanded||nativeFullscreen;
  const fullscreenLabel=fullscreen?t('travelExitFullscreen'):t('travelEnterFullscreen');
  const FullscreenIcon=fullscreen?Minimize:Maximize;
@@ -115,6 +125,15 @@ export const TimeTravelPreview: React.FC<Props> = ({imageId,load,onClose,onExter
 .mly-travel-missing,.mly-travel-status{display:grid;place-items:center}
 .mly-travel-missing{height:100%;color:white}
 .mly-travel-status{min-height:100px}
+.mly-travel-modes{display:flex;gap:6px;flex-wrap:wrap;margin-block-end:12px}
+.mly-travel-modes button[aria-pressed="true"]{background:var(--mly-theme-selected,#31543d);border-color:var(--mly-theme-accent,#c5f6d6)}
+.mly-travel-timeline{min-width:0;margin-block-start:10px}
+.mly-travel-timeline-date{font-weight:600;margin-block-end:4px}
+.mly-travel-date-marks{display:flex;overflow-x:auto;scrollbar-width:thin;gap:4px;padding:4px;overscroll-behavior-x:contain}
+.mly-travel-dialog .mly-travel-date-mark{position:relative;flex:1 0 auto;white-space:nowrap;padding:5px 9px}
+.mly-travel-dialog .mly-travel-date-mark[aria-current="date"]{background:var(--mly-theme-selected,#31543d);border-color:var(--mly-theme-accent,#c5f6d6)}
+.mly-travel-date-mark::before{content:"";display:block;margin:0 auto 4px;width:7px;height:7px;border:1px solid currentColor;border-radius:50%}
+.mly-travel-date-mark[aria-current="date"]::before{background:currentColor}
 `}</style>
   <div lang={locale} ref={dialog} className="mly-travel-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId}>
    <header><h2 id={titleId}>{t('timeTravel')}</h2><div className="mly-travel-actions">
@@ -127,7 +146,25 @@ export const TimeTravelPreview: React.FC<Props> = ({imageId,load,onClose,onExter
    {!data&&!error&&<div role="status" className="mly-travel-status">{t('loadingCaptures')} </div>}
    {error&&<div role="alert"><p>{comparison?t('travelSharedError'):t('travelError')}</p><button className="mly-text-action" type="button" onClick={()=>setRetry(v=>v+1)}>{t('retry')} </button></div>}
    {data&&!candidate&&<p>{t('noCaptures')} </p>}
-   {starting&&candidate&&<React.Fragment>
+   {datedCaptures.length>1&&<div className="mly-travel-modes" role="group" aria-label={t('travelViewMode')}>
+    <button type="button" aria-pressed={!timeline} onClick={()=>setTimeline(false)}>{t('travelComparisonMode')}</button>
+    <button type="button" aria-pressed={timeline} onClick={()=>setTimeline(true)}>{t('travelTimelineMode')}</button>
+   </div>}
+   {timeline&&timelineCapture&&<React.Fragment>
+    <div dir="ltr" className="mly-travel-frame">{image(timelineCapture.url,date(timelineCapture.capturedAt))}</div>
+    <div className="mly-travel-timeline">
+     <div className="mly-travel-timeline-date">{date(timelineCapture.capturedAt)}</div>
+     <input className="mly-travel-slider" type="range" min="0" max={datedCaptures.length-1} value={timelineIndex}
+      aria-label={t('travelBrowseDates')} aria-valuetext={date(timelineCapture.capturedAt)}
+      onChange={event=>setTimelineCaptureId(datedCaptures[Number(event.target.value)].id)}/>
+     <div className="mly-travel-date-marks">
+      {datedCaptures.map((capture,index)=><button key={capture.id} type="button" className="mly-travel-date-mark"
+       ref={index===timelineIndex?activeDateMark:undefined} aria-current={index===timelineIndex?'date':undefined}
+       onClick={()=>setTimelineCaptureId(capture.id)}>{date(capture.capturedAt)}</button>)}
+     </div>
+    </div>
+   </React.Fragment>}
+   {!timeline&&starting&&candidate&&<React.Fragment>
     <div className="mly-travel-captures">
      {compare&&<div className="mly-travel-field">
       <span>{t('travelStartingImage')}</span><div className="mly-travel-start-date">{date(starting.capturedAt)}</div>

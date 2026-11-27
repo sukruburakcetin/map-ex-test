@@ -38,7 +38,7 @@ export const routeClearPointsStyle: React.CSSProperties = {
 };
 export const routeBudgetStyle: React.CSSProperties = { display: "flex", alignItems: "center", flexDirection: "column", gap: "1px", background: "rgba(0,0,0,0.3)", borderRadius: "3px", padding: "2px 3px" };
 export const routeBudgetLabelStyle: React.CSSProperties = { fontSize: "6px", color: "rgba(255,255,255,0.7)", whiteSpace: "nowrap" };
-export const routeGenerateLabelStyle: React.CSSProperties = { position: "relative", zIndex: 1 };
+export const routeGenerateLabelStyle: React.CSSProperties = { position: "relative", zIndex: 1, textAlign: "center" };
 export const routeResultStyle: React.CSSProperties = {
     background: "rgba(168, 85, 247, 0.15)",
     borderRadius: "4px",
@@ -225,16 +225,16 @@ export function getRouteGenerateStyle(isGeneratingRoute: boolean | undefined, ha
         position: "relative",
         width: "100%",
         borderRadius: "3px",
-        border: "1px solid rgba(168, 85, 247, 0.5)",
-        background: !hasStart || !hasEnd ? "rgba(255,255,255,0.05)" : "rgba(168, 85, 247, 0.3)",
-        color: !hasStart || !hasEnd ? "rgba(255,255,255,0.3)" : "white",
+        border: "1px solid var(--mly-theme-border, #648b73)",
+        background: !hasStart || !hasEnd ? "var(--mly-theme-control, #21352b)" : "var(--mly-theme-selected, #31543d)",
+        color: !hasStart || !hasEnd ? "var(--mly-theme-muted, #b5ccbf)" : "var(--mly-theme-text, #edf7f0)",
         fontSize: "6.5px",
         fontWeight: 700,
         cursor: isGeneratingRoute ? "wait" : !hasStart || !hasEnd ? "not-allowed" : "pointer",
         padding: "3px 0",
         display: "flex",
+        alignItems: "center",
         justifyContent: "center",
-        gap: "3px",
         overflow: "hidden",
     };
 }

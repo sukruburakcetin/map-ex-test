@@ -1,6 +1,12 @@
 import type { SettingsMessages } from '../settingsMessages';
 const tr: SettingsMessages = {
   "builderMapConnection": "Harita bağlantısı",
+  "builderDefaultTravelMode": "Varsayılan seyahat türü",
+  "builderTravelOnFoot": "Yaya",
+  "builderTravelOther": "Diğer ulaşım",
+  "builderRoadDataSource": "Yol verisi kaynağı",
+  "builderCustomRoadService": "Özel servis",
+  "builderPublicOverpass": "Herkese açık Overpass",
   "builderCoverageDefaults": "Kapsama varsayılanları",
   "builderEnableServiceHint": "Hizmeti yapılandırmak için yukarıdaki seçeneği etkinleştirin. Mevcut değerler korunur.",
 

@@ -99,6 +99,7 @@ export interface InfoBoxProps {
   imageInformationHost?: ImageInformationHost;
   imageInformationViewer?: InformationViewer | null;
   imageInformationActive?: boolean;
+  imageInformationMapView?: object;
   routePreviewHost?: RoutePreviewHost;
   detectionToolsRequest?: number;
   // visibility / config

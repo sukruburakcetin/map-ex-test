@@ -18,7 +18,7 @@ export const qualityToolsButtonStyle: React.CSSProperties = {
     color: "white",
 };
 export const qualityToolsLegendStyle: React.CSSProperties = { marginTop: "4px", display: "flex", flexDirection: "column", gap: "2px" };
-export const qualityToolsRangeStyle: React.CSSProperties = { color: "rgba(255,255,255,0.4)", marginLeft: "auto" };
+export const qualityToolsRangeStyle: React.CSSProperties = { color: "var(--mly-theme-muted, #c7dfd0)", marginInlineStart: "auto", whiteSpace: "nowrap" };
 export function getQualityToolsLabelStyle(active: boolean | undefined): React.CSSProperties {
     return {
         display: "flex",
@@ -54,16 +54,16 @@ export function getQualityToolsKnobStyle(active: boolean | undefined): React.CSS
         transition: "left 0.2s",
     };
 }
-export function getQualityToolsBandStyle(isSelected: boolean, isAnySelected: boolean): React.CSSProperties {
+export function getQualityToolsBandStyle(isSelected: boolean): React.CSSProperties {
     return {
         display: "flex",
         alignItems: "center",
         gap: "4px",
         fontSize: "7px",
         cursor: "pointer",
-        opacity: isAnySelected && !isSelected ? 0.3 : 1,
-        transition: "opacity 0.2s ease",
+        background: isSelected ? "var(--mly-theme-selected, #315846)" : undefined,
+        borderRadius: "3px",
     };
 }
 export function getQualityToolsSwatchStyle(color: string): React.CSSProperties { return { width: "8px", height: "3px", borderRadius: "2px", background: color, flexShrink: 0 }; }
-export function getQualityToolsBandLabelStyle(isSelected: boolean): React.CSSProperties { return { color: "rgba(255,255,255,0.85)", fontWeight: isSelected ? 700 : 500 }; }
+export function getQualityToolsBandLabelStyle(isSelected: boolean): React.CSSProperties { return { color: "var(--mly-theme-text, #d9e5de)", fontWeight: isSelected ? 700 : 500 }; }

@@ -2,7 +2,7 @@ const fs=require('node:fs'),path=require('node:path'),test=require('node:test'),
 const compile=s=>ts.transpileModule(s,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS}}).outputText;
 function load(file,req=()=>{}){const m={exports:{}};new Function('require','module','exports',compile(fs.readFileSync(path.join(__dirname,'../src',file),'utf8')))(req,m,m.exports);return m.exports}
 const constants=load('utils/constants.ts'),geo=load('utils/geoUtils.ts');
-const {relatedCaptures,loadTimeTravelPreview}=load('features/imagery/timeTravelPreview.ts',id=>id.endsWith('constants')?constants:geo);
+const {relatedCaptures,loadTimeTravelPreview,createTimeTravelPreviewLoader}=load('features/imagery/timeTravelPreview.ts',id=>id.endsWith('constants')?constants:geo);
 const current={id:'A',sequence:'s1',captured_at:'2020-01-01',computed_geometry:{coordinates:[29,41]},computed_compass_angle:359,thumb_1024_url:'https://example.com/A.jpg'};
 const candidate={...current,id:'B',sequence:'s2',captured_at:'2021-01-01',computed_compass_angle:1,thumb_1024_url:'https://example.com/B.jpg'};
 const response=(value,ok=true)=>({ok,json:async()=>value});
@@ -29,4 +29,36 @@ test('HTTP/API errors and missing source preview fail safely without candidate f
  let calls=0;mock(t,async()=>{calls++;return response({},false)});await assert.rejects(loadTimeTravelPreview('A','test',new AbortController().signal));assert.equal(calls,1);
  global.fetch=async()=>response({error:{message:'secret'}});await assert.rejects(loadTimeTravelPreview('A','test',new AbortController().signal),/could not load/);
  global.fetch=async()=>response({...current,thumb_1024_url:null});await assert.rejects(loadTimeTravelPreview('A','test',new AbortController().signal),/not available/);
+});
+
+test('searches later pages before showing the empty state and bounds the lookup', async t => {
+ const cursors = [];
+ mock(t, async url => {
+  const request = new URL(url);
+  if (!request.pathname.endsWith('/images')) return response(current);
+  const cursor = request.searchParams.get('after');
+  cursors.push(cursor);
+  return response({
+   data: cursor ? [candidate] : [],
+   paging: { next: 'https://other.example/images', cursors: { after: String(cursors.length) } },
+  });
+ });
+ const result = await loadTimeTravelPreview('A','token',new AbortController().signal);
+ assert.deepEqual(cursors,[null,'1','2']);
+ assert.deepEqual(result.alternatives.map(item=>item.id),['B']);
+});
+
+test('reopening the same capture reuses results while shared links and new credentials reload', async () => {
+ let requests = 0;
+ const load = createTimeTravelPreviewLoader(async () => {
+  requests++;
+  return { current: { id:'A' }, alternatives:[{ id:String(requests) }] };
+ });
+ const signal = new AbortController().signal;
+ const first = await load('A','one',signal);
+ assert.strictEqual(await load('A','one',signal),first);
+ await load('A','one',signal,{imageId:'A',startId:'A',compareId:'B',split:50});
+ assert.strictEqual(await load('A','one',signal),first);
+ assert.notStrictEqual(await load('A','two',signal),first);
+ assert.equal(requests,3);
 });

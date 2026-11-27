@@ -2,6 +2,68 @@ import { throwIfRoutingAborted } from './routingCancellation';
 import type { RoutingProvider, RoutingResult, RoutingSolveOptions, RoutingCoordinate, RoutingPreflightResult } from "./routingTypes";
 import { distanceMeters } from "./geoUtils";
 
+async function requestOSRM<T>(url: string, signal: AbortSignal | undefined, endpoint: string): Promise<T> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    throwIfRoutingAborted(signal);
+    const request = new AbortController();
+    const abort = () => request.abort();
+    signal?.addEventListener("abort", abort, { once: true });
+    const timer = setTimeout(abort, 12000);
+    try {
+      let response: Response | undefined;
+      let data: T | undefined;
+      try {
+        response = await fetch(url, { signal: request.signal });
+        if (response.ok) data = await response.json();
+        else if (response.status === 400) {
+          const failure = await response.json().catch(() => null);
+          if (failure?.code === "NoRoute" || failure?.code === "NoSegment" || failure?.code === "NoTable") {
+            throwIfRoutingAborted(signal);
+            return failure as T;
+          }
+        }
+        if (request.signal.aborted) throw new DOMException("Cancelled", "AbortError");
+      } catch (error) {
+        throwIfRoutingAborted(signal);
+        const timedOut = request.signal.aborted;
+        if (attempt > 0 || (!timedOut && response && !(error instanceof TypeError))) {
+          throw new Error(timedOut ? `The ${endpoint} request timed out. Try again.`
+            : response ? `${endpoint} returned an invalid response.` : `Could not connect to ${endpoint}. Try again.`);
+        }
+        response = undefined;
+      }
+      throwIfRoutingAborted(signal);
+      if (response?.ok) return data as T;
+      if (response?.status === 429) {
+        const header = response.headers?.get("Retry-After")?.trim();
+        const seconds = header && /^\d+$/.test(header) ? Number(header) : Math.ceil((Date.parse(header ?? "") - Date.now()) / 1000);
+        throw new Error(Number.isFinite(seconds) && seconds > 0
+          ? `${endpoint} is rate-limited. Try again in ${seconds} seconds.`
+          : `${endpoint} is rate-limited. Try again shortly.`);
+      }
+      if (response && (attempt > 0 || ![502, 503, 504].includes(response.status))) {
+        throw new Error(`${endpoint} request failed with HTTP ${response.status}. Try again.`);
+      }
+    } finally {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", abort);
+    }
+    await new Promise<void>((resolve, reject) => {
+      const cancelled = () => {
+        clearTimeout(delay);
+        reject(new DOMException("Cancelled", "AbortError"));
+      };
+      const delay = setTimeout(() => {
+        signal?.removeEventListener("abort", cancelled);
+        resolve();
+      }, 750);
+      signal?.addEventListener("abort", cancelled, { once: true });
+      if (signal?.aborted) cancelled();
+    });
+  }
+  throw new Error(`The ${endpoint} request could not finish.`);
+}
+
 export interface OSRMRoutingProviderConfig {
   /**
    * Base OSRM server URL.
@@ -140,30 +202,9 @@ export const createOSRMRoutingProvider = (config: OSRMRoutingProviderConfig): Ro
      * --------------------------------------------------------
      */
 
-    let response: Response;
+    const data = await requestOSRM<OSRMTableResponse>(url, signal, "OSRM Table");
 
-    try {
-      response = await fetch(url, {signal});
-    } catch {
-      throwIfRoutingAborted(signal);
-      throw new Error("Could not connect to the OSRM Table service.");
-    }
-
-    throwIfRoutingAborted(signal);
-    if (!response.ok) {
-      throw new Error(`OSRM table request failed with HTTP ` + `${response.status}.`);
-    }
-
-    let data: OSRMTableResponse;
-
-    try {
-      data = await response.json();
-    } catch {
-      throwIfRoutingAborted(signal);
-      throw new Error("OSRM Table returned an invalid response.");
-    }
-
-    throwIfRoutingAborted(signal);
+    if (data.code === "NoTable" || data.code === "NoSegment") throw new Error("No road connection found between these stops. Move a stop closer to a routable road.");
     if (data.code !== "Ok" || !Array.isArray(data.durations)) {
       throw new Error(data.message ? `OSRM Table: ${data.message}` : "OSRM Table preflight failed.");
     }
@@ -306,31 +347,7 @@ export const createOSRMRoutingProvider = (config: OSRMRoutingProviderConfig): Ro
        * --------------------------------------------------------
        */
 
-      let response: Response;
-
-      try {
-        response = await fetch(url, {signal:options.signal});
-      } catch (error) {
-        throwIfRoutingAborted(options.signal);
-        throw new Error("Could not connect to the OSRM routing server.");
-      }
-
-      /*
-       * HTTP-level failure.
-       */
-      throwIfRoutingAborted(options.signal);
-      if (!response.ok) {
-        throw new Error(`OSRM request failed with HTTP ` + `${response.status}.`);
-      }
-
-      let data: OSRMResponse;
-
-      try {
-        data = await response.json();
-      } catch {
-        throwIfRoutingAborted(options.signal);
-        throw new Error("OSRM returned an invalid response.");
-      }
+      const data = await requestOSRM<OSRMResponse>(url, options.signal, "OSRM routing");
 
       /*
        * --------------------------------------------------------
@@ -339,6 +356,7 @@ export const createOSRMRoutingProvider = (config: OSRMRoutingProviderConfig): Ro
        */
 
       throwIfRoutingAborted(options.signal);
+      if (data.code === "NoRoute" || data.code === "NoSegment") throw new Error("No route found between these stops. Move a stop closer to a routable road.");
       if (data.code !== "Ok") {
         throw new Error(data.message ? `OSRM: ${data.message}` : `OSRM routing failed: ${data.code}`);
       }

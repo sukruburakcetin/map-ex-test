@@ -1,15 +1,15 @@
 # Image info
 
-Select a Mapillary image, open **Tools & details**, then expand **Image info**. It appears directly below **Coordinates**. Pause playback to load additional details. Nothing needs to be configured.
+Select a Mapillary image, open **Tools & details**, then expand **Image Info** below **Coordinates**. The summary shows when the image was captured (UTC), its format, the contributor, and the selected marker position when available.
 
-The section shows capture date and time in UTC, contributor, organization, camera make and model, projection, original image dimensions and megapixels, and capture method. The image ID appears below the details.
+## Compare recorded positions
 
-- **Original dimensions** describe the uploaded image, not the displayed preview. Hover over the dimensions row for this explanation.
-- **Other method** means the image was classified as not captured on foot; it does not identify a vehicle or bicycle.
-- **Unknown** means capture method was not classified. **Unavailable** means a field was not supplied.
+In **Location & alignment**, compare the original GPS coordinates with the position calculated by Mapillary after processing. **Position difference** is the horizontal distance between them. It does not measure GPS accuracy. The widget can anchor the selected marker to the coverage point, so its displayed position may differ from both metadata values.
 
-The details use the panel’s shared scroll area. Scroll, swipe, or focus the scroll area and use arrow keys to reach the lower tools. The width toggle gives long values more room.
+## Review the capture
 
-Selecting a coverage point opens the image, not this panel. The section starts collapsed and opens only when you expand it. Closing it keeps it closed when you select another image. If you leave it open, it can follow the selected image while paused. It reuses available metadata, and requests missing details only while expanded, visible, and playback is paused. A short settling delay avoids requests while quickly browsing images. Resuming playback or closing the section cancels its pending work. Successful details for up to 16 images stay in memory for reuse while the panel remains mounted.
+- **Capture details** shows camera make and model, original dimensions and megapixels, and the capture method when classified. **Other method** means Mapillary classified the capture as not on foot. It does not identify a vehicle or bicycle.
+- **Organization** shows the organization associated with the capture when available.
+- **Technical details** shows available image and sequence IDs, projection, original and processed heading and altitude above sea level, and predicted visual quality. The quality score describes the image's appearance.
 
-If loading fails, select **Retry** while paused. Image exploration remains available independently of this optional information.
+Image Info starts collapsed. Pause playback to load missing metadata. A short delay avoids unnecessary requests while stepping quickly through images. Resuming playback or closing the section cancels pending metadata work. If loading fails, choose **Retry** while paused.

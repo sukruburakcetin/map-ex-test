@@ -1,6 +1,12 @@
 /** Builder-only catalog. */
 export const settingsEn = {
   "builderMapConnection": "Map connection",
+  "builderDefaultTravelMode": "Default travel mode",
+  "builderTravelOnFoot": "On foot",
+  "builderTravelOther": "Other travel",
+  "builderRoadDataSource": "Road data source",
+  "builderCustomRoadService": "Custom service",
+  "builderPublicOverpass": "Public Overpass",
   "builderCoverageDefaults": "Coverage defaults",
   "builderEnableServiceHint": "Enable this option above to configure its service. Existing values are kept.",
 
